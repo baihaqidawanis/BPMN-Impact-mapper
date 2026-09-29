@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "o2c-terminal-outcome",
+  "description": "Clarify the completed end-event outcome.",
+  "baseline_sha256": "c167e190542e25e93d51fb9302e0d77b1624d1acd4da00cb78f89b5763489a80",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "O2C-END-COMPLETED",
+      "attribute": "name",
+      "value": "Order fulfilled and financially closed"
+    }
+  ]
+}

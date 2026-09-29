@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "fixture-label-change",
+  "description": "CLI mutation fixture",
+  "baseline_sha256": "762b2dadafc53791f98859009cfd65ec307bec3445318efecbc4e4e49b8e8b42",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "Task_fixture",
+      "attribute": "name",
+      "value": "Updated task"
+    }
+  ]
+}

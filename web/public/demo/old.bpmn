@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Old">
+  <process id="Process_Request" isExecutable="false">
+    <laneSet id="LaneSet_Request">
+      <lane id="Lane_Clerk" name="Clerk"><flowNodeRef>START</flowNodeRef><flowNodeRef>TASK-CREATE</flowNodeRef></lane>
+      <lane id="Lane_Manager" name="Manager"><flowNodeRef>GW-DECIDE</flowNodeRef><flowNodeRef>TASK-APPROVE</flowNodeRef><flowNodeRef>END-DONE</flowNodeRef></lane>
+    </laneSet>
+    <startEvent id="START" name="Request received"/>
+    <userTask id="TASK-CREATE" name="Create request"><dataInputAssociation id="Assoc_Old"><sourceRef>DATA-ORDER</sourceRef></dataInputAssociation></userTask>
+    <exclusiveGateway id="GW-DECIDE" name="Request valid?"/>
+    <userTask id="TASK-APPROVE" name="Approve request"/>
+    <endEvent id="END-DONE" name="Completed"/>
+    <dataObjectReference id="DATA-ORDER" name="Order"><dataState name="DRAFT"/></dataObjectReference>
+    <sequenceFlow id="FLOW-1" sourceRef="START" targetRef="TASK-CREATE"/>
+    <sequenceFlow id="FLOW-2" sourceRef="TASK-CREATE" targetRef="GW-DECIDE"/>
+    <sequenceFlow id="FLOW-3" name="yes" sourceRef="GW-DECIDE" targetRef="TASK-APPROVE"><conditionExpression>${valid == true}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="FLOW-4" sourceRef="TASK-APPROVE" targetRef="END-DONE"/>
+  </process>
+</definitions>

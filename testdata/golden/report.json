@@ -1,0 +1,54 @@
+{
+  "analysis_id": "abc123",
+  "input_fingerprint": "input123",
+  "method": "hybrid",
+  "repository": {
+    "name": "synthetic",
+    "revision": "fixture-v1"
+  },
+  "changes": [
+    {
+      "change_type": "ADD_TASK",
+      "old_element": null,
+      "new_element": {
+        "id": "TASK-VALIDATE",
+        "name": "Validate request",
+        "type": "serviceTask"
+      },
+      "impacts": [
+        {
+          "module": "internal",
+          "layer": "application",
+          "file": "internal/application/request.go",
+          "symbol": "ValidateRequest",
+          "required_action": "ADD",
+          "evidence": [
+            {
+              "type": "TRACE_ID",
+              "location": "internal/application/request.go:4",
+              "excerpt": "TASK-VALIDATE"
+            }
+          ],
+          "score_breakdown": {
+            "trace_id": 1,
+            "symbol": 0.5,
+            "path": 0.25,
+            "lexical": 0.5,
+            "structured": 1,
+            "bm25": 1,
+            "total": 0.8
+          },
+          "confidence": 0.8
+        }
+      ],
+      "unresolved_impacts": [],
+      "reason": "task added"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "EXAMPLE",
+      "message": "synthetic warning"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "p2p-gateway-condition",
+  "description": "Tighten the approval branch condition without changing stable IDs.",
+  "baseline_sha256": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+  "operations": [
+    {
+      "kind": "set_child_text",
+      "element_id": "FLOW-P2P-005",
+      "child": "conditionExpression",
+      "value": "decision = 'APPROVED' and approvalLevel >= 2"
+    }
+  ]
+}

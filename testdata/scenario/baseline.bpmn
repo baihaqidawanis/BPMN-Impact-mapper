@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="Process_fixture">
+    <startEvent id="Start_fixture"/>
+    <task id="Task_fixture" name="Original task"/>
+    <endEvent id="End_fixture"/>
+    <sequenceFlow id="Flow_fixture_1" sourceRef="Start_fixture" targetRef="Task_fixture"/>
+    <sequenceFlow id="Flow_fixture_2" sourceRef="Task_fixture" targetRef="End_fixture"/>
+  </process>
+</definitions>

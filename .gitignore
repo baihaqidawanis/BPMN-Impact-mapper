@@ -1,0 +1,17 @@
+/bin/
+/coverage/
+/.gocache/
+/outputs/
+/.data/
+/web/.next/
+/web/node_modules/
+/web/coverage/
+/web/test-results/
+/web/playwright-report/
+*.tsbuildinfo
+/impact-report.json
+/impact-report.md
+*.exe
+*.test
+*.out
+.env*

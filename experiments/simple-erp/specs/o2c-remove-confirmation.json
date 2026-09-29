@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "scenario_id": "o2c-remove-confirmation",
+  "description": "Remove the confirmation task and rewire its incoming flow to the existing delivery merge.",
+  "baseline_sha256": "c167e190542e25e93d51fb9302e0d77b1624d1acd4da00cb78f89b5763489a80",
+  "operations": [
+    {
+      "kind": "remove_element",
+      "element_id": "SAL-SO-005"
+    },
+    {
+      "kind": "remove_element",
+      "element_id": "FLOW-O2C-010"
+    },
+    {
+      "kind": "set_attribute",
+      "element_id": "FLOW-O2C-008",
+      "attribute": "targetRef",
+      "value": "GW-O2C-DELIVERY-MERGE"
+    }
+  ]
+}

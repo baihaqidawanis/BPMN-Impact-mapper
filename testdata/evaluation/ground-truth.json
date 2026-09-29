@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "TASK-VALIDATE",
+      "expected": [
+        {
+          "file": "internal/application/request.go",
+          "symbol": "ValidateRequest",
+          "module": "internal",
+          "layer": "application",
+          "required_action": "ADD"
+        }
+      ]
+    },
+    {
+      "change_type": "MODIFY_TASK_LABEL",
+      "element_id": "TASK-CREATE",
+      "expected": [
+        {
+          "file": "internal/application/request.go",
+          "symbol": "RegisterRequest",
+          "module": "internal",
+          "layer": "application",
+          "required_action": "MODIFY"
+        }
+      ]
+    }
+  ]
+}

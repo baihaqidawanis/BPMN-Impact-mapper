@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "p2p-task-label",
+  "description": "Change one stable task label while retaining its BPMN ID.",
+  "baseline_sha256": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "PUR-PR-001",
+      "attribute": "name",
+      "value": "Create and classify purchase request"
+    }
+  ]
+}

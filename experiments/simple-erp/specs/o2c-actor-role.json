@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "o2c-actor-role",
+  "description": "Rename one lane role; all referenced nodes inherit the changed actor.",
+  "baseline_sha256": "c167e190542e25e93d51fb9302e0d77b1624d1acd4da00cb78f89b5763489a80",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "LANE-O2C-ADMIN",
+      "attribute": "name",
+      "value": "Sales Supervisor"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "TASK-VALIDATE",
+      "file": "internal/application/request.go",
+      "symbol": "ValidateRequest",
+      "module": "internal",
+      "layer": "application",
+      "required_action": "ADD",
+      "rationale": "Frozen pre-evaluation rule linking validation activity to its application function."
+    },
+    {
+      "change_type": "MODIFY_TASK_LABEL",
+      "element_id": "TASK-CREATE",
+      "file": "internal/application/request.go",
+      "symbol": "RegisterRequest",
+      "module": "internal",
+      "layer": "application",
+      "required_action": "MODIFY",
+      "rationale": "Frozen pre-evaluation rule linking request registration terminology to its application function."
+    }
+  ]
+}

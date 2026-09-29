@@ -1,0 +1,122 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "change_type": "MODIFY_TASK_LABEL",
+      "element_id": "PUR-PR-001",
+      "file": "backend/internal/purchasing/adapter/postgres/store.go",
+      "module": "purchasing",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: the implementation emits the stable task ID when creating a purchase request; label wording alone does not prove a required code change."
+    },
+    {
+      "change_type": "MODIFY_GATEWAY_CONDITION",
+      "element_id": "GW-P2P-APPROVED",
+      "file": "backend/internal/purchasing/adapter/postgres/store.go",
+      "module": "purchasing",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: purchasing state transitions are a candidate for a changed approval rule."
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "FLOW-P2P-005",
+      "file": "backend/internal/purchasing/adapter/postgres/store.go",
+      "module": "purchasing",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: the approval branch is represented by purchasing transition persistence."
+    },
+    {
+      "change_type": "MODIFY_GATEWAY_CONDITION",
+      "element_id": "GW-P2P-RECEIVED",
+      "file": "backend/internal/purchasing/adapter/postgres/store.go",
+      "module": "purchasing",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: receipt completion is persisted in the purchasing adapter."
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "FLOW-P2P-012",
+      "file": "backend/internal/finance/adapter/postgres/store.go",
+      "module": "finance",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: the branch leads to supplier-invoice recording; a renamed outcome is relevance evidence only."
+    },
+    {
+      "change_type": "MODIFY_ACTOR_ROLE",
+      "element_id": "SAL-SO-004",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: sales approval and rejection enforce actor constraints."
+    },
+    {
+      "change_type": "MODIFY_ACTOR_ROLE",
+      "element_id": "GW-O2C-APPROVED",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: sales transition persistence is relevant to the approval branch actor."
+    },
+    {
+      "change_type": "MODIFY_ACTOR_ROLE",
+      "element_id": "O2C-END-REJECTED",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: the rejected terminal outcome follows the actor-controlled review transition."
+    },
+    {
+      "change_type": "MODIFY_ACTOR_ROLE",
+      "element_id": "SAL-PAY-001",
+      "file": "backend/internal/finance/adapter/postgres/store.go",
+      "module": "finance",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: customer payment recording may be constrained by the renamed lane role."
+    },
+    {
+      "change_type": "MODIFY_TERMINAL_OUTCOME",
+      "element_id": "O2C-END-COMPLETED",
+      "file": "backend/internal/finance/adapter/postgres/store.go",
+      "module": "finance",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: final payment persistence performs the sales-order completion transition."
+    },
+    {
+      "change_type": "REMOVE_TASK",
+      "element_id": "SAL-SO-005",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "REMOVE",
+      "rationale": "Pre-review baseline: the sales transition adapter contains the stable confirmation trace and is the direct removal candidate."
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "FLOW-O2C-008",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: approval-to-delivery rewiring may affect the sales transition implementation."
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "FLOW-O2C-010",
+      "file": "backend/internal/sales/adapter/postgres/store.go",
+      "module": "sales",
+      "layer": "repository",
+      "required_action": "VERIFY",
+      "rationale": "Pre-review baseline: removal of the confirmation transition is related to the sales adapter."
+    }
+  ]
+}

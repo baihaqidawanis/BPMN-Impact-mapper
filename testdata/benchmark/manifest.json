@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "methods": ["configuration", "bm25", "hybrid"],
+  "scenarios": [
+    {
+      "id": "synthetic-request-change",
+      "repository_path": "testdata/repository",
+      "repository_name": "synthetic-repository",
+      "revision": "fixture-v2",
+      "old_bpmn_path": "testdata/bpmn/old.bpmn",
+      "old_bpmn_sha256": "394cd3196f0df5ed8fd09a497cf4b85bb46d9f803f5b307533f9e13bf1a94d15",
+      "new_bpmn_path": "testdata/bpmn/new.bpmn",
+      "new_bpmn_sha256": "e05ec4e66d46625c39c2be329c069f1c9aa1290a742945559285ba5d35e9dbe1",
+      "mapping_config_path": "testdata/config/mapping.json",
+      "mapping_config_sha256": "369d5c809960642bcf2dd81e55a54ad008bff5b2095914729a55934990aa7f90",
+      "ground_truth_path": "testdata/evaluation/ground-truth.json",
+      "ground_truth_sha256": "261e6d1152aefa240e1731cfad711f63b4819e8c68f11515f07e360cd33d1435"
+    }
+  ]
+}

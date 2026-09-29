@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_New">
+  <process id="Process_Request" isExecutable="false">
+    <laneSet id="LaneSet_Request">
+      <lane id="Lane_Coordinator" name="Coordinator"><flowNodeRef>START</flowNodeRef><flowNodeRef>TASK-CREATE</flowNodeRef></lane>
+      <lane id="Lane_Manager" name="Manager"><flowNodeRef>GW-DECIDE</flowNodeRef><flowNodeRef>TASK-VALIDATE</flowNodeRef><flowNodeRef>END-DONE</flowNodeRef></lane>
+    </laneSet>
+    <startEvent id="START" name="Request received"/>
+    <userTask id="TASK-CREATE" name="Register request"><dataInputAssociation id="Assoc_New_Order"><sourceRef>DATA-ORDER</sourceRef></dataInputAssociation><dataInputAssociation id="Assoc_New_Customer"><sourceRef>DATA-CUSTOMER</sourceRef></dataInputAssociation></userTask>
+    <exclusiveGateway id="GW-DECIDE" name="Request valid?"/>
+    <serviceTask id="TASK-VALIDATE" name="Validate request"/>
+    <endEvent id="END-DONE" name="Fulfilled"/>
+    <dataObjectReference id="DATA-ORDER" name="Order"><dataState name="REVIEWED"/></dataObjectReference>
+    <dataObjectReference id="DATA-CUSTOMER" name="Customer"/>
+    <sequenceFlow id="FLOW-1" sourceRef="START" targetRef="TASK-CREATE"/>
+    <sequenceFlow id="FLOW-2" sourceRef="TASK-CREATE" targetRef="GW-DECIDE"/>
+    <sequenceFlow id="FLOW-3" name="accepted" sourceRef="GW-DECIDE" targetRef="TASK-VALIDATE"><conditionExpression>${score &gt;= 70}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="FLOW-4" sourceRef="TASK-VALIDATE" targetRef="END-DONE"/>
+  </process>
+</definitions>

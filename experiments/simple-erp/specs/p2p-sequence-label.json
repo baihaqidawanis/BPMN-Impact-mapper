@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "p2p-sequence-label",
+  "description": "Clarify a sequence-flow outcome label while retaining topology.",
+  "baseline_sha256": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "FLOW-P2P-012",
+      "attribute": "name",
+      "value": "Receipt complete"
+    }
+  ]
+}
