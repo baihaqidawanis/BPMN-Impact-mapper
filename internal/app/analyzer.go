@@ -33,7 +33,11 @@ type Request struct {
 	Retrieval         mapping.Options       `json:"retrieval,omitempty"`
 }
 
-type Analyzer struct{ Resolver mapping.Resolver }
+type Analyzer struct {
+	Resolver mapping.Resolver
+	// Indexers optionally supplies language adapters at the composition boundary.
+	Indexers *index.Registry
+}
 
 func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.Report, error) {
 	if err := validateRequest(request); err != nil {
@@ -66,6 +70,7 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	if err != nil {
 		return domain.Report{}, fmt.Errorf("read new BPMN: %w", err)
 	}
+	inventory = excludeMethodInputCopies(inventory, oldData, newData, methodConfig)
 	if err := ctx.Err(); err != nil {
 		return domain.Report{}, err
 	}
@@ -77,9 +82,17 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	if err != nil {
 		return domain.Report{}, fmt.Errorf("parse new BPMN: %w", err)
 	}
-	artifacts, indexWarnings := index.Build(inventory)
+	registry := index.DefaultRegistry()
+	if analyzer.Indexers != nil {
+		registry = *analyzer.Indexers
+	}
+	indexed := registry.Build(inventory)
+	artifacts, indexWarnings := indexed.Artifacts, indexed.Warnings
 	changes := diff.Compare(oldGraph, newGraph)
-	changes, retrievalWarnings := strategy.Attach(changes, artifacts, request.Retrieval)
+	changes, retrievalWarnings, err := strategy.Attach(ctx, changes, artifacts, request.Retrieval)
+	if err != nil {
+		return domain.Report{}, fmt.Errorf("apply %s mapping: %w", method, err)
+	}
 	name := strings.TrimSpace(request.RepositoryName)
 	if name == "" {
 		name = filepath.Base(inventory.Root)
@@ -103,13 +116,45 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 		return warnings[i].Message < warnings[j].Message
 	})
 	fingerprint := inputFingerprint(name, revision, oldData, newData, inventory, request.Ingest)
+	var methodMetadata map[string]string
+	if provider, ok := strategy.(mapping.MetadataProvider); ok {
+		methodMetadata = provider.MethodMetadata()
+	}
 	return domain.Report{
-		AnalysisID:       analysisID(fingerprint, request, methodConfig),
+		SourceAnalysis:   indexed.Files,
+		AnalysisID:       analysisID(fingerprint, request, methodConfig, registry.Identity()),
 		InputFingerprint: fingerprint,
-		Method:           method,
-		Repository:       domain.Repository{Name: name, Revision: revision},
-		Changes:          changes, Warnings: warnings,
+		Method:           method, MethodMetadata: methodMetadata,
+		Repository: domain.Repository{Name: name, Revision: revision},
+		Changes:    changes, Warnings: warnings,
 	}, nil
+}
+
+// excludeMethodInputCopies removes byte-identical copies of inference inputs
+// from the retrieval corpus. This complements path exclusion when the web
+// adapter stores uploaded BPMN documents outside the analyzed repository.
+func excludeMethodInputCopies(inventory ingest.Inventory, inputs ...[]byte) ingest.Inventory {
+	hashes := make(map[[sha256.Size]byte]bool, len(inputs))
+	for _, input := range inputs {
+		if len(input) > 0 {
+			hashes[sha256.Sum256(input)] = true
+		}
+	}
+	if len(hashes) == 0 {
+		return inventory
+	}
+	allowed := make([]ingest.File, 0, len(inventory.Files))
+	for _, file := range inventory.Files {
+		if hashes[sha256.Sum256(file.Content)] {
+			inventory.Bytes -= int64(len(file.Content))
+			inventory.Warnings = append(inventory.Warnings, "skipped method input copy: "+file.RelativePath)
+			continue
+		}
+		allowed = append(allowed, file)
+	}
+	inventory.Files = allowed
+	sort.Strings(inventory.Warnings)
+	return inventory
 }
 
 func WriteArtifacts(outputDirectory string, value domain.Report) error {
@@ -190,8 +235,10 @@ func inputFingerprint(name, revision string, oldData, newData []byte, inventory 
 	return hex.EncodeToString(hash.Sum(nil)[:16])
 }
 
-func analysisID(fingerprint string, request Request, methodConfig []byte) string {
+func analysisID(fingerprint string, request Request, methodConfig []byte, indexIdentity string) string {
 	hash := sha256.New()
+	writeHash(hash, []byte(indexIdentity))
+	writeHash(hash, []byte("engine-3.4d"))
 	writeHash(hash, []byte(fingerprint))
 	writeHash(hash, []byte(request.Method))
 	writeHash(hash, methodConfig)

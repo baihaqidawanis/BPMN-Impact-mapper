@@ -19,7 +19,7 @@ import (
 
 func TestHandlerReturnsCanonicalReport(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")
-	input := app.Request{RepositoryPath: filepath.Join(root, "repository"), OldBPMNPath: filepath.Join(root, "bpmn", "old.bpmn"), NewBPMNPath: filepath.Join(root, "bpmn", "new.bpmn"), RepositoryName: "synthetic"}
+	input := app.Request{RepositoryPath: filepath.Join(root, "repository"), OldBPMNPath: filepath.Join(root, "bpmn", "old.bpmn"), NewBPMNPath: filepath.Join(root, "bpmn", "new.bpmn"), RepositoryName: "synthetic", Method: domain.MethodBM25}
 	body, err := json.Marshal(input)
 	if err != nil {
 		t.Fatal(err)
@@ -75,7 +75,7 @@ func TestWebAPIHealthCreateRetrieveAndCleanup(t *testing.T) {
 		"repo_path":       filepath.Join(root, "repository"),
 		"repository_name": "synthetic-web",
 		"revision":        "fixture-v1",
-		"method":          "hybrid",
+		"method":          "bm25",
 		"top_k":           "5",
 	}, map[string]string{
 		"old_bpmn": filepath.Join(root, "bpmn", "old.bpmn"),
@@ -104,6 +104,11 @@ func TestWebAPIHealthCreateRetrieveAndCleanup(t *testing.T) {
 		if get.Code != http.StatusOK || get.Body.Len() == 0 {
 			t.Fatalf("get %q status=%d body=%s", suffix, get.Code, get.Body.String())
 		}
+	}
+	list := httptest.NewRecorder()
+	handler.ServeHTTP(list, httptest.NewRequest(http.MethodGet, "/api/v1/analyses", nil))
+	if list.Code != http.StatusOK || !bytes.Contains(list.Body.Bytes(), []byte(value.AnalysisID)) || bytes.Contains(list.Body.Bytes(), []byte(temporaryRoot)) {
+		t.Fatalf("list status=%d body=%s", list.Code, list.Body.String())
 	}
 }
 

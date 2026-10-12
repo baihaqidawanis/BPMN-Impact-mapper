@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="DefsRemoveBranchOld">
+  <process id="P-BRANCH" isExecutable="false">
+    <startEvent id="START" name="Start"/><exclusiveGateway id="GW-ROUTE" name="Route"/><task id="TASK-A" name="Accept"/><task id="TASK-B" name="Reject"/><endEvent id="END" name="Done"/>
+    <sequenceFlow id="F1" sourceRef="START" targetRef="GW-ROUTE"/><sequenceFlow id="F2" sourceRef="GW-ROUTE" targetRef="TASK-A"/><sequenceFlow id="F3" sourceRef="GW-ROUTE" targetRef="TASK-B"/><sequenceFlow id="F4" sourceRef="TASK-A" targetRef="END"/><sequenceFlow id="F5" sourceRef="TASK-B" targetRef="END"/>
+  </process>
+</definitions>

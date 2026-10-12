@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="INSERT-NEW">
+  <process id="PROCESS-INSERT" isExecutable="false">
+    <startEvent id="START" name="Received"/>
+    <userTask id="TASK-A" name="Prepare request"/>
+    <userTask id="TASK-REVIEW" name="Review request"/>
+    <serviceTask id="TASK-B" name="Register request"/>
+    <endEvent id="END" name="Completed"/>
+    <sequenceFlow id="FLOW-START-A" sourceRef="START" targetRef="TASK-A"/>
+    <sequenceFlow id="FLOW-A-REVIEW" sourceRef="TASK-A" targetRef="TASK-REVIEW"/>
+    <sequenceFlow id="FLOW-REVIEW-B" sourceRef="TASK-REVIEW" targetRef="TASK-B"/>
+    <sequenceFlow id="FLOW-B-END" sourceRef="TASK-B" targetRef="END"/>
+  </process>
+</definitions>

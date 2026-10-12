@@ -1,6 +1,7 @@
 package retrieval
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
@@ -20,17 +21,23 @@ func DefaultConfig() Config {
 
 type Hybrid struct{}
 
+type artifactImpact struct {
+	impact     domain.Impact
+	symbolKind string
+}
+
 func (Hybrid) Method() domain.AnalysisMethod { return domain.MethodHybrid }
 
-func (Hybrid) Attach(changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning) {
-	return Attach(changes, artifacts, config)
+func (Hybrid) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
+	attached, warnings := Attach(changes, artifacts, config)
+	return attached, warnings, nil
 }
 
 type BM25Only struct{}
 
 func (BM25Only) Method() domain.AnalysisMethod { return domain.MethodBM25 }
 
-func (BM25Only) Attach(changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning) {
+func (BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
 	defaults := DefaultConfig()
 	if config.TopK <= 0 {
 		config.TopK = defaults.TopK
@@ -46,7 +53,7 @@ func (BM25Only) Attach(changes []domain.Change, artifacts []domain.Artifact, con
 			continue
 		}
 		query, _ := queryFor(*change)
-		ranked := model.Search(query)
+		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
 			change.UnresolvedImpact = append(change.UnresolvedImpact, "BM25 found no lexical candidate")
 			continue
@@ -66,7 +73,7 @@ func (BM25Only) Attach(changes []domain.Change, artifacts []domain.Artifact, con
 			})
 		}
 	}
-	return changes, []domain.Warning{}
+	return changes, []domain.Warning{}, nil
 }
 
 func Attach(changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning) {
@@ -95,7 +102,7 @@ func Attach(changes []domain.Change, artifacts []domain.Artifact, config Config)
 			continue
 		}
 		query, stableIDs := queryFor(*change)
-		ranked := model.Search(query)
+		ranked := removeShadowedPackageDocuments(model.Search(query))
 		bm25 := map[string]float64{}
 		maxBM25 := 0.0
 		for _, result := range ranked {
@@ -104,13 +111,15 @@ func Attach(changes []domain.Change, artifacts []domain.Artifact, config Config)
 				maxBM25 = result.Score
 			}
 		}
-		impacts := make([]domain.Impact, 0)
+		scored := make([]artifactImpact, 0)
 		for _, artifact := range artifacts {
 			impact, ok := scoreArtifact(*change, artifact, query, stableIDs, bm25[artifact.ID], maxBM25, config)
 			if ok {
-				impacts = append(impacts, impact)
+				scored = append(scored, artifactImpact{impact: impact, symbolKind: artifact.Symbol.Kind})
 			}
 		}
+		scored = propagate(scored, artifacts, config.CandidateThreshold)
+		impacts := removeShadowedPackageImpacts(scored)
 		sort.SliceStable(impacts, func(i, j int) bool {
 			if math.Abs(impacts[i].Confidence-impacts[j].Confidence) > 1e-12 {
 				return impacts[i].Confidence > impacts[j].Confidence
@@ -137,6 +146,44 @@ func Attach(changes []domain.Change, artifacts []domain.Artifact, config Config)
 		return warnings[i].Message < warnings[j].Message
 	})
 	return changes, warnings
+}
+
+func removeShadowedPackageDocuments(ranked []RankedDocument) []RankedDocument {
+	hasSpecific := make(map[string]bool)
+	for _, candidate := range ranked {
+		kind := candidate.Artifact.Symbol.Kind
+		if kind != "" && kind != "package" {
+			hasSpecific[candidate.Artifact.File] = true
+		}
+	}
+	filtered := make([]RankedDocument, 0, len(ranked))
+	for _, candidate := range ranked {
+		if candidate.Artifact.Symbol.Kind == "package" && hasSpecific[candidate.Artifact.File] {
+			continue
+		}
+		filtered = append(filtered, candidate)
+	}
+	return filtered
+}
+
+// removeShadowedPackageImpacts keeps file-level Go evidence only when no
+// accepted type/function/method candidate from the same file explains it more
+// precisely. Multiple genuinely matching symbols remain separate candidates.
+func removeShadowedPackageImpacts(scored []artifactImpact) []domain.Impact {
+	hasSpecific := make(map[string]bool)
+	for _, candidate := range scored {
+		if candidate.symbolKind != "" && candidate.symbolKind != "package" {
+			hasSpecific[candidate.impact.File] = true
+		}
+	}
+	impacts := make([]domain.Impact, 0, len(scored))
+	for _, candidate := range scored {
+		if candidate.symbolKind == "package" && hasSpecific[candidate.impact.File] {
+			continue
+		}
+		impacts = append(impacts, candidate.impact)
+	}
+	return impacts
 }
 
 func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stableIDs []string, rawBM25, maxBM25 float64, config Config) (domain.Impact, bool) {
@@ -204,7 +251,7 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 func queryFor(change domain.Change) ([]string, []string) {
 	var raw []string
 	var ids []string
-	for _, element := range []*domain.Element{change.OldElement, change.NewElement} {
+	for _, element := range queryElements(change) {
 		if element == nil {
 			continue
 		}
@@ -214,8 +261,26 @@ func queryFor(change domain.Change) ([]string, []string) {
 		raw = append(raw, element.Incoming...)
 		raw = append(raw, element.Outgoing...)
 	}
+	if change.Context != nil {
+		raw = append(raw, string(change.Context.Pattern))
+		for _, element := range append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...) {
+			raw = append(raw, element.ID, element.Name, element.Type)
+		}
+		raw = append(raw, change.Context.RelatedFlowIDs...)
+	}
 	raw = append(raw, string(change.ChangeType))
 	return textutil.UniqueSorted(textutil.Tokenize(strings.Join(raw, " "))), textutil.UniqueSorted(ids)
+}
+
+func queryElements(change domain.Change) []*domain.Element {
+	switch change.ChangeType {
+	case domain.AddTask, domain.AddGateway, domain.AddDataRequirement, domain.AddState:
+		return []*domain.Element{change.NewElement}
+	case domain.RemoveTask, domain.RemoveGateway, domain.RemoveDataRequirement:
+		return []*domain.Element{change.OldElement}
+	default:
+		return []*domain.Element{change.OldElement, change.NewElement}
+	}
 }
 
 func overlap(values, query []string) float64 {
@@ -334,6 +399,11 @@ func strongAction(change domain.ChangeType) domain.RequiredAction {
 		return domain.ActionAdd
 	case domain.RemoveTask, domain.RemoveGateway, domain.RemoveDataRequirement:
 		return domain.ActionRemove
+	case domain.ModifyTaskLabel:
+		// A wording change can be directly traceable without changing software
+		// behavior. Exact ID evidence therefore warrants review, not an inferred
+		// code modification.
+		return domain.ActionVerify
 	default:
 		return domain.ActionModify
 	}

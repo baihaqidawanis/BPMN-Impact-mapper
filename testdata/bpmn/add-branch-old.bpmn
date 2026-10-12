@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="BRANCH-OLD">
+  <process id="PROCESS-BRANCH" isExecutable="false">
+    <startEvent id="START" name="Received"/>
+    <userTask id="TASK-A" name="Prepare request"/>
+    <serviceTask id="TASK-B" name="Register request"/>
+    <endEvent id="END" name="Completed"/>
+    <sequenceFlow id="FLOW-START-A" sourceRef="START" targetRef="TASK-A"/>
+    <sequenceFlow id="FLOW-A-B" sourceRef="TASK-A" targetRef="TASK-B"/>
+    <sequenceFlow id="FLOW-B-END" sourceRef="TASK-B" targetRef="END"/>
+  </process>
+</definitions>

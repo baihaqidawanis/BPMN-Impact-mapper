@@ -42,7 +42,28 @@
         }
       ],
       "unresolved_impacts": [],
-      "reason": "task added"
+      "reason": "task added",
+      "context": {
+        "pattern": "INSERT_TASK",
+        "predecessors": [
+          {
+            "id": "TASK-CREATE",
+            "name": "Create request",
+            "type": "userTask"
+          }
+        ],
+        "successors": [
+          {
+            "id": "TASK-REGISTER",
+            "name": "Register request",
+            "type": "serviceTask"
+          }
+        ],
+        "related_flow_ids": [
+          "FLOW-CREATE-VALIDATE",
+          "FLOW-VALIDATE-REGISTER"
+        ]
+      }
     }
   ],
   "warnings": [

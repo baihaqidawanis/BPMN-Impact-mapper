@@ -17,6 +17,7 @@ func TestInnerPackagesDoNotDependOnOuterAdapters(t *testing.T) {
 		"app":         {"bpmn": true, "diff": true, "domain": true, "index": true, "ingest": true, "mapping": true, "report": true},
 		"benchmark":   {"app": true, "domain": true, "evaluation": true, "mapping": true},
 		"review":      {"evaluation": true},
+		"reviewpack":  {"domain": true, "evaluation": true},
 		"scenario":    {"bpmn": true},
 		"reportstore": {"domain": true},
 	}

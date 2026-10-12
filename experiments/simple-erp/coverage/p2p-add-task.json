@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "scenario_id": "p2p-add-task",
+  "description": "Insert a request-validation task after purchase request submission.",
+  "baseline_sha256": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "FLOW-P2P-003",
+      "attribute": "targetRef",
+      "value": "PUR-PR-002A"
+    },
+    {
+      "kind": "append_xml",
+      "element_id": "P2P-L2-001",
+      "xml": "<bpmn:serviceTask id=\"PUR-PR-002A\" name=\"Validate purchase request details\"/><bpmn:sequenceFlow id=\"FLOW-P2P-003A\" sourceRef=\"PUR-PR-002A\" targetRef=\"PUR-PR-003\"/>"
+    }
+  ]
+}

@@ -6,7 +6,6 @@ import (
 	"go/parser"
 	"go/token"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
@@ -20,30 +19,8 @@ type Adapter interface {
 }
 
 func Build(inventory ingest.Inventory) ([]domain.Artifact, []string) {
-	adapters := []Adapter{GoAdapter{}, TextAdapter{}}
-	var artifacts []domain.Artifact
-	var warnings []string
-	for _, file := range inventory.Files {
-		for _, adapter := range adapters {
-			if !adapter.Supports(file) {
-				continue
-			}
-			indexed, err := adapter.Index(file)
-			if err != nil {
-				warnings = append(warnings, fmt.Sprintf("index %s: %v", file.RelativePath, err))
-				if _, native := adapter.(GoAdapter); native {
-					fallback, _ := (TextAdapter{}).Index(file)
-					artifacts = append(artifacts, fallback...)
-				}
-			} else {
-				artifacts = append(artifacts, indexed...)
-			}
-			break
-		}
-	}
-	sort.Slice(artifacts, func(i, j int) bool { return artifacts[i].ID < artifacts[j].ID })
-	sort.Strings(warnings)
-	return artifacts, warnings
+	result := DefaultRegistry().Build(inventory)
+	return result.Artifacts, result.Warnings
 }
 
 type TextAdapter struct{}

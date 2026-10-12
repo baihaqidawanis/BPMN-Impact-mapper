@@ -1,14 +1,14 @@
 # BPMN Impact Mapper — Phase 1 Plan
 
-Status: **DONE — Phase 3.1 presentation hardening verified**
-Last updated: 2026-09-28
+Status: **DONE — Phase 4.0 persisted analysis history verified**
+Last updated: 2026-10-01
 Scope owner: this repository only
 
 ## 1. Problem statement and research objective
 
 Software often follows BPMN as a specification without loading BPMN at runtime. A BPMN edit therefore does not directly identify which implementation artifacts require modification or verification. BPMN Impact Mapper is a third-party, mapping-only analysis tool that converts a semantic BPMN graph diff and a static repository index into ranked, evidence-bearing impact candidates.
 
-The Phase 1 research objective is to establish a deterministic and auditable baseline for later comparison of configuration-driven mapping, lexical BM25 retrieval, hybrid retrieval, and hybrid retrieval with optional LLM verification. Ranking is candidate retrieval, not causal proof. The tool must abstain when evidence is weak or ambiguous.
+The research objective is to establish an auditable automatic pipeline comparing BM25-only, Semantic-only, BM25 + Semantic rank fusion, and Graph-Aware Hybrid before evidence-bounded LLM planning. Ranking is candidate retrieval, not causal proof. The tool must abstain when evidence is weak or ambiguous. The legacy configuration adapter is outside the primary product UI and target experiment because it requires manual mapping before inference.
 
 ## 2. Scope
 
@@ -458,6 +458,8 @@ Prepare reproducible Simple-ERP pilot inputs without writing to or executing the
 
 Six case-study scenarios produced 18 canonical reports under ignored `outputs/pilots/reports-v2/`. A second complete run was byte-identical for all 18 JSON reports. Detected changes cover `MODIFY_TASK_LABEL`, `MODIFY_GATEWAY_CONDITION`, `MODIFY_SEQUENCE_FLOW`, `MODIFY_ACTOR_ROLE`, `MODIFY_TERMINAL_OUTCOME`, and `REMOVE_TASK`; flow condition/name changes intentionally also alter their gateway's outgoing-condition signature. Five hybrid results retain explicit tie warnings. These are useful uncertainty signals, not failures. No evaluation metric or final ground truth is reported because independent reviewer annotations and adjudication remain human research steps.
 
+Coverage extension: [DONE] `append_xml` is a generic, parser-validated experiment mutation operation. Two additional read-only Simple-ERP P2P specifications generate `ADD_TASK` (`PUR-PR-002A`) and `ADD_GATEWAY` (`GW-P2P-BUDGET`) scenarios, each with the expected related sequence-flow changes. Generated BPMN and reports stay under ignored `outputs/pilots/`; no Simple-ERP file was changed. The remaining data/state and gateway-removal coverage is intentionally deferred until its focused scenario design is reviewed.
+
 ## 30. Phase 3 plan — local web presentation MVP
 
 Authorization: user instruction on 2026-09-29 to build a modular Clean Architecture web application using Next.js and Go, explicitly prioritizing a presentable end-to-end mapping flow without authentication.
@@ -532,3 +534,321 @@ The synthetic preset is presentation data, not a product rule, benchmark result,
 ### Phase 3.1 verification note
 
 Two serial Playwright tests pass using system Chrome: the one-click synthetic preset completes a hybrid analysis, renders changes, expands an evidence/score panel, and downloads Markdown; the manual flow uploads both BPMN files and completes a BM25 analysis. The final frontend type-check and optimized build pass. `npm audit` reports zero vulnerabilities after upgrading the test runner to patched Playwright 1.63.0. The Go suite, vet, and both binaries remain green. The result view was visually inspected from a real completed analysis and retains the same canonical backend output contract.
+
+## 32. Phase 3.2 plan — case-study retrieval hardening
+
+Authorization: user instruction on 2026-09-29 to continue with the highest-value improvement after reviewing the one-task Simple-ERP presentation result.
+
+### Scope and decisions
+
+- exclude byte-identical copies of BPMN/configuration method inputs when web uploads make path-based exclusion insufficient;
+- exclude repository `.bpmn` process specifications from the software-source retrieval corpus;
+- exclude documentation plan trees without excluding similarly named source packages;
+- keep `MODIFY_TASK_LABEL` candidates at `VERIFY`, even with a strong exact trace, because wording changes do not prove behavior changes;
+- suppress a Go package-level candidate when a more precise accepted symbol from the same file exists;
+- preserve distinct matching symbols, deterministic ordering, evidence, score breakdown, and every existing method boundary;
+- keep Simple-ERP read only and validate against the existing `PUR-PR-001` controlled mutation.
+
+### Acceptance criteria
+
+- [DONE] Exact copies of uploaded method inputs cannot enter retrieval, with a deterministic warning and regression test.
+- [DONE] Repository `.bpmn` specifications cannot rank as source-impact candidates.
+- [DONE] Documentation plan trees are excluded while non-documentation `plans` source packages remain indexable.
+- [DONE] High-confidence label-only impacts remain `VERIFY` and retain their complete score/evidence.
+- [DONE] A matching Go method shadows only the redundant package-level candidate from the same file.
+- [DONE] The real one-task Simple-ERP report has no BPMN-input or implementation-plan candidate and ranks `Store.CreateRequest` first as `VERIFY`.
+- [DONE] Full formatting, tests, vet, builds, diff checks, deterministic rerun, and external-repository status checks pass.
+
+### Phase 3.2 verification note
+
+All Go packages pass uncached tests and vet, both commands build, frontend type-check passes, and `git diff --check` passes. Two independent hybrid runs over Simple-ERP commit metadata `69724e6` and the controlled `PUR-PR-001` label mutation produced byte-identical canonical JSON (`C469C5400A55F43D98DCA880E22756F260BB33F335248B90D7E673A24E871759`). The hybrid result contains one BPMN change and ranks `backend/internal/purchasing/adapter/postgres/store.go / Store.CreateRequest` first as `VERIFY`; selected BPMN, documentation plans/review findings, and the redundant package symbol are absent. BM25 remains a lexical baseline and ranks `docs/BUSINESS-RULES.md` first, while configuration-driven emits its single frozen `store.go` rule; this difference is expected and useful for the method comparison. Simple-ERP remained clean on `fix/ta-baseline-readiness` at `69724e6`.
+
+## 33. Phase 3.3 plan — focused presentation UI
+
+Authorization: user instruction on 2026-09-30 to refine the presentation UI using the supplied neutral/blue palette and SF Pro system typography without expanding the analysis scope.
+
+### Scope and decisions
+
+- use the palette `#000000`, `#1D1D1F`, `#434344`, `#6E6E73`, `#F5F5F7`, and `#0071E3` with white surfaces;
+- use the Apple system/SF Pro font stack without downloading or redistributing font files;
+- remove decorative gradients and excessive colored cards in favor of flat hierarchy, whitespace, borders, and one blue accent;
+- make candidate rank explicit and set the presentation default to top five while retaining the configurable range;
+- preserve API contracts, canonical reports, analysis rules, accessible labels, and both manual and synthetic flows.
+
+### Acceptance criteria
+
+- [DONE] Home, analysis form, interpretation guide, and report view share the restrained visual system.
+- [DONE] Candidate rows expose deterministic rank, action, target, confidence, evidence, and score breakdown.
+- [DONE] TypeScript type-check and optimized Next.js production build pass.
+- [DONE] Both Playwright flows pass serially using system Chrome.
+- [DONE] A completed hybrid report is captured and visually inspected at desktop width.
+- [DONE] `git diff --check` passes.
+
+### Verification note
+
+`npm run typecheck`, the optimized Next.js build, and two serial Playwright tests pass. The first browser run had a pre-page Chrome process exit while its second test passed; an immediate full rerun and the screenshot-enabled full run each passed both tests, so the launch failure is recorded as environment flakiness rather than an assertion failure. Visual inspection of `.data/ui-report.png` confirms the completed report, responsive two-column workspace, ranked candidates, expanded evidence, and score bars render with the intended neutral/blue hierarchy.
+
+## 34. Recommended next research tranche — reviewer ground truth
+
+- [DONE via Phases 3.5–3.8] Add a review-only workflow that records candidate relevance and expected action without altering inference output.
+- [DONE via Phases 3.5–3.8] Export two independent reviewer files and reuse the existing reconciliation command for disagreements.
+- [DONE via Phase 3.5] Add a same-input method comparison view for configuration-driven, BM25, and hybrid reports.
+- [TODO] Run the frozen Simple-ERP scenarios only after reviewer ground truth is hidden from inference and adjudicated.
+- [TODO] Report Recall@k, Precision@k, MRR/MAP, action classification, unresolved rate, false-positive rate, latency, and reproducibility without claiming cross-system generalization.
+
+## 37. Phase 3.4C — extensible indexing contracts
+
+Scope approved by user: introduce ordered SourceAdapter and RelationExtractor contracts, explicit TEXT_ONLY / AST_SYMBOLS / STATIC_CALLS capabilities, generic source relations, and deterministic per-file capability reporting. Go is the only native adapter; malformed Go falls back to text. New adapters register without changing retrieval. Capability does not imply accuracy or a full call graph. Keep existing public Build wrapper and report readers compatible. Type-aware interface dispatch remains subsequent work.
+
+- [DONE] Registry, generic relations, capability reporting and fallback. Analyzer accepts an injected registry; ordered adapter/extractor identity is bound into engine-3.4c analysis IDs.
+- [DONE] Mixed-language/custom adapter and failure tests; Go tests and vet, frontend typecheck/production build, 3 Playwright tests and diff check passed. Browser test verifies TypeScript fixture is explicitly TEXT_ONLY. JSON/Markdown round-trip test still passes with capability metadata.
+
+Scope clarification: this phase supplies extensibility and truthful coverage, not new native language parsers or type-aware Go dispatch. Native support remains Go syntax plus limited static calls. Capability labels do not lower/raise confidence by themselves. Files, modules and calls still require evidence; architecture classification remains heuristic.
+
+## 38. Phase 3.4D — conservative type-aware Go relations
+
+Authorization: user instruction on 2026-09-30 to continue the highest-value mapping accuracy work.
+
+### Scope and decisions
+
+- resolve direct Go receiver-method calls when the receiver type is statically available from a method receiver, parameter, explicit local declaration, composite literal, or receiver struct field;
+- follow selector chains such as `h.service.Execute()` through indexed struct fields;
+- resolve an interface call to a concrete method only when exactly one indexed named type structurally implements the complete supported interface method set;
+- compare the complete supported method set with normalized parameter/result type shapes and variadic shape; embedded interfaces and unsupported type expressions abstain;
+- emit distinct `CALLS_METHOD` and `INTERFACE_DISPATCH` relations with located call-site evidence;
+- keep propagation hybrid-only, one hop, discounted, and always `VERIFY`; static dispatch evidence does not prove runtime execution or a required modification;
+- reject ambiguous receiver targets, ambiguous implementations, shadowed package identifiers, and unsupported dynamic/generic dispatch rather than guessing;
+- bind changed extractor behavior to a new registry/engine identity and document the remaining static-analysis limits.
+
+### Acceptance criteria
+
+- [DONE] Direct receiver, receiver-field, and unique interface dispatch resolve to indexed method artifacts.
+- [DONE] Multiple interface implementations, signature mismatches, unsupported embedded interfaces, shadowing, and ambiguous method targets abstain.
+- [DONE] Deterministic tests prove one-hop retrieval with located method/interface evidence.
+- [DONE] Per-file capabilities distinguish syntax symbols, static free-function calls, and type-aware relations.
+- [DONE] Documentation and full Go/frontend quality gates pass; work remained inside this repository.
+
+### Phase 3.4D verification note
+
+Deterministic index tests cover direct receiver calls, composite-literal locals, receiver-field selector chains, cross-package named signature types, and unique interface dispatch in both propagation directions. Negative tests cover multiple implementations, method signature mismatch, embedded interfaces, duplicate targets, and receiver shadowing. Propagated candidates remain one-hop `VERIFY` with distinct located evidence. `go test -count=1 ./...`, `go vet ./...`, both Go command builds, frontend type-check/production build, and all three serial Playwright scenarios pass. `git diff --check` is required as the final workspace gate. Simple-ERP and POC TA were outside the writable workspace and were not accessed or changed in this tranche.
+
+## 36. Phase 3.4B — source call evidence
+
+Implementation tranche: resolve direct Go function calls within the same package and explicit imported module packages from the allowed inventory. Reject local shadowing and ambiguous targets. Receiver/interface dispatch remains deferred until type resolution is implemented; SAME_PACKAGE alone is not impact evidence. Hybrid expands only from accepted exact-trace symbol candidates, one hop, with VERIFY and a separate discounted dependency score. BM25/configuration baselines stay isolated. Version the analysis identity to prevent collisions with older persisted reports. Existing-branch/move semantics and UI filters remain follow-up work; this tranche prioritizes a tested source-relation foundation.
+
+- [DONE] Static call extraction and deterministic one-hop retrieval: calls.go and propagation.go, tested with alias imports, shadowed symbols, duplicate targets and two-hop exclusion.
+- [DONE] Negative fixtures, regression tests, and methodology documentation. All Go packages and go vet pass; analysis identity now includes engine version, addressing persisted-report collisions beyond test isolation.
+- [DONE] Integration fixture recovers Persist through a resolved call despite absent query terms, repeat output is identical; frontend typecheck and three Playwright workflows pass.
+- [DONE via Phase 3.4D] Conservative receiver/interface resolution is implemented; advanced BPMN movement/branch patterns and dedicated UI filtering remain follow-up work.
+
+## 35. Phase 3.4A plan — composite BPMN change context
+
+Authorization: user instruction on 2026-09-30 to continue backend development that improves mapping of task, gateway, and flow changes inside one BPMN process.
+
+### Objective and boundary
+
+Preserve the auditable atomic taxonomy while adding deterministic context for common multi-edit operations. Composite recognition explains how related node and flow edits form an insertion, removal with rewiring, or gateway branch addition. It does not claim behavioral equivalence, execute BPMN, or replace evidence-based candidate retrieval.
+
+### Scope
+
+- enrich BPMN elements with process, parent subprocess, boundary attachment, gateway direction, default flow, and event-definition metadata;
+- keep nested subprocess nodes in explicit scope rather than treating every node as context-free;
+- attach optional, backward-compatible change context containing pattern, predecessor, successor, and related flow IDs;
+- recognize `INSERT_TASK`, `REMOVE_TASK_WITH_REWIRE`, and `ADD_GATEWAY_BRANCH` from graph topology;
+- make hybrid and BM25 queries change-aware and include bounded neighbor context;
+- add independent synthetic BPMN fixture pairs for all three patterns;
+- render composite context in canonical Markdown and the web report without duplicating inference logic.
+
+### Explicit non-goals
+
+- no execution semantics, token simulation, automatic code changes, LLM, database, or framework-specific rules;
+- no accuracy-improvement claim before hidden ground-truth evaluation;
+- no flattening of several atomic changes into one destructive replacement of the existing taxonomy;
+- no changes to Simple-ERP or POC TA.
+
+### Acceptance criteria
+
+- [DONE] Parser preserves process and nested subprocess context plus boundary/event/gateway attributes.
+- [DONE] Three composite patterns are deterministic and covered by BPMN fixture tests.
+- [DONE] Retrieval queries use pattern and neighboring element context with regression tests.
+- [DONE] JSON, Markdown, and web UI expose optional context while old reports remain readable.
+- [DONE] Formatting, Go tests/vet/build, frontend type-check/build/E2E, deterministic output, and diff checks pass.
+
+### Phase 3.4A verification note
+
+The parser test covers process ID, parent subprocess, boundary attachment, timer event definition, gateway direction, and default flow. Three independent BPMN fixture pairs produce `INSERT_TASK`, `REMOVE_TASK_WITH_REWIRE`, and `ADD_GATEWAY_BRANCH` while retaining their atomic task/gateway/sequence-flow changes. Two complete CLI runs per scenario produced byte-identical canonical JSON: insert `AB90C536385E987AAE52DE321F3EE2F6A9E48898BA7B24515321C5D9E6EDFF7B`, removal `4572C868A92D1F46120B4BCCFFEA352FF29B3F0AEFC5C1B4C48326896C968CC9`, and branch `E6AB24959A993EE9ED1B0ACE7F6C0A7C5387D5A3669F09B8D79941EF5C48009F`. Contextual retrieval has a regression proving predecessor/successor terms can retrieve a source symbol even when the inserted task label is absent. Structural fallback now refuses cross-process matches.
+
+All Go tests, vet, command builds, frontend type-check, optimized Next.js build, `git diff --check`, and three serial Playwright flows pass. Playwright storage moved from persistent `.data/playwright` to its cleaned `test-results` tree after schema evolution correctly triggered the report store's overwrite protection; no production storage semantics were weakened. The third browser test uploads the insertion fixtures and verifies the rendered `INSERT TASK` context end to end.
+
+## 40. Phase 3.6 — evaluation dashboard
+
+Authorized continuation: upload two annotations after inference, reconcile in Go, explicitly adjudicate conflicts in the browser, and evaluate stored predictions through a separate bounded JSON endpoint. Evaluation requires full change coverage, unique methods and identical input fingerprints. Missing reviewer cases cannot be silently treated as negative cases. Predictions stay immutable; review/evaluation results are downloadable without server persistence. File-level metrics retain existing evaluator semantics; FP/(TP+FP) will be labeled false discovery proportion, not statistical FPR. Legacy annotations have no snapshot binding, so the reviewer must confirm applicability to the selected snapshot.
+
+- [DONE] Separate reconciliation/evaluation endpoints and strict validation.
+- [DONE] Conflict decisions, metrics table and JSON/Markdown downloads in modular dashboard.
+- [DONE] Backend negative tests and browser workflow proof, documentation and quality gates.
+
+Verification: Go tests and vet pass across all packages; TypeScript and production build pass; all six serial Playwright workflows pass. New E2E uploads two synthetic annotations for three stored methods, detects a conflict, verifies evaluation is disabled until adjudication, checks metrics and downloaded provenance, and invalidates results on decision changes. Backend tests cover malformed/oversized/unknown JSON, duplicate reviewer IDs, unresolved/missing/duplicate decisions, empty coverage, fingerprint mismatch, duplicate methods, deterministic repeat results, unsafe expected paths, and immutable prediction storage. The rendered metric table was visually inspected from a real browser screenshot. No dependencies, database, external services, or changes to study repositories were introduced. Changes remain uncommitted.
+
+Limitations: annotation v1 lacks cryptographic snapshot provenance and requires user confirmation; reviewer independence is a research procedure. Existing file-level metric semantics remain unchanged, including optional metadata handling and empty-case averaging. No latency, statistical FPR, universal accuracy, or cross-system generalization claim is made. The dashboard evaluates already-produced reports; inference never receives annotations.
+
+## 41. Phase 3.7 — blind reviewer pack and snapshot provenance
+
+Authorization: user instruction on 2026-10-01 to continue autonomous development toward a robust, thesis-ready mapping workflow.
+
+Problem: browser-local reviewer export is useful for exploratory review, but displaying ranked candidates can anchor reviewers. Version-1 annotations also do not bind themselves to an immutable analysis snapshot. This tranche adds a separate coordinator workflow; it does not change inference, scoring, or fabricate ground truth.
+
+Scope and decisions:
+
+- add a pure `reviewpack` use case that validates one snapshot across canonical reports, rejects duplicate methods and mismatched repository/fingerprint/change sets, and derives deterministic case order;
+- emit two version-1 annotation templates containing BPMN change cases and a deliberately invalid `REVIEW_REQUIRED` sentinel; reviewers replace it with findings or remove it for an explicit negative case, so untouched templates fail closed;
+- emit a blind Markdown guide containing BPMN old/new/context information but no candidate, score, confidence, evidence, analysis ID, or method identity;
+- emit a coordinator-only manifest binding repository revision, input fingerprint, report SHA-256, analysis IDs, methods, case digest, and deterministic pack ID;
+- add `prepare-review` CLI with repeatable `--report`, explicit reviewer IDs, bounded regular-file reads, and refusal to overwrite an existing pack artifact;
+- allow `reconcile --manifest` to validate coordinator metadata, exact reviewer case coverage, and the fail-closed sentinel before embedding pack ID/fingerprint/case digest in reconciliation output;
+- document that reviewer identity, independence, implementation inspection, and final adjudication remain human research responsibilities.
+
+Acceptance criteria:
+
+- [DONE] Blind artifacts contain no prediction-derived candidates or ranking signals.
+- [DONE] Snapshot/method/change mismatches, duplicate methods/analysis IDs/cases, empty change sets, and untouched templates fail closed.
+- [DONE] Identical inputs produce byte-identical JSON/Markdown and pack ID regardless of report argument order.
+- [DONE] CLI integration, architecture boundary, unit tests, Go formatting/test/vet/build, and diff checks pass.
+- [DONE] Documentation explains the coordinator-manifest boundary and remaining human steps without making accuracy claims.
+- [DONE] Manifest-bound reconciliation retains snapshot provenance and rejects tampered metadata, incomplete cases, or untouched sentinels; legacy reconciliation remains compatible.
+
+### Phase 3.7 verification note
+
+`prepare-review` accepts one to sixteen bounded, regular, non-symlink canonical report files. The pure use case sorts reports by method, verifies a shared input fingerprint/repository/change set, hashes report bytes and normalized cases, and emits deterministic reviewer templates, a blind guide, and a coordinator-only manifest into a new directory via staging and atomic rename. Tests prove report-argument-order invariance, reject duplicate/mismatched/empty inputs, verify that candidate paths and confidence do not leak into reviewer artifacts, reject untouched sentinel templates, validate manifest integrity and exact completed-case coverage, embed snapshot provenance in manifest-bound reconciliation, and refuse pack overwrite. `go test -count=1 ./...`, `go vet ./...`, both command builds, and `git diff --check` pass. The Go tool emitted non-fatal stat-cache access warnings for the user module cache while using the repository-local build cache; all commands exited successfully. No frontend file, study repository, network service, database, or inference/scoring behavior changed.
+
+Remaining research boundary: version-1 annotation files do not independently embed the pack ID; the binding is enforced when the coordinator supplies the manifest to reconciliation. Independent reviewer identity, blind distribution, implementation inspection, annotation completion, adjudication, and any real accuracy claim remain human-controlled study steps.
+
+## 42. Phase 3.8 — web blind-review pack and robustness automation
+
+Authorization: user instruction on 2026-10-01 to continue autonomous development.
+
+Scope:
+
+- expose the existing pure `reviewpack` use case through a bounded post-inference API that loads immutable stored reports only;
+- add a restrained web panel that requests a same-snapshot pack and downloads the manifest, blind guide, and two fail-closed reviewer templates separately;
+- never send reviewer findings or ground truth into analysis, retrieval, or scoring;
+- add API and browser tests proving method/fingerprint validation and absence of candidates/scores from blind artifacts;
+- extend deterministic robustness coverage and batch experiment orchestration only after the web boundary is verified.
+
+Acceptance criteria:
+
+- [DONE] Web-generated pack uses the same Go domain use case as the CLI and contains snapshot provenance.
+- [DONE] Invalid report IDs, duplicate methods, mismatched snapshots, malformed JSON, and identical reviewer IDs fail closed.
+- [DONE] Browser downloads contain sentinels and no candidate, confidence, evidence, ranking, or score data.
+- [DONE] Go, TypeScript, production build, Playwright, and diff gates pass.
+
+### Phase 3.8 verification note
+
+The new post-inference endpoint accepts only immutable analysis IDs, a shared fingerprint, and two distinct reviewer identifiers. It reloads canonical reports, computes their byte hashes, and delegates to `reviewpack.Build`; no candidate-building logic exists in TypeScript. API tests prove deterministic responses, snapshot/method/reviewer validation, sentinel presence, and absence of candidate paths/confidence. The browser test runs all three methods, creates a pack, verifies the response has no `impacts` or `confidence`, downloads Reviewer A JSON, and validates every fail-closed sentinel. Visual inspection of `.data/ui-blind-review.png` confirms the restrained panel and role-separated downloads render coherently in the completed report workspace.
+
+The existing frozen `benchmark` runner already supplies batch scenario × method execution, repetition checks, input hashes, and post-inference ground-truth parsing. A second runner was deliberately not added. Existing synthetic diff/index/retrieval tests already cover add/remove/modify task, actor, gateway condition, sequence flow, data/state/outcome, three composite topology patterns, ambiguous matching, deterministic ranking, and conservative static relations. This tranche adds web-boundary robustness rather than duplicating those suites.
+
+## 43. Phase 3.9 — topology robustness, demo scenarios, and CSV export
+
+Authorization: user instruction on 2026-10-01 to continue all remaining autonomous development items.
+
+- [DONE] Recognize `MOVE_TASK` conservatively from stable task IDs whose predecessor/successor sets change, while retaining atomic `MODIFY_SEQUENCE_FLOW` changes.
+- [DONE] Recognize `REMOVE_GATEWAY_BRANCH` only for a removed branching gateway with at least one preserved neighboring element.
+- [DONE] Add negative controls proving unchanged topology and condition-only flow edits are not labeled as task moves.
+- [DONE] Add focused web presets for insert task, add/remove gateway branch, move task, and ambiguous matching.
+- [DONE] Export deterministic spreadsheet-ready benchmark CSV without volatile timing.
+- [DONE] Pass Go, frontend, browser, build, and diff quality gates.
+
+### Phase 3.9 verification note
+
+Two new composite contexts preserve the canonical taxonomy rather than inventing replacement change types. `MOVE_TASK` annotates sequence-flow edits only when a stable same-scope task's predecessor or successor ID set changes. `REMOVE_GATEWAY_BRANCH` requires a removed branching gateway and a preserved neighboring element. Fixture tests cover both patterns; negative controls prove identical graphs emit nothing and a condition-only sequence-flow edit remains context-free. The web selector provides comprehensive, insertion, branch addition/removal, move, and deliberately ambiguous scenarios. The ambiguous preset initially sat on a floating-point similarity boundary and correctly produced ordinary add/remove changes; adding equal actor evidence made the ambiguity explicit without weakening the matcher threshold.
+
+Benchmark output now includes deterministic `benchmark-report.csv` with scenario and aggregate rows, four-decimal metrics, CSV escaping, reproducibility metadata, and the accurately named `false_discovery_proportion`; volatile timing remains separate. `go test -count=1 ./...`, `go vet ./...`, TypeScript typecheck, production build, and the final seven-test Playwright suite pass. The targeted corrected-control rerun also passed. `git diff --check` remains the final workspace gate.
+
+## 44. Phase 4.0 — persisted analysis history
+
+Authorization: user redirected final work toward application development rather than presentation guidance on 2026-10-01.
+
+- [DONE] Add an inward report-store listing contract with deterministic summaries and no absolute paths.
+- [DONE] Harden stored-report reads against symlink/non-regular/oversized artifacts.
+- [DONE] Expose bounded `GET /api/v1/analyses` without invoking inference.
+- [DONE] Add a restrained web history panel that reloads immutable reports after browser refresh.
+- [DONE] Keep history timestamp-free and deterministically ordered because canonical reports contain no trustworthy creation time.
+- [DONE] Correct benchmark Markdown terminology from statistical FP rate to false discovery proportion.
+
+### Phase 4.0 verification note
+
+`reportstore.Store` now lists typed summaries while the filesystem adapter accepts at most 1,000 canonical analysis directories and reads only regular, non-symlink JSON artifacts up to 64 MiB. Summaries contain repository metadata, method, fingerprint, and counts but no local path. Ordering is by deterministic analysis ID rather than filesystem time. `GET /api/v1/analyses` is read-only and never invokes the analyzer. The web history refreshes after a successful analysis and reopens an immutable report after a full browser reload. Browser testing exposed the existing sticky form covering the new lower panel; removing sticky positioning fixed the real pointer-interception defect. The targeted history test and final seven-test browser suite pass, together with all Go tests/vet/builds, TypeScript typecheck, Next production build, and `git diff --check`.
+
+## 39. Phase 3.5 — web method comparison and reviewer artifact
+
+Authorization: user instruction on 2026-09-30 to continue with the evaluation and method-comparison tranche.
+
+### Scope and decisions
+
+- add an opt-in comparison run using byte-identical repository/BPMN/top-k metadata for BM25 and Hybrid, plus Configuration-Driven only when a frozen mapping path is supplied;
+- execute method requests sequentially to bound local CPU/memory and verify that all returned reports share one `input_fingerprint`;
+- present retrieval counts, unresolved counts, per-change ranked candidates, and overlap against Hybrid without calling those values accuracy metrics;
+- keep canonical reports method-specific and downloadable through their existing immutable analysis IDs;
+- add a browser-local reviewer form that can select predicted candidates, change expected actions, and add missing expected impacts manually;
+- export version-1 reviewer annotation JSON compatible with the existing reconciliation command;
+- never send reviewer choices or ground truth to the analysis API, report store, candidate retrieval, scoring, or comparison requests;
+- retain single-analysis mode and the current presentation styling.
+
+### Explicit non-goals
+
+- no accuracy/recall claim before independent annotation and reconciliation;
+- no automatic ground-truth derivation from ranked candidates;
+- no database, reviewer accounts, authentication, adjudication UI, or server-side annotation persistence;
+- no Configuration-Driven comparison without an explicitly supplied frozen mapping file.
+
+### Acceptance criteria
+
+- [DONE] The same web input can produce BM25 and Hybrid reports, optionally Configuration-Driven, with a verified shared input fingerprint.
+- [DONE] The comparison UI clearly separates retrieval differences from accuracy metrics.
+- [DONE] Reviewer annotation export supports selected candidates, manual missing impacts, expected actions, and empty/negative cases.
+- [DONE] Annotation data remains browser-local and matches the existing reconciliation schema.
+- [DONE] Existing single analysis and all previous browser workflows remain functional.
+- [DONE] Type-check, production build, Playwright, Go tests/vet, and diff checks pass.
+
+### Phase 3.5 verification note
+
+The synthetic comparison runs all three methods sequentially with one verified fingerprint and distinct immutable reports; its frozen neutral configuration is a method fixture, not ground truth. Browser tests select a method card and verify the corresponding report. Reviewer E2E selects a predicted file, adds a missing expected file manually, downloads JSON, and verifies the version, reviewer identity, and expected impact structure. A real browser screenshot confirms the restrained comparison UI remains usable within the existing layout. `go test -count=1 ./...`, `go vet ./...`, both Go command builds, frontend type-check/production build, all five serial Playwright workflows, and `git diff --check` pass.
+
+## 45. Proposed Phase 4.1 - semantic retrieval research baseline
+
+Status: IN PROGRESS for an isolated offline prototype authorized by the user on
+2026-10-10. Inclusion in the final thesis comparison remains advisor-gated.
+
+- [DONE] Record recent BPMN semantics, BPMN-to-source traceability, and semantic
+  requirement-to-code literature in `docs/SEMANTIC_RETRIEVAL.md`.
+- [DONE] Define the method boundary, reproducibility metadata, evidence
+  requirement, and distinction from RAG/LLM verification.
+- [TODO] Obtain advisor approval for a fourth independent experimental method.
+- [TODO] Freeze a synonym/no-stable-ID benchmark and independently reviewed
+  ground truth.
+- [DONE] Select and record the prototype runtime: Python 3.12,
+  sentence-transformers 5.2.3, and cached `all-MiniLM-L6-v2`. The canonical
+  report records provider/model; environment hashing and cross-machine numeric
+  reproducibility remain experiment work.
+- [DONE] Implement Semantic Retrieval as an isolated offline mapping adapter,
+  CLI/API/web method, and comparison column. It uses bounded embedding input,
+  deterministic ranking, `VERIFY` actions, explicit errors, and no silent
+  fallback. It remains independently selectable after fusion was added.
+- [DONE] Verify unit tests and two byte-identical real offline CLI runs; the
+  smoke excluded ground-truth/checkpoint paths and proves reproducible
+  functionality on the current machine only.
+- [DONE] Remove Configuration-Driven from the primary web workflow and target TA
+  method set; retain the existing adapter temporarily only for internal backward
+  compatibility with older artifacts.
+- [DONE] Implement RRF fusion and enable comparison of BM25-only, Semantic-only, BM25 +
+  Semantic Fusion, and Graph-Aware Hybrid on byte-identical inputs without a
+  premature generalization claim.
+
+Implementation evidence (2026-10-10): RRF unit tests cover agreement, stable
+ties, evidence union, abstention, action safety, and graph-evidence precedence.
+Real offline CLI smoke runs produced evidence-bearing `fusion` and `hybrid`
+reports for all 12 synthetic changes. `go test -count=1 ./...`, `go vet ./...`,
+TypeScript type-check, Next.js production build, `git diff --check`, and all
+seven serial Playwright workflows pass. These results prove implementation
+mechanics only; comparative accuracy remains blocked on hidden ground truth.

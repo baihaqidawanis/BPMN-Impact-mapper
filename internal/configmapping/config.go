@@ -3,6 +3,7 @@
 package configmapping
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -97,7 +98,7 @@ func (config Config) Validate() error {
 
 func (Mapper) Method() domain.AnalysisMethod { return domain.MethodConfiguration }
 
-func (mapper Mapper) Attach(changes []domain.Change, artifacts []domain.Artifact, _ mapping.Options) ([]domain.Change, []domain.Warning) {
+func (mapper Mapper) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, _ mapping.Options) ([]domain.Change, []domain.Warning, error) {
 	byFile := map[string][]domain.Artifact{}
 	for _, artifact := range artifacts {
 		byFile[artifact.File] = append(byFile[artifact.File], artifact)
@@ -143,7 +144,7 @@ func (mapper Mapper) Attach(changes []domain.Change, artifacts []domain.Artifact
 		}
 	}
 	sort.Slice(warnings, func(i, j int) bool { return warnings[i].Message < warnings[j].Message })
-	return changes, warnings
+	return changes, warnings, nil
 }
 
 func matches(rule Rule, change domain.Change) bool {

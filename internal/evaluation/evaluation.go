@@ -97,11 +97,16 @@ func (truth GroundTruth) Validate() error {
 		seenCases[key] = true
 		seenFiles := map[string]bool{}
 		for expectedIndex, expected := range item.Expected {
+			switch expected.Action {
+			case domain.ActionAdd, domain.ActionModify, domain.ActionRemove, domain.ActionVerify, domain.ActionNoAction, domain.ActionUnresolved:
+			default:
+				return errors.New("unsupported expected action")
+			}
 			if expected.File == "" || expected.Action == "" {
 				return fmt.Errorf("ground-truth case %d expected impact %d requires file and action", index, expectedIndex)
 			}
 			clean := path.Clean(expected.File)
-			if clean != expected.File || path.IsAbs(expected.File) || strings.Contains(expected.File, "\\") || clean == ".." || strings.HasPrefix(clean, "../") {
+			if clean == "." || strings.ContainsAny(expected.File, ":\x00\r\n") || clean != expected.File || path.IsAbs(expected.File) || strings.Contains(expected.File, "\\") || clean == ".." || strings.HasPrefix(clean, "../") {
 				return fmt.Errorf("ground-truth case %d expected impact %d requires a clean relative slash path", index, expectedIndex)
 			}
 			if seenFiles[expected.File] {

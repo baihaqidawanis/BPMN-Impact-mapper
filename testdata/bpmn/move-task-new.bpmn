@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="DefsMoveNew">
+  <process id="P-MOVE" isExecutable="false">
+    <startEvent id="START" name="Start"/><task id="TASK-A" name="Prepare"/><task id="TASK-B" name="Review"/><endEvent id="END" name="Done"/>
+    <sequenceFlow id="F1" sourceRef="START" targetRef="TASK-B"/><sequenceFlow id="F2" sourceRef="TASK-B" targetRef="TASK-A"/><sequenceFlow id="F3" sourceRef="TASK-A" targetRef="END"/>
+  </process>
+</definitions>

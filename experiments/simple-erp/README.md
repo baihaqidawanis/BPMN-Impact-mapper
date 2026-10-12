@@ -10,7 +10,7 @@ This directory contains **case-study experiment inputs**, not product rules and 
 - Reviewer data: must be authored independently after inference. Predictions are not reviewer labels.
 - Evaluation artifacts: generated BPMN and reports are written below ignored `outputs/pilots/` and must not be committed.
 
-The six specifications exercise label, gateway-condition, sequence-flow-label, actor-role, terminal-outcome, and removal/rewiring changes. They are controlled research scenarios, not claims about requested Simple-ERP features. Final metrics require two independent reviewers plus explicit adjudication of disagreements.
+The six specifications exercise label, gateway-condition, sequence-flow-label, actor-role, terminal-outcome, and removal/rewiring changes. `coverage/` adds focused `ADD_TASK` and `ADD_GATEWAY` specifications. They are controlled research scenarios, not claims about requested Simple-ERP features. Final metrics require two independent reviewers plus explicit adjudication of disagreements.
 
 Example generation:
 

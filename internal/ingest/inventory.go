@@ -101,12 +101,12 @@ func Build(ctx context.Context, root string, options Options) (Inventory, error)
 			return nil
 		}
 		if entry.IsDir() {
-			if excludedDirectories[name] || matchesAny(rel, options.Ignore) {
+			if excludedDirectories[name] || leakageDirectory(rel) || matchesAny(rel, options.Ignore) {
 				return filepath.SkipDir
 			}
 			return nil
 		}
-		if secretFile(name) || leakageFile(rel) || generatedFile(name) || matchesAny(rel, options.Ignore) {
+		if secretFile(name) || processModelFile(name) || leakageFile(rel) || generatedFile(name) || matchesAny(rel, options.Ignore) {
 			return nil
 		}
 		fileInfo, err := entry.Info()
@@ -171,19 +171,38 @@ func secretFile(name string) bool {
 		strings.Contains(name, "private_key") || strings.Contains(name, "private-key")
 }
 
+func processModelFile(name string) bool {
+	return strings.EqualFold(filepath.Ext(name), ".bpmn")
+}
+
 func leakageFile(relative string) bool {
 	lower := strings.ToLower(filepath.ToSlash(relative))
 	base := path.Base(lower)
-	if strings.Contains(lower, "/checkpoints/") || strings.Contains(lower, "/ground-truth/") || strings.Contains(lower, "/ground_truth/") {
+	if containsPathSegment(lower, "checkpoints") || containsPathSegment(lower, "ground-truth") || containsPathSegment(lower, "ground_truth") {
 		return true
 	}
-	blocked := []string{"process-mapping", "traceability-coverage", "release-candidate", "impact-report", "ground-truth", "ground_truth", "implementation-plan", "audit-report"}
+	// Documentation plan trees are method-development artifacts, not prediction
+	// evidence. Keep similarly named source packages (for example internal/plans)
+	// available to the index.
+	if strings.HasPrefix(lower, "docs/") && strings.Contains("/"+lower+"/", "/plans/") {
+		return true
+	}
+	blocked := []string{"process-mapping", "traceability-coverage", "release-candidate", "review-findings", "impact-report", "ground-truth", "ground_truth", "implementation-plan", "audit-report"}
 	for _, marker := range blocked {
 		if strings.Contains(base, marker) {
 			return true
 		}
 	}
 	return false
+}
+
+func leakageDirectory(relative string) bool {
+	lower := strings.ToLower(filepath.ToSlash(relative))
+	return containsPathSegment(lower, "checkpoints") || containsPathSegment(lower, "ground-truth") || containsPathSegment(lower, "ground_truth")
+}
+
+func containsPathSegment(relative, segment string) bool {
+	return strings.Contains("/"+strings.Trim(relative, "/")+"/", "/"+segment+"/")
 }
 
 func generatedFile(name string) bool {

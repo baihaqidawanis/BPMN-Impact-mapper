@@ -38,8 +38,16 @@ type Handler struct {
 func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
 	switch {
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/review-packs":
+		handler.prepareReviewPack(writer, request)
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/reviews/reconcile":
+		handler.reconcileReviews(writer, request)
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/evaluations":
+		handler.evaluateReports(writer, request)
 	case request.Method == http.MethodGet && request.URL.Path == "/api/v1/health":
 		writeJSON(writer, http.StatusOK, map[string]string{"status": "ok"})
+	case request.Method == http.MethodGet && request.URL.Path == "/api/v1/analyses":
+		handler.listAnalyses(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/analyses":
 		handler.createAnalysis(writer, request)
 	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/api/v1/analyses/"):
@@ -49,6 +57,21 @@ func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Reque
 	default:
 		http.NotFound(writer, request)
 	}
+}
+
+func (handler Handler) listAnalyses(writer http.ResponseWriter, request *http.Request) {
+	if handler.Store == nil {
+		handler.internalError(writer, errors.New("report store is not configured"))
+		return
+	}
+	values, err := handler.Store.List(request.Context())
+	if err != nil {
+		handler.internalError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, struct {
+		Analyses []domain.ReportSummary `json:"analyses"`
+	}{values})
 }
 
 func (handler Handler) createAnalysis(writer http.ResponseWriter, request *http.Request) {

@@ -1,0 +1,19 @@
+.panel { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); }
+.panel > summary { padding: 18px; cursor: pointer; font-size: 14px; font-weight: 650; }
+.panel > summary span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 400; }
+.body { display: grid; gap: 14px; padding: 0 18px 18px; font-size: 12px; }
+.body p { color: var(--muted); line-height: 1.6; margin: 8px 0; }
+.body label { display: grid; gap: 7px; }
+.body input, .body select, .body textarea { min-width: 0; width: 100%; padding: 9px; color: var(--ink); background: var(--canvas); border: 1px solid var(--line); border-radius: 7px; font: inherit; }
+.body button { justify-self: start; padding: 10px 14px; background: var(--canvas); color: var(--blue); border: 1px solid var(--line-strong); border-radius: 8px; cursor: pointer; font: inherit; }
+.body button:disabled { opacity: .45; cursor: default; }
+.body fieldset { min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.body pre { max-height: 200px; overflow: auto; font-size: 10px; }
+.body .confirm { display: flex; align-items: start; gap: 8px; line-height: 1.5; }
+.confirm input { width: auto; accent-color: var(--blue); }
+.uploads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tableWrap { overflow-x: auto; }
+.body table { width: 100%; border-collapse: collapse; }
+.body th, .body td { padding: 9px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.downloads { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+@media (max-width: 600px) { .uploads { grid-template-columns: 1fr; } }

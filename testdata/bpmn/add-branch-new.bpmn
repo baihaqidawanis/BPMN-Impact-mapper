@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="BRANCH-NEW">
+  <process id="PROCESS-BRANCH" isExecutable="false">
+    <startEvent id="START" name="Received"/>
+    <userTask id="TASK-A" name="Prepare request"/>
+    <exclusiveGateway id="GW-ROUTE" name="Requires review?" gatewayDirection="Diverging" default="FLOW-GW-B"/>
+    <serviceTask id="TASK-B" name="Register request"/>
+    <userTask id="TASK-REVIEW" name="Review request"/>
+    <endEvent id="END" name="Completed"/>
+    <sequenceFlow id="FLOW-START-A" sourceRef="START" targetRef="TASK-A"/>
+    <sequenceFlow id="FLOW-A-GW" sourceRef="TASK-A" targetRef="GW-ROUTE"/>
+    <sequenceFlow id="FLOW-GW-B" name="no" sourceRef="GW-ROUTE" targetRef="TASK-B"/>
+    <sequenceFlow id="FLOW-GW-REVIEW" name="yes" sourceRef="GW-ROUTE" targetRef="TASK-REVIEW"><conditionExpression>${requiresReview}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="FLOW-B-END" sourceRef="TASK-B" targetRef="END"/>
+    <sequenceFlow id="FLOW-REVIEW-END" sourceRef="TASK-REVIEW" targetRef="END"/>
+  </process>
+</definitions>

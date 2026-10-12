@@ -15,7 +15,7 @@ import (
 func TestRunWritesDeterministicEvaluationArtifacts(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")
 	prediction := t.TempDir()
-	request := app.Request{RepositoryPath: filepath.Join(root, "repository"), OldBPMNPath: filepath.Join(root, "bpmn", "old.bpmn"), NewBPMNPath: filepath.Join(root, "bpmn", "new.bpmn"), RepositoryName: "synthetic", Revision: "fixture-v2", Method: domain.MethodHybrid}
+	request := app.Request{RepositoryPath: filepath.Join(root, "repository"), OldBPMNPath: filepath.Join(root, "bpmn", "old.bpmn"), NewBPMNPath: filepath.Join(root, "bpmn", "new.bpmn"), RepositoryName: "synthetic", Revision: "fixture-v2", Method: domain.MethodBM25}
 	value, err := wiring.NewAnalyzer().Analyze(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)

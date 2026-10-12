@@ -1,6 +1,7 @@
 package benchmark_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -12,6 +13,18 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	impactreport "github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 )
+
+func TestCSVIsDeterministicAndSpreadsheetReady(t *testing.T) {
+	report := benchmark.Report{BenchmarkID: "bench", Results: []benchmark.ScenarioMethodResult{{ScenarioID: "case,one", Method: domain.MethodHybrid, Repetitions: 2, Reproducible: true}}, Aggregates: []benchmark.MethodAggregate{{Method: domain.MethodHybrid, Scenarios: 1}}}
+	first, err := benchmark.CSV(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _ := benchmark.CSV(report)
+	if !bytes.Equal(first, second) || !bytes.Contains(first, []byte(`"case,one"`)) || !bytes.Contains(first, []byte("false_discovery_proportion")) {
+		t.Fatalf("unexpected CSV: %s", first)
+	}
+}
 
 func TestManifestValidationEnforcesFairFrozenRuns(t *testing.T) {
 	hash := strings.Repeat("a", 64)

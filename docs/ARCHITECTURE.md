@@ -2,7 +2,7 @@
 
 ## Clean Architecture rule
 
-The dependency direction is transport/composition → application/use cases → ports → domain contracts. Concrete mapping adapters point inward to `mapping.Strategy`; `app.Analyzer` receives a `mapping.Resolver` and does not import BM25 or configuration adapters. `wiring` is the sole composition root that binds those adapters. `evaluation`, `benchmark`, `review`, and the case-agnostic `scenario` mutator are separate use cases and cannot import retrieval/configuration/filesystem adapters. A dependency-rule test parses imports and fails on boundary inversion.
+The dependency direction is transport/composition → application/use cases → ports → domain contracts. Concrete mapping adapters point inward to `mapping.Strategy`; `app.Analyzer` receives a `mapping.Resolver` and does not import BM25 or configuration adapters. `wiring` is the sole composition root that binds those adapters. `evaluation`, `benchmark`, `review`, `reviewpack`, and the case-agnostic `scenario` mutator are separate use cases and cannot import retrieval/configuration/filesystem adapters. A dependency-rule test parses imports and fails on boundary inversion.
 
 The target repository is passive data. No component imports, compiles, starts, or otherwise executes it.
 
@@ -11,14 +11,20 @@ The target repository is passive data. No component imports, compiles, starts, o
 1. `ingest.Build` canonicalizes the local root, applies exclusions and limits, skips symlinks/binary/secret/leakage files, and returns sorted relative paths with in-memory content.
 2. `bpmn.Parse` tokenizes bounded XML, rejects directives, extracts supported nodes, lanes, data state/requirements, and sequence flows, then builds incoming/outgoing adjacency maps.
 3. `diff.Compare` matches stable IDs first. A conservative unique structural fallback can match changed IDs; ties become `UNRESOLVED_MATCH`.
-4. `index.Build` dispatches `.go` files to `go/parser` and every other allowed text file to the generic adapter. Adapter failures fall back to text with a warning.
-5. The selected `mapping.Strategy` runs configuration-driven, BM25-only, or hybrid retrieval and emits only candidates with evidence.
+4. The indexing registry dispatches `.go` files to `go/parser` and every other allowed text file to the generic adapter. Relation extractors run only over compatible indexed files; adapter failures fall back to text with a warning.
+5. The selected `mapping.Strategy` runs configuration-driven compatibility, BM25-only, offline Semantic, BM25 + Semantic RRF fusion, or Graph-Aware Hybrid retrieval and emits only candidates with evidence. The fusion adapter composes strategies through the application port instead of coupling their implementations.
 6. `app.Analyzer` constructs a deterministic report and warnings. `report.JSON` is authoritative; `report.Markdown` is a pure view of the same object.
 7. Separately, `experiment.Run` decodes a completed report and hidden ground truth, then invokes pure `evaluation.Evaluate`; there is no reverse edge into inference.
 8. `benchmark.Runner` coordinates injected analyzer, file, and prediction-renderer ports. The experiment adapter supplies local filesystem behavior; hidden ground truth is read only after a completed prediction.
 9. `review.Reconcile` compares independent annotations in memory and emits an agreed subset plus unresolved conflicts.
 10. Before inference, optional experiment tooling applies a hash-locked `scenario.Spec` to BPMN bytes, validates the result with `bpmn.Parse`, and writes a new file through the outward `experiment` adapter. It never edits the baseline or target source repository.
 11. The web adapter streams bounded BPMN uploads into a request-scoped temporary directory, invokes the same analyzer, persists the resulting canonical report through the `reportstore.Store` port, and removes uploads before returning.
+
+## Source relation model
+
+`domain.SourceRelation` is adapter-neutral and links two indexed artifact IDs with a relation kind plus repository-relative call-site evidence. The Go extractor emits `CALLS` for free functions, `CALLS_METHOD` for a statically known receiver, and `INTERFACE_DISPATCH` only when one indexed named type uniquely satisfies the supported interface method set. Receiver fields can be followed through selector chains such as `handler.service.Execute()`.
+
+The resolver compares complete supported method names and normalized parameter/result type shapes. It abstains on ambiguous implementations, embedded interfaces, generic or promoted dispatch, unresolved external implementations, unsupported type expressions, and shadowed receiver names. Retrieval expands only one edge from an exact-trace seed, discounts the dependency score, and always labels the propagated candidate `VERIFY`. Thus a static edge is useful retrieval context, not runtime or causality proof.
 
 ## Graph model
 
@@ -42,9 +48,11 @@ The parser recognizes task variants, call/subprocess activities, common events, 
 
 - Enterprise/domain: `domain`.
 - Application ports/use cases: `mapping`, `app`, `evaluation`, `reportstore`.
-- Experiment/review use cases: `benchmark`, `review`, `scenario`.
+- Experiment/review use cases: `benchmark`, `review`, `reviewpack`, `scenario`.
 - Analysis/domain services: `bpmn`, `diff`, `index`.
 - Outward adapters: `retrieval`, `configmapping`, `ingest`, `report`, `filestore`, `experiment`, `api`, CLI, Next.js.
+- Optional outward embedding adapter: `semantic`; it invokes a trusted embedded
+  Python helper and a locally cached model, never target-repository code.
 - Composition: `wiring` only.
 
 ## Local web application
@@ -53,4 +61,12 @@ The parser recognizes task variants, call/subprocess activities, common events, 
 
 `web/` is a separate Next.js presentation adapter. During development, a same-origin rewrite proxies `/backend/*` to the Go server, avoiding browser CORS coupling. TypeScript types mirror the canonical report contract but contain no parser, diff, retrieval, scoring, or action-classification logic.
 
+Method comparison is orchestration in the presentation adapter: it submits the same bounded form sequentially with different method selectors and rejects reports whose method-independent input fingerprints differ. Each response remains an ordinary immutable canonical report. The comparison computes descriptive set overlap only; research metrics stay in the post-inference evaluation use case.
+
+Reviewer annotation creation remains browser-local export. The separate EvaluationDashboard uploads completed annotations to bounded evaluation routes. `review.Adjudicate` preserves agreements and validates explicit conflict resolutions; `evaluation.ValidateCoverage` enforces complete change coverage. The HTTP adapter loads immutable stored predictions and invokes the existing pure evaluator. It never invokes the analyzer or saves reviewer data. The returned bundle contains metrics, adjudication provenance and Markdown derived from the same Go evaluation objects.
+
+The blind-review panel calls a separate post-inference `/api/v1/review-packs` route with immutable analysis IDs, the shared fingerprint, and reviewer identifiers only. The adapter reloads stored canonical reports and invokes the same pure `reviewpack.Build` use case as the CLI. The browser receives four separately downloadable artifacts; no reviewer finding or ground truth crosses this route. Batch method execution remains the existing frozen `benchmark` use case, which parses ground truth only after each prediction completes; a second batch engine would weaken rather than improve the method boundary.
+
 Completed reports are immutable deterministic artifacts stored below a configurable local directory. This MVP intentionally uses no database: single-user local presentation does not need concurrent mutation, query indexes, identity, or transactional workflows. The `reportstore.Store` port permits a later PostgreSQL adapter without changing analysis or HTTP contracts.
+
+The report-store port also exposes deterministic summaries for history. Filesystem listing accepts only canonical analysis-ID directories and bounded regular, non-symlink JSON files, then sorts by analysis ID. The API and web history panel can reopen immutable reports without rerunning analysis. No creation timestamp is invented because canonical reports do not contain a trustworthy one.

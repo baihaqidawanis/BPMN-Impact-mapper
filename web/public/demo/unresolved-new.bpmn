@@ -1,0 +1,1 @@
+<?xml version="1.0"?><definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"><process id="P"><laneSet id="LS"><lane id="L" name="Manager"><flowNodeRef>NEW-A</flowNodeRef><flowNodeRef>NEW-B</flowNodeRef></lane></laneSet><userTask id="NEW-A" name="Review"/><userTask id="NEW-B" name="Review"/></process></definitions>

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
@@ -62,7 +63,25 @@ func (store ReportStore) Get(ctx context.Context, analysisID string) (domain.Rep
 	if err != nil {
 		return domain.Report{}, reportstore.ErrNotFound
 	}
-	data, err := os.ReadFile(filepath.Join(directory, "impact-report.json"))
+	info, err := os.Lstat(directory)
+	if errors.Is(err, os.ErrNotExist) || err == nil && (info.Mode()&os.ModeSymlink != 0 || !info.IsDir()) {
+		return domain.Report{}, reportstore.ErrNotFound
+	}
+	if err != nil {
+		return domain.Report{}, fmt.Errorf("inspect analysis directory: %w", err)
+	}
+	reportPath := filepath.Join(directory, "impact-report.json")
+	fileInfo, err := os.Lstat(reportPath)
+	if errors.Is(err, os.ErrNotExist) || err == nil && (fileInfo.Mode()&os.ModeSymlink != 0 || !fileInfo.Mode().IsRegular()) {
+		return domain.Report{}, reportstore.ErrNotFound
+	}
+	if err != nil {
+		return domain.Report{}, fmt.Errorf("inspect analysis report: %w", err)
+	}
+	if fileInfo.Size() > 64<<20 {
+		return domain.Report{}, errors.New("stored analysis report exceeds size limit")
+	}
+	data, err := os.ReadFile(reportPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return domain.Report{}, reportstore.ErrNotFound
 	}
@@ -77,6 +96,52 @@ func (store ReportStore) Get(ctx context.Context, analysisID string) (domain.Rep
 		return domain.Report{}, errors.New("stored analysis ID mismatch")
 	}
 	return value, nil
+}
+
+func (store ReportStore) List(ctx context.Context) ([]domain.ReportSummary, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	root, err := filepath.Abs(store.Root)
+	if err != nil || store.Root == "" {
+		return nil, errors.New("report store root is required")
+	}
+	entries, err := os.ReadDir(root)
+	if errors.Is(err, os.ErrNotExist) {
+		return []domain.ReportSummary{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) > 1000 {
+		return nil, errors.New("report store entry limit exceeded")
+	}
+	result := make([]domain.ReportSummary, 0, len(entries))
+	for _, entry := range entries {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		if !entry.IsDir() || !validAnalysisID.MatchString(entry.Name()) {
+			continue
+		}
+		value, err := store.Get(ctx, entry.Name())
+		if errors.Is(err, reportstore.ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		summary := domain.ReportSummary{AnalysisID: value.AnalysisID, InputFingerprint: value.InputFingerprint, Method: value.Method, Repository: value.Repository, Changes: len(value.Changes), Warnings: len(value.Warnings)}
+		for _, change := range value.Changes {
+			summary.Candidates += len(change.Impacts)
+			if len(change.Impacts) == 0 || len(change.UnresolvedImpact) > 0 {
+				summary.Unresolved++
+			}
+		}
+		result = append(result, summary)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].AnalysisID < result[j].AnalysisID })
+	return result, nil
 }
 
 func (store ReportStore) analysisDirectory(analysisID string) (string, error) {

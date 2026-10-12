@@ -21,7 +21,7 @@ func TestAnalyzeEndToEndIsDeterministicAndPrivate(t *testing.T) {
 		RepositoryPath: filepath.Join(root, "repository"),
 		OldBPMNPath:    filepath.Join(root, "bpmn", "old.bpmn"),
 		NewBPMNPath:    filepath.Join(root, "bpmn", "new.bpmn"),
-		RepositoryName: "synthetic-repository", Revision: "fixture-v1",
+		RepositoryName: "synthetic-repository", Revision: "fixture-v1", Method: domain.MethodBM25,
 	}
 	first, err := wiring.NewAnalyzer().Analyze(context.Background(), request)
 	if err != nil {
@@ -134,5 +134,46 @@ func TestAnalyzeRejectsInvalidMethodConfigurationCombination(t *testing.T) {
 	request.Method = "unknown"
 	if _, err := wiring.NewAnalyzer().Analyze(context.Background(), request); err == nil {
 		t.Fatal("expected unsupported method error")
+	}
+}
+
+func TestAnalyzeExcludesRepositoryCopyOfUploadedBPMN(t *testing.T) {
+	fixtureRoot := filepath.Join("..", "..", "testdata")
+	oldData, err := os.ReadFile(filepath.Join(fixtureRoot, "bpmn", "old.bpmn"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(repository, "docs"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repository, "docs", "baseline.xml"), oldData, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repository, "source.go"), []byte("package sample\n// TASK-VALIDATE validates requests\nfunc ValidateRequest() {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	reportValue, err := wiring.NewAnalyzer().Analyze(context.Background(), app.Request{
+		RepositoryPath: repository,
+		OldBPMNPath:    filepath.Join(fixtureRoot, "bpmn", "old.bpmn"),
+		NewBPMNPath:    filepath.Join(fixtureRoot, "bpmn", "new.bpmn"),
+		Method:         domain.MethodBM25,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, change := range reportValue.Changes {
+		for _, impact := range change.Impacts {
+			if impact.File == "docs/baseline.xml" {
+				t.Fatalf("uploaded BPMN copy leaked into candidates: %#v", impact)
+			}
+		}
+	}
+	foundWarning := false
+	for _, warning := range reportValue.Warnings {
+		foundWarning = foundWarning || strings.Contains(warning.Message, "skipped method input copy: docs/baseline.xml")
+	}
+	if !foundWarning {
+		t.Fatalf("missing input-copy exclusion warning: %#v", reportValue.Warnings)
 	}
 }

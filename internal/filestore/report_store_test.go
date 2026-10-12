@@ -34,11 +34,32 @@ func TestReportStoreRoundTrip(t *testing.T) {
 	if loaded.AnalysisID != value.AnalysisID || loaded.Method != value.Method {
 		t.Fatalf("loaded=%#v", loaded)
 	}
+	listed, err := store.List(context.Background())
+	if err != nil || len(listed) != 1 || listed[0].AnalysisID != value.AnalysisID {
+		t.Fatalf("listed=%#v err=%v", listed, err)
+	}
 	for _, name := range []string{"impact-report.json", "impact-report.md"} {
 		info, err := os.Stat(filepath.Join(store.Root, value.AnalysisID, name))
 		if err != nil || info.Size() == 0 {
 			t.Fatalf("artifact %s missing: %v", name, err)
 		}
+	}
+}
+
+func TestReportStoreListIsDeterministicAndSkipsUnsafeEntries(t *testing.T) {
+	store := ReportStore{Root: t.TempDir()}
+	for _, id := range []string{"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"} {
+		value := domain.Report{AnalysisID: id, InputFingerprint: "fingerprint", Method: domain.MethodHybrid, Repository: domain.Repository{Name: "fixture", Revision: "one"}, Changes: []domain.Change{{Impacts: []domain.Impact{{File: "file.go"}}}}, Warnings: []domain.Warning{}}
+		if err := store.Save(context.Background(), value); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(store.Root, "not-an-analysis"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	values, err := store.List(context.Background())
+	if err != nil || len(values) != 2 || values[0].AnalysisID[0] != 'a' || values[0].Candidates != 1 {
+		t.Fatalf("values=%#v err=%v", values, err)
 	}
 }
 

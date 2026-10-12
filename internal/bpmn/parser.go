@@ -45,9 +45,11 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 		Incoming: map[string][]string{}, Outgoing: map[string][]string{}, Warnings: []string{},
 	}
 	lanes := map[string]string{}
-	var currentElement *domain.Element
 	var currentFlow *domain.Flow
 	var currentLane string
+	var currentProcess string
+	var elementStack []*domain.Element
+	var subprocessStack []string
 	depth, elementCount, processCount := 0, 0, 0
 	seenDefinitions := false
 
@@ -77,6 +79,7 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 				seenDefinitions = true
 			case "process":
 				processCount++
+				currentProcess = attr(value, "id")
 			case "lane":
 				currentLane = attr(value, "name")
 			case "flowNodeRef":
@@ -112,12 +115,12 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 				if err != nil {
 					return nil, err
 				}
-				if currentElement != nil {
+				if currentElement := topElement(elementStack); currentElement != nil {
 					currentElement.Documentation = strings.TrimSpace(documentation)
 				}
 				depth--
 			case "sourceRef", "targetRef":
-				if currentElement != nil {
+				if currentElement := topElement(elementStack); currentElement != nil {
 					ref, err := decodeText(decoder, value)
 					if err != nil {
 						return nil, err
@@ -126,12 +129,25 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 					depth--
 				}
 			case "dataState":
-				if currentElement != nil {
+				if currentElement := topElement(elementStack); currentElement != nil {
 					currentElement.State = strings.TrimSpace(attr(value, "name"))
 				}
 			default:
-				if supportedElement(local) {
-					element := &domain.Element{ID: attr(value, "id"), Name: strings.TrimSpace(attr(value, "name")), Type: local, DataRequirements: []string{}, Incoming: []string{}, Outgoing: []string{}}
+				if isEventDefinition(local) {
+					if currentElement := topElement(elementStack); currentElement != nil {
+						currentElement.EventDefinitions = append(currentElement.EventDefinitions, local)
+					}
+				} else if supportedElement(local) {
+					parentID := ""
+					if len(subprocessStack) > 0 {
+						parentID = subprocessStack[len(subprocessStack)-1]
+					}
+					element := &domain.Element{
+						ID: attr(value, "id"), Name: strings.TrimSpace(attr(value, "name")), Type: local,
+						ProcessID: currentProcess, ParentID: parentID, AttachedToRef: attr(value, "attachedToRef"),
+						GatewayDirection: attr(value, "gatewayDirection"), DefaultFlow: attr(value, "default"),
+						EventDefinitions: []string{}, DataRequirements: []string{}, Incoming: []string{}, Outgoing: []string{},
+					}
 					if element.ID == "" {
 						return nil, fmt.Errorf("%s requires an id", local)
 					}
@@ -139,18 +155,27 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 						return nil, fmt.Errorf("duplicate BPMN ID %q", element.ID)
 					}
 					graph.Elements[element.ID] = element
-					currentElement = element
+					elementStack = append(elementStack, element)
+					if local == "subProcess" {
+						subprocessStack = append(subprocessStack, element.ID)
+					}
 				}
 			}
 		case xml.EndElement:
-			if currentElement != nil && value.Name.Local == currentElement.Type {
-				currentElement = nil
+			if currentElement := topElement(elementStack); currentElement != nil && value.Name.Local == currentElement.Type {
+				elementStack = elementStack[:len(elementStack)-1]
+				if value.Name.Local == "subProcess" && len(subprocessStack) > 0 {
+					subprocessStack = subprocessStack[:len(subprocessStack)-1]
+				}
 			}
 			if value.Name.Local == "sequenceFlow" {
 				currentFlow = nil
 			}
 			if value.Name.Local == "lane" {
 				currentLane = ""
+			}
+			if value.Name.Local == "process" {
+				currentProcess = ""
 			}
 			depth--
 		}
@@ -176,8 +201,20 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 		element.Incoming = append([]string(nil), graph.Incoming[id]...)
 		element.Outgoing = append([]string(nil), graph.Outgoing[id]...)
 		element.DataRequirements = textutil.UniqueSorted(element.DataRequirements)
+		element.EventDefinitions = textutil.UniqueSorted(element.EventDefinitions)
 	}
 	return graph, nil
+}
+
+func topElement(stack []*domain.Element) *domain.Element {
+	if len(stack) == 0 {
+		return nil
+	}
+	return stack[len(stack)-1]
+}
+
+func isEventDefinition(local string) bool {
+	return strings.HasSuffix(local, "EventDefinition")
 }
 
 func decodeText(decoder *xml.Decoder, start xml.StartElement) (string, error) {

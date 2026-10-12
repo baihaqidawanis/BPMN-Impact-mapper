@@ -1,0 +1,1 @@
+<?xml version="1.0"?><definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"><process id="P"><startEvent id="S"/><task id="A" name="Prepare"/><task id="B" name="Review"/><endEvent id="E"/><sequenceFlow id="F1" sourceRef="S" targetRef="A"/><sequenceFlow id="F2" sourceRef="A" targetRef="B"/><sequenceFlow id="F3" sourceRef="B" targetRef="E"/></process></definitions>

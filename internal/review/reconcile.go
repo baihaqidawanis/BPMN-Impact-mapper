@@ -29,8 +29,15 @@ type Reconciliation struct {
 	Version       string                 `json:"version"`
 	ReviewerA     string                 `json:"reviewer_a"`
 	ReviewerB     string                 `json:"reviewer_b"`
+	ReviewPack    *PackProvenance        `json:"review_pack,omitempty"`
 	Agreed        evaluation.GroundTruth `json:"agreed_ground_truth"`
 	Disagreements []Disagreement         `json:"disagreements"`
+}
+
+type PackProvenance struct {
+	PackID           string `json:"pack_id"`
+	InputFingerprint string `json:"input_fingerprint"`
+	CaseDigest       string `json:"case_digest"`
 }
 
 func Reconcile(a, b Annotation) (Reconciliation, error) {

@@ -1,14 +1,15 @@
 import { reportDownloadURL } from "@/lib/api";
 import type { Change, Impact, Report, ScoreBreakdown } from "@/lib/types";
+import { ReviewPanel } from "./ReviewPanel";
 import styles from "./ReportView.module.css";
 
 export function ReportView({ report }: { report: Report }) {
   const candidateCount = report.changes.reduce((sum, change) => sum + change.impacts.length, 0);
-  const unresolvedCount = report.changes.reduce((sum, change) => sum + change.unresolved_impacts.length, 0);
+  const unresolvedCount = report.changes.reduce((sum, change) => sum + (change.unresolved_impacts?.length ?? 0), 0);
   return (
 		<div className={styles.report} data-testid="report-view">
       <div className={styles.reportHeader}>
-        <div><p>Analysis complete</p><h2>{report.repository.name}</h2><span>{report.repository.revision} · {report.method}</span></div>
+        <div><p>Analysis complete</p><h2>{report.repository.name}</h2><span>{report.repository.revision} · {report.method}{report.method_metadata?.model ? ` · ${report.method_metadata.model}` : ""}</span></div>
         <div className={styles.downloads}>
           <a href={reportDownloadURL(report.analysis_id, "json")}>JSON</a>
           <a href={reportDownloadURL(report.analysis_id, "md")}>Markdown</a>
@@ -23,9 +24,15 @@ export function ReportView({ report }: { report: Report }) {
       {report.warnings.length > 0 && (
         <div className={styles.warnings}><strong>Analysis warnings</strong>{report.warnings.map((warning) => <p key={`${warning.code}-${warning.message}`}><b>{warning.code}</b> {warning.message}</p>)}</div>
       )}
+      {!!report.source_analysis?.length && <details className={styles.warnings}>
+        <summary>Source analysis coverage ({report.source_analysis.length} files)</summary>
+        <p>Text-only files support lexical retrieval. Static calls cover a limited subset of Go; these capabilities do not measure accuracy.</p>
+        {report.source_analysis.map((file) => <p key={file.file}><b>{file.language}</b> {file.file} — {file.capabilities.join(", ")}{file.fallback ? " (parser fallback)" : ""}</p>)}
+      </details>}
       <div className={styles.changeList}>
         {report.changes.map((change, index) => <ChangeCard change={change} index={index} key={`${change.change_type}-${change.new_element?.id ?? change.old_element?.id}-${index}`} />)}
       </div>
+      <ReviewPanel key={report.analysis_id} report={report} />
       <footer className={styles.fingerprint}>Analysis ID <code>{report.analysis_id}</code><span>Input fingerprint <code>{report.input_fingerprint}</code></span></footer>
     </div>
   );
@@ -45,19 +52,29 @@ function ChangeCard({ change, index }: { change: Change; index: number }) {
         <span className={styles.impactCount}>{change.impacts.length} candidates</span>
       </div>
       {change.reason && <p className={styles.reason}>{change.reason}</p>}
-      {change.impacts.length > 0 ? <div className={styles.impacts}>{change.impacts.map((impact, impactIndex) => <ImpactRow impact={impact} key={`${impact.file}-${impact.symbol}-${impactIndex}`} />)}</div> : <p className={styles.noImpact}>No evidence-bearing candidate crossed the retrieval threshold.</p>}
-      {change.unresolved_impacts.length > 0 && <div className={styles.unresolved}><b>Unresolved impact</b>{change.unresolved_impacts.map((item) => <p key={item}>{item}</p>)}</div>}
+		{change.context && <div className={styles.context}><b>{change.context.pattern.replaceAll("_", " ")}</b><span>{contextSummary(change)}</span></div>}
+      {change.impacts.length > 0 ? <div className={styles.impacts}>{change.impacts.map((impact, impactIndex) => <ImpactRow impact={impact} rank={impactIndex + 1} key={`${impact.file}-${impact.symbol}-${impactIndex}`} />)}</div> : <p className={styles.noImpact}>No evidence-bearing candidate crossed the retrieval threshold.</p>}
+      {(change.unresolved_impacts?.length ?? 0) > 0 && <div className={styles.unresolved}><b>Unresolved impact</b>{change.unresolved_impacts.map((item) => <p key={item}>{item}</p>)}</div>}
     </article>
   );
 }
 
-function ImpactRow({ impact }: { impact: Impact }) {
+function contextSummary(change: Change) {
+	const context = change.context;
+	if (!context) return "";
+	const predecessors = context.predecessors?.map((element) => element.name || element.id).join(", ");
+	const successors = context.successors?.map((element) => element.name || element.id).join(", ");
+	return [predecessors && `from ${predecessors}`, successors && `to ${successors}`].filter(Boolean).join(" ");
+}
+
+function ImpactRow({ impact, rank }: { impact: Impact; rank: number }) {
   return (
 		<details className={styles.impact} data-testid="impact-details">
       <summary>
+        <span className={styles.rank}>{String(rank).padStart(2, "0")}</span>
         <span className={`${styles.action} ${styles[impact.required_action.toLowerCase()] ?? ""}`}>{impact.required_action}</span>
         <span className={styles.target}><b>{impact.file}</b><small>{impact.symbol || "file-level candidate"} · {impact.module} / {impact.layer}</small></span>
-        <span className={styles.confidence}><b>{Math.round(impact.confidence * 100)}%</b><small>confidence</small></span>
+        <span className={styles.confidence}><b>{Math.round(impact.confidence * 100)}%</b><small>{impact.score_breakdown.rrf ? "rank consensus" : "confidence"}</small></span>
         <span className={styles.chevron}>⌄</span>
       </summary>
       <div className={styles.impactBody}>

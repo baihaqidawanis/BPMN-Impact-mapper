@@ -1,0 +1,39 @@
+.panel { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); }
+.panel > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; cursor: pointer; list-style: none; }
+.panel > summary::-webkit-details-marker { display: none; }
+.panel > summary > span:first-child { display: grid; gap: 3px; }
+.panel > summary b { color: var(--ink); font-size: 12px; }
+.panel > summary small { color: var(--muted); font-size: 9px; }
+.panel > summary > span:last-child { color: var(--blue); font-size: 9px; font-weight: 700; }
+.body { display: grid; gap: 13px; padding: 0 18px 18px; border-top: 1px solid var(--line); }
+.notice { margin-top: 15px; padding: 11px; border-left: 3px solid var(--blue); background: var(--blue-soft); color: var(--charcoal); font-size: 9px; line-height: 1.5; }
+.notice b { color: var(--blue); }
+.reviewer { display: grid; gap: 6px; }
+.reviewer span { color: var(--charcoal); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+.reviewer input, .manual input, .candidate select, .manual select { min-height: 35px; padding: 0 9px; border: 1px solid var(--line-strong); border-radius: 8px; outline: 0; background: var(--canvas); color: var(--ink); font-size: 9px; }
+.reviewer input:focus, .manual input:focus, .candidate select:focus, .manual select:focus { border-color: var(--blue); }
+.case { display: grid; gap: 9px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; }
+.case > header { display: flex; gap: 9px; align-items: center; }
+.case > header > span { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 7px; background: var(--black); color: white; font-size: 8px; }
+.case > header div { display: grid; gap: 2px; }
+.case > header b { color: var(--ink); font-size: 9px; }
+.case > header small { color: var(--muted); font-size: 8px; }
+.candidates { display: grid; gap: 5px; }
+.candidate { display: grid; grid-template-columns: minmax(0, 1fr) 105px; gap: 8px; align-items: center; padding: 8px; border-radius: 8px; background: var(--canvas); }
+.candidate label { min-width: 0; display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.candidate label input { accent-color: var(--blue); }
+.candidate label span { min-width: 0; display: grid; gap: 2px; }
+.candidate label b, .candidate label small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.candidate label b { color: var(--ink); font-size: 8px; }
+.candidate label small { color: var(--muted); font-size: 7px; }
+.candidate select:disabled { opacity: 0.5; }
+.manual { display: grid; grid-template-columns: 1.6fr 1fr 0.8fr 0.8fr 105px auto; gap: 5px; padding: 8px; border: 1px dashed var(--line-strong); border-radius: 8px; }
+.manual button, .add { border: 0; background: transparent; color: var(--blue); font-size: 8px; font-weight: 650; cursor: pointer; }
+.add { justify-self: start; padding: 3px 0; }
+.empty { margin: 0; color: var(--muted); font-size: 8px; }
+.error { margin: 0; color: var(--charcoal); font-size: 9px; font-weight: 650; }
+.export { min-height: 39px; border: 0; border-radius: 9px; background: var(--black); color: white; font-size: 10px; font-weight: 650; cursor: pointer; }
+.export:hover { background: var(--blue); }
+
+@media (max-width: 760px) { .manual { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .candidate { grid-template-columns: 1fr; } .manual { grid-template-columns: 1fr; } }

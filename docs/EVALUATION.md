@@ -2,7 +2,7 @@
 
 ## Fair comparison
 
-The four planned methods are configuration-driven mapping, lexical/BM25, hybrid retrieval, and hybrid plus LLM verification. Each must receive the same frozen repository snapshot, old/new BPMN pairs, scenario cards, and output schema. Only method-specific baseline preparation may differ, and its cost must be reported.
+The target retrieval comparison is BM25-only, Semantic-only, BM25 + Semantic RRF, and Graph-Aware Hybrid. Each must receive the same frozen repository snapshot, old/new BPMN pairs, scenario cards, Top-K, and output schema. LLM planning is evaluated separately after retrieval so generation quality cannot hide retrieval errors.
 
 ## Artifact separation
 
@@ -43,7 +43,19 @@ Ground-truth bytes are parsed only after the corresponding inference call return
 
 ## Independent review
 
-Two versioned reviewer annotations use the same case/expected-impact contract. Reconciliation requires distinct reviewer identifiers, canonicalizes expected-impact order, and accepts a case only when both reviewers independently provide exactly equal impacts and actions. All missing or conflicting cases remain in `disagreements`; the tool performs no majority vote or automatic adjudication.
+The CLI `prepare-review` workflow reduces anchoring bias by creating reviewer artifacts from one or more completed same-snapshot reports without exposing any predicted file, symbol, method, evidence, rank, confidence, or score. Reviewers receive only a BPMN change guide and an individual annotation template. A coordinator-only manifest binds the repository revision, method-independent input fingerprint, normalized change-set digest, prediction methods, analysis IDs, and report byte hashes. Report argument order does not affect the pack ID or bytes.
+
+The web blind-review panel uses the identical Go use case against immutable stored reports. Its endpoint accepts only report IDs, their shared fingerprint, and two reviewer identifiers; it does not accept annotations, expected impacts, or ground truth. The browser downloads both templates, the guide, and the coordinator manifest separately so distribution roles stay explicit.
+
+Templates fail closed: every case initially contains a `REVIEW_REQUIRED` entry with an invalid empty action. A reviewer must replace it with independently established expected impacts, or explicitly remove it and use an empty list for a negative case. Therefore, two untouched templates cannot silently reconcile into false negative ground truth. The pack directory is write-once at CLI level. Passing its coordinator manifest to `reconcile --manifest` validates the pack ID, case digest, canonical prediction metadata, and exact case coverage for both completed annotations; the resulting JSON and Markdown retain pack ID, input fingerprint, and case digest. The manifest is provenance metadata, not encryption, a digital signature, or proof that the people were independent; the coordinator must keep it separate from reviewers and retain completed files with the research archive.
+
+The web dashboard exposes reconciliation and evaluation after inference. It accepts two version-1 annotation files (512 KiB each in the browser; 2 MiB total API body), recomputes reconciliation on evaluation, and requires exactly one explicit resolution for every disagreement. Missing reviewer cases remain conflicts. Final truth must cover every change exactly once; additional or missing cases reject the evaluation. The server reads at most three immutable reports with unique methods and one input fingerprint. Changing reviewer files or decisions invalidates displayed results.
+
+Version-1 annotations do not encode a snapshot fingerprint. The user must confirm they apply to the selected snapshot; matching case IDs alone cannot prove provenance or reviewer independence. Distinct reviewer IDs are a validation rule, not evidence that two people reviewed the scenario. The downloaded bundle retains both annotations and decisions for audit. It is not persisted by the API.
+
+The legacy JSON field `false_positive_rate` is FP/(TP+FP), so the dashboard labels it **false discovery proportion**. A true-negative universe is unavailable; statistical FPR and file-level accuracy are therefore not displayed. Module/layer accuracy counts unspecified expected metadata as matching under the existing evaluator; the dashboard discloses this limitation. Precision@k retains denominator k; negative expected sets contribute zero to recall/MRR/MAP macro averages. These are file-level metrics: multiple symbols in one file are deduplicated, and the first prediction supplies its action. No new latency measurement is made by this dashboard.
+
+Two versioned reviewer annotations use the same case/expected-impact contract. Reconciliation requires distinct reviewer identifiers, canonicalizes expected-impact order, and accepts a case only when both reviewers provide equal impacts and actions. All missing or conflicting cases remain in `disagreements`. The dashboard supports explicit human decisions through `review.Adjudicate`; it never silently chooses a reviewer.
 
 ## Phase 1 fixtures
 

@@ -34,12 +34,14 @@ type AnalysisMethod string
 const (
 	MethodHybrid        AnalysisMethod = "hybrid"
 	MethodBM25          AnalysisMethod = "bm25"
+	MethodSemantic      AnalysisMethod = "semantic"
+	MethodFusion        AnalysisMethod = "fusion"
 	MethodConfiguration AnalysisMethod = "configuration"
 )
 
 func (method AnalysisMethod) Valid() bool {
 	switch method {
-	case MethodHybrid, MethodBM25, MethodConfiguration:
+	case MethodHybrid, MethodBM25, MethodSemantic, MethodFusion, MethodConfiguration:
 		return true
 	default:
 		return false
@@ -53,6 +55,12 @@ type Element struct {
 	Actor            string   `json:"actor,omitempty"`
 	State            string   `json:"state,omitempty"`
 	Documentation    string   `json:"documentation,omitempty"`
+	ProcessID        string   `json:"process_id,omitempty"`
+	ParentID         string   `json:"parent_id,omitempty"`
+	AttachedToRef    string   `json:"attached_to_ref,omitempty"`
+	GatewayDirection string   `json:"gateway_direction,omitempty"`
+	DefaultFlow      string   `json:"default_flow,omitempty"`
+	EventDefinitions []string `json:"event_definitions,omitempty"`
 	DataRequirements []string `json:"data_requirements,omitempty"`
 	Incoming         []string `json:"incoming,omitempty"`
 	Outgoing         []string `json:"outgoing,omitempty"`
@@ -83,14 +91,15 @@ type Symbol struct {
 }
 
 type Artifact struct {
-	ID       string
-	File     string
-	Module   string
-	Layer    string
-	Language string
-	Symbol   Symbol
-	Content  string
-	Tokens   []string
+	ID        string
+	File      string
+	Module    string
+	Layer     string
+	Language  string
+	Symbol    Symbol
+	Content   string
+	Tokens    []string
+	Relations []SourceRelation
 }
 
 type Evidence struct {
@@ -100,6 +109,9 @@ type Evidence struct {
 }
 
 type ScoreBreakdown struct {
+	Dependency float64 `json:"dependency,omitempty"`
+	Semantic   float64 `json:"semantic,omitempty"`
+	RRF        float64 `json:"rrf,omitempty"`
 	TraceID    float64 `json:"trace_id"`
 	Symbol     float64 `json:"symbol"`
 	Path       float64 `json:"path"`
@@ -120,13 +132,37 @@ type Impact struct {
 	Confidence     float64        `json:"confidence"`
 }
 
+type ChangePattern string
+
+const (
+	PatternInsertTask           ChangePattern = "INSERT_TASK"
+	PatternRemoveTaskWithRewire ChangePattern = "REMOVE_TASK_WITH_REWIRE"
+	PatternAddGatewayBranch     ChangePattern = "ADD_GATEWAY_BRANCH"
+	PatternMoveTask             ChangePattern = "MOVE_TASK"
+	PatternRemoveGatewayBranch  ChangePattern = "REMOVE_GATEWAY_BRANCH"
+)
+
+type ElementContext struct {
+	ID   string `json:"id"`
+	Name string `json:"name,omitempty"`
+	Type string `json:"type"`
+}
+
+type ChangeContext struct {
+	Pattern        ChangePattern    `json:"pattern"`
+	Predecessors   []ElementContext `json:"predecessors,omitempty"`
+	Successors     []ElementContext `json:"successors,omitempty"`
+	RelatedFlowIDs []string         `json:"related_flow_ids,omitempty"`
+}
+
 type Change struct {
-	ChangeType       ChangeType `json:"change_type"`
-	OldElement       *Element   `json:"old_element"`
-	NewElement       *Element   `json:"new_element"`
-	Impacts          []Impact   `json:"impacts"`
-	UnresolvedImpact []string   `json:"unresolved_impacts"`
-	Reason           string     `json:"reason,omitempty"`
+	ChangeType       ChangeType     `json:"change_type"`
+	OldElement       *Element       `json:"old_element"`
+	NewElement       *Element       `json:"new_element"`
+	Impacts          []Impact       `json:"impacts"`
+	UnresolvedImpact []string       `json:"unresolved_impacts"`
+	Reason           string         `json:"reason,omitempty"`
+	Context          *ChangeContext `json:"context,omitempty"`
 }
 
 type Repository struct {
@@ -140,10 +176,23 @@ type Warning struct {
 }
 
 type Report struct {
+	SourceAnalysis   []FileAnalysis    `json:"source_analysis,omitempty"`
+	AnalysisID       string            `json:"analysis_id"`
+	InputFingerprint string            `json:"input_fingerprint"`
+	Method           AnalysisMethod    `json:"method"`
+	MethodMetadata   map[string]string `json:"method_metadata,omitempty"`
+	Repository       Repository        `json:"repository"`
+	Changes          []Change          `json:"changes"`
+	Warnings         []Warning         `json:"warnings"`
+}
+
+type ReportSummary struct {
 	AnalysisID       string         `json:"analysis_id"`
 	InputFingerprint string         `json:"input_fingerprint"`
 	Method           AnalysisMethod `json:"method"`
 	Repository       Repository     `json:"repository"`
-	Changes          []Change       `json:"changes"`
-	Warnings         []Warning      `json:"warnings"`
+	Changes          int            `json:"changes"`
+	Candidates       int            `json:"candidates"`
+	Unresolved       int            `json:"unresolved"`
+	Warnings         int            `json:"warnings"`
 }

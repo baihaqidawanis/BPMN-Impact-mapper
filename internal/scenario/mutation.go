@@ -33,6 +33,7 @@ type Operation struct {
 	Attribute string `json:"attribute,omitempty"`
 	Child     string `json:"child,omitempty"`
 	Value     string `json:"value,omitempty"`
+	XML       string `json:"xml,omitempty"`
 }
 
 func DecodeSpec(data []byte) (Spec, error) {
@@ -86,10 +87,17 @@ func (s Spec) Validate() error {
 				return fmt.Errorf("operation %d: remove_element accepts only element_id", i)
 			}
 			removed[operation.ElementID] = true
+		case "append_xml":
+			if operation.Attribute != "" || operation.Child != "" || operation.Value != "" || strings.TrimSpace(operation.XML) == "" {
+				return fmt.Errorf("operation %d: append_xml requires xml and forbids attribute, child, and value", i)
+			}
+			if err := validateFragment(operation.XML); err != nil {
+				return fmt.Errorf("operation %d: append_xml: %w", i, err)
+			}
 		default:
 			return fmt.Errorf("operation %d: unsupported kind %q", i, operation.Kind)
 		}
-		key := operation.Kind + "\x00" + operation.ElementID + "\x00" + operation.Attribute + "\x00" + operation.Child
+		key := operation.Kind + "\x00" + operation.ElementID + "\x00" + operation.Attribute + "\x00" + operation.Child + "\x00" + operation.XML
 		if seen[key] {
 			return fmt.Errorf("operation %d duplicates an earlier operation", i)
 		}
@@ -201,6 +209,9 @@ func Mutate(baseline []byte, spec Spec) ([]byte, error) {
 		}
 	}
 	for i, count := range applied {
+		if spec.Operations[i].Kind == "append_xml" {
+			continue
+		}
 		if count != 1 {
 			return nil, fmt.Errorf("operation %d (%s on %q) applied %d times; expected exactly once", i, spec.Operations[i].Kind, spec.Operations[i].ElementID, count)
 		}
@@ -215,10 +226,69 @@ func Mutate(baseline []byte, spec Spec) ([]byte, error) {
 		generated = append(append(append([]byte(nil), generated[:current.start]...), current.value...), generated[current.end:]...)
 		lastStart = current.start
 	}
+	for i, operation := range spec.Operations {
+		if operation.Kind != "append_xml" {
+			continue
+		}
+		var err error
+		generated, err = appendXML(generated, operation.ElementID, operation.XML)
+		if err != nil {
+			return nil, fmt.Errorf("operation %d: %w", i, err)
+		}
+	}
 	if _, err := bpmn.Parse(generated, bpmn.Limits{}); err != nil {
 		return nil, fmt.Errorf("generated BPMN is invalid: %w", err)
 	}
 	return append([]byte(nil), generated...), nil
+}
+
+func validateFragment(fragment string) error {
+	decoder := xml.NewDecoder(strings.NewReader(`<root xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">` + fragment + `</root>`))
+	for {
+		token, err := decoder.Token()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if _, ok := token.(xml.Directive); ok {
+			return errors.New("XML directives are not allowed")
+		}
+	}
+}
+
+func appendXML(input []byte, elementID, fragment string) ([]byte, error) {
+	decoder := xml.NewDecoder(bytes.NewReader(input))
+	for {
+		before := int(decoder.InputOffset())
+		token, err := decoder.Token()
+		if errors.Is(err, io.EOF) {
+			return nil, fmt.Errorf("append target %q applied 0 times; expected exactly once", elementID)
+		}
+		if err != nil {
+			return nil, err
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok || attribute(start, "id") != elementID {
+			continue
+		}
+		after := int(decoder.InputOffset())
+		tagStart := before + bytes.IndexByte(input[before:after], '<')
+		if tagStart < before {
+			return nil, fmt.Errorf("cannot locate append target %q", elementID)
+		}
+		if err := decoder.Skip(); err != nil {
+			return nil, err
+		}
+		end := int(decoder.InputOffset())
+		closing := bytes.LastIndexByte(input[tagStart:end], '<')
+		if closing < 0 {
+			return nil, fmt.Errorf("cannot locate closing tag for append target %q", elementID)
+		}
+		insert := tagStart + closing
+		return append(append(append([]byte(nil), input[:insert]...), []byte(fragment)...), input[insert:]...), nil
+	}
 }
 
 func replaceAttribute(tag []byte, name, value string) ([]byte, bool) {

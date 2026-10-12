@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="DefsRemoveBranchNew">
+  <process id="P-BRANCH" isExecutable="false">
+    <startEvent id="START" name="Start"/><task id="TASK-A" name="Accept"/><endEvent id="END" name="Done"/>
+    <sequenceFlow id="F1" sourceRef="START" targetRef="TASK-A"/><sequenceFlow id="F4" sourceRef="TASK-A" targetRef="END"/>
+  </process>
+</definitions>

@@ -18,6 +18,12 @@ func TestBuildHonorsSecurityAndIgnoreRules(t *testing.T) {
 	write(t, root, "private.key", "key")
 	write(t, root, "node_modules/library.js", "excluded")
 	write(t, root, "docs/PROCESS-MAPPING.md", "leakage")
+	write(t, root, "ground-truth/hidden.json", "leakage")
+	write(t, root, "checkpoints/review.md", "leakage")
+	write(t, root, "docs/REVIEW-FINDINGS.md", "review artifact leakage")
+	write(t, root, "docs/process-model.bpmn", "process specification, not source corpus")
+	write(t, root, "docs/superpowers/plans/phase-2.md", "implementation plan leakage")
+	write(t, root, "internal/plans/service.go", "package plans")
 	write(t, root, "skip/ignored.txt", "ignored")
 	writeBytes(t, root, "image.bin", []byte{0, 1, 2})
 	if err := os.Symlink(filepath.Join(root, "a.txt"), filepath.Join(root, "link.txt")); err != nil {
@@ -31,7 +37,7 @@ func TestBuildHonorsSecurityAndIgnoreRules(t *testing.T) {
 	for _, file := range result.Files {
 		paths = append(paths, file.RelativePath)
 	}
-	if !reflect.DeepEqual(paths, []string{"a.txt", "z.go"}) {
+	if !reflect.DeepEqual(paths, []string{"a.txt", "internal/plans/service.go", "z.go"}) {
 		t.Fatalf("paths=%v", paths)
 	}
 	second, err := ingest.Build(context.Background(), root, ingest.Options{Ignore: []string{"skip/**"}})

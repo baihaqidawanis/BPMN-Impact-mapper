@@ -33,6 +33,10 @@ func goldenReport() domain.Report {
 		Changes: []domain.Change{{
 			ChangeType: domain.AddTask, OldElement: nil,
 			NewElement: &domain.Element{ID: "TASK-VALIDATE", Name: "Validate request", Type: "serviceTask"},
+			Context: &domain.ChangeContext{Pattern: domain.PatternInsertTask,
+				Predecessors:   []domain.ElementContext{{ID: "TASK-CREATE", Name: "Create request", Type: "userTask"}},
+				Successors:     []domain.ElementContext{{ID: "TASK-REGISTER", Name: "Register request", Type: "serviceTask"}},
+				RelatedFlowIDs: []string{"FLOW-CREATE-VALIDATE", "FLOW-VALIDATE-REGISTER"}},
 			Impacts: []domain.Impact{{Module: "internal", Layer: "application", File: "internal/application/request.go", Symbol: "ValidateRequest", RequiredAction: domain.ActionAdd,
 				Evidence:       []domain.Evidence{{Type: "TRACE_ID", Location: "internal/application/request.go:4", Excerpt: "TASK-VALIDATE"}},
 				ScoreBreakdown: domain.ScoreBreakdown{TraceID: 1, Symbol: 0.5, Path: 0.25, Lexical: 0.5, Structured: 1, BM25: 1, Total: 0.8}, Confidence: 0.8}},

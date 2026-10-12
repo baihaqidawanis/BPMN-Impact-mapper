@@ -1,0 +1,19 @@
+.panel { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); }
+.panel > summary { padding: 18px; cursor: pointer; font-size: 14px; font-weight: 650; }
+.panel > summary span { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 400; }
+.body { display: grid; gap: 14px; padding: 0 18px 18px; font-size: 12px; }
+.body p { margin: 0; color: var(--muted); line-height: 1.6; }
+.reviewers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.body label { display: grid; gap: 7px; font-weight: 600; }
+.body input { min-width: 0; width: 100%; padding: 9px; color: var(--ink); background: var(--canvas); border: 1px solid var(--line); border-radius: 7px; font: inherit; }
+.body button { justify-self: start; padding: 10px 14px; color: var(--blue); background: var(--canvas); border: 1px solid var(--line-strong); border-radius: 8px; cursor: pointer; font: inherit; font-weight: 600; }
+.body button:disabled { opacity: .45; cursor: default; }
+.ready { display: grid; gap: 12px; padding: 13px; border: 1px solid color-mix(in srgb, var(--blue) 32%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--blue) 4%, var(--surface)); }
+.ready > div:first-child { display: grid; gap: 4px; }
+.ready span { color: var(--blue); font-weight: 700; }
+.ready code { overflow-wrap: anywhere; font-size: 11px; }
+.ready small { color: var(--muted); }
+.downloads { display: flex; flex-wrap: wrap; gap: 8px; }
+.body .manifest { color: var(--ink); border-style: dashed; }
+.error { color: #a52a2a !important; }
+@media (max-width: 600px) { .reviewers { grid-template-columns: 1fr; } }

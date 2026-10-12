@@ -13,4 +13,5 @@ var ErrNotFound = errors.New("analysis report not found")
 type Store interface {
 	Save(context.Context, domain.Report) error
 	Get(context.Context, string) (domain.Report, error)
+	List(context.Context) ([]domain.ReportSummary, error)
 }

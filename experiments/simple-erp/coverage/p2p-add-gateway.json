@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "scenario_id": "p2p-add-gateway",
+  "description": "Insert a budget decision gateway with explicit approve and reject branches before request approval.",
+  "baseline_sha256": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+  "operations": [
+    {
+      "kind": "set_attribute",
+      "element_id": "FLOW-P2P-004",
+      "attribute": "targetRef",
+      "value": "GW-P2P-BUDGET"
+    },
+    {
+      "kind": "append_xml",
+      "element_id": "P2P-L2-001",
+      "xml": "<bpmn:exclusiveGateway id=\"GW-P2P-BUDGET\" name=\"Budget available?\" default=\"FLOW-P2P-004B\"/><bpmn:sequenceFlow id=\"FLOW-P2P-004A\" name=\"Budget approved\" sourceRef=\"GW-P2P-BUDGET\" targetRef=\"GW-P2P-APPROVED\"><bpmn:conditionExpression xsi:type=\"bpmn:tFormalExpression\">budgetAvailable = true</bpmn:conditionExpression></bpmn:sequenceFlow><bpmn:sequenceFlow id=\"FLOW-P2P-004B\" name=\"Budget unavailable\" sourceRef=\"GW-P2P-BUDGET\" targetRef=\"P2P-END-REJECTED\"/>"
+    }
+  ]
+}

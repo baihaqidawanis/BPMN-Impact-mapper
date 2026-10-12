@@ -1,0 +1,31 @@
+.comparison { display: grid; gap: 13px; margin-bottom: 15px; padding: 19px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+.comparison > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.comparison header p { margin: 0 0 4px; color: var(--blue); font-size: 8px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+.comparison h2 { margin: 0; color: var(--ink); font-size: 17px; font-weight: 650; letter-spacing: -0.03em; }
+.comparison header > span { padding: 6px 8px; border-radius: 7px; font-size: 8px; font-weight: 700; }
+.valid { background: var(--blue-soft); color: var(--blue); }
+.invalid { border: 1px solid var(--line-strong); color: var(--charcoal); }
+.disclaimer { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; }
+.methods button { display: grid; justify-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--canvas); color: var(--ink); text-align: left; cursor: pointer; }
+.methods button[aria-pressed="true"] { border-color: var(--blue); background: var(--blue-soft); }
+.methods button > span { color: var(--muted); font-size: 8px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.methods button > b { margin-top: 8px; font-size: 23px; font-weight: 600; letter-spacing: -0.04em; }
+.methods button > small { color: var(--muted); font-size: 8px; }
+.methods dl { width: 100%; display: grid; gap: 4px; margin: 10px 0 0; padding-top: 8px; border-top: 1px solid var(--line); }
+.methods dl div { display: flex; justify-content: space-between; gap: 8px; font-size: 8px; }
+.methods dt { color: var(--muted); }
+.methods dd { margin: 0; font-weight: 650; }
+.matrix { border-top: 1px solid var(--line); padding-top: 11px; }
+.matrix summary { color: var(--charcoal); font-size: 9px; font-weight: 650; cursor: pointer; }
+.tableWrap { overflow-x: auto; margin-top: 10px; }
+.matrix table { width: 100%; min-width: 580px; border-collapse: collapse; font-size: 8px; }
+.matrix th, .matrix td { padding: 9px; border: 1px solid var(--line); vertical-align: top; text-align: left; }
+.matrix thead th { background: var(--canvas); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.matrix tbody th { max-width: 150px; color: var(--charcoal); font-weight: 650; }
+.matrix ol { display: grid; gap: 6px; margin: 0; padding-left: 14px; }
+.matrix li b, .matrix li span { display: block; overflow-wrap: anywhere; }
+.matrix li b { color: var(--ink); font-weight: 600; }
+.matrix li span, .none { color: var(--muted); }
+
+@media (max-width: 600px) { .comparison > header { align-items: flex-start; flex-direction: column; } }

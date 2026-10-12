@@ -38,11 +38,219 @@ func Compare(oldGraph, newGraph *domain.Graph) []domain.Change {
 		}
 	}
 	changes = append(changes, compareFlows(oldGraph, newGraph)...)
+	annotateChangeContexts(oldGraph, newGraph, changes)
 	sort.SliceStable(changes, func(i, j int) bool {
 		ki, kj := changeKey(changes[i]), changeKey(changes[j])
 		return ki < kj
 	})
 	return changes
+}
+
+func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.Change) {
+	moved := movedTaskContexts(oldGraph, newGraph)
+	for index := range changes {
+		change := &changes[index]
+		switch change.ChangeType {
+		case domain.AddTask:
+			if change.NewElement != nil && isTask(change.NewElement.Type) {
+				change.Context = insertionContext(oldGraph, newGraph, change.NewElement.ID)
+			}
+		case domain.RemoveTask:
+			if change.OldElement != nil && isTask(change.OldElement.Type) {
+				change.Context = removalContext(oldGraph, newGraph, change.OldElement.ID)
+			}
+		case domain.AddGateway:
+			if change.NewElement != nil {
+				change.Context = gatewayBranchContext(newGraph, change.NewElement.ID)
+			}
+		case domain.RemoveGateway:
+			if change.OldElement != nil {
+				change.Context = removedGatewayBranchContext(oldGraph, newGraph, change.OldElement.ID)
+			}
+		case domain.ModifySequenceFlow:
+			change.Context = movedFlowContext(change, moved)
+		}
+	}
+}
+
+func movedTaskContexts(oldGraph, newGraph *domain.Graph) map[string]*domain.ChangeContext {
+	result := map[string]*domain.ChangeContext{}
+	for _, id := range sortedElementIDs(oldGraph) {
+		oldElement, newElement := oldGraph.Elements[id], newGraph.Elements[id]
+		if oldElement == nil || newElement == nil || !isTask(oldElement.Type) || oldElement.Type != newElement.Type || !sameScope(oldElement, newElement) {
+			continue
+		}
+		oldPredecessors, oldIncoming := neighbors(oldGraph, id, true)
+		oldSuccessors, oldOutgoing := neighbors(oldGraph, id, false)
+		newPredecessors, newIncoming := neighbors(newGraph, id, true)
+		newSuccessors, newOutgoing := neighbors(newGraph, id, false)
+		if contextIDs(oldPredecessors) == contextIDs(newPredecessors) && contextIDs(oldSuccessors) == contextIDs(newSuccessors) {
+			continue
+		}
+		result[id] = &domain.ChangeContext{Pattern: domain.PatternMoveTask, Predecessors: newPredecessors, Successors: newSuccessors, RelatedFlowIDs: sortedUnique(append(append(append(oldIncoming, oldOutgoing...), newIncoming...), newOutgoing...))}
+	}
+	return result
+}
+
+func movedFlowContext(change *domain.Change, moved map[string]*domain.ChangeContext) *domain.ChangeContext {
+	ids := []string{}
+	for _, element := range []*domain.Element{change.OldElement, change.NewElement} {
+		if element != nil {
+			ids = append(ids, element.Incoming...)
+			ids = append(ids, element.Outgoing...)
+		}
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		if context := moved[id]; context != nil {
+			copy := *context
+			copy.Predecessors = append([]domain.ElementContext(nil), context.Predecessors...)
+			copy.Successors = append([]domain.ElementContext(nil), context.Successors...)
+			copy.RelatedFlowIDs = append([]string(nil), context.RelatedFlowIDs...)
+			return &copy
+		}
+	}
+	return nil
+}
+
+func contextIDs(values []domain.ElementContext) string {
+	ids := make([]string, 0, len(values))
+	for _, value := range values {
+		ids = append(ids, value.ID)
+	}
+	sort.Strings(ids)
+	return strings.Join(ids, "|")
+}
+
+func insertionContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeContext {
+	predecessors, incomingFlows := neighbors(newGraph, id, true)
+	successors, outgoingFlows := neighbors(newGraph, id, false)
+	if len(predecessors) != 1 || len(successors) != 1 || oldGraph.Elements[predecessors[0].ID] == nil || oldGraph.Elements[successors[0].ID] == nil {
+		return nil
+	}
+	if !sameScope(newGraph.Elements[id], newGraph.Elements[predecessors[0].ID], newGraph.Elements[successors[0].ID]) {
+		return nil
+	}
+	bridged := directFlowIDs(oldGraph, predecessors[0].ID, successors[0].ID)
+	if len(bridged) == 0 {
+		return nil
+	}
+	return &domain.ChangeContext{
+		Pattern: domain.PatternInsertTask, Predecessors: predecessors, Successors: successors,
+		RelatedFlowIDs: sortedUnique(append(append(incomingFlows, outgoingFlows...), bridged...)),
+	}
+}
+
+func removalContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeContext {
+	predecessors, incomingFlows := neighbors(oldGraph, id, true)
+	successors, outgoingFlows := neighbors(oldGraph, id, false)
+	if len(predecessors) != 1 || len(successors) != 1 || newGraph.Elements[predecessors[0].ID] == nil || newGraph.Elements[successors[0].ID] == nil {
+		return nil
+	}
+	if !sameScope(oldGraph.Elements[id], oldGraph.Elements[predecessors[0].ID], oldGraph.Elements[successors[0].ID]) {
+		return nil
+	}
+	bridged := directFlowIDs(newGraph, predecessors[0].ID, successors[0].ID)
+	if len(bridged) == 0 {
+		return nil
+	}
+	return &domain.ChangeContext{
+		Pattern: domain.PatternRemoveTaskWithRewire, Predecessors: predecessors, Successors: successors,
+		RelatedFlowIDs: sortedUnique(append(append(incomingFlows, outgoingFlows...), bridged...)),
+	}
+}
+
+func gatewayBranchContext(graph *domain.Graph, id string) *domain.ChangeContext {
+	predecessors, incomingFlows := neighbors(graph, id, true)
+	successors, outgoingFlows := neighbors(graph, id, false)
+	if len(predecessors) < 2 && len(successors) < 2 {
+		return nil
+	}
+	return &domain.ChangeContext{
+		Pattern: domain.PatternAddGatewayBranch, Predecessors: predecessors, Successors: successors,
+		RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...)),
+	}
+}
+
+func removedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeContext {
+	predecessors, incomingFlows := neighbors(oldGraph, id, true)
+	successors, outgoingFlows := neighbors(oldGraph, id, false)
+	if len(predecessors) < 2 && len(successors) < 2 {
+		return nil
+	}
+	preservedNeighbor := false
+	for _, neighbor := range append(append([]domain.ElementContext(nil), predecessors...), successors...) {
+		if newGraph.Elements[neighbor.ID] != nil {
+			preservedNeighbor = true
+			break
+		}
+	}
+	if !preservedNeighbor {
+		return nil
+	}
+	return &domain.ChangeContext{Pattern: domain.PatternRemoveGatewayBranch, Predecessors: predecessors, Successors: successors, RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...))}
+}
+
+func sameScope(elements ...*domain.Element) bool {
+	if len(elements) < 2 || elements[0] == nil {
+		return false
+	}
+	for _, element := range elements[1:] {
+		if element == nil || element.ProcessID != elements[0].ProcessID || element.ParentID != elements[0].ParentID {
+			return false
+		}
+	}
+	return true
+}
+
+func neighbors(graph *domain.Graph, id string, incoming bool) ([]domain.ElementContext, []string) {
+	flowIDs := graph.Outgoing[id]
+	if incoming {
+		flowIDs = graph.Incoming[id]
+	}
+	flowIDs = append([]string(nil), flowIDs...)
+	sort.Strings(flowIDs)
+	result := make([]domain.ElementContext, 0, len(flowIDs))
+	for _, flowID := range flowIDs {
+		flow := graph.Flows[flowID]
+		if flow == nil {
+			continue
+		}
+		neighborID := flow.TargetRef
+		if incoming {
+			neighborID = flow.SourceRef
+		}
+		if element := graph.Elements[neighborID]; element != nil {
+			result = append(result, domain.ElementContext{ID: element.ID, Name: element.Name, Type: element.Type})
+		}
+	}
+	return result, flowIDs
+}
+
+func directFlowIDs(graph *domain.Graph, sourceID, targetID string) []string {
+	var result []string
+	for _, flowID := range graph.Outgoing[sourceID] {
+		if flow := graph.Flows[flowID]; flow != nil && flow.TargetRef == targetID {
+			result = append(result, flowID)
+		}
+	}
+	sort.Strings(result)
+	return result
+}
+
+func sortedUnique(values []string) []string {
+	set := make(map[string]bool, len(values))
+	for _, value := range values {
+		if value != "" {
+			set[value] = true
+		}
+	}
+	result := make([]string, 0, len(set))
+	for value := range set {
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result
 }
 
 func structuralMatches(oldGraph, newGraph *domain.Graph, matchedOld, matchedNew map[string]string) []domain.Change {
@@ -79,12 +287,21 @@ func structuralMatches(oldGraph, newGraph *domain.Graph, matchedOld, matchedNew 
 }
 
 func similarity(oldGraph, newGraph *domain.Graph, oldElement, newElement *domain.Element) float64 {
+	if oldElement.ProcessID != "" && newElement.ProcessID != "" && oldElement.ProcessID != newElement.ProcessID {
+		return 0
+	}
+	if oldElement.ParentID != "" && newElement.ParentID != "" && oldElement.ParentID != newElement.ParentID {
+		return 0
+	}
 	score := 0.0
 	if textutil.Normalize(oldElement.Name) != "" && textutil.Normalize(oldElement.Name) == textutil.Normalize(newElement.Name) {
-		score += 0.4
+		score += 0.35
 	}
 	if textutil.Normalize(oldElement.Actor) != "" && textutil.Normalize(oldElement.Actor) == textutil.Normalize(newElement.Actor) {
-		score += 0.2
+		score += 0.15
+	}
+	if oldElement.ProcessID != "" && oldElement.ProcessID == newElement.ProcessID && oldElement.ParentID == newElement.ParentID {
+		score += 0.1
 	}
 	if len(oldElement.Incoming) == len(newElement.Incoming) && len(oldElement.Outgoing) == len(newElement.Outgoing) {
 		score += 0.2
@@ -201,6 +418,10 @@ func removalType(element *domain.Element) domain.ChangeType {
 
 func isGateway(kind string) bool { return strings.HasSuffix(kind, "Gateway") }
 
+func isTask(kind string) bool {
+	return kind == "task" || strings.HasSuffix(kind, "Task") || kind == "callActivity" || kind == "subProcess"
+}
+
 func isTerminal(graph *domain.Graph, element *domain.Element) bool {
 	return element.Type == "endEvent" || len(graph.Outgoing[element.ID]) == 0
 }
@@ -238,6 +459,7 @@ func clone(element *domain.Element) *domain.Element {
 		return nil
 	}
 	copy := *element
+	copy.EventDefinitions = append([]string{}, element.EventDefinitions...)
 	copy.DataRequirements = append([]string{}, element.DataRequirements...)
 	copy.Incoming = append([]string{}, element.Incoming...)
 	copy.Outgoing = append([]string{}, element.Outgoing...)

@@ -3,6 +3,8 @@
 package mapping
 
 import (
+	"context"
+
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
@@ -15,7 +17,11 @@ type Options struct {
 
 type Strategy interface {
 	Method() domain.AnalysisMethod
-	Attach(changes []domain.Change, artifacts []domain.Artifact, options Options) ([]domain.Change, []domain.Warning)
+	Attach(context.Context, []domain.Change, []domain.Artifact, Options) ([]domain.Change, []domain.Warning, error)
+}
+
+type MetadataProvider interface {
+	MethodMetadata() map[string]string
 }
 
 type Resolver interface {

@@ -50,6 +50,25 @@ func TestMutateRemovesAndRewires(t *testing.T) {
 	}
 }
 
+func TestMutateAppendsBPMNFragments(t *testing.T) {
+	sum := sha256.Sum256([]byte(sampleBPMN))
+	spec := Spec{Version: Version, ScenarioID: "case-append", BaselineSHA256: fmt.Sprintf("%x", sum), Operations: []Operation{
+		{Kind: "set_attribute", ElementID: "F2", Attribute: "targetRef", Value: "T2"},
+		{Kind: "append_xml", ElementID: "P", XML: `<task id="T2" name="Validate"/><sequenceFlow id="F3" sourceRef="T2" targetRef="E"/>`},
+	}}
+	result, err := Mutate([]byte(sampleBPMN), spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	graph, err := bpmn.Parse(result, bpmn.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if graph.Elements["T2"] == nil || graph.Flows["F2"].TargetRef != "T2" || graph.Flows["F3"].SourceRef != "T2" {
+		t.Fatalf("append did not create expected topology: %#v", graph)
+	}
+}
+
 func TestMutateFailsClosed(t *testing.T) {
 	sum := sha256.Sum256([]byte(sampleBPMN))
 	base := Spec{Version: Version, ScenarioID: "case", BaselineSHA256: fmt.Sprintf("%x", sum)}
@@ -62,6 +81,7 @@ func TestMutateFailsClosed(t *testing.T) {
 		{"missing target", withOperations(base, Operation{Kind: "remove_element", ElementID: "missing"}), "applied 0 times"},
 		{"missing attribute", withOperations(base, Operation{Kind: "set_attribute", ElementID: "T1", Attribute: "missing", Value: "x"}), "has no attribute"},
 		{"invalid result", withOperations(base, Operation{Kind: "remove_element", ElementID: "T1"}), "generated BPMN is invalid"},
+		{"invalid append", withOperations(base, Operation{Kind: "append_xml", ElementID: "P", XML: `<task`}), "append_xml"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
