@@ -117,7 +117,7 @@ func (manifest Manifest) Validate() error {
 		}
 		methodSet[method] = true
 	}
-	for _, required := range []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodConfiguration} {
+	for _, required := range []domain.AnalysisMethod{domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion, domain.MethodHybrid} {
 		if !methodSet[required] {
 			return fmt.Errorf("benchmark manifest requires method %q", required)
 		}
@@ -128,13 +128,22 @@ func (manifest Manifest) Validate() error {
 			return fmt.Errorf("scenario %d has empty or duplicate id %q", index, scenario.ID)
 		}
 		seen[scenario.ID] = true
-		if scenario.RepositoryPath == "" || scenario.OldBPMNPath == "" || scenario.NewBPMNPath == "" || scenario.MappingConfigPath == "" || scenario.GroundTruthPath == "" {
+		if scenario.RepositoryPath == "" || scenario.OldBPMNPath == "" || scenario.NewBPMNPath == "" || scenario.GroundTruthPath == "" {
 			return fmt.Errorf("scenario %s is missing required paths", scenario.ID)
 		}
-		for label, hash := range map[string]string{"old BPMN": scenario.OldBPMNSHA256, "new BPMN": scenario.NewBPMNSHA256, "mapping config": scenario.MappingConfigSHA256, "ground truth": scenario.GroundTruthSHA256} {
+		for label, hash := range map[string]string{"old BPMN": scenario.OldBPMNSHA256, "new BPMN": scenario.NewBPMNSHA256, "ground truth": scenario.GroundTruthSHA256} {
 			if !validHash(hash) {
 				return fmt.Errorf("scenario %s has invalid %s SHA-256", scenario.ID, label)
 			}
+		}
+		if methodSet[domain.MethodConfiguration] && (scenario.MappingConfigPath == "" || !validHash(scenario.MappingConfigSHA256)) {
+			return fmt.Errorf("scenario %s requires a frozen mapping config for configuration method", scenario.ID)
+		}
+		if (scenario.MappingConfigPath == "") != (scenario.MappingConfigSHA256 == "") {
+			return fmt.Errorf("scenario %s mapping config path and hash must be provided together", scenario.ID)
+		}
+		if scenario.MappingConfigSHA256 != "" && !validHash(scenario.MappingConfigSHA256) {
+			return fmt.Errorf("scenario %s has invalid mapping config SHA-256", scenario.ID)
 		}
 		if scenario.ExpectedInputFingerprint != "" && len(scenario.ExpectedInputFingerprint) != 32 {
 			return fmt.Errorf("scenario %s has invalid expected input fingerprint", scenario.ID)
@@ -160,10 +169,14 @@ func (runner Runner) Run(ctx context.Context, manifest Manifest) (Report, Timing
 	sort.Slice(scenarios, func(i, j int) bool { return scenarios[i].ID < scenarios[j].ID })
 	methods := append([]domain.AnalysisMethod(nil), manifest.Methods...)
 	sort.Slice(methods, func(i, j int) bool { return methods[i] < methods[j] })
+	includeConfiguration := false
+	for _, method := range methods {
+		includeConfiguration = includeConfiguration || method == domain.MethodConfiguration
+	}
 	var results []ScenarioMethodResult
 	var timings []TimingEntry
 	for _, scenario := range scenarios {
-		if err := runner.verifyPublicInputs(scenario); err != nil {
+		if err := runner.verifyPublicInputs(scenario, includeConfiguration); err != nil {
 			return Report{}, Timing{}, err
 		}
 		commonFingerprint := ""
@@ -236,14 +249,19 @@ func (runner Runner) Run(ctx context.Context, manifest Manifest) (Report, Timing
 	return report, Timing{BenchmarkID: report.BenchmarkID, Runs: timings}, nil
 }
 
-func (runner Runner) verifyPublicInputs(scenario Scenario) error {
+func (runner Runner) verifyPublicInputs(scenario Scenario, includeConfiguration bool) error {
 	inputs := []struct {
 		path, expected, label string
 		limit                 int64
 	}{
 		{scenario.OldBPMNPath, scenario.OldBPMNSHA256, "old BPMN", 8 << 20},
 		{scenario.NewBPMNPath, scenario.NewBPMNSHA256, "new BPMN", 8 << 20},
-		{scenario.MappingConfigPath, scenario.MappingConfigSHA256, "mapping config", 1 << 20},
+	}
+	if includeConfiguration {
+		inputs = append(inputs, struct {
+			path, expected, label string
+			limit                 int64
+		}{scenario.MappingConfigPath, scenario.MappingConfigSHA256, "mapping config", 1 << 20})
 	}
 	for _, input := range inputs {
 		data, err := runner.Files.Read(input.path, input.limit)
@@ -312,6 +330,7 @@ func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 		result.ModuleAccuracy += value.ModuleAccuracy
 		result.LayerAccuracy += value.LayerAccuracy
 		result.ActionAccuracy += value.ActionAccuracy
+		result.ActionMacroF1 += value.ActionMacroF1
 		result.UnresolvedRate += value.UnresolvedRate
 		result.FalsePositiveRate += value.FalsePositiveRate
 		result.EvaluatedChanges += value.EvaluatedChanges
@@ -336,6 +355,7 @@ func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 	result.ModuleAccuracy = round(result.ModuleAccuracy / count)
 	result.LayerAccuracy = round(result.LayerAccuracy / count)
 	result.ActionAccuracy = round(result.ActionAccuracy / count)
+	result.ActionMacroF1 = round(result.ActionMacroF1 / count)
 	result.UnresolvedRate = round(result.UnresolvedRate / count)
 	result.FalsePositiveRate = round(result.FalsePositiveRate / count)
 	return result

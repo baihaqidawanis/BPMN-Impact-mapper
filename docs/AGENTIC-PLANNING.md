@@ -53,10 +53,14 @@ an orchestration framework as a confounder.
 - hallucination and completeness validation;
 - deterministic plan identity bound to provider, model, and prompt version;
 - canonical JSON and Markdown rendering;
-- an offline path through `llm.NoLLMProvider`.
+- an offline default path through `llm.NoLLMProvider`;
+- an unwired `llm.OpenAICompatibleProvider` adapter with HTTPS-or-loopback URL
+  validation, bounded requests/responses, strict typed JSON decoding, and mock
+  HTTP tests. Construction performs no request and no credential is stored.
 
-No network call, API key, prompt, model SDK, or repository source execution is
-part of this increment.
+The production composition still performs no network call and stores no API
+key. The optional adapter uses only `net/http`; it is not active until a future
+configuration explicitly injects it.
 
 `context_id` is the first 32 hexadecimal characters of SHA-256 over the
 canonical JSON bundle with `context_id` cleared. The validator recomputes it
@@ -73,6 +77,11 @@ persists canonical plan JSON/Markdown through `planstore.Store`. The default
 server injects `NoLLMProvider`, so the stored record is explicitly `DISABLED`;
 it proves identity, persistence, and failure-safe UI behavior without fabricating
 model output. Repeating the same request is idempotent.
+
+Provider output cannot change BPMN identity, file, symbol, module, layer, or
+evidence references. It also cannot promote a candidate's suggested action to a
+different strong action, emit source-code fences, exceed bounded planning text,
+or mark a plan complete while review issues remain.
 
 ## Provider requirements for the next increment
 

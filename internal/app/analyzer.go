@@ -120,9 +120,16 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	if provider, ok := strategy.(mapping.MetadataProvider); ok {
 		methodMetadata = provider.MethodMetadata()
 	}
+	methodIdentity := methodConfig
+	if len(methodMetadata) > 0 {
+		methodIdentity, _ = json.Marshal(struct {
+			Resolver []byte            `json:"resolver"`
+			Runtime  map[string]string `json:"runtime"`
+		}{methodConfig, methodMetadata})
+	}
 	return domain.Report{
 		SourceAnalysis:   indexed.Files,
-		AnalysisID:       analysisID(fingerprint, request, methodConfig, registry.Identity()),
+		AnalysisID:       analysisID(fingerprint, request, methodIdentity, registry.Identity()),
 		InputFingerprint: fingerprint,
 		Method:           method, MethodMetadata: methodMetadata,
 		Repository: domain.Repository{Name: name, Revision: revision},

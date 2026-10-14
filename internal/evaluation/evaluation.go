@@ -43,22 +43,43 @@ type AtK struct {
 }
 
 type Metrics struct {
-	Recall               AtK     `json:"recall"`
-	Precision            AtK     `json:"precision"`
-	MRR                  float64 `json:"mrr"`
-	MAP                  float64 `json:"map"`
-	FilePrecision        float64 `json:"file_precision"`
-	FileRecall           float64 `json:"file_recall"`
-	FileF1               float64 `json:"file_f1"`
-	ModuleAccuracy       float64 `json:"module_accuracy"`
-	LayerAccuracy        float64 `json:"layer_accuracy"`
-	ActionAccuracy       float64 `json:"required_action_accuracy"`
-	UnresolvedRate       float64 `json:"unresolved_rate"`
-	FalsePositiveRate    float64 `json:"false_positive_rate"`
-	LatencyMilliseconds  int64   `json:"latency_ms"`
-	EvaluatedChanges     int     `json:"evaluated_changes"`
-	ExpectedImpacts      int     `json:"expected_impacts"`
-	PredictedUniqueFiles int     `json:"predicted_unique_files"`
+	Recall               AtK                   `json:"recall"`
+	Precision            AtK                   `json:"precision"`
+	MRR                  float64               `json:"mrr"`
+	MAP                  float64               `json:"map"`
+	FilePrecision        float64               `json:"file_precision"`
+	FileRecall           float64               `json:"file_recall"`
+	FileF1               float64               `json:"file_f1"`
+	ModuleAccuracy       float64               `json:"module_accuracy"`
+	LayerAccuracy        float64               `json:"layer_accuracy"`
+	ActionAccuracy       float64               `json:"required_action_accuracy"`
+	ActionMacroF1        float64               `json:"required_action_macro_f1"`
+	ActionClasses        []ActionClassMetric   `json:"required_action_classes"`
+	ActionConfusion      ActionConfusionMatrix `json:"required_action_confusion"`
+	UnresolvedRate       float64               `json:"unresolved_rate"`
+	FalsePositiveRate    float64               `json:"false_positive_rate"`
+	LatencyMilliseconds  int64                 `json:"latency_ms"`
+	EvaluatedChanges     int                   `json:"evaluated_changes"`
+	ExpectedImpacts      int                   `json:"expected_impacts"`
+	PredictedUniqueFiles int                   `json:"predicted_unique_files"`
+}
+
+type ActionClassMetric struct {
+	Action    domain.RequiredAction `json:"action"`
+	Support   int                   `json:"support"`
+	Precision float64               `json:"precision"`
+	Recall    float64               `json:"recall"`
+	F1        float64               `json:"f1"`
+}
+
+type ActionConfusionMatrix struct {
+	Labels []domain.RequiredAction `json:"labels"`
+	Rows   [][]int                 `json:"rows"`
+}
+
+var actionLabels = []domain.RequiredAction{
+	domain.ActionAdd, domain.ActionModify, domain.ActionRemove,
+	domain.ActionVerify, domain.ActionNoAction, domain.ActionUnresolved,
 }
 
 type ChangeResult struct {
@@ -137,6 +158,10 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 		return caseKey(sortedCases[i].ChangeType, sortedCases[i].ElementID) < caseKey(sortedCases[j].ChangeType, sortedCases[j].ElementID)
 	})
 	metrics := Metrics{EvaluatedChanges: len(sortedCases)}
+	actionMatrix := make([][]int, len(actionLabels))
+	for index := range actionMatrix {
+		actionMatrix[index] = make([]int, len(actionLabels))
+	}
 	results := make([]ChangeResult, 0, len(sortedCases))
 	var recall1, recall3, recall5, precision1, precision3, precision5 float64
 	truePositive, falsePositive, falseNegative := 0, 0, 0
@@ -188,6 +213,13 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 				falseNegative++
 			}
 		}
+		for file, expectedImpact := range expected {
+			predictedAction := domain.ActionUnresolved
+			if impact, found := predictedSet[file]; found {
+				predictedAction = impact.RequiredAction
+			}
+			actionMatrix[actionIndex(expectedImpact.Action)][actionIndex(predictedAction)]++
+		}
 		results = append(results, result)
 	}
 	count := float64(len(sortedCases))
@@ -207,9 +239,46 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 	metrics.ModuleAccuracy = ratio(moduleCorrect, matchedPairs)
 	metrics.LayerAccuracy = ratio(layerCorrect, matchedPairs)
 	metrics.ActionAccuracy = ratio(actionCorrect, matchedPairs)
+	metrics.ActionClasses, metrics.ActionMacroF1 = actionClassification(actionMatrix)
+	metrics.ActionConfusion = ActionConfusionMatrix{Labels: append([]domain.RequiredAction(nil), actionLabels...), Rows: actionMatrix}
 	predictionHash, truthHash := sha256Hex(predictionBytes), sha256Hex(truthBytes)
 	evaluationSeed := []byte(predictionHash + ":" + truthHash)
 	return Report{EvaluationID: sha256Hex(evaluationSeed)[:32], AnalysisID: prediction.AnalysisID, Method: prediction.Method, PredictionSHA256: predictionHash, GroundTruthSHA256: truthHash, Metrics: metrics, Changes: results}, nil
+}
+
+func actionIndex(action domain.RequiredAction) int {
+	for index, candidate := range actionLabels {
+		if candidate == action {
+			return index
+		}
+	}
+	return len(actionLabels) - 1
+}
+
+func actionClassification(matrix [][]int) ([]ActionClassMetric, float64) {
+	classes := make([]ActionClassMetric, 0, len(actionLabels))
+	macro, supported := 0.0, 0
+	for index, action := range actionLabels {
+		tp, support, predicted := matrix[index][index], 0, 0
+		for other := range actionLabels {
+			support += matrix[index][other]
+			predicted += matrix[other][index]
+		}
+		precision, recall := ratio(tp, predicted), ratio(tp, support)
+		f1 := 0.0
+		if precision+recall > 0 {
+			f1 = round(2 * precision * recall / (precision + recall))
+		}
+		classes = append(classes, ActionClassMetric{Action: action, Support: support, Precision: precision, Recall: recall, F1: f1})
+		if support > 0 {
+			macro += f1
+			supported++
+		}
+	}
+	if supported == 0 {
+		return classes, 0
+	}
+	return classes, round(macro / float64(supported))
 }
 
 func caseKey(changeType domain.ChangeType, elementID string) string {

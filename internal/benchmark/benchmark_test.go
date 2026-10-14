@@ -11,6 +11,7 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/benchmark"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/evaluation"
 	impactreport "github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 )
 
@@ -26,9 +27,34 @@ func TestCSVIsDeterministicAndSpreadsheetReady(t *testing.T) {
 	}
 }
 
+func TestTimingComparisonSummarizesMetricsAndVolatileLatency(t *testing.T) {
+	report := benchmark.Report{BenchmarkID: "bench", Aggregates: []benchmark.MethodAggregate{{Method: domain.MethodBM25, Scenarios: 1, Metrics: evaluation.Metrics{Recall: evaluation.AtK{At5: 0.75}, MRR: 0.5, FileF1: 0.6}}}}
+	timing := benchmark.Timing{BenchmarkID: "bench", Runs: []benchmark.TimingEntry{
+		{Method: domain.MethodBM25, ScenarioID: "one", Repetition: 1, Milliseconds: 30},
+		{Method: domain.MethodBM25, ScenarioID: "one", Repetition: 2, Milliseconds: 10},
+	}}
+	markdown := string(benchmark.TimingMarkdown(report, timing))
+	csvData, err := benchmark.TimingCSV(report, timing)
+	if err != nil || !strings.Contains(markdown, "| bm25 | 2 | 0.7500 | 0.5000 | 0.6000 | 10 | 20.0 | 20.0 | 30 |") || !strings.Contains(markdown, "first embedding method includes cold model startup") || !bytes.Contains(csvData, []byte("first embedding method includes cold startup")) {
+		t.Fatalf("markdown=%s csv=%s err=%v", markdown, csvData, err)
+	}
+}
+
+func TestAblationReportUsesHybridAsDescriptiveReference(t *testing.T) {
+	report := benchmark.Report{BenchmarkID: "bench", Aggregates: []benchmark.MethodAggregate{
+		{Method: domain.MethodBM25, Scenarios: 2, Metrics: evaluation.Metrics{Recall: evaluation.AtK{At5: 0.5}, MRR: 0.4, FileF1: 0.3, ActionMacroF1: 0.2}},
+		{Method: domain.MethodHybrid, Scenarios: 2, Metrics: evaluation.Metrics{Recall: evaluation.AtK{At5: 0.8}, MRR: 0.7, FileF1: 0.6, ActionMacroF1: 0.5}},
+	}}
+	markdown := string(benchmark.AblationMarkdown(report))
+	csvData, err := benchmark.AblationCSV(report)
+	if err != nil || !strings.Contains(markdown, "| bm25 | 0.5000 | -0.3000 |") || !strings.Contains(markdown, "descriptive, not causal") || !bytes.Contains(csvData, []byte("delta_action_macro_f1")) {
+		t.Fatalf("markdown=%s csv=%s err=%v", markdown, csvData, err)
+	}
+}
+
 func TestManifestValidationEnforcesFairFrozenRuns(t *testing.T) {
 	hash := strings.Repeat("a", 64)
-	valid := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5, Methods: []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodConfiguration}, Scenarios: []benchmark.Scenario{{ID: "one", RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hash, NewBPMNPath: "new", NewBPMNSHA256: hash, MappingConfigPath: "mapping", MappingConfigSHA256: hash, GroundTruthPath: "truth", GroundTruthSHA256: hash}}}
+	valid := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5, Methods: []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion}, Scenarios: []benchmark.Scenario{{ID: "one", RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hash, NewBPMNPath: "new", NewBPMNSHA256: hash, GroundTruthPath: "truth", GroundTruthSHA256: hash}}}
 	if err := valid.Validate(); err != nil {
 		t.Fatal(err)
 	}
@@ -48,12 +74,22 @@ func TestManifestValidationEnforcesFairFrozenRuns(t *testing.T) {
 			t.Errorf("invalid manifest %d accepted", index)
 		}
 	}
+	withConfiguration := clone()
+	withConfiguration.Methods = append(withConfiguration.Methods, domain.MethodConfiguration)
+	if err := withConfiguration.Validate(); err == nil {
+		t.Fatal("configuration benchmark accepted without frozen mapping")
+	}
+	withConfiguration.Scenarios[0].MappingConfigPath = "mapping"
+	withConfiguration.Scenarios[0].MappingConfigSHA256 = hash
+	if err := withConfiguration.Validate(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRunnerLoadsGroundTruthAfterInferenceAndRejectsDrift(t *testing.T) {
 	truth := []byte(`{"version":"1","cases":[]}`)
-	files := &fakeFiles{data: map[string][]byte{"old": []byte("old"), "new": []byte("new"), "mapping": []byte("mapping"), "truth": truth}}
-	manifest := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5, Methods: []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodConfiguration}, Scenarios: []benchmark.Scenario{{ID: "one", RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hashOf([]byte("old")), NewBPMNPath: "new", NewBPMNSHA256: hashOf([]byte("new")), MappingConfigPath: "mapping", MappingConfigSHA256: hashOf([]byte("mapping")), GroundTruthPath: "truth", GroundTruthSHA256: hashOf(truth)}}}
+	files := &fakeFiles{data: map[string][]byte{"old": []byte("old"), "new": []byte("new"), "truth": truth}}
+	manifest := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5, Methods: []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion}, Scenarios: []benchmark.Scenario{{ID: "one", RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hashOf([]byte("old")), NewBPMNPath: "new", NewBPMNSHA256: hashOf([]byte("new")), GroundTruthPath: "truth", GroundTruthSHA256: hashOf(truth)}}}
 	analyzer := &fakeAnalyzer{events: &files.events}
 	runner := benchmark.Runner{Analyzer: analyzer, Files: files, Predictions: renderer{}}
 	if _, _, err := runner.Run(context.Background(), manifest); err != nil {

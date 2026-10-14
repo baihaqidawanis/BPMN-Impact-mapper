@@ -1,5 +1,21 @@
 import type { APIErrorPayload, Report, ReportSummary } from "./types";
 
+export interface SemanticCapability {
+  available: boolean;
+  provider?: string;
+  model?: string;
+  message: string;
+}
+
+export async function checkSemanticRuntime(): Promise<SemanticCapability> {
+  const response = await fetch("/backend/api/v1/capabilities/semantic/check", {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Semantic runtime could not be checked.");
+  return await response.json() as SemanticCapability;
+}
+
 export async function createAnalysis(formData: FormData): Promise<Report> {
   const response = await fetch("/backend/api/v1/analyses", {
     method: "POST",

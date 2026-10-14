@@ -23,7 +23,14 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 		return nil
 	}
 	identity := strategy.Embedder.Identity()
-	return map[string]string{"provider": identity.Provider, "model": identity.Model}
+	metadata := map[string]string{"provider": identity.Provider, "model": identity.Model, "adapter_sha256": identity.AdapterSHA256}
+	if identity.PythonVersion != "" {
+		metadata["python_version"] = identity.PythonVersion
+		metadata["sentence_transformers_version"] = identity.SentenceTransformersVersion
+		metadata["model_artifact_sha256"] = identity.ModelArtifactSHA256
+		metadata["embedding_dimension"] = fmt.Sprint(identity.EmbeddingDimension)
+	}
+	return metadata
 }
 
 func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, artifacts []domain.Artifact, options mapping.Options) ([]domain.Change, []domain.Warning, error) {

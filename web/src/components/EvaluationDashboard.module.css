@@ -16,6 +16,10 @@
 .body table { width: 100%; border-collapse: collapse; }
 .body th, .body td { padding: 9px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .downloads { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.confusion { border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); }
+.confusion > summary { padding: 11px 12px; cursor: pointer; font-weight: 650; text-transform: capitalize; }
+.confusion > p { padding: 0 12px; }
+.confusion table { min-width: 620px; background: var(--surface); }
 .diagnostics { display: grid; gap: 10px; margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--line); }
 .diagnostics h4 { margin: 0; font-size: 14px; }
 .diagnostics > details { border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); }

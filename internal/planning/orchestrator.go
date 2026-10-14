@@ -19,6 +19,13 @@ type Orchestrator struct {
 	Policy   Policy
 }
 
+const (
+	maxRationaleRunes = 2000
+	maxSummaryRunes   = 600
+	maxStepRunes      = 1200
+	maxPlanSteps      = 20
+)
+
 func (orchestrator Orchestrator) Run(ctx context.Context, report domain.Report) (ChangePlan, error) {
 	if orchestrator.Provider == nil {
 		return ChangePlan{}, errors.New("planning provider is required")
@@ -88,7 +95,7 @@ func (orchestrator Orchestrator) Run(ctx context.Context, report domain.Report) 
 	result.Plans = finalPlans
 	result.ReviewIssues = cleanStrings(review.Issues)
 	result.Status = StatusNeedsReview
-	if review.Approved {
+	if review.Approved && len(result.ReviewIssues) == 0 {
 		result.Status = StatusComplete
 	}
 	return finalize(result)
@@ -156,7 +163,7 @@ func validateDecisions(change ChangeInput, decisions []CandidateDecision) error 
 		default:
 			return fmt.Errorf("candidate %q has invalid verdict %q", key, decision.Verdict)
 		}
-		if strings.TrimSpace(decision.Rationale) == "" {
+		if strings.TrimSpace(decision.Rationale) == "" || len([]rune(decision.Rationale)) > maxRationaleRunes {
 			return fmt.Errorf("candidate %q requires rationale", key)
 		}
 		if err := validateEvidenceIDs(candidate, decision.EvidenceIDs); err != nil {
@@ -182,7 +189,13 @@ func validatePlans(bundle EvidenceBundle, decisions []CandidateDecision, require
 		if plan.Layer != candidate.Layer || plan.Module != candidate.Module {
 			return fmt.Errorf("provider changed module/layer for %q", key)
 		}
-		if !validAction(plan.Action) || strings.TrimSpace(plan.Summary) == "" || len(cleanStrings(plan.Steps)) == 0 {
+		if !validAction(plan.Action) || !allowedPlannedAction(candidate.SuggestedAction, plan.Action) {
+			return fmt.Errorf("target %q cannot change suggested action %q to %q", key, candidate.SuggestedAction, plan.Action)
+		}
+		if err := validatePlanText(plan); err != nil {
+			return fmt.Errorf("target %q: %w", key, err)
+		}
+		if strings.TrimSpace(plan.Summary) == "" || len(cleanStrings(plan.Steps)) == 0 {
 			return fmt.Errorf("target %q requires valid action, summary, and steps", key)
 		}
 		if err := validateEvidenceIDs(candidate, plan.EvidenceIDs); err != nil {
@@ -200,6 +213,32 @@ func validatePlans(bundle EvidenceBundle, decisions []CandidateDecision, require
 		}
 		if !seen[key] {
 			return fmt.Errorf("relevant candidate %q has no file plan", key)
+		}
+	}
+	return nil
+}
+
+func allowedPlannedAction(suggested, planned domain.RequiredAction) bool {
+	if planned == suggested {
+		return true
+	}
+	return planned == domain.ActionVerify || planned == domain.ActionUnresolved
+}
+
+func validatePlanText(plan FilePlan) error {
+	if len([]rune(strings.TrimSpace(plan.Summary))) > maxSummaryRunes {
+		return errors.New("summary exceeds the bounded planning limit")
+	}
+	steps := cleanStrings(plan.Steps)
+	if len(steps) > maxPlanSteps {
+		return errors.New("plan has too many steps")
+	}
+	for _, value := range append([]string{plan.Summary}, steps...) {
+		if len([]rune(value)) > maxStepRunes {
+			return errors.New("planning text exceeds the per-item limit")
+		}
+		if strings.Contains(value, "```") {
+			return errors.New("source-code blocks are not allowed in planning output")
 		}
 	}
 	return nil

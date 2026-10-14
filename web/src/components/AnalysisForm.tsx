@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { checkSemanticRuntime, type SemanticCapability } from "@/lib/api";
 import type { AnalysisMethod } from "@/lib/types";
 import styles from "./AnalysisForm.module.css";
 
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, onEdited, onOpenEditor }: Props) {
+	const [researchMode, setResearchMode] = useState(false);
   const [method, setMethod] = useState<AnalysisMethod>("hybrid");
 	const [compareMethods, setCompareMethods] = useState(false);
 	const [repositoryPath, setRepositoryPath] = useState("");
@@ -24,11 +26,30 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 	const [demoLoading, setDemoLoading] = useState(false);
 	const [demoError, setDemoError] = useState("");
 	const [demoScenario, setDemoScenario] = useState("comprehensive");
+	const [semanticStatus, setSemanticStatus] = useState<SemanticCapability | null>(null);
+	const [semanticChecking, setSemanticChecking] = useState(false);
 	useEffect(() => {
 		if (demoFiles && baseline !== demoFiles.old) setDemoFiles(null);
 	}, [baseline, demoFiles]);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function verifySemanticRuntime() {
+		setSemanticChecking(true);
+		try {
+			const capability = await checkSemanticRuntime();
+			setSemanticStatus(capability);
+			return capability.available;
+		} catch (error) {
+			setSemanticStatus({
+				available: false,
+				message: error instanceof Error ? error.message : "Semantic runtime could not be checked.",
+			});
+			return false;
+		} finally {
+			setSemanticChecking(false);
+		}
+	}
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 		const formData = new FormData(event.currentTarget);
 		for (const name of ["repo_path", "repository_name", "revision"]) {
@@ -40,7 +61,9 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 		}
 		if (edited) formData.set("new_bpmn", edited);
 		if (baseline) formData.set("old_bpmn", baseline);
-		void onSubmit(formData);
+		const needsSemantic = compareMethods || method !== "bm25";
+		if (needsSemantic && !semanticStatus?.available && !(await verifySemanticRuntime())) return;
+		await onSubmit(formData);
   }
 
 	async function loadSyntheticDemo() {
@@ -62,6 +85,7 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 			setRepositoryName(demoScenario === "comprehensive" ? "Synthetic Request Workflow" : `Synthetic ${demoScenario.replaceAll("-", " ")} workflow`);
 			setRevision("fixture-v1");
 			setMethod("hybrid");
+			setResearchMode(false);
 			setCompareMethods(false);
 		} catch (error) {
 			setDemoError(error instanceof Error ? error.message : "Synthetic demo could not be loaded.");
@@ -87,7 +111,7 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 				<span aria-hidden="true">▶</span>{demoLoading ? "Loading demo…" : "Load synthetic demo"}
 			</button>
 			{demoError && <p className={styles.demoError}>{demoError}</p>}
-      <form onSubmit={submit} className={styles.form}>
+      <form onSubmit={(event) => void submit(event)} className={styles.form}>
         <label className={styles.field}>
           <span>Repository path <b>*</b></span>
 					<input name="repo_path" value={repositoryPath} onChange={(event) => setRepositoryPath(event.target.value)} required placeholder="C:\path\to\repository" autoComplete="off" />
@@ -113,24 +137,41 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 				{edited && <p role="status">New BPMN ready: {edited.name}. Run analysis to update results.</p>}
 				{demoFiles && <div className={styles.demoActive}><b>Synthetic demo ready</b><span>Neutral BPMN fixtures will be submitted; no case-study data is used.</span></div>}
 
-        <div className={styles.grid}>
-          <label className={styles.field}>
-            <span>Mapping method</span>
-            <select name="method" value={method} onChange={(event) => setMethod(event.target.value as AnalysisMethod)}>
-              <option value="hybrid">Graph-aware deterministic hybrid</option>
-								<option value="fusion">BM25 + Semantic fusion (RRF)</option>
-              <option value="bm25">BM25 lexical baseline</option>
-								<option value="semantic">Semantic embedding baseline</option>
-            </select>
-          </label>
-          <label className={styles.field}><span>Top candidates</span><input name="top_k" type="number" min="1" max="100" defaultValue="5" /><small>Five keeps the review focused.</small></label>
-        </div>
-        <label className={styles.checkField}>
-          <input name="compare_methods" type="checkbox" checked={compareMethods} onChange={(event) => setCompareMethods(event.target.checked)} />
-			<span><b>Compare mapping methods</b><small>Runs BM25, Semantic, rank fusion, and Graph-Aware Hybrid on the same input.</small></span>
-        </label>
+				<div className={styles.modeSwitch} role="group" aria-label="Analysis mode">
+					<button type="button" aria-pressed={!researchMode} onClick={() => { setResearchMode(false); setMethod("hybrid"); setCompareMethods(false); }}>Product</button>
+					<button type="button" aria-pressed={researchMode} onClick={() => setResearchMode(true)}>Research</button>
+				</div>
+				{researchMode ? <p className={styles.modeNote}><b>Research mode</b> exposes baselines and controlled method comparison. It does not change the production recommendation.</p> : <div className={styles.methodSummary}><span>Production method</span><b>Graph-Aware Hybrid</b><small>BM25, semantic retrieval, and graph/source evidence are combined automatically.</small></div>}
+				<input type="hidden" name="method" value={researchMode ? method : "hybrid"} />
+				<div className={styles.grid}>
+					{researchMode && <label className={styles.field}>
+						<span>Experimental method</span>
+						<select aria-label="Experimental method" value={method} onChange={(event) => setMethod(event.target.value as AnalysisMethod)}>
+							<option value="hybrid">Graph-aware deterministic hybrid</option>
+							<option value="fusion">BM25 + Semantic fusion (RRF)</option>
+							<option value="bm25">BM25 lexical baseline</option>
+							<option value="semantic">Semantic embedding baseline</option>
+						</select>
+					</label>}
+					<label className={styles.field}><span>Top candidates</span><input name="top_k" type="number" min="1" max="100" defaultValue="5" /><small>Five keeps the review focused.</small></label>
+				</div>
+				{researchMode && <label className={styles.checkField}>
+					<input name="compare_methods" type="checkbox" checked={compareMethods} onChange={(event) => setCompareMethods(event.target.checked)} />
+					<span><b>Compare mapping methods</b><small>Runs BM25, Semantic, rank fusion, and Graph-Aware Hybrid on the same input.</small></span>
+				</label>}
 
-        <button className={styles.submit} disabled={loading} type="submit">
+				{(compareMethods || method !== "bm25") && (
+					<div className={styles.runtimeCheck} data-state={semanticStatus ? (semanticStatus.available ? "ready" : "unavailable") : "unchecked"}>
+						<div>
+							<b>Semantic runtime</b>
+							<small role="status">{semanticChecking ? "Checking the local embedding model…" : semanticStatus?.message ?? "Required by this method; checked locally before analysis."}</small>
+							{semanticStatus?.available && semanticStatus.model && <small>{semanticStatus.model}</small>}
+						</div>
+						<button type="button" disabled={loading || semanticChecking} onClick={() => void verifySemanticRuntime()}>{semanticChecking ? "Checking…" : "Check runtime"}</button>
+					</div>
+				)}
+
+				<button className={styles.submit} disabled={loading || semanticChecking} type="submit">
           {loading ? "Analysis in progress…" : "Run impact analysis"}<span aria-hidden="true">→</span>
         </button>
         <p className={styles.note}>The mapper never executes or modifies repository source.</p>

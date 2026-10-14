@@ -16,7 +16,14 @@ import (
 )
 
 func NewAnalyzer() app.Analyzer {
-	return app.Analyzer{Resolver: strategyResolver{semanticEmbedder: semantic.NewPythonEmbedderFromEnvironment()}}
+	return NewAnalyzerWithSemanticEmbedder(semantic.NewPythonEmbedderFromEnvironment())
+}
+
+// NewAnalyzerWithSemanticEmbedder keeps runtime construction in the composition
+// root while allowing the server to share one configured embedder with its
+// capability check.
+func NewAnalyzerWithSemanticEmbedder(embedder semantic.Embedder) app.Analyzer {
+	return app.Analyzer{Resolver: strategyResolver{semanticEmbedder: embedder}}
 }
 
 type strategyResolver struct{ semanticEmbedder semantic.Embedder }
@@ -67,7 +74,15 @@ func (resolver strategyResolver) semanticStrategy() (semantic.Strategy, []byte, 
 	if resolver.semanticEmbedder == nil {
 		return semantic.Strategy{}, nil, fmt.Errorf("semantic embedder is not configured")
 	}
-	identity, err := json.Marshal(resolver.semanticEmbedder.Identity())
+	identityValue := resolver.semanticEmbedder.Identity()
+	// Resolver identity must remain stable before and after the first runtime
+	// call. Dynamic package/model metadata is added to the final analysis
+	// identity by app.Analyzer after retrieval completes.
+	identityValue.PythonVersion = ""
+	identityValue.SentenceTransformersVersion = ""
+	identityValue.ModelArtifactSHA256 = ""
+	identityValue.EmbeddingDimension = 0
+	identity, err := json.Marshal(identityValue)
 	if err != nil {
 		return semantic.Strategy{}, nil, err
 	}

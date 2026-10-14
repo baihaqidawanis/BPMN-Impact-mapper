@@ -27,7 +27,8 @@ test("canvas draft preserves baseline, exports XML and submits edited BPMN", asy
   expect((await download).suggestedFilename()).toBe("edited-process.bpmn");
   await dialog.getByRole("button", { name: "Use edited BPMN" }).click();
   await expect(dialog).not.toBeVisible();
-  await page.locator('select[name="method"]').selectOption("bm25");
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
   await page.getByRole("button", { name: "Run impact analysis" }).click();
   await expect(page.getByTestId("report-view")).toBeVisible();
   await expect(page.getByTestId("report-view")).toContainText("MODIFY TASK LABEL");

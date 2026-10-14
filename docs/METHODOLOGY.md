@@ -107,7 +107,7 @@ falls back to another method.
 The adapter invokes only its embedded trusted Python helper, forces offline
 model loading, bounds documents and process output, and honors cancellation. It
 never imports or executes code from the analyzed repository. Model/provider are
-stored in canonical report metadata. A model checksum, cross-machine numerical
-reproducibility, and retrieval accuracy remain evaluation work. Semantic is not
-part of the current Hybrid score; final thesis inclusion remains advisor-gated.
-See [SEMANTIC_RETRIEVAL.md](SEMANTIC_RETRIEVAL.md).
+stored in canonical report metadata. Semantic participates in Graph-Aware
+Hybrid through RRF; it cannot promote deterministic actions. Cross-machine
+numerical reproducibility and retrieval accuracy remain evaluation work. See
+[SEMANTIC_RETRIEVAL.md](SEMANTIC_RETRIEVAL.md).

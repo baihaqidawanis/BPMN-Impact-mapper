@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_Vocabulary_Old">
+  <process id="Process_Vocabulary" isExecutable="false">
+    <laneSet id="LaneSet_Vocabulary">
+      <lane id="Lane_Analyst" name="Procurement Analyst">
+        <flowNodeRef>START-VOCAB</flowNodeRef>
+        <flowNodeRef>END-VOCAB</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="START-VOCAB" name="Intake submitted"/>
+    <endEvent id="END-VOCAB" name="Decision recorded"/>
+    <sequenceFlow id="FLOW-VOCAB-OLD" sourceRef="START-VOCAB" targetRef="END-VOCAB"/>
+  </process>
+</definitions>

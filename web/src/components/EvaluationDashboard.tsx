@@ -99,7 +99,7 @@ function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
     ["Recall@1", m => m.recall.at_1], ["Recall@3", m => m.recall.at_3], ["Recall@5", m => m.recall.at_5],
     ["Precision@1", m => m.precision.at_1], ["Precision@3", m => m.precision.at_3], ["Precision@5", m => m.precision.at_5],
     ["MRR", m => m.mrr], ["MAP", m => m.map], ["File precision", m => m.file_precision], ["File recall", m => m.file_recall], ["File F1", m => m.file_f1],
-    ["Module accuracy*", m => m.module_accuracy], ["Layer accuracy*", m => m.layer_accuracy], ["Action accuracy", m => m.required_action_accuracy],
+    ["Module accuracy*", m => m.module_accuracy], ["Layer accuracy*", m => m.layer_accuracy], ["Action accuracy on retrieved files", m => m.required_action_accuracy], ["Action macro-F1", m => m.required_action_macro_f1],
     ["Unresolved rate", m => m.unresolved_rate], ["False discovery proportion", m => m.false_positive_rate],
   ];
   return <section data-testid="evaluation-results">
@@ -108,7 +108,14 @@ function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
     <div className={styles.tableWrap}><table><thead><tr><th>Metric</th>{bundle.results.map(r => <th key={r.analysis_id}>{r.method}</th>)}</tr></thead>
       <tbody>{rows.map(([name, value]) => <tr key={name}><th>{name}</th>{bundle.results.map(r => <td key={r.analysis_id}>{value(r.metrics).toFixed(4)}</td>)}</tr>)}</tbody>
     </table></div>
-    <p>*Legacy module/layer metrics count unspecified expected metadata as matching. False discovery proportion is FP/(TP+FP); true-negative-based FPR is unavailable. Latency is not measured by this dashboard. These results describe the selected scenario only.</p>
+    <p>*Legacy module/layer metrics count unspecified expected metadata as matching. Action macro-F1 counts a missed relevant file as UNRESOLVED and averages only actions present in ground truth. False discovery proportion is FP/(TP+FP); true-negative-based FPR is unavailable. Latency is not measured by this dashboard. These results describe the selected scenario only.</p>
+    {bundle.results.map(result => <details className={styles.confusion} key={`actions-${result.analysis_id}`}>
+      <summary>{result.method} action confusion matrix</summary>
+      <p>Rows are expected actions; columns are predicted actions.</p>
+      <div className={styles.tableWrap}><table><thead><tr><th>Expected</th>{result.metrics.required_action_confusion.labels.map(label => <th key={label}>{label}</th>)}</tr></thead>
+        <tbody>{result.metrics.required_action_confusion.labels.map((label, row) => <tr key={label}><th>{label}</th>{result.metrics.required_action_confusion.rows[row].map((count, column) => <td key={`${label}-${column}`}>{count}</td>)}</tr>)}</tbody>
+      </table></div>
+    </details>)}
     <section className={styles.diagnostics} data-testid="evaluation-diagnostics">
       <h4>Per-change diagnostics</h4>
       <p>Inspect which BPMN change was retrieved, missed, or left unresolved. This is the useful layer for improving a method; aggregate scores alone do not explain a failure.</p>

@@ -140,7 +140,12 @@ For presentation, select **Load synthetic demo** and then **Run impact analysis*
 
 The demo selector also provides focused insert-task, add/remove gateway branch, move-task, and ambiguous-match scenarios. These are deterministic functionality demonstrations, not accuracy evidence.
 
-Select **Compare mapping methods** to run the same input sequentially through BM25, Semantic, BM25 + Semantic Fusion, and Graph-Aware Hybrid. The comparison verifies one shared input fingerprint and shows retrieval counts, unresolved cases, overlap, and per-change top candidates. These are method differences, not accuracy metrics. On the current machine a cold Semantic run can take tens of seconds because the local model starts in a separate process; identical embeddings are reused in memory by the following Fusion and Hybrid runs.
+The default **Product** mode runs only Graph-Aware Hybrid. Switch to **Research** mode to select BM25, Semantic, or Fusion, or select **Compare mapping methods** to run the same input sequentially through all four configurations. The comparison verifies one shared input fingerprint and shows retrieval counts, unresolved cases, overlap, and per-change top candidates. These are research controls, not user-facing accuracy claims. On the current machine a cold Semantic run can take tens of seconds because the local model starts in a separate process; identical embeddings are reused in memory by the following Fusion and Hybrid runs.
+
+Semantic, Fusion, and Hybrid display a local runtime check before analysis. The
+check never downloads a model or calls a network service. If it is unavailable,
+select BM25 or configure `BPMN_IMPACT_PYTHON` and a locally cached
+`BPMN_IMPACT_SEMANTIC_MODEL`.
 
 After any report, open **Reviewer annotation** to select expected impacts, correct their expected action, and add missed files manually. The browser downloads a version-1 reviewer JSON compatible with `bpmn-impact-mapper reconcile`. Candidate selections are not automatic ground truth; independently inspect the frozen implementation evidence before export.
 
@@ -162,6 +167,7 @@ The Playwright suite uses the installed Chrome browser, starts isolated local Go
 API routes:
 
 - `GET /api/v1/health`;
+- `POST /api/v1/capabilities/semantic/check` (offline runtime readiness; no repository input);
 - `GET /api/v1/analyses` (deterministic stored-report summaries);
 - `POST /api/v1/analyses` using bounded multipart form data;
 - `GET /api/v1/analyses/{analysis-id}`;
@@ -202,7 +208,7 @@ go run ./cmd/bpmn-impact-mapper evaluate `
   --output outputs\hybrid\evaluation
 ```
 
-It writes `evaluation-report.json` and `evaluation-report.md` with Recall@1/@3/@5, Precision@1/@3/@5, MRR, MAP, file precision/recall/F1, module/layer/action accuracy, unresolved rate, false-positive rate, counts, and reproducibility hashes.
+It writes `evaluation-report.json` and `evaluation-report.md` with Recall@1/@3/@5, Precision@1/@3/@5, MRR, MAP, file precision/recall/F1, module/layer/action accuracy, required-action macro-F1, an action confusion matrix, unresolved rate, false discovery proportion, counts, and reproducibility hashes. A missed expected file is represented as predicted `UNRESOLVED` in the action confusion matrix; action accuracy remains limited to retrieved expected files.
 
 ## Frozen benchmark
 
@@ -214,7 +220,16 @@ go run ./cmd/bpmn-impact-mapper benchmark `
   --output outputs\benchmark
 ```
 
-The manifest pins SHA-256 for old/new BPMN, configuration, and hidden ground truth. The runner additionally requires a shared method-independent repository/BPMN input fingerprint and byte-identical predictions across repetitions. Deterministic metrics are written to `benchmark-report.json`, `.md`, and spreadsheet-ready `.csv`; volatile wall-clock measurements are isolated in `benchmark-timing.json`.
+The manifest pins SHA-256 for old/new BPMN and hidden ground truth. It runs BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid on the same input. Configuration-driven mapping can be added as an optional legacy comparator, but then its mapping JSON path and SHA-256 are mandatory. The runner additionally requires a shared method-independent repository/BPMN input fingerprint and byte-identical predictions across repetitions. Deterministic metrics are written to `benchmark-report.json`, `.md`, and spreadsheet-ready `.csv`; `benchmark-ablation.md/.csv` reports each configuration's paired aggregate delta against Hybrid without claiming causality. Raw volatile wall-clock measurements remain in `benchmark-timing.json`, while `benchmark-comparison.md/.csv` place labeled latency summaries beside deterministic metrics without adding latency to the benchmark identity.
+
+The tracked benchmark includes a vocabulary-mismatch control whose BPMN task
+has no stable ID or exact label token in the expected source symbol. This is a
+synthetic method control, not case-study accuracy evidence.
+
+Latency output is shared-process and sequential. The first embedding method
+includes cold model startup while later methods may reuse the embedding cache;
+do not interpret it as a fair speed ranking without an isolated cold/warm run
+protocol.
 
 ## Reviewer reconciliation
 
@@ -258,7 +273,9 @@ With `--manifest`, reconciliation verifies the pack ID, case digest, canonical r
 - `internal/report`: canonical JSON and Markdown renderer;
 - `internal/reportstore`: completed-analysis persistence port;
 - `internal/filestore`: atomic local JSON/Markdown report adapter;
-- `internal/llm`: provider contract and offline `NoLLMProvider`;
+- `internal/llm`: offline `NoLLMProvider` plus a bounded, typed
+  `OpenAICompatibleProvider` adapter; production composition remains offline by
+  default and no API key is stored in source;
 - `internal/mapping`: inward strategy/resolver ports and shared method options;
 - `internal/configmapping`, `internal/retrieval`: outward method adapters;
 - `internal/evaluation`: pure post-inference evaluation use case;
@@ -273,6 +290,9 @@ With `--manifest`, reconciliation verifies the pack ID, case digest, canonical r
 - `testdata`: original synthetic BPMN/source/golden fixtures.
 
 Detailed decisions are in [PLAN.md](PLAN.md), [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md), [semantic retrieval research proposal](docs/SEMANTIC_RETRIEVAL.md), [security](docs/SECURITY.md), and [evaluation](docs/EVALUATION.md).
+
+The concise four-method research baseline and its primary literature are in
+[BASELINE-METHODS.md](BASELINE-METHODS.md).
 
 ## Current limitations
 

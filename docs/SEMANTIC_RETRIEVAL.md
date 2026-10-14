@@ -36,8 +36,10 @@ retrieved context to a generative model.
 - Rank by cosine similarity with deterministic tie-breaking.
 - Emit only indexed files/symbols and bounded source excerpts as evidence.
 - Classify results as `VERIFY`; similarity alone does not prove code must change.
-- Record provider and model identity in each report. Model checksum, hardware,
-  and latency belong in the frozen experiment manifest and remain follow-up work.
+- Record provider/model, embedded-adapter SHA-256, Python and
+  `sentence-transformers` versions, embedding dimension, and a deterministic
+  loaded-model artifact SHA-256 in each report. Hardware identity remains
+  experiment-run metadata rather than canonical prediction input.
 - Keep repository content local; do not call an external embedding API.
 
 The implementation uses cached `all-MiniLM-L6-v2` through
@@ -45,7 +47,10 @@ The implementation uses cached `all-MiniLM-L6-v2` through
 cosine similarity, a default `0.25` threshold, and deterministic file/symbol
 tie-breaking. It excludes stable IDs from queries and emits only `VERIFY`.
 That model choice is not yet validated for source code or Indonesian BPMN
-labels. A smoke run proves operability only, not accuracy.
+labels. A smoke run proves operability only, not accuracy. The model artifact
+fingerprint hashes loaded weights, module configuration, tokenizer vocabulary,
+dimension, selected model name, and library version without exposing a local
+cache path.
 
 ## Implemented rank fusion
 
@@ -72,6 +77,13 @@ The Python adapter serializes model workers per server process and retains only
 the most recent input hash and vectors in memory. Therefore the web comparison
 can reuse identical embeddings across Semantic, Fusion, and Hybrid without
 persisting repository text.
+
+The web performs an explicit capability check before a method that needs
+embeddings. The check embeds one fixed, non-repository sentence using the same
+configured adapter. Successful readiness is cached for the server lifetime;
+failures are not cached. The public response exposes only provider/model identity
+and a bounded generic message, while detailed runtime errors remain in the local
+server log. This is an operational preflight, not an accuracy measurement.
 
 ## Recent literature (2022-2024)
 

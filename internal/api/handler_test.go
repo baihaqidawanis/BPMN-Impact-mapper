@@ -2,7 +2,9 @@ package api_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +20,30 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
+
+func TestSemanticCapabilityCheck(t *testing.T) {
+	t.Run("available", func(t *testing.T) {
+		handler := api.Handler{SemanticCheck: func(context.Context) (string, string, error) {
+			return "offline-test", "fixture-model", nil
+		}}
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/v1/capabilities/semantic/check", nil))
+		if response.Code != http.StatusOK || !bytes.Contains(response.Body.Bytes(), []byte(`"available":true`)) || !bytes.Contains(response.Body.Bytes(), []byte(`"model":"fixture-model"`)) {
+			t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+		}
+	})
+
+	t.Run("unavailable does not leak runtime detail", func(t *testing.T) {
+		handler := api.Handler{SemanticCheck: func(context.Context) (string, string, error) {
+			return "offline-test", "fixture-model", errors.New(`C:\\private\\model failed`)
+		}}
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/api/v1/capabilities/semantic/check", nil))
+		if response.Code != http.StatusOK || !bytes.Contains(response.Body.Bytes(), []byte(`"available":false`)) || bytes.Contains(response.Body.Bytes(), []byte(`C:\\private`)) {
+			t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+		}
+	})
+}
 
 func TestHandlerReturnsCanonicalReport(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")

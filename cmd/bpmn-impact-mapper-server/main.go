@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/filestore"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/llm"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
 
@@ -49,8 +51,13 @@ func run(arguments []string) error {
 	if err := os.MkdirAll(root, 0o750); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
 	}
+	embedder := semantic.NewPythonEmbedderFromEnvironment()
+	var semanticProbe struct {
+		sync.Mutex
+		ready bool
+	}
 	handler := api.Handler{
-		Analyzer:       wiring.NewAnalyzer(),
+		Analyzer:       wiring.NewAnalyzerWithSemanticEmbedder(embedder),
 		Store:          filestore.ReportStore{Root: filepath.Join(root, "analyses")},
 		Planner:        planning.Orchestrator{Provider: llm.NoLLMProvider{}},
 		PlanStore:      filestore.PlanStore{Root: filepath.Join(root, "plans")},
@@ -58,6 +65,17 @@ func run(arguments []string) error {
 		MaxRequestSize: *maxRequestBytes,
 		MaxBPMNSize:    *maxBPMNBytes,
 		LogError:       func(err error) { log.Printf("request error: %v", err) },
+		SemanticCheck: func(ctx context.Context) (string, string, error) {
+			identity := embedder.Identity()
+			semanticProbe.Lock()
+			defer semanticProbe.Unlock()
+			if semanticProbe.ready {
+				return identity.Provider, identity.Model, nil
+			}
+			_, err := embedder.Embed(ctx, []string{"semantic runtime readiness"})
+			semanticProbe.ready = err == nil
+			return identity.Provider, identity.Model, err
+		},
 	}
 	server := &http.Server{
 		Addr:              *address,

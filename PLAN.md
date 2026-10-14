@@ -442,7 +442,10 @@ Automate fair repeated comparison without letting orchestration or reviewer data
 
 ### Phase 2B verification note
 
-The frozen synthetic manifest executes three methods × two repetitions and produces three scenario-method results with shared inputs. Deterministic benchmark output is separated from timing. Reviewer reconciliation intentionally leaves one synthetic conflict unresolved. A real Simple-ERP benchmark still requires user/reviewer-authored mutation scenarios and independently adjudicated ground truth; the tool does not fabricate them.
+Historical note: this tranche originally executed three methods. Phase 4.2
+supersedes its manifest contract with the current four automatic methods. The
+reviewer boundary remains unchanged: a real Simple-ERP benchmark still requires
+independently adjudicated ground truth, which the tool does not fabricate.
 
 ## 29. Phase 2C plan — auditable case-study pilot preparation
 
@@ -878,3 +881,102 @@ reports for all 12 synthetic changes. `go test -count=1 ./...`, `go vet ./...`,
 TypeScript type-check, Next.js production build, `git diff --check`, and all
 seven serial Playwright workflows pass. These results prove implementation
 mechanics only; comparative accuracy remains blocked on hidden ground truth.
+
+## 46. Phase 4.2 - current benchmark contract and semantic preflight
+
+Authorization: user instruction on 2026-10-14 to continue hardening all
+development work that does not require reviewer input or an LLM credential.
+
+- [DONE] Require BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid in
+  the primary frozen benchmark manifest.
+- [DONE] Retain Configuration-Driven only as an optional legacy comparator with
+  a mandatory frozen mapping path and SHA-256 when selected.
+- [DONE] Remove the obsolete mandatory mapping fixture from the primary
+  synthetic benchmark.
+- [DONE] Add an offline semantic runtime capability endpoint using the same
+  configured embedder as analysis.
+- [DONE] Prevent Semantic, Fusion, Hybrid, and method comparison from submitting
+  when the local embedding runtime is unavailable; keep BM25 independent.
+- [DONE] Bound the public capability response and keep subprocess/runtime detail
+  in local logs.
+- [DONE] Run full Go, vet, Next.js build, Playwright, and diff quality gates and
+  record final evidence.
+
+This tranche does not invent case-study ground truth, recalibrate scores from
+synthetic fixtures, download a model, call an external API, or enable an LLM.
+
+Verification evidence (2026-10-14): the frozen four-method manifest completed
+two repetitions per method with benchmark ID
+`1b74d82408aa04a940abbfe642e8e08b`; all 11 serial Playwright workflows passed
+in 2.3 minutes, including real offline Hybrid execution and the unavailable
+runtime/BM25 fallback control. Full Go tests, vet, TypeScript type-check, Next.js
+production build, and `git diff --check` pass. These remain implementation and
+reproducibility checks, not retrieval-accuracy claims.
+
+## 47. Phase 4.3 - research baseline and pre-provider hardening
+
+Authorization: user instruction on 2026-10-14 to implement the six remaining
+development steps before discussing evaluation metrics.
+
+- [DONE] Add root `BASELINE-METHODS.md` with the four method contracts,
+  limitations, and primary literature; correct the stale Hybrid/Semantic note.
+- [DONE] Bind semantic reports and analysis identity to adapter SHA-256, Python
+  version, sentence-transformers version, embedding dimension, and loaded model
+  artifact SHA-256 without exposing local cache paths.
+- [DONE] Add a synthetic vocabulary-mismatch/no-trace-ID benchmark scenario.
+- [DONE] Export combined deterministic metrics and separately labeled volatile
+  latency summaries as benchmark comparison Markdown and CSV.
+- [DONE] Implement an isolated OpenAI-compatible planning provider with strict
+  typed JSON, bounded I/O, HTTPS/loopback policy, and mock-server tests; keep
+  `NoLLMProvider` as production default.
+- [DONE] Prevent provider action escalation, code-block output, unbounded plan
+  prose, and `COMPLETE` status while reviewer issues remain.
+- [DONE] Complete full quality gates and record the final benchmark
+  evidence before metric-design discussion.
+
+This phase does not activate an external model, send repository data, create
+case-study ground truth, or claim accuracy from synthetic controls.
+
+Interim benchmark evidence: two scenarios, four methods, and two repetitions
+completed with benchmark ID `631994bff5746c42dd955fd828c171cf`.
+The vocabulary-mismatch control produced Recall@1 `0.0000` for BM25 and
+`1.0000` for Semantic, Fusion, and Hybrid. This demonstrates that the control
+separates lexical and semantic behavior; it is deliberately constructed
+synthetic evidence and not an accuracy or generalization result. The timing
+table is explicitly labeled shared-process/sequential because Fusion bears the
+cold model start and later methods reuse cached embeddings.
+
+Final verification evidence (2026-10-14): focused semantic, benchmark, LLM,
+and planning tests pass; the full Go suite and `go vet ./...` pass; TypeScript
+type-check and the Next.js production build pass; `git diff --check` passes.
+The serial Playwright suite passed 10/11 on its first run because the real local
+embedding runtime transiently failed its cold preflight under the combined
+browser/build workload; the failed evaluation workflow passed on an isolated
+rerun (1/1). The separate frozen benchmark completed every real offline
+Semantic/Fusion/Hybrid repetition. This is recorded as an environment-sensitive
+cold-start limitation, not hidden as an accuracy failure.
+
+## 48. Phase 4.4 - product/research boundary and action evaluation
+
+Authorization: user instruction on 2026-10-14 to retain Hybrid as the product
+method while keeping component methods available for research comparison.
+
+- [DONE] Make Product mode the web default and submit only Graph-Aware Hybrid.
+- [DONE] Move BM25, Semantic, Fusion, and four-method comparison behind an
+  explicit Research mode control without removing the reproducible experiment
+  path.
+- [DONE] Add required-action macro-F1 and a fixed-label action confusion matrix
+  to canonical evaluation JSON, Markdown, API output, and the web dashboard.
+- [DONE] Count an expected file that is absent from retrieval as predicted
+  `UNRESOLVED` in the confusion matrix; retain existing action accuracy as a
+  retrieved-file-only diagnostic to avoid silently changing its meaning.
+- [DONE] Add `benchmark-ablation.md` and `.csv` with paired aggregate deltas
+  against Hybrid, explicitly labeled descriptive rather than causal.
+- [TODO] Add Docker Compose as a separately validated local packaging phase;
+  it is intentionally outside this focused commit.
+
+Verification evidence (2026-10-15): `go test -count=1 ./...`, `go vet ./...`,
+TypeScript type-check, and production build pass. All 11 serial Playwright
+workflows pass after the Product/Research selector update, including BM25
+fallback, four-method comparison, canvas editing, immutable evaluation, and
+reviewer export. No network provider or LLM is enabled.

@@ -26,6 +26,18 @@ Generated/binary: source maps, common minified assets, common generated Go/C# su
 
 Process inputs: repository `.bpmn` files are not part of the software-source retrieval corpus. XML-named copies of selected BPMN/configuration inputs are removed by exact-content matching.
 
+The semantic capability endpoint processes one fixed mapper-owned sentence and
+does not receive repository or BPMN content. Runtime failures are logged locally;
+the browser receives a generic message and never receives subprocess stderr or
+an absolute model path.
+
+The optional OpenAI-compatible planning adapter is not wired into the server by
+default. It accepts only the bounded evidence bundle, requires HTTPS for remote
+hosts (loopback HTTP is allowed for local labs/tests), caps request/response
+bytes, disables redirects in its default client, returns generic HTTP failures,
+and never persists or logs its API key. Typed planning validation remains the
+authority after provider output.
+
 Leakage artifacts: process mapping, traceability coverage, checkpoint trees, release-candidate/review-finding documents, documentation plan trees, audit/implementation plans, generated impact reports, and ground-truth paths/files.
 
 Caller-supplied `--ignore` globs extend, but do not weaken, defaults.

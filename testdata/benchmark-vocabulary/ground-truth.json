@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "TASK-ELIGIBILITY",
+      "expected": [
+        {
+          "file": "internal/application/requisition.go",
+          "symbol": "ScreenSourcingNeed",
+          "module": "internal",
+          "layer": "application",
+          "required_action": "ADD"
+        }
+      ]
+    }
+  ]
+}

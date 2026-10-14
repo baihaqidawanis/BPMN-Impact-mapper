@@ -12,7 +12,9 @@ export interface EvaluationResult {
     recall: { at_1: number; at_3: number; at_5: number };
     precision: { at_1: number; at_3: number; at_5: number };
     mrr: number; map: number; file_f1: number; file_precision: number; file_recall: number;
-    module_accuracy: number; layer_accuracy: number; required_action_accuracy: number;
+    module_accuracy: number; layer_accuracy: number; required_action_accuracy: number; required_action_macro_f1: number;
+    required_action_classes: { action: string; support: number; precision: number; recall: number; f1: number }[];
+    required_action_confusion: { labels: string[]; rows: number[][] };
     unresolved_rate: number; false_positive_rate: number; evaluated_changes: number;
   };
   changes: {

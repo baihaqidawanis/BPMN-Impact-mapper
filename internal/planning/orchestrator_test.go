@@ -57,18 +57,30 @@ func (provider *fakeProvider) PlanLayer(_ context.Context, request planning.Laye
 		if provider.mode == "invent-file" {
 			file = "invented/file.go"
 		}
+		action := candidate.SuggestedAction
+		steps := []string{"Inspect the cited symbol and preserve its public contract."}
+		if provider.mode == "escalate-action" {
+			action = domain.ActionRemove
+		}
+		if provider.mode == "code-step" {
+			steps = []string{"```go\nfunc invented() {}\n```"}
+		}
 		plans = append(plans, planning.FilePlan{
 			ChangeType: decision.ChangeType, ElementID: decision.ElementID, File: file, Symbol: candidate.Symbol,
-			Module: candidate.Module, Layer: candidate.Layer, Action: candidate.SuggestedAction,
+			Module: candidate.Module, Layer: candidate.Layer, Action: action,
 			Summary: "Update the existing behavior without generating source code.",
-			Steps:   []string{"Inspect the cited symbol and preserve its public contract."}, EvidenceIDs: append([]string(nil), decision.EvidenceIDs...),
+			Steps:   steps, EvidenceIDs: append([]string(nil), decision.EvidenceIDs...),
 		})
 	}
 	return planning.LayerPlanningResponse{Plans: plans}, nil
 }
 
-func (*fakeProvider) ReviewPlan(_ context.Context, request planning.ReviewRequest) (planning.ReviewResponse, error) {
-	return planning.ReviewResponse{Approved: true, Revised: append([]planning.FilePlan(nil), request.Draft...)}, nil
+func (provider *fakeProvider) ReviewPlan(_ context.Context, request planning.ReviewRequest) (planning.ReviewResponse, error) {
+	issues := []string{}
+	if provider.mode == "approved-with-issues" {
+		issues = []string{"A reviewer concern remains."}
+	}
+	return planning.ReviewResponse{Approved: true, Issues: issues, Revised: append([]planning.FilePlan(nil), request.Draft...)}, nil
 }
 
 func TestOrchestratorProducesDeterministicEvidenceGroundedPlan(t *testing.T) {
@@ -101,13 +113,20 @@ func TestOrchestratorProducesDeterministicEvidenceGroundedPlan(t *testing.T) {
 }
 
 func TestOrchestratorRejectsInventedOrIncompleteOutput(t *testing.T) {
-	for _, mode := range []string{"invent-file", "invent-evidence", "omit-plan"} {
+	for _, mode := range []string{"invent-file", "invent-evidence", "omit-plan", "escalate-action", "code-step"} {
 		t.Run(mode, func(t *testing.T) {
 			_, err := (planning.Orchestrator{Provider: &fakeProvider{mode: mode}}).Run(context.Background(), fixtureReport())
 			if err == nil {
 				t.Fatal("expected hallucination guard to reject provider output")
 			}
 		})
+	}
+}
+
+func TestOrchestratorCannotCompleteWhileReviewIssuesRemain(t *testing.T) {
+	plan, err := (planning.Orchestrator{Provider: &fakeProvider{mode: "approved-with-issues"}}).Run(context.Background(), fixtureReport())
+	if err != nil || plan.Status != planning.StatusNeedsReview || len(plan.ReviewIssues) != 1 {
+		t.Fatalf("plan=%#v err=%v", plan, err)
 	}
 }
 

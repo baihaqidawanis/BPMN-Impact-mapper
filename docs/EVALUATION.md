@@ -23,7 +23,8 @@ Use a frozen scenario-change × artifact unit. Prefer two independent reviewers 
 - Recall@1/@3/@5 and Precision@1/@3/@5 on unique paths;
 - MRR, and MAP when multiple relevant artifacts have binary relevance;
 - file, module, and layer accuracy;
-- required-action classification by change type;
+- required-action accuracy on retrieved expected files, plus macro-F1 and a
+  confusion matrix where an expected file not retrieved becomes `UNRESOLVED`;
 - unresolved/abstention and false-positive rates;
 - latency plus evidence/index preparation time;
 - repeated-run byte-for-byte reproducibility;
@@ -31,15 +32,30 @@ Use a frozen scenario-change × artifact unit. Prefer two independent reviewers 
 
 Recall@k must not be mislabeled as Hit@k. Ranking metrics do not prove implementation correctness.
 
-Phase 2A implements these metrics in `internal/evaluation`. Ranking metrics are macro-averaged by ground-truth case; file precision/recall/F1 are micro-aggregated over unique file paths. Prediction files are deduplicated per change before scoring. Module/layer/action accuracy is evaluated only for expected files that were retrieved. `Precision@k` uses `k` as the denominator even when fewer candidates are returned. Negative-control cases may have an empty expected set and still contribute false positives.
+Phase 2A implements these metrics in `internal/evaluation`. Ranking metrics are macro-averaged by ground-truth case; file precision/recall/F1 are micro-aggregated over unique file paths. Prediction files are deduplicated per change before scoring. Module/layer/action accuracy is evaluated only for expected files that were retrieved. The required-action confusion matrix instead includes every expected file and records a missing retrieval as predicted `UNRESOLVED`; macro-F1 averages only action classes that have ground-truth support. `Precision@k` uses `k` as the denominator even when fewer candidates are returned. Negative-control cases may have an empty expected set and still contribute false positives.
 
 Canonical prediction and ground-truth byte hashes bind every evaluation artifact. The evaluation ID is deterministic from those hashes. Latency remains zero in Phase 2A because volatile timing is deliberately kept out of canonical inference reports; controlled experiment orchestration should record wall time separately in a later tranche.
 
 ## Frozen benchmark orchestration
 
-Phase 2B adds a versioned manifest with repository metadata and SHA-256 locks for BPMN pairs, configuration, and hidden ground truth. Every manifest must include configuration, BM25, and hybrid methods; repetitions must be between 2 and 10. The report's method-independent `input_fingerprint` hashes repository metadata, allowed repository contents, both BPMNs, and ingestion configuration. A run fails when fingerprints differ across methods, an optional expected fingerprint does not match, or repeated canonical prediction/evaluation hashes drift.
+Phase 2B adds a versioned manifest with repository metadata and SHA-256 locks for BPMN pairs and hidden ground truth. Every primary manifest must include BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid; repetitions must be between 2 and 10. Configuration-driven mapping is an optional legacy comparator and requires a frozen mapping path plus SHA-256 when selected. The report's method-independent `input_fingerprint` hashes repository metadata, allowed repository contents, both BPMNs, and ingestion configuration. A run fails when fingerprints differ across methods, an optional expected fingerprint does not match, or repeated canonical prediction/evaluation hashes drift.
 
 Ground-truth bytes are parsed only after the corresponding inference call returns. Timing uses a separate non-deterministic artifact and does not affect benchmark IDs or metric reports. Method aggregates are macro means across scenarios; counts remain summed.
+
+`benchmark-comparison.md` and `.csv` present Recall@5, MRR, File F1, and
+per-method min/median/mean/max wall-clock latency in one table. Latency remains
+explicitly volatile and excluded from prediction hashes and benchmark identity.
+`benchmark-ablation.md` and `.csv` use Hybrid as a paired aggregate reference
+and report deltas for BM25, Semantic, and Fusion. They describe the frozen
+scenarios only and do not establish causal contribution.
+The current runner is shared-process and sequential: the first embedding method
+includes cold model startup while later methods may reuse embeddings. Therefore
+these timings diagnose runtime behavior but are not yet a fair standalone
+method-speed comparison; a cold/warm isolated protocol is required for that
+claim.
+The vocabulary-mismatch fixture is a synthetic control for a task whose expected
+source uses different wording and no BPMN trace ID; it must not be presented as
+independent empirical evidence.
 
 ## Independent review
 
@@ -61,7 +77,7 @@ Two versioned reviewer annotations use the same case/expected-impact contract. R
 
 `testdata` is synthetic and neutral. It exercises task, actor, gateway, flow, data, state, and terminal changes against Go and TypeScript-like text without copying either external study repository. External case-study results must be reported separately and cannot establish universal generalization.
 
-The included three-method run is only a functional smoke benchmark. The configuration fixture intentionally mirrors two synthetic expectations, so its perfect fixture score must not be reported as comparative research evidence.
+The included four-method run is only a functional smoke benchmark. Its synthetic ground truth is fixture-authored and must not be reported as independent case-study evidence.
 
 ## Case-study pilot inputs
 

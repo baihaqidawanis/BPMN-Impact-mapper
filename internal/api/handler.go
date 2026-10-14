@@ -2,6 +2,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,11 +38,14 @@ type Handler struct {
 	MaxRequestSize int64
 	MaxBPMNSize    int64
 	LogError       func(error)
+	SemanticCheck  func(context.Context) (provider, model string, err error)
 }
 
 func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
 	switch {
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/capabilities/semantic/check":
+		handler.checkSemanticRuntime(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/review-packs":
 		handler.prepareReviewPack(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/reviews/reconcile":
@@ -65,6 +69,38 @@ func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Reque
 	default:
 		http.NotFound(writer, request)
 	}
+}
+
+func (handler Handler) checkSemanticRuntime(writer http.ResponseWriter, request *http.Request) {
+	type response struct {
+		Available bool   `json:"available"`
+		Provider  string `json:"provider,omitempty"`
+		Model     string `json:"model,omitempty"`
+		Message   string `json:"message"`
+	}
+	if handler.SemanticCheck == nil {
+		writeJSON(writer, http.StatusOK, response{Message: "Semantic runtime is not configured on this server."})
+		return
+	}
+	provider, model, err := handler.SemanticCheck(request.Context())
+	if filepath.IsAbs(model) {
+		model = filepath.Base(model)
+	}
+	if err != nil {
+		handler.log(fmt.Errorf("semantic capability check: %w", err))
+		writeJSON(writer, http.StatusOK, response{
+			Provider: provider,
+			Model:    model,
+			Message:  "Semantic runtime is unavailable. Select BM25 or configure the local Python embedding model.",
+		})
+		return
+	}
+	writeJSON(writer, http.StatusOK, response{
+		Available: true,
+		Provider:  provider,
+		Model:     model,
+		Message:   "Offline semantic runtime is ready.",
+	})
 }
 
 func (handler Handler) listAnalyses(writer http.ResponseWriter, request *http.Request) {

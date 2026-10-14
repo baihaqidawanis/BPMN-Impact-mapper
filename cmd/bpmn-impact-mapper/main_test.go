@@ -150,7 +150,7 @@ func TestRunFrozenBenchmark(t *testing.T) {
 	if err := run(arguments, &bytes.Buffer{}, &bytes.Buffer{}); err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"benchmark-report.json", "benchmark-report.md", "benchmark-report.csv", "benchmark-timing.json"} {
+	for _, name := range []string{"benchmark-report.json", "benchmark-report.md", "benchmark-report.csv", "benchmark-timing.json", "benchmark-comparison.md", "benchmark-comparison.csv", "benchmark-ablation.md", "benchmark-ablation.csv"} {
 		if info, err := os.Stat(filepath.Join(output, name)); err != nil || info.Size() == 0 {
 			t.Fatalf("missing %s: %v", name, err)
 		}

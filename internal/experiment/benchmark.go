@@ -43,7 +43,19 @@ func RunBenchmark(ctx context.Context, manifestPath, outputDirectory string, ana
 	if err != nil {
 		return benchmark.Report{}, err
 	}
-	for name, data := range map[string][]byte{"benchmark-report.json": reportJSON, "benchmark-report.md": benchmark.Markdown(report), "benchmark-report.csv": csvData, "benchmark-timing.json": timingJSON} {
+	timingCSV, err := benchmark.TimingCSV(report, timing)
+	if err != nil {
+		return benchmark.Report{}, err
+	}
+	ablationCSV, err := benchmark.AblationCSV(report)
+	if err != nil {
+		return benchmark.Report{}, err
+	}
+	for name, data := range map[string][]byte{
+		"benchmark-report.json": reportJSON, "benchmark-report.md": benchmark.Markdown(report), "benchmark-report.csv": csvData,
+		"benchmark-timing.json": timingJSON, "benchmark-comparison.md": benchmark.TimingMarkdown(report, timing), "benchmark-comparison.csv": timingCSV,
+		"benchmark-ablation.md": benchmark.AblationMarkdown(report), "benchmark-ablation.csv": ablationCSV,
+	} {
 		if err := store.Write(name, data); err != nil {
 			return benchmark.Report{}, err
 		}

@@ -129,7 +129,7 @@ func runBenchmark(arguments []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(stdout, "benchmark %s: wrote benchmark-report.json, benchmark-report.md, benchmark-report.csv, and benchmark-timing.json\n", result.BenchmarkID)
+	fmt.Fprintf(stdout, "benchmark %s: wrote deterministic report artifacts plus benchmark timing/comparison JSON, Markdown, and CSV\n", result.BenchmarkID)
 	return nil
 }
 

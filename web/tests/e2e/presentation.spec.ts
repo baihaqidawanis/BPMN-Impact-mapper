@@ -3,11 +3,45 @@ import path from "node:path";
 import { readFile } from "node:fs/promises";
 import type { Report } from "../../src/lib/types";
 
+test("semantic preflight blocks unavailable runtime while BM25 stays independent", async ({ page }) => {
+	let analysisRequests = 0;
+	let capabilityRequests = 0;
+	await page.route("**/backend/api/v1/capabilities/semantic/check", async route => {
+		capabilityRequests++;
+		await route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ available: false, model: "fixture-model", message: "Semantic runtime is unavailable." }),
+		});
+	});
+	page.on("request", request => {
+		if (request.method() === "POST" && request.url().endsWith("/api/v1/analyses")) analysisRequests++;
+	});
+
+	await page.goto("/");
+	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await page.getByRole("button", { name: "Check runtime" }).click();
+	await expect(page.getByRole("status").filter({ hasText: "Semantic runtime is unavailable." })).toBeVisible();
+	expect(capabilityRequests).toBe(1);
+	await page.getByRole("button", { name: "Run impact analysis" }).click();
+	await expect(page.getByRole("status").filter({ hasText: "Semantic runtime is unavailable." })).toBeVisible();
+	await expect.poll(() => capabilityRequests).toBe(2);
+	expect(analysisRequests).toBe(0);
+
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
+	await page.getByRole("button", { name: "Run impact analysis" }).click();
+	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
+	expect(capabilityRequests).toBe(2);
+	expect(analysisRequests).toBe(1);
+});
+
 test("evaluation reconciles conflicts and evaluates immutable comparison reports", async ({ page }) => {
 	test.setTimeout(420_000);
   await page.goto("/");
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
   await page.getByLabel("Compare mapping methods").check();
   const reports: Report[] = [];
   page.on("response", async response => {
@@ -131,7 +165,8 @@ test("manual BPMN upload workflow remains available", async ({ page }) => {
 	await page.getByLabel("Repository name").fill("Manual fixture run");
 	await page.locator('input[name="old_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/old.bpmn"));
 	await page.locator('input[name="new_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/new.bpmn"));
-	await page.locator('select[name="method"]').selectOption("bm25");
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByRole("heading", { name: "Manual fixture run" })).toBeVisible();
@@ -169,6 +204,7 @@ test("same-input method comparison exposes retrieval differences", async ({ page
 	await page.goto("/");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
 	await page.getByLabel("Compare mapping methods").check();
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 

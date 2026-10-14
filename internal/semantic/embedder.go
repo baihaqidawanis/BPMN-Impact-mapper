@@ -33,6 +33,7 @@ var embeddingCache struct {
 	sync.RWMutex
 	key     [sha256.Size]byte
 	vectors [][]float64
+	runtime Identity
 }
 
 type Embedder interface {
@@ -41,13 +42,24 @@ type Embedder interface {
 }
 
 type Identity struct {
-	Provider string `json:"provider"`
-	Model    string `json:"model"`
+	Provider                    string `json:"provider"`
+	Model                       string `json:"model"`
+	AdapterSHA256               string `json:"adapter_sha256"`
+	PythonVersion               string `json:"python_version,omitempty"`
+	SentenceTransformersVersion string `json:"sentence_transformers_version,omitempty"`
+	ModelArtifactSHA256         string `json:"model_artifact_sha256,omitempty"`
+	EmbeddingDimension          int    `json:"embedding_dimension,omitempty"`
 }
 
 type PythonEmbedder struct {
 	Command string
 	Model   string
+	state   *identityState
+}
+
+type identityState struct {
+	sync.RWMutex
+	runtime Identity
 }
 
 func NewPythonEmbedderFromEnvironment() PythonEmbedder {
@@ -59,11 +71,22 @@ func NewPythonEmbedderFromEnvironment() PythonEmbedder {
 	if model == "" {
 		model = DefaultModel
 	}
-	return PythonEmbedder{Command: command, Model: model}
+	return PythonEmbedder{Command: command, Model: model, state: &identityState{}}
 }
 
 func (embedder PythonEmbedder) Identity() Identity {
-	return Identity{Provider: providerVersion, Model: embedder.Model}
+	adapterHash := sha256.Sum256([]byte(pythonScript))
+	identity := Identity{Provider: providerVersion, Model: embedder.Model, AdapterSHA256: fmt.Sprintf("%x", adapterHash)}
+	if embedder.state == nil {
+		return identity
+	}
+	embedder.state.RLock()
+	defer embedder.state.RUnlock()
+	identity.PythonVersion = embedder.state.runtime.PythonVersion
+	identity.SentenceTransformersVersion = embedder.state.runtime.SentenceTransformersVersion
+	identity.ModelArtifactSHA256 = embedder.state.runtime.ModelArtifactSHA256
+	identity.EmbeddingDimension = embedder.state.runtime.EmbeddingDimension
+	return identity
 }
 
 func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]float64, error) {
@@ -87,6 +110,7 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 	}
 	cacheKey := sha256.Sum256(append([]byte(embedder.Command+"\x00"+embedder.Model+"\x00"), input...))
 	if cached := cachedVectors(cacheKey); cached != nil {
+		embedder.storeRuntimeIdentity(cachedRuntimeIdentity(cacheKey))
 		return cached, nil
 	}
 	select {
@@ -96,6 +120,7 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 		return nil, ctx.Err()
 	}
 	if cached := cachedVectors(cacheKey); cached != nil {
+		embedder.storeRuntimeIdentity(cachedRuntimeIdentity(cacheKey))
 		return cached, nil
 	}
 	command := exec.CommandContext(ctx, embedder.Command, "-c", pythonScript, embedder.Model)
@@ -122,6 +147,11 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 	var response struct {
 		Dimension int         `json:"dimension"`
 		Vectors   [][]float64 `json:"vectors"`
+		Runtime   struct {
+			PythonVersion               string `json:"python_version"`
+			SentenceTransformersVersion string `json:"sentence_transformers_version"`
+			ModelArtifactSHA256         string `json:"model_artifact_sha256"`
+		} `json:"runtime"`
 	}
 	decoder := json.NewDecoder(bytes.NewReader(stdout.Bytes()))
 	decoder.DisallowUnknownFields()
@@ -136,8 +166,25 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 			return nil, errors.New("semantic embedding runtime returned inconsistent dimensions")
 		}
 	}
-	storeCachedVectors(cacheKey, response.Vectors)
+	runtimeIdentity := Identity{
+		PythonVersion: response.Runtime.PythonVersion, SentenceTransformersVersion: response.Runtime.SentenceTransformersVersion,
+		ModelArtifactSHA256: response.Runtime.ModelArtifactSHA256, EmbeddingDimension: response.Dimension,
+	}
+	if runtimeIdentity.PythonVersion == "" || runtimeIdentity.SentenceTransformersVersion == "" || len(runtimeIdentity.ModelArtifactSHA256) != 64 {
+		return nil, errors.New("semantic embedding runtime returned incomplete reproducibility metadata")
+	}
+	embedder.storeRuntimeIdentity(runtimeIdentity)
+	storeCachedVectors(cacheKey, response.Vectors, runtimeIdentity)
 	return cloneVectors(response.Vectors), nil
+}
+
+func (embedder PythonEmbedder) storeRuntimeIdentity(identity Identity) {
+	if embedder.state == nil || identity.PythonVersion == "" {
+		return
+	}
+	embedder.state.Lock()
+	embedder.state.runtime = identity
+	embedder.state.Unlock()
 }
 
 func cachedVectors(key [sha256.Size]byte) [][]float64 {
@@ -149,11 +196,21 @@ func cachedVectors(key [sha256.Size]byte) [][]float64 {
 	return cloneVectors(embeddingCache.vectors)
 }
 
-func storeCachedVectors(key [sha256.Size]byte, vectors [][]float64) {
+func cachedRuntimeIdentity(key [sha256.Size]byte) Identity {
+	embeddingCache.RLock()
+	defer embeddingCache.RUnlock()
+	if embeddingCache.vectors == nil || embeddingCache.key != key {
+		return Identity{}
+	}
+	return embeddingCache.runtime
+}
+
+func storeCachedVectors(key [sha256.Size]byte, vectors [][]float64, runtime Identity) {
 	embeddingCache.Lock()
 	defer embeddingCache.Unlock()
 	embeddingCache.key = key
 	embeddingCache.vectors = cloneVectors(vectors)
+	embeddingCache.runtime = runtime
 }
 
 func cloneVectors(vectors [][]float64) [][]float64 {

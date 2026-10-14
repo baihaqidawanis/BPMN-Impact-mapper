@@ -32,8 +32,23 @@ func TestEvaluateComputesHandCheckableMetrics(t *testing.T) {
 	if metrics.FilePrecision != 0.6667 || metrics.FileRecall != 1 || metrics.FileF1 != 0.8 || metrics.ActionAccuracy != 0.5 {
 		t.Fatalf("classification metrics=%#v", metrics)
 	}
+	if metrics.ActionMacroF1 != 0.5 || metrics.ActionConfusion.Rows[0][3] != 1 || metrics.ActionConfusion.Rows[1][1] != 1 {
+		t.Fatalf("action classification=%#v", metrics)
+	}
 	if metrics.FalsePositiveRate != 0.3333 || metrics.UnresolvedRate != 0 {
 		t.Fatalf("rates=%#v", metrics)
+	}
+}
+
+func TestEvaluateCountsMissedExpectedFileAsUnresolvedAction(t *testing.T) {
+	prediction := domain.Report{AnalysisID: "analysis", Method: domain.MethodHybrid, Changes: []domain.Change{{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "A", Type: "task"}}}}
+	truth := evaluation.GroundTruth{Version: "1", Cases: []evaluation.Case{{ChangeType: domain.AddTask, ElementID: "A", Expected: []evaluation.ExpectedImpact{{File: "missing.go", Action: domain.ActionAdd}}}}}
+	result, err := evaluation.Evaluate(prediction, []byte("prediction"), truth, []byte("truth"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Metrics.ActionConfusion.Rows[0][5] != 1 || result.Metrics.ActionMacroF1 != 0 {
+		t.Fatalf("missed action=%#v", result.Metrics)
 	}
 }
 
