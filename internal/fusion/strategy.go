@@ -31,9 +31,10 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 		k = DefaultRRFK
 	}
 	metadata := map[string]string{
-		"fusion":        "reciprocal-rank-fusion-v1",
-		"rrf_k":         fmt.Sprint(k),
-		"score_meaning": "normalized rank consensus; not probability",
+		"fusion":         "reciprocal-rank-fusion-v2-full-pool",
+		"candidate_pool": "all threshold-qualified artifacts before display top-k",
+		"rrf_k":          fmt.Sprint(k),
+		"score_meaning":  "normalized rank consensus; not probability",
 	}
 	if strategy.Left != nil {
 		metadata["left_method"] = string(strategy.Left.Method())
@@ -53,11 +54,18 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	if strategy.Left == nil || strategy.Right == nil {
 		return nil, nil, fmt.Errorf("fusion requires two retrieval strategies")
 	}
-	left, leftWarnings, err := strategy.Left.Attach(ctx, cloneChanges(changes), artifacts, options)
+	// Display top-k must not censor agreement before fusion. Each adapter emits
+	// at most one candidate per artifact; retain all threshold-qualified ranks.
+	poolOptions := options
+	poolOptions.TopK = len(artifacts)
+	if poolOptions.TopK < 1 {
+		poolOptions.TopK = 1
+	}
+	left, leftWarnings, err := strategy.Left.Attach(ctx, cloneChanges(changes), artifacts, poolOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s retrieval: %w", strategy.Left.Method(), err)
 	}
-	right, rightWarnings, err := strategy.Right.Attach(ctx, cloneChanges(changes), artifacts, options)
+	right, rightWarnings, err := strategy.Right.Attach(ctx, cloneChanges(changes), artifacts, poolOptions)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s retrieval: %w", strategy.Right.Method(), err)
 	}

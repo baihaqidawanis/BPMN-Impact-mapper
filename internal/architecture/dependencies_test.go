@@ -13,6 +13,8 @@ func TestInnerPackagesDoNotDependOnOuterAdapters(t *testing.T) {
 	allowed := map[string]map[string]bool{
 		"domain":      {},
 		"mapping":     {"domain": true},
+		"planning":    {"domain": true},
+		"planstore":   {"planning": true},
 		"evaluation":  {"domain": true},
 		"app":         {"bpmn": true, "diff": true, "domain": true, "index": true, "ingest": true, "mapping": true, "report": true},
 		"benchmark":   {"app": true, "domain": true, "evaluation": true, "mapping": true},

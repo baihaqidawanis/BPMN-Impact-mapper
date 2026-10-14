@@ -22,6 +22,10 @@ export function reportDownloadURL(analysisID: string, format: "json" | "md"): st
   return `/backend/api/v1/analyses/${encodeURIComponent(analysisID)}/report.${format}`;
 }
 
+export function planningContextURL(analysisID: string): string {
+  return `/backend/api/v1/analyses/${encodeURIComponent(analysisID)}/planning-context.json`;
+}
+
 export async function listAnalyses(): Promise<ReportSummary[]> {
   const response = await fetch("/backend/api/v1/analyses", { cache: "no-store" });
   if (!response.ok) throw new Error("Saved analyses could not be loaded.");

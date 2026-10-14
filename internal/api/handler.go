@@ -16,6 +16,8 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/mapping"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planstore"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/reportstore"
 )
@@ -29,6 +31,8 @@ const (
 type Handler struct {
 	Analyzer       app.Analyzer
 	Store          reportstore.Store
+	Planner        planning.Orchestrator
+	PlanStore      planstore.Store
 	TempRoot       string
 	MaxRequestSize int64
 	MaxBPMNSize    int64
@@ -50,8 +54,12 @@ func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Reque
 		handler.listAnalyses(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/analyses":
 		handler.createAnalysis(writer, request)
+	case request.Method == http.MethodPost && isAnalysisPlansPath(request.URL.Path):
+		handler.createPlan(writer, request)
 	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/api/v1/analyses/"):
 		handler.getAnalysis(writer, request)
+	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/api/v1/plans/"):
+		handler.getPlan(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/analyze":
 		handler.legacyAnalyze(writer, request)
 	default:
@@ -114,7 +122,7 @@ func (handler Handler) createAnalysis(writer http.ResponseWriter, request *http.
 	value, err := handler.Analyzer.Analyze(request.Context(), input)
 	if err != nil {
 		handler.log(err)
-		writeAPIError(writer, http.StatusUnprocessableEntity, "ANALYSIS_FAILED", "Analysis could not be completed. Verify the repository path, BPMN files, and selected method.")
+		writeAPIError(writer, http.StatusUnprocessableEntity, "ANALYSIS_FAILED", analysisFailureMessage(err))
 		return
 	}
 	if err := handler.Store.Save(request.Context(), value); err != nil {
@@ -221,7 +229,7 @@ func (handler Handler) copyBPMN(path string, source *multipart.Part) error {
 }
 
 func webRequest(fields, files map[string]string) (app.Request, error) {
-	repositoryPath := fields["repo_path"]
+	repositoryPath := strings.TrimSpace(fields["repo_path"])
 	if repositoryPath == "" {
 		return app.Request{}, errors.New("repo_path is required")
 	}
@@ -305,6 +313,104 @@ func (handler Handler) getAnalysis(writer http.ResponseWriter, request *http.Req
 		writer.Header().Set("Content-Type", "text/markdown; charset=utf-8")
 		writer.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="impact-report-%s.md"`, value.AnalysisID))
 		_, _ = writer.Write(report.Markdown(value))
+	case "planning-context.json":
+		data, err := planning.BundleJSON(planning.BuildEvidenceBundle(value, planning.DefaultLimits()))
+		if err != nil {
+			handler.internalError(writer, err)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		writer.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="planning-context-%s.json"`, value.AnalysisID))
+		_, _ = writer.Write(data)
+	case "plans":
+		if handler.PlanStore == nil {
+			handler.internalError(writer, errors.New("plan store is not configured"))
+			return
+		}
+		plans, err := handler.PlanStore.ListByAnalysis(request.Context(), value.AnalysisID)
+		if err != nil {
+			handler.internalError(writer, err)
+			return
+		}
+		writeJSON(writer, http.StatusOK, struct {
+			Plans []planning.PlanSummary `json:"plans"`
+		}{plans})
+	default:
+		http.NotFound(writer, request)
+	}
+}
+
+func isAnalysisPlansPath(path string) bool {
+	parts := strings.Split(strings.TrimPrefix(path, "/api/v1/analyses/"), "/")
+	return strings.HasPrefix(path, "/api/v1/analyses/") && len(parts) == 2 && parts[0] != "" && parts[1] == "plans"
+}
+
+func (handler Handler) createPlan(writer http.ResponseWriter, request *http.Request) {
+	if handler.Store == nil || handler.PlanStore == nil {
+		handler.internalError(writer, errors.New("planning stores are not configured"))
+		return
+	}
+	parts := strings.Split(strings.TrimPrefix(request.URL.Path, "/api/v1/analyses/"), "/")
+	reportValue, err := handler.Store.Get(request.Context(), parts[0])
+	if errors.Is(err, reportstore.ErrNotFound) {
+		writeAPIError(writer, http.StatusNotFound, "NOT_FOUND", "Analysis report was not found.")
+		return
+	}
+	if err != nil {
+		handler.internalError(writer, err)
+		return
+	}
+	plan, err := handler.Planner.Run(request.Context(), reportValue)
+	if err != nil {
+		handler.log(err)
+		writeAPIError(writer, http.StatusUnprocessableEntity, "PLANNING_FAILED", "The planning provider could not produce a valid evidence-grounded plan.")
+		return
+	}
+	if err := handler.PlanStore.Save(request.Context(), plan); err != nil {
+		handler.internalError(writer, err)
+		return
+	}
+	writer.Header().Set("Location", "/api/v1/plans/"+plan.PlanID)
+	writeJSON(writer, http.StatusCreated, plan)
+}
+
+func (handler Handler) getPlan(writer http.ResponseWriter, request *http.Request) {
+	if handler.PlanStore == nil {
+		handler.internalError(writer, errors.New("plan store is not configured"))
+		return
+	}
+	parts := strings.Split(strings.TrimPrefix(request.URL.Path, "/api/v1/plans/"), "/")
+	if len(parts) > 2 || parts[0] == "" {
+		http.NotFound(writer, request)
+		return
+	}
+	value, err := handler.PlanStore.Get(request.Context(), parts[0])
+	if errors.Is(err, planstore.ErrNotFound) {
+		writeAPIError(writer, http.StatusNotFound, "NOT_FOUND", "Change plan was not found.")
+		return
+	}
+	if err != nil {
+		handler.internalError(writer, err)
+		return
+	}
+	format := "change-plan.json"
+	if len(parts) == 2 {
+		format = parts[1]
+	}
+	switch format {
+	case "change-plan.json":
+		data, err := planning.JSON(value)
+		if err != nil {
+			handler.internalError(writer, err)
+			return
+		}
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		writer.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="change-plan-%s.json"`, value.PlanID))
+		_, _ = writer.Write(data)
+	case "change-plan.md":
+		writer.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		writer.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="change-plan-%s.md"`, value.PlanID))
+		_, _ = writer.Write(planning.Markdown(value))
 	default:
 		http.NotFound(writer, request)
 	}

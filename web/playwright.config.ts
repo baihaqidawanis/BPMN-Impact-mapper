@@ -26,7 +26,7 @@ export default defineConfig({
     {
       command: "npm run dev -- -p 13000",
       cwd: __dirname,
-      env: { BPMN_MAPPER_BACKEND_URL: "http://127.0.0.1:18081" },
+      env: { BPMN_MAPPER_BACKEND_URL: "http://127.0.0.1:18081", BPMN_MAPPER_TEST_BUILD: "1" },
       url: "http://127.0.0.1:13000",
       timeout: 120_000,
       reuseExistingServer: false,

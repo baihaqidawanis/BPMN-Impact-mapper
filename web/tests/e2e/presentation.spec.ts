@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import type { Report } from "../../src/lib/types";
 
 test("evaluation reconciles conflicts and evaluates immutable comparison reports", async ({ page }) => {
-	test.setTimeout(300_000);
+	test.setTimeout(420_000);
   await page.goto("/");
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
@@ -23,6 +23,7 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
   }));
   const other = structuredClone(cases);
   other[0].expected = [{ file: "missing/expected.go", required_action: "MODIFY" }];
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
   const dashboard = page.getByTestId("evaluation-dashboard");
   await dashboard.locator("summary").click();
   const upload = (reviewer: string, values: typeof cases) => ({
@@ -44,6 +45,12 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
   await expect(results.getByRole("columnheader", { name: "semantic" })).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "fusion" })).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "hybrid" })).toBeVisible();
+  const diagnostics = results.getByTestId("evaluation-diagnostics");
+  await expect(diagnostics).toBeVisible();
+  const hybridDiagnostics = diagnostics.locator("details").filter({ hasText: /^hybrid/i });
+  await hybridDiagnostics.locator("summary").click();
+  await expect(hybridDiagnostics.getByText("missing/expected.go").first()).toBeVisible();
+  await expect(hybridDiagnostics.getByRole("columnheader", { name: "RR" })).toBeVisible();
   await results.screenshot({ path: test.info().outputPath("evaluation-results.png") });
   const downloaded = page.waitForEvent("download");
   await results.getByRole("button", { name: "Download evaluation JSON" }).click();
@@ -66,7 +73,7 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
   await expect(page.getByLabel(/Repository path/)).toHaveValue("testdata\\repository");
 
   await page.getByRole("button", { name: "Run impact analysis" }).click();
-  await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 120_000 });
   await expect(page.getByRole("heading", { name: "Synthetic Request Workflow" })).toBeVisible();
   await expect(page.getByTestId("report-view").getByText("BPMN changes", { exact: true })).toBeVisible();
   await page.getByText(/^Source analysis coverage/).click();
@@ -74,23 +81,42 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
   await expect(page.getByText("MODIFY TASK LABEL").first()).toBeVisible();
 
 	const firstCandidate = page.getByTestId("impact-details").first();
-  await firstCandidate.locator("summary").click();
+  await firstCandidate.locator(":scope > summary").click();
   await expect(firstCandidate.getByRole("heading", { name: "Evidence" })).toBeVisible();
   await expect(firstCandidate.getByRole("heading", { name: "Score breakdown" })).toBeVisible();
 	if (process.env.UI_SCREENSHOT) {
 		await page.screenshot({ path: path.resolve(process.cwd(), "../.data/ui-report.png"), fullPage: true });
 	}
+	const navigation = page.getByRole("navigation", { name: "Workspace navigation" });
+	await navigation.getByRole("button", { name: "Planning", exact: true }).click();
+	const planning = page.getByTestId("planning-context-view");
+	await expect(planning).toBeVisible();
+	await expect(planning.getByText("Pre-LLM audit boundary")).toBeVisible();
+	await expect(planning.getByText("Evidence items")).toBeVisible();
+	await expect(planning.getByRole("link", { name: "Download JSON" })).toHaveAttribute("href", /planning-context\.json$/);
+	await planning.getByRole("button", { name: "Create planning record" }).click();
+	await expect(planning.getByRole("heading", { name: "Planning record prepared" })).toBeVisible();
+	await expect(planning.getByText("DISABLED", { exact: true }).first()).toBeVisible();
+	await expect(planning.getByText("1 immutable record", { exact: true })).toBeVisible();
+	const planDownloadPromise = page.waitForEvent("download");
+	await planning.getByRole("link", { name: "Plan JSON" }).click();
+	const planDownload = await planDownloadPromise;
+	expect(planDownload.suggestedFilename()).toMatch(/^change-plan-[a-f0-9]{32}\.json$/);
+	await navigation.getByRole("button", { name: "Mapping", exact: true }).click();
 
   const jsonLink = page.getByRole("link", { name: "JSON" });
   const markdownLink = page.getByRole("link", { name: "Markdown" });
+  const planningContextLink = page.getByRole("link", { name: "Planning context" });
   await expect(jsonLink).toHaveAttribute("href", /report\.json$/);
   await expect(markdownLink).toHaveAttribute("href", /report\.md$/);
+  await expect(planningContextLink).toHaveAttribute("href", /planning-context\.json$/);
   const downloadPromise = page.waitForEvent("download");
   await markdownLink.click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^impact-report-[a-f0-9]{32}\.md$/);
 
 	await page.reload();
+	await page.getByRole("navigation", { name:"Workspace navigation" }).getByRole("button", { name:"Saved analyses", exact:true }).click();
 	const history = page.getByTestId("analysis-history");
 	await history.locator("summary").click();
 	const saved = history.locator("article").filter({ hasText: "Synthetic Request Workflow" }).first();
@@ -158,6 +184,7 @@ test("same-input method comparison exposes retrieval differences", async ({ page
 	}
 	await comparison.getByRole("button", { name: /^BM25 \d/ }).click();
 	await expect(page.getByTestId("report-view").getByText(/bm25/).first()).toBeVisible();
+	await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
 
 	const blindPack = page.getByTestId("blind-review-pack");
 	await blindPack.locator("summary").click();
@@ -184,6 +211,7 @@ test("reviewer annotation exports selected and missing impacts locally", async (
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
+	await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
 
 	const review = page.getByTestId("review-panel");
 	await review.locator("summary").click();

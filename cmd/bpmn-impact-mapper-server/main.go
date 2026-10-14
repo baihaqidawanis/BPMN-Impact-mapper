@@ -15,6 +15,8 @@ import (
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/api"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/filestore"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/llm"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
 
@@ -50,6 +52,8 @@ func run(arguments []string) error {
 	handler := api.Handler{
 		Analyzer:       wiring.NewAnalyzer(),
 		Store:          filestore.ReportStore{Root: filepath.Join(root, "analyses")},
+		Planner:        planning.Orchestrator{Provider: llm.NoLLMProvider{}},
+		PlanStore:      filestore.PlanStore{Root: filepath.Join(root, "plans")},
 		TempRoot:       filepath.Join(root, "tmp"),
 		MaxRequestSize: *maxRequestBytes,
 		MaxBPMNSize:    *maxBPMNBytes,

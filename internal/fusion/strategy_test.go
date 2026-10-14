@@ -110,3 +110,30 @@ func impact(file string, action domain.RequiredAction, evidenceType string) doma
 		File: file, RequiredAction: action, Evidence: []domain.Evidence{{Type: evidenceType, Location: file, Excerpt: evidenceType}},
 	}
 }
+
+type boundedStrategy struct{ fakeStrategy }
+
+func (s boundedStrategy) Attach(_ context.Context, changes []domain.Change, _ []domain.Artifact, options mapping.Options) ([]domain.Change, []domain.Warning, error) {
+	result := append([]domain.Change(nil), s.changes...)
+	for i := range result {
+		if len(result[i].Impacts) > options.TopK {
+			result[i].Impacts = result[i].Impacts[:options.TopK]
+		}
+	}
+	return result, nil, nil
+}
+
+func TestFusionUsesFullPoolBeforeDisplayTopK(t *testing.T) {
+	left := boundedStrategy{fakeStrategy{method: domain.MethodBM25, changes: []domain.Change{{Impacts: []domain.Impact{impact("a.go", domain.ActionVerify, "BM25"), impact("shared.go", domain.ActionVerify, "BM25")}}}}}
+	right := boundedStrategy{fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{impact("b.go", domain.ActionVerify, "SEMANTIC_SIMILARITY"), impact("shared.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}}}}}
+	strategy := fusion.Strategy{Left: left, Right: right}
+	artifacts := make([]domain.Artifact, 3)
+	one, _, err := strategy.Attach(context.Background(), []domain.Change{{}}, artifacts, mapping.Options{TopK: 1})
+	if err != nil || len(one[0].Impacts) != 1 || one[0].Impacts[0].File != "shared.go" {
+		t.Fatalf("lost agreement: %+v %v", one, err)
+	}
+	many, _, err := strategy.Attach(context.Background(), []domain.Change{{}}, artifacts, mapping.Options{TopK: 3})
+	if err != nil || !reflect.DeepEqual(one[0].Impacts[0], many[0].Impacts[0]) {
+		t.Fatal("display top-k changed winner or score")
+	}
+}

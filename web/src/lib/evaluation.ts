@@ -15,6 +15,15 @@ export interface EvaluationResult {
     module_accuracy: number; layer_accuracy: number; required_action_accuracy: number;
     unresolved_rate: number; false_positive_rate: number; evaluated_changes: number;
   };
+  changes: {
+    change_type: string;
+    element_id: string;
+    expected_files: string[];
+    predicted_files: string[];
+    reciprocal_rank: number;
+    average_precision: number;
+    unresolved: boolean;
+  }[];
 }
 export interface EvaluationBundle {
   input_fingerprint: string;

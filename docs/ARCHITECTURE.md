@@ -19,6 +19,15 @@ The target repository is passive data. No component imports, compiles, starts, o
 9. `review.Reconcile` compares independent annotations in memory and emits an agreed subset plus unresolved conflicts.
 10. Before inference, optional experiment tooling applies a hash-locked `scenario.Spec` to BPMN bytes, validates the result with `bpmn.Parse`, and writes a new file through the outward `experiment` adapter. It never edits the baseline or target source repository.
 11. The web adapter streams bounded BPMN uploads into a request-scoped temporary directory, invokes the same analyzer, persists the resulting canonical report through the `reportstore.Store` port, and removes uploads before returning.
+12. Separately and only after a canonical report exists, `planning.Orchestrator`
+    packages bounded evidence, invokes verifier/planner/reviewer provider roles,
+    validates every returned target against mapper candidates, and renders a
+    change plan. Planning never feeds candidates back into inference and never
+    modifies repository source.
+13. The web may request a planning record for an immutable analysis. The
+    orchestrator binds it to the exact context/provider/model/prompt identity,
+    then `planstore.Store` persists JSON and Markdown without overwriting a
+    different plan. With `NoLLMProvider`, the record is explicitly `DISABLED`.
 
 ## Source relation model
 
@@ -47,12 +56,16 @@ The parser recognizes task variants, call/subprocess activities, common events, 
 ## Module boundaries
 
 - Enterprise/domain: `domain`.
-- Application ports/use cases: `mapping`, `app`, `evaluation`, `reportstore`.
+- Application ports/use cases: `mapping`, `app`, `evaluation`, `reportstore`,
+  `planning`, `planstore`.
 - Experiment/review use cases: `benchmark`, `review`, `reviewpack`, `scenario`.
+- Optional post-inference planning use case and provider port: `planning`.
 - Analysis/domain services: `bpmn`, `diff`, `index`.
 - Outward adapters: `retrieval`, `configmapping`, `ingest`, `report`, `filestore`, `experiment`, `api`, CLI, Next.js.
 - Optional outward embedding adapter: `semantic`; it invokes a trusted embedded
   Python helper and a locally cached model, never target-repository code.
+- Optional outward LLM adapters: `llm`; Phase 1 still supplies only the offline
+  provider, which also satisfies the planning port without making network calls.
 - Composition: `wiring` only.
 
 ## Local web application
@@ -68,5 +81,11 @@ Reviewer annotation creation remains browser-local export. The separate Evaluati
 The blind-review panel calls a separate post-inference `/api/v1/review-packs` route with immutable analysis IDs, the shared fingerprint, and reviewer identifiers only. The adapter reloads stored canonical reports and invokes the same pure `reviewpack.Build` use case as the CLI. The browser receives four separately downloadable artifacts; no reviewer finding or ground truth crosses this route. Batch method execution remains the existing frozen `benchmark` use case, which parses ground truth only after each prediction completes; a second batch engine would weaken rather than improve the method boundary.
 
 Completed reports are immutable deterministic artifacts stored below a configurable local directory. This MVP intentionally uses no database: single-user local presentation does not need concurrent mutation, query indexes, identity, or transactional workflows. The `reportstore.Store` port permits a later PostgreSQL adapter without changing analysis or HTTP contracts.
+
+Change plans use a separate filesystem root and `planstore.Store` port. Their
+identity includes the analysis context and provider identity, allowing multiple
+future model/prompt variants without mutating the canonical impact report.
+Writes are atomic and idempotent; a different artifact cannot overwrite an
+existing plan ID.
 
 The report-store port also exposes deterministic summaries for history. Filesystem listing accepts only canonical analysis-ID directories and bounded regular, non-symlink JSON files, then sorts by analysis ID. The API and web history panel can reopen immutable reports without rerunning analysis. No creation timestamp is invented because canonical reports do not contain a trustworthy one.

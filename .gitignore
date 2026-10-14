@@ -4,6 +4,7 @@
 /outputs/
 /.data/
 /web/.next/
+/web/.next-test/
 /web/node_modules/
 /web/coverage/
 /web/test-results/

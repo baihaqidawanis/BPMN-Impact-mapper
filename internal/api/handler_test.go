@@ -14,6 +14,8 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/filestore"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/llm"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
 
@@ -60,10 +62,13 @@ func TestHandlerRejectsGroundTruthAtInferenceBoundary(t *testing.T) {
 func TestWebAPIHealthCreateRetrieveAndCleanup(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")
 	temporaryRoot := t.TempDir()
+	dataRoot := t.TempDir()
 	handler := api.Handler{
-		Analyzer: wiring.NewAnalyzer(),
-		Store:    filestore.ReportStore{Root: filepath.Join(t.TempDir(), "analyses")},
-		TempRoot: temporaryRoot,
+		Analyzer:  wiring.NewAnalyzer(),
+		Store:     filestore.ReportStore{Root: filepath.Join(dataRoot, "analyses")},
+		Planner:   planning.Orchestrator{Provider: llm.NoLLMProvider{}},
+		PlanStore: filestore.PlanStore{Root: filepath.Join(dataRoot, "plans")},
+		TempRoot:  temporaryRoot,
 	}
 	health := httptest.NewRecorder()
 	handler.ServeHTTP(health, httptest.NewRequest(http.MethodGet, "/api/v1/health", nil))
@@ -98,17 +103,42 @@ func TestWebAPIHealthCreateRetrieveAndCleanup(t *testing.T) {
 		t.Fatalf("temporary uploads were not cleaned: entries=%v err=%v", entries, err)
 	}
 
-	for _, suffix := range []string{"", "/report.json", "/report.md"} {
+	for _, suffix := range []string{"", "/report.json", "/report.md", "/planning-context.json"} {
 		get := httptest.NewRecorder()
 		handler.ServeHTTP(get, httptest.NewRequest(http.MethodGet, "/api/v1/analyses/"+value.AnalysisID+suffix, nil))
 		if get.Code != http.StatusOK || get.Body.Len() == 0 {
 			t.Fatalf("get %q status=%d body=%s", suffix, get.Code, get.Body.String())
 		}
 	}
+	planningContext := httptest.NewRecorder()
+	handler.ServeHTTP(planningContext, httptest.NewRequest(http.MethodGet, "/api/v1/analyses/"+value.AnalysisID+"/planning-context.json", nil))
+	if planningContext.Code != http.StatusOK || !bytes.Contains(planningContext.Body.Bytes(), []byte(`"evidence"`)) || !bytes.Contains(planningContext.Body.Bytes(), []byte(`"CH01-C01-E01"`)) || bytes.Contains(planningContext.Body.Bytes(), []byte(`"score_breakdown"`)) {
+		t.Fatalf("planning context status=%d body=%s", planningContext.Code, planningContext.Body.String())
+	}
 	list := httptest.NewRecorder()
 	handler.ServeHTTP(list, httptest.NewRequest(http.MethodGet, "/api/v1/analyses", nil))
 	if list.Code != http.StatusOK || !bytes.Contains(list.Body.Bytes(), []byte(value.AnalysisID)) || bytes.Contains(list.Body.Bytes(), []byte(temporaryRoot)) {
 		t.Fatalf("list status=%d body=%s", list.Code, list.Body.String())
+	}
+	createPlan := httptest.NewRecorder()
+	handler.ServeHTTP(createPlan, httptest.NewRequest(http.MethodPost, "/api/v1/analyses/"+value.AnalysisID+"/plans", nil))
+	if createPlan.Code != http.StatusCreated || createPlan.Header().Get("Location") == "" {
+		t.Fatalf("create plan status=%d body=%s", createPlan.Code, createPlan.Body.String())
+	}
+	var plan planning.ChangePlan
+	if err := json.Unmarshal(createPlan.Body.Bytes(), &plan); err != nil || plan.Status != planning.StatusDisabled || len(plan.PlanID) != 32 {
+		t.Fatalf("plan=%#v err=%v", plan, err)
+	}
+	for _, path := range []string{
+		"/api/v1/analyses/" + value.AnalysisID + "/plans",
+		"/api/v1/plans/" + plan.PlanID,
+		"/api/v1/plans/" + plan.PlanID + "/change-plan.md",
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusOK || response.Body.Len() == 0 {
+			t.Fatalf("get plan path=%s status=%d body=%s", path, response.Code, response.Body.String())
+		}
 	}
 }
 

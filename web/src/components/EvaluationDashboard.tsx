@@ -109,10 +109,33 @@ function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
       <tbody>{rows.map(([name, value]) => <tr key={name}><th>{name}</th>{bundle.results.map(r => <td key={r.analysis_id}>{value(r.metrics).toFixed(4)}</td>)}</tr>)}</tbody>
     </table></div>
     <p>*Legacy module/layer metrics count unspecified expected metadata as matching. False discovery proportion is FP/(TP+FP); true-negative-based FPR is unavailable. Latency is not measured by this dashboard. These results describe the selected scenario only.</p>
+    <section className={styles.diagnostics} data-testid="evaluation-diagnostics">
+      <h4>Per-change diagnostics</h4>
+      <p>Inspect which BPMN change was retrieved, missed, or left unresolved. This is the useful layer for improving a method; aggregate scores alone do not explain a failure.</p>
+      {bundle.results.map(result => <details key={result.analysis_id}>
+        <summary>{result.method} <span>{result.changes.length} changes</span></summary>
+        <div className={styles.tableWrap}><table>
+          <thead><tr><th>Change</th><th>Expected files</th><th>Ranked predictions</th><th>RR</th><th>AP</th><th>Status</th></tr></thead>
+          <tbody>{result.changes.map(change => <tr key={`${change.change_type}:${change.element_id}`}>
+            <th><span className={styles.changeType}>{change.change_type.replaceAll("_", " ")}</span><code>{change.element_id}</code></th>
+            <td>{fileList(change.expected_files, "No expected file")}</td>
+            <td>{fileList(change.predicted_files, "No candidate")}</td>
+            <td>{change.reciprocal_rank.toFixed(4)}</td>
+            <td>{change.average_precision.toFixed(4)}</td>
+            <td><span className={change.unresolved ? styles.unresolved : styles.resolved}>{change.unresolved ? "Unresolved" : "Ranked"}</span></td>
+          </tr>)}</tbody>
+        </table></div>
+      </details>)}
+    </section>
     <div className={styles.downloads}>
       <button type="button" onClick={() => downloadEvaluation(bundle, "evaluation-bundle.json")}>Download evaluation JSON</button>
       <button type="button" onClick={() => downloadEvaluation(bundle.markdown, "evaluation-report.md")}>Download evaluation Markdown</button>
       <button type="button" onClick={() => downloadEvaluation(bundle.ground_truth, "ground-truth.json")}>Download final ground truth</button>
     </div>
   </section>;
+}
+
+function fileList(files: string[], empty: string) {
+  if (files.length === 0) return <span className={styles.empty}>{empty}</span>;
+  return <ol className={styles.fileList}>{files.map(file => <li key={file}><code>{file}</code></li>)}</ol>;
 }

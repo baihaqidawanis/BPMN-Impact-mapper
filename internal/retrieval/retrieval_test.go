@@ -127,3 +127,57 @@ func TestCompositeContextContributesNeighborTermsToRetrieval(t *testing.T) {
 		t.Fatalf("context did not affect score=%#v", changes[0].Impacts[0].ScoreBreakdown)
 	}
 }
+
+func TestTraceIDUsesIdentifierBoundaries(t *testing.T) {
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "PUR-PR-001", Name: "Create purchase request", Type: "userTask"}}
+	artifacts := []domain.Artifact{
+		{ID: "exact", File: "exact.yaml", Content: "operationId: PUR-PR-0010-collision\noperationId: PUR-PR-001-create", Tokens: textutil.Tokenize("create purchase request")},
+		{ID: "numeric-prefix", File: "numeric.go", Content: `const trace = "PUR-PR-0010"`, Tokens: textutil.Tokenize("unrelated")},
+		{ID: "leading-prefix", File: "leading.go", Content: `const trace = "XPUR-PR-001"`, Tokens: textutil.Tokenize("unrelated")},
+		{ID: "underscore-prefix", File: "underscore.go", Content: `const trace = "PUR-PR-001_extra"`, Tokens: textutil.Tokenize("unrelated")},
+	}
+	changes, _ := retrieval.Attach([]domain.Change{change}, artifacts, retrieval.DefaultConfig())
+	if len(changes[0].Impacts) != 1 || changes[0].Impacts[0].File != "exact.yaml" {
+		t.Fatalf("trace boundary impacts=%#v", changes[0].Impacts)
+	}
+	if changes[0].Impacts[0].ScoreBreakdown.TraceID != 1 {
+		t.Fatalf("exact operation trace not recognized: %#v", changes[0].Impacts[0])
+	}
+	for _, evidence := range changes[0].Impacts[0].Evidence {
+		if evidence.Type == "TRACE_ID" && evidence.Location != "exact.yaml:2" {
+			t.Fatalf("trace evidence points to prefix collision: %#v", evidence)
+		}
+	}
+}
+
+func TestPathAndSymbolRecognizeConservativeInflections(t *testing.T) {
+	artifact := domain.Artifact{
+		ID: "purchasing", File: "internal/purchasing/requests.go", Module: "internal", Layer: "application",
+		Symbol: domain.Symbol{Name: "Requests", Kind: "function"}, Content: "unrelated", Tokens: []string{"unrelated"},
+	}
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "TASK-X", Name: "Purchase request", Type: "userTask"}}
+	config := retrieval.DefaultConfig()
+	config.CandidateThreshold = 0.01
+	changes, _ := retrieval.Attach([]domain.Change{change}, []domain.Artifact{artifact}, config)
+	if len(changes[0].Impacts) != 1 {
+		t.Fatalf("inflected candidate missing: %#v", changes[0])
+	}
+	score := changes[0].Impacts[0].ScoreBreakdown
+	if score.Path == 0 || score.Symbol == 0 || score.Lexical != 0 || score.TraceID != 0 {
+		t.Fatalf("unexpected inflection score=%#v", score)
+	}
+}
+
+func TestInflectionMatchingRejectsSharedPrefixes(t *testing.T) {
+	artifact := domain.Artifact{
+		ID: "prefix", File: "internal/statement/username.go", Module: "internal", Layer: "application",
+		Symbol: domain.Symbol{Name: "Username", Kind: "function"}, Content: "unrelated", Tokens: []string{"unrelated"},
+	}
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "TASK-X", Name: "State user", Type: "userTask"}}
+	config := retrieval.DefaultConfig()
+	config.CandidateThreshold = 0.01
+	changes, _ := retrieval.Attach([]domain.Change{change}, []domain.Artifact{artifact}, config)
+	if len(changes[0].Impacts) != 0 {
+		t.Fatalf("shared prefixes must not become evidence: %#v", changes[0].Impacts)
+	}
+}

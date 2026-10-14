@@ -187,23 +187,22 @@ func removeShadowedPackageImpacts(scored []artifactImpact) []domain.Impact {
 }
 
 func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stableIDs []string, rawBM25, maxBM25 float64, config Config) (domain.Impact, bool) {
-	contentLower := strings.ToLower(artifact.Content)
 	pathTokens := textutil.Tokenize(artifact.File)
 	symbolTokens := textutil.Tokenize(artifact.Symbol.Name + " " + artifact.Symbol.Receiver)
 	trace := 0.0
 	evidence := []domain.Evidence{}
 	for _, id := range stableIDs {
-		if id != "" && strings.Contains(contentLower, strings.ToLower(id)) {
+		if containsStableID(artifact.Content, id) {
 			trace = 1
-			evidence = append(evidence, evidenceAt("TRACE_ID", artifact, id))
+			evidence = append(evidence, evidenceAtStableID(artifact, id))
 			break
 		}
 	}
-	symbol := overlap(symbolTokens, query)
+	symbol := overlapInflections(symbolTokens, query)
 	if symbol > 0 {
 		evidence = append(evidence, evidenceAt("SYMBOL", artifact, artifact.Symbol.Name))
 	}
-	pathScore := overlap(pathTokens, query)
+	pathScore := overlapInflections(pathTokens, query)
 	if pathScore > 0 {
 		evidence = append(evidence, domain.Evidence{Type: "PATH", Location: artifact.File, Excerpt: bounded(artifact.File, 240)})
 	}
@@ -306,6 +305,101 @@ func overlap(values, query []string) float64 {
 	return math.Min(1, float64(matches)/math.Min(5, float64(len(querySet))))
 }
 
+// overlapInflections extends exact token overlap only for common grammatical
+// variants. It is intentionally limited to symbol and path signals: BM25 and
+// lexical evidence retain their exact, auditable token semantics.
+func overlapInflections(values, query []string) float64 {
+	valueSet := make(map[string]bool, len(values))
+	for _, value := range values {
+		valueSet[value] = true
+	}
+	querySet := map[string]bool{}
+	for _, value := range query {
+		if len(value) > 1 {
+			querySet[value] = true
+		}
+	}
+	if len(querySet) == 0 {
+		return 0
+	}
+	matches := 0
+	for queryToken := range querySet {
+		if valueSet[queryToken] || containsInflection(valueSet, queryToken) {
+			matches++
+		}
+	}
+	return math.Min(1, float64(matches)/math.Min(5, float64(len(querySet))))
+}
+
+func containsInflection(values map[string]bool, query string) bool {
+	if len(query) < 4 {
+		return false
+	}
+	variants := []string{query + "s", query + "es", query + "ed", query + "ing"}
+	if strings.HasSuffix(query, "e") && len(query) > 4 {
+		stem := strings.TrimSuffix(query, "e")
+		variants = append(variants, stem+"ed", stem+"ing")
+	}
+	if strings.HasSuffix(query, "y") && len(query) > 4 {
+		variants = append(variants, strings.TrimSuffix(query, "y")+"ies")
+	}
+	for _, variant := range variants {
+		if values[variant] {
+			return true
+		}
+	}
+	for value := range values {
+		if len(value) >= 4 && inflectsTo(value, query) {
+			return true
+		}
+	}
+	return false
+}
+
+func inflectsTo(base, variant string) bool {
+	if variant == base+"s" || variant == base+"es" || variant == base+"ed" || variant == base+"ing" {
+		return true
+	}
+	if strings.HasSuffix(base, "e") && len(base) > 4 {
+		stem := strings.TrimSuffix(base, "e")
+		if variant == stem+"ed" || variant == stem+"ing" {
+			return true
+		}
+	}
+	return strings.HasSuffix(base, "y") && len(base) > 4 && variant == strings.TrimSuffix(base, "y")+"ies"
+}
+
+// containsStableID matches an ID at identifier boundaries. A hyphen is kept as
+// a boundary so an operation ID such as TASK-001-create still carries the BPMN
+// trace, while TASK-0010 and XTASK-001 do not collide with TASK-001.
+func containsStableID(content, id string) bool {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return false
+	}
+	contentRunes := []rune(strings.ToLower(content))
+	idRunes := []rune(strings.ToLower(id))
+	if len(idRunes) > len(contentRunes) {
+		return false
+	}
+	for start := 0; start+len(idRunes) <= len(contentRunes); start++ {
+		if string(contentRunes[start:start+len(idRunes)]) != string(idRunes) {
+			continue
+		}
+		beforeOK := start == 0 || !isIdentifierRune(contentRunes[start-1])
+		after := start + len(idRunes)
+		afterOK := after == len(contentRunes) || !isIdentifierRune(contentRunes[after])
+		if beforeOK && afterOK {
+			return true
+		}
+	}
+	return false
+}
+
+func isIdentifierRune(value rune) bool {
+	return unicode.IsLetter(value) || unicode.IsDigit(value) || value == '_'
+}
+
 func structuredSignal(artifact domain.Artifact, query []string) (float64, string) {
 	lower := strings.ToLower(artifact.Content)
 	if firstPresent(query, artifact.Content) == "" {
@@ -359,6 +453,25 @@ func evidenceAt(kind string, artifact domain.Artifact, needle string) domain.Evi
 		location = fmt.Sprintf("%s:%d", artifact.File, lineNumber)
 	}
 	return domain.Evidence{Type: kind, Location: location, Excerpt: excerpt}
+}
+
+func evidenceAtStableID(artifact domain.Artifact, id string) domain.Evidence {
+	lines := strings.Split(artifact.Content, "\n")
+	for index, line := range lines {
+		if !containsStableID(line, id) {
+			continue
+		}
+		lineNumber := index + 1
+		if artifact.Symbol.StartLine > 0 {
+			lineNumber += artifact.Symbol.StartLine - 1
+		}
+		return domain.Evidence{
+			Type:     "TRACE_ID",
+			Location: fmt.Sprintf("%s:%d", artifact.File, lineNumber),
+			Excerpt:  bounded(strings.TrimSpace(line), 240),
+		}
+	}
+	return domain.Evidence{Type: "TRACE_ID", Location: artifact.File, Excerpt: bounded(id, 240)}
 }
 
 func excerpt(content, needle string) (int, string) {

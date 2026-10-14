@@ -4,6 +4,7 @@ const backendURL = process.env.BPMN_MAPPER_BACKEND_URL ?? "http://127.0.0.1:8080
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  distDir: process.env.BPMN_MAPPER_TEST_BUILD === "1" ? ".next-test" : ".next",
 	allowedDevOrigins: ["127.0.0.1"],
 	experimental: {
 		// Local CPU embedding startup can exceed the framework's default proxy window.

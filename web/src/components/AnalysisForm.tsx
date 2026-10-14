@@ -1,15 +1,20 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import type { AnalysisMethod } from "@/lib/types";
 import styles from "./AnalysisForm.module.css";
 
 interface Props {
   loading: boolean;
   onSubmit: (formData: FormData) => Promise<void>;
+  baseline: File | null;
+  edited: File | null;
+  onBaseline: (file: File | null) => void;
+  onEdited: (file: File | null) => void;
+  onOpenEditor: () => void;
 }
 
-export function AnalysisForm({ loading, onSubmit }: Props) {
+export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, onEdited, onOpenEditor }: Props) {
   const [method, setMethod] = useState<AnalysisMethod>("hybrid");
 	const [compareMethods, setCompareMethods] = useState(false);
 	const [repositoryPath, setRepositoryPath] = useState("");
@@ -19,28 +24,40 @@ export function AnalysisForm({ loading, onSubmit }: Props) {
 	const [demoLoading, setDemoLoading] = useState(false);
 	const [demoError, setDemoError] = useState("");
 	const [demoScenario, setDemoScenario] = useState("comprehensive");
+	useEffect(() => {
+		if (demoFiles && baseline !== demoFiles.old) setDemoFiles(null);
+	}, [baseline, demoFiles]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 		const formData = new FormData(event.currentTarget);
+		for (const name of ["repo_path", "repository_name", "revision"]) {
+			formData.set(name, String(formData.get(name) ?? "").trim());
+		}
 		if (demoFiles) {
 			formData.set("old_bpmn", demoFiles.old);
 			formData.set("new_bpmn", demoFiles.next);
 		}
+		if (edited) formData.set("new_bpmn", edited);
+		if (baseline) formData.set("old_bpmn", baseline);
 		void onSubmit(formData);
   }
 
 	async function loadSyntheticDemo() {
+		onEdited(null);
 		setDemoLoading(true);
 		setDemoError("");
 		try {
 			const prefix = demoScenario === "comprehensive" ? "/demo/" : `/demo/${demoScenario}-`;
 			const [oldResponse, newResponse] = await Promise.all([fetch(prefix + "old.bpmn"), fetch(prefix + "new.bpmn")]);
 			if (!oldResponse.ok || !newResponse.ok) throw new Error("Synthetic demo fixtures are unavailable.");
-			setDemoFiles({
+			const files = {
 				old: new File([await oldResponse.blob()], "synthetic-old.bpmn", { type: "application/xml" }),
 				next: new File([await newResponse.blob()], "synthetic-new.bpmn", { type: "application/xml" }),
-			});
+			};
+			setDemoFiles(files);
+			onBaseline(files.old);
+			onEdited(files.next);
 			setRepositoryPath("testdata\\repository");
 			setRepositoryName(demoScenario === "comprehensive" ? "Synthetic Request Workflow" : `Synthetic ${demoScenario.replaceAll("-", " ")} workflow`);
 			setRevision("fixture-v1");
@@ -53,8 +70,10 @@ export function AnalysisForm({ loading, onSubmit }: Props) {
 		}
 	}
 
-	function useManualFiles(_event: ChangeEvent<HTMLInputElement>) {
+	function useManualFiles(event: ChangeEvent<HTMLInputElement>) {
 		setDemoFiles(null);
+		onEdited(event.target.name === "new_bpmn" ? event.target.files?.[0] ?? null : null);
+		if (event.target.name === "old_bpmn") onBaseline(event.target.files?.[0] ?? null);
 	}
 
   return (
@@ -83,12 +102,15 @@ export function AnalysisForm({ loading, onSubmit }: Props) {
         <div className={styles.divider}><span>BPMN comparison</span></div>
         <label className={styles.fileField}>
           <span><b>Baseline BPMN</b><small>Old process specification</small></span>
-					<input name="old_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!demoFiles} onChange={useManualFiles} />
+					<input key={`old-${baseline?.name}-${baseline?.lastModified}`} name="old_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!baseline} onChange={useManualFiles} />
+          {baseline && <small>Loaded: {baseline.name}</small>}
         </label>
         <label className={styles.fileField}>
           <span><b>New BPMN</b><small>Changed process specification</small></span>
-					<input name="new_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!demoFiles} onChange={useManualFiles} />
+					<input key={`new-${baseline?.name}-${baseline?.lastModified}`} name="new_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!demoFiles && !edited} onChange={useManualFiles} />
         </label>
+				<button className={styles.canvasLink} type="button" disabled={loading || !baseline} onClick={onOpenEditor}>Edit baseline in canvas <span aria-hidden="true">↗</span></button>
+				{edited && <p role="status">New BPMN ready: {edited.name}. Run analysis to update results.</p>}
 				{demoFiles && <div className={styles.demoActive}><b>Synthetic demo ready</b><span>Neutral BPMN fixtures will be submitted; no case-study data is used.</span></div>}
 
         <div className={styles.grid}>

@@ -6,6 +6,18 @@ The implemented deterministic core uses the Go standard library. It inventories 
 
 ## Scope boundary
 
+### Edit BPMN in the web
+
+The web workspace has four top-level views: **Mapping**, **BPMN Canvas**,
+**Saved analyses**, and **Guide**. Upload a baseline from Mapping or Canvas,
+then edit its independent copy with the bpmn-js palette (task/gateway/flows;
+wrench for task type). Select **Use edited BPMN** to return the current version
+to Mapping, then run impact analysis. Uploading a separate new BPMN remains
+supported. Switching views preserves editor state and undo/redo history. The
+Mapping view warns when the canvas contains edits that have not been applied.
+Drafts live in browser memory: download before refreshing.
+See [scoring audit and editor limitations](docs/SCORING-AUDIT.md).
+
 The mapper recommends artifacts for human review. It does not modify source, generate code, run the analyzed repository, migrate a database, deploy software, or prove that a candidate must change. Unsupported or ambiguous cases are reported as unresolved.
 
 Implemented language support:
@@ -134,6 +146,8 @@ After any report, open **Reviewer annotation** to select expected impacts, corre
 
 Open **Evaluation dashboard** below the report, upload Reviewer A/B JSON, and select **Reconcile reviewers**. Resolve each conflict explicitly by choosing one reviewer, entering corrected expected impacts, or confirming an empty negative case. Confirm the annotations apply to the selected snapshot, then **Evaluate stored reports**. The Go evaluation API loads the already completed reports, requires complete change coverage and matching fingerprints, and computes file-level metrics. Download the evaluation bundle (including reviewers and adjudication decisions), Markdown, and final ground truth. Uploaded reviews are processed only by evaluation, never inference; no review/evaluation files are persisted on the server.
 
+See [the ground-truth protocol](docs/GROUND-TRUTH-PROTOCOL.md) before interpreting Recall/Precision. In particular, a new BPMN task has no objectively known affected implementation until a closed reference implementation exists or independent reviewers make a documented architecture judgment.
+
 Production verification:
 
 ```powershell
@@ -153,6 +167,13 @@ API routes:
 - `GET /api/v1/analyses/{analysis-id}`;
 - `GET /api/v1/analyses/{analysis-id}/report.json`;
 - `GET /api/v1/analyses/{analysis-id}/report.md`.
+- `GET /api/v1/analyses/{analysis-id}/planning-context.json` (bounded,
+  inspectable pre-LLM evidence only; no model call);
+- `POST /api/v1/analyses/{analysis-id}/plans` (creates an immutable planning
+  record; returns `DISABLED` while `NoLLMProvider` is configured);
+- `GET /api/v1/analyses/{analysis-id}/plans`;
+- `GET /api/v1/plans/{plan-id}/change-plan.json`;
+- `GET /api/v1/plans/{plan-id}/change-plan.md`;
 - `POST /api/v1/reviews/reconcile` (bounded JSON annotations);
 - `POST /api/v1/review-packs` (stored report IDs and reviewer identifiers; no ground truth);
 - `POST /api/v1/evaluations` (stored report IDs, annotations, explicit conflict decisions).
@@ -230,6 +251,10 @@ With `--manifest`, reconciliation verifies the pack ID, case digest, canonical r
 - `internal/ingest`: secure local repository inventory;
 - `internal/index`: generic text and native Go adapters;
 - `internal/retrieval`: deterministic BM25, evidence, scoring, abstention;
+- `internal/planning`: bounded post-inference verifier/planner/reviewer contracts,
+  deterministic context identity, timed orchestration, validation, and canonical
+  change-plan rendering;
+- `internal/planstore`: immutable change-plan persistence port;
 - `internal/report`: canonical JSON and Markdown renderer;
 - `internal/reportstore`: completed-analysis persistence port;
 - `internal/filestore`: atomic local JSON/Markdown report adapter;

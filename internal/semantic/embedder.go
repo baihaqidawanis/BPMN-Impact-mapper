@@ -110,6 +110,9 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 	command.Stdout = &limitedWriter{target: &stdout, remaining: maxEmbeddingOutput}
 	command.Stderr = &limitedWriter{target: &stderr, remaining: 1 << 20}
 	if err := command.Run(); err != nil {
+		if ctx.Err() != nil {
+			return nil, fmt.Errorf("offline embedding interrupted: %w", ctx.Err())
+		}
 		message := strings.TrimSpace(stderr.String())
 		if message == "" {
 			message = err.Error()

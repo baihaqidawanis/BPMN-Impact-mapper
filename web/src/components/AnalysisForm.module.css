@@ -6,6 +6,9 @@
   box-shadow: var(--shadow);
 }
 
+.canvasLink { display: flex; justify-content: space-between; border: 1px solid var(--line); background: var(--canvas); color: var(--blue); border-radius: 9px; padding: 12px; cursor: pointer; font: inherit; }
+.canvasLink:disabled { opacity: .5; cursor: default; }
+
 .heading {
   display: flex;
   gap: 13px;

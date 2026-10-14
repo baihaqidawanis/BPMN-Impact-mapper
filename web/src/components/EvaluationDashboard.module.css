@@ -16,4 +16,24 @@
 .body table { width: 100%; border-collapse: collapse; }
 .body th, .body td { padding: 9px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .downloads { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.diagnostics { display: grid; gap: 10px; margin-top: 4px; padding-top: 14px; border-top: 1px solid var(--line); }
+.diagnostics h4 { margin: 0; font-size: 14px; }
+.diagnostics > details { border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); }
+.diagnostics > details > summary { display: flex; justify-content: space-between; gap: 12px; padding: 12px; cursor: pointer; font-weight: 650; text-transform: capitalize; }
+.diagnostics > details > summary span { color: var(--muted); font-size: 11px; font-weight: 450; }
+.diagnostics table { min-width: 760px; background: var(--surface); }
+.diagnostics th { vertical-align: top; }
+.diagnostics code { display: block; margin-top: 4px; color: var(--muted); font: 10px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+.changeType { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.fileList { min-width: 180px; margin: 0; padding-left: 18px; }
+.fileList li + li { margin-top: 5px; }
+.fileList code { color: var(--ink); }
+.empty { color: var(--muted); font-style: italic; }
+.resolved, .unresolved { display: inline-block; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 650; }
+.resolved { color: #075f39; background: #e8f7ef; }
+.unresolved { color: #8a4b08; background: #fff3df; }
+@media (prefers-color-scheme: dark) {
+  .resolved { color: #8ee6b9; background: #123b29; }
+  .unresolved { color: #ffd08a; background: #493116; }
+}
 @media (max-width: 600px) { .uploads { grid-template-columns: 1fr; } }

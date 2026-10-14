@@ -1,0 +1,12 @@
+.editor { width: 100%; height: calc(100dvh - 205px); min-height: 540px; background: white; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.editor header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #ddd; }
+.editor h2 { margin: 0; font-size: 19px; }
+.editor p { margin: 8px 20px; font-size: 13px; color: #6e6e73; }
+.editor header p { margin: 6px 0 0; }
+.editor nav { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 20px; }
+.editor button { padding: 9px 13px; border: 1px solid #ddd; border-radius: 8px; background: #f5f5f7; cursor: pointer; }
+.editor button:disabled { opacity: .45; cursor: wait; }
+.editor .primary { background: #0071e3; color: white; margin-left: auto; }
+.editor .error { color: #b42318; }
+.canvas { flex: 1; min-height: 200px; border-block: 1px solid #ddd; }
+.editor footer { padding: 12px 20px; font-size: 12px; color: #6e6e73; }

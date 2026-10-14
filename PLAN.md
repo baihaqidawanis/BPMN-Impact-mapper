@@ -1,7 +1,33 @@
 # BPMN Impact Mapper — Phase 1 Plan
 
 Status: **DONE — Phase 4.0 persisted analysis history verified**
-Last updated: 2026-10-01
+Last updated: 2026-10-14
+
+## Canvas and scoring audit (2026-10-14)
+
+### Workspace navigation increment
+
+- DONE: top navigation for Mapping, BPMN Canvas, Saved analyses, Guide; full-width inline editor and preserved mounted state across navigation.
+- DONE: browser tests cover navigation, canvas-first upload, draft/undo preservation, saved-report navigation and responsive layout. All 10 serial Playwright scenarios and TypeScript checks pass.
+
+- DONE: isolated bpmn-js editor; immutable baseline, explicit edited XML submission, undo/redo, reset, download. Two Playwright editor scenarios pass (edit/analyze/reset and add task/gateway with BPMN-DI export).
+- DONE: audit zero-valued signals and RRF candidate truncation; preserve action evidence requirements. See `docs/SCORING-AUDIT.md` and full-pool regression in `internal/fusion/strategy_test.go`.
+- DONE: make stable-ID trace matching boundary-aware and add conservative grammatical matching for path/symbol tokens, with collision regressions; fixed weights and action thresholds remain unchanged.
+- DONE: expose per-change evaluation diagnostics in the web dashboard (expected files, ranked predictions, RR, AP, and unresolved state) so aggregate Recall/Precision results are actionable.
+- DONE: document the post-inference ground-truth protocol, evidence hierarchy, new-task limitation, and human/tool responsibility boundary; expose the non-self-labeling rule in the web guide.
+- DONE: implement the pre-LLM agentic planning core as a typed Go state machine: bounded evidence bundle, verifier, per-layer planner, cross-layer reviewer, hallucination/completeness validator, deterministic plan JSON/Markdown, and offline provider compatibility. No network or model call was added.
+- DONE: expose a read-only `planning-context.json` preview from immutable reports and link it in the web report, making the future model payload inspectable before provider activation.
+- DONE: separate optional reviewer/reconciliation/metrics controls into a dedicated Research workspace so the primary Mapping report remains focused and presentation-ready.
+- DONE: add a restrained Planning workspace that visualizes the exact bounded pre-LLM payload, counts candidates/evidence, reports payload size, and exposes evidence IDs without pretending a provider is connected.
+- DONE: bind bounded payloads to deterministic context IDs, require provider/model/prompt identity, enforce per-role timeouts, and cover the provider contract with failure-path tests.
+- DONE: add an API/UI planning execution boundary plus immutable atomic plan JSON/Markdown storage; the default offline provider creates an explicit `DISABLED` record and never fabricates plan content.
+- TODO: add one opt-in OpenAI-compatible provider, adapter-level transient retries, and provider-failure fallback after explicit LLM configuration.
+- DONE: editor round trip and analysis, ranking invariance against display top-k, `go test ./...`, `go vet ./...`, TypeScript, production build and diff whitespace checks. Nine browser scenarios verified: eight passed in the full run; one passed targeted rerun after fixing its nested-summary selector and cold-start timeout.
+- TODO: frozen independent ground truth for empirical weight calibration; do not inflate missing signals or claim calibrated probabilities.
+- TODO: persistent drafts and report-to-canvas highlighting in a subsequent increment.
+- BLOCKED: Next/source-map-js advisory upgrade. npm audit identifies fixed ranges,
+  but the configured registry returned ETARGET for Next 16.4.0 and 16.3.8 on
+  2026-10-14. Keep the tool local until an available compatible patch is tested.
 Scope owner: this repository only
 
 ## 1. Problem statement and research objective

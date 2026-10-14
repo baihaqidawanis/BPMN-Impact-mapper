@@ -20,6 +20,7 @@ export function InterpretationGuide() {
           <h3>Methods</h3>
 					<p><b>BM25</b> matches exact terms. <b>Semantic</b> matches meaning using local embeddings. <b>Fusion</b> combines their ranks with RRF. <b>Hybrid</b> fuses Semantic with graph-aware trace, structure, BM25, and static source-relation evidence.</p>
 					<p>RRF and cosine scores describe retrieval relevance or rank consensus, not the probability that a file must change.</p>
+          <p><b>Ground truth</b> must come from a frozen reference implementation or independent reviewers after predictions are complete. Mapper candidates cannot label themselves.</p>
         </div>
       </div>
     </details>

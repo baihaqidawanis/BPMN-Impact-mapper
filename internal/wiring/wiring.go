@@ -80,6 +80,6 @@ func fusionIdentity(method domain.AnalysisMethod, semanticIdentity []byte) []byt
 		Fusion   string                `json:"fusion"`
 		RRFK     int                   `json:"rrf_k"`
 		Semantic json.RawMessage       `json:"semantic"`
-	}{method, "reciprocal-rank-fusion-v1", fusion.DefaultRRFK, semanticIdentity})
+	}{method, "reciprocal-rank-fusion-v2-full-pool", fusion.DefaultRRFK, semanticIdentity})
 	return identity
 }
