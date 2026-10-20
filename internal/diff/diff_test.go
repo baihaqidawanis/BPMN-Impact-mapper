@@ -3,6 +3,7 @@ package diff_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/bpmn"
@@ -22,6 +23,38 @@ func TestCompareDetectsRequiredTaxonomy(t *testing.T) {
 		if !found[required] {
 			t.Errorf("missing %s in %#v", required, found)
 		}
+	}
+}
+
+func TestCompareDetectsGatewaySemanticsWithStableID(t *testing.T) {
+	oldGraph := graphWithElements(&domain.Element{ID: "GW", Name: "Review decision", Type: "exclusiveGateway", GatewayDirection: "Diverging", DefaultFlow: "FLOW-REJECT"})
+	newGraph := graphWithElements(&domain.Element{ID: "GW", Name: "Review decision", Type: "parallelGateway", GatewayDirection: "Converging"})
+	changes := diff.Compare(oldGraph, newGraph)
+	if len(changes) != 1 || changes[0].ChangeType != domain.ModifyGatewaySemantics {
+		t.Fatalf("expected gateway semantic change, got %#v", changes)
+	}
+	for _, term := range []string{"exclusiveGateway", "parallelGateway", "Diverging", "Converging", "FLOW-REJECT"} {
+		if !strings.Contains(changes[0].Reason, term) {
+			t.Fatalf("reason omitted %q: %s", term, changes[0].Reason)
+		}
+	}
+	if got := diff.Compare(oldGraph, oldGraph); len(got) != 0 {
+		t.Fatalf("unchanged gateway produced changes: %#v", got)
+	}
+	for _, test := range []struct {
+		name    string
+		changed domain.Element
+	}{
+		{name: "type only", changed: domain.Element{ID: "GW", Name: "Review decision", Type: "parallelGateway", GatewayDirection: "Diverging", DefaultFlow: "FLOW-REJECT"}},
+		{name: "direction only", changed: domain.Element{ID: "GW", Name: "Review decision", Type: "exclusiveGateway", GatewayDirection: "Converging", DefaultFlow: "FLOW-REJECT"}},
+		{name: "default only", changed: domain.Element{ID: "GW", Name: "Review decision", Type: "exclusiveGateway", GatewayDirection: "Diverging"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got := diff.Compare(oldGraph, graphWithElements(&test.changed))
+			if len(got) != 1 || got[0].ChangeType != domain.ModifyGatewaySemantics {
+				t.Fatalf("gateway semantic change missed: %#v", got)
+			}
+		})
 	}
 }
 

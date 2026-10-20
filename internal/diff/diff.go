@@ -358,6 +358,21 @@ func compareElement(oldGraph, newGraph *domain.Graph, oldElement, newElement *do
 	if isGateway(oldElement.Type) && outgoingConditions(oldGraph, oldElement.ID) != outgoingConditions(newGraph, newElement.ID) {
 		changes = append(changes, base(domain.ModifyGatewayCondition, "gateway outgoing condition changed"))
 	}
+	if isGateway(oldElement.Type) || isGateway(newElement.Type) {
+		var differences []string
+		if oldElement.Type != newElement.Type {
+			differences = append(differences, fmt.Sprintf("type %s -> %s", oldElement.Type, newElement.Type))
+		}
+		if oldElement.GatewayDirection != newElement.GatewayDirection {
+			differences = append(differences, fmt.Sprintf("direction %q -> %q", oldElement.GatewayDirection, newElement.GatewayDirection))
+		}
+		if oldElement.DefaultFlow != newElement.DefaultFlow {
+			differences = append(differences, fmt.Sprintf("default flow %q -> %q", oldElement.DefaultFlow, newElement.DefaultFlow))
+		}
+		if len(differences) > 0 {
+			changes = append(changes, base(domain.ModifyGatewaySemantics, "gateway semantics changed: "+strings.Join(differences, "; ")))
+		}
+	}
 	return changes
 }
 

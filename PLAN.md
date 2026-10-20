@@ -1,7 +1,23 @@
 # BPMN Impact Mapper — Phase 1 Plan
 
 Status: **DONE — Phase 4.0 persisted analysis history verified**
-Last updated: 2026-10-14
+Last updated: 2026-10-20
+
+## Trace evidence and score explanation (2026-10-20)
+
+- DONE: audit found that changed-element IDs alone contribute the direct 45% trace signal; neighbour IDs already contribute query terms but were not labelled as contextual evidence.
+- DONE: expose exact neighbouring ID occurrences as `CONTEXT_TRACE_ID`, distinct from direct traces, without changing scores, acceptance thresholds, propagation seeds or actions. Version the annotation through method metadata; regression tests check unchanged scoring/action and ID collision rejection.
+- DONE: separate combined ranking scores from individual search signals; show direct/context/unused-check states, scope weights to the code-evidence branch, and align Markdown terminology. Five explanation tests and the Markdown/JSON golden test pass.
+- DONE: `go test -p 1 ./...`, `go vet -p 1 ./...`, TypeScript, production frontend build and whitespace checks pass. Go concurrency was limited after an initial Windows paging/memory failure.
+- BLOCKED (environment): visual browser verification remains open. After correcting the new browser fixture's history response, system Chrome exited on launch and the locally installed Chromium revisions did not match Playwright's expected revision. No browser was downloaded. The focused `scoring-display.spec.ts` is ready for rerun.
+- TODO: calibrate the 45% trace weight only with independent development/held-out cases; do not rescale positive signals to make absent-ID cases appear certain.
+
+## Local semantic timeout follow-up (2026-10-20)
+
+- DONE: measured a cold Hybrid CLI analysis of the Simple-ERP P2P gateway/task scenario at about 2 minutes 48 seconds; the former 2-minute API default was insufficient.
+- DONE: raised API and CLI analysis defaults to 10 minutes and the Next.js rewrite proxy to 11 minutes; retained cancellation and finite resource bounds.
+- DONE: tested a larger Python embedding batch/thread count, observed worker failure on this machine, and reverted the experiment. Ranking and embedding semantics were not changed.
+- TODO: profile embedding throughput across multiple machines/repository sizes before changing batching or claiming a general performance improvement.
 
 ## Canvas and scoring audit (2026-10-14)
 
@@ -34,7 +50,7 @@ Scope owner: this repository only
 
 Software often follows BPMN as a specification without loading BPMN at runtime. A BPMN edit therefore does not directly identify which implementation artifacts require modification or verification. BPMN Impact Mapper is a third-party, mapping-only analysis tool that converts a semantic BPMN graph diff and a static repository index into ranked, evidence-bearing impact candidates.
 
-The research objective is to establish an auditable automatic pipeline comparing BM25-only, Semantic-only, BM25 + Semantic rank fusion, and Graph-Aware Hybrid before evidence-bounded LLM planning. Ranking is candidate retrieval, not causal proof. The tool must abstain when evidence is weak or ambiguous. The legacy configuration adapter is outside the primary product UI and target experiment because it requires manual mapping before inference.
+The research objective is to establish an auditable automatic pipeline comparing BM25-only, Semantic-only, BM25 + Semantic rank fusion, and BPMN-Context-Aware Hybrid Retrieval before evidence-bounded LLM planning. Ranking is candidate retrieval, not causal proof. The tool must abstain when evidence is weak or ambiguous. The legacy configuration adapter is outside the primary product UI and target experiment because it requires manual mapping before inference.
 
 ## 2. Scope
 
@@ -155,7 +171,7 @@ Required actions are exactly `ADD`, `MODIFY`, `REMOVE`, `VERIFY`, `NO_ACTION`, a
 
 Matching order is stable ID, then type, normalized label, lane/actor, incoming/outgoing signatures, graph neighborhood, and structural similarity. Phase 1 fully implements stable-ID matches and conservative unique structural fallback. Competing equal best fallback matches produce `UNRESOLVED_MATCH`; no forced pairing is allowed.
 
-Taxonomy: `ADD_TASK`, `REMOVE_TASK`, `MODIFY_TASK_LABEL`, `MODIFY_ACTOR_ROLE`, `ADD_GATEWAY`, `REMOVE_GATEWAY`, `MODIFY_GATEWAY_CONDITION`, `MODIFY_SEQUENCE_FLOW`, `ADD_DATA_REQUIREMENT`, `REMOVE_DATA_REQUIREMENT`, `ADD_STATE`, `MODIFY_TERMINAL_OUTCOME`, `UNRESOLVED_MATCH`.
+Taxonomy: `ADD_TASK`, `REMOVE_TASK`, `MODIFY_TASK_LABEL`, `MODIFY_ACTOR_ROLE`, `ADD_GATEWAY`, `REMOVE_GATEWAY`, `MODIFY_GATEWAY_CONDITION`, `MODIFY_GATEWAY_SEMANTICS`, `MODIFY_SEQUENCE_FLOW`, `ADD_DATA_REQUIREMENT`, `REMOVE_DATA_REQUIREMENT`, `ADD_STATE`, `MODIFY_TERMINAL_OUTCOME`, `UNRESOLVED_MATCH`.
 
 Sequence flow comparison covers add/remove, endpoint rewiring, label changes, and condition changes. Gateway condition changes are attributed separately when outgoing conditions differ. Terminal outcome changes compare terminal node labels/types. Data requirements use BPMN data input/output associations and data object references where present.
 
@@ -871,7 +887,7 @@ Status: IN PROGRESS for an isolated offline prototype authorized by the user on
   method set; retain the existing adapter temporarily only for internal backward
   compatibility with older artifacts.
 - [DONE] Implement RRF fusion and enable comparison of BM25-only, Semantic-only, BM25 +
-  Semantic Fusion, and Graph-Aware Hybrid on byte-identical inputs without a
+  Semantic Fusion, and BPMN-Context-Aware Hybrid Retrieval on byte-identical inputs without a
   premature generalization claim.
 
 Implementation evidence (2026-10-10): RRF unit tests cover agreement, stable
@@ -887,7 +903,7 @@ mechanics only; comparative accuracy remains blocked on hidden ground truth.
 Authorization: user instruction on 2026-10-14 to continue hardening all
 development work that does not require reviewer input or an LLM credential.
 
-- [DONE] Require BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid in
+- [DONE] Require BM25, Semantic, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval in
   the primary frozen benchmark manifest.
 - [DONE] Retain Configuration-Driven only as an optional legacy comparator with
   a mandatory frozen mapping path and SHA-256 when selected.
@@ -961,7 +977,7 @@ cold-start limitation, not hidden as an accuracy failure.
 Authorization: user instruction on 2026-10-14 to retain Hybrid as the product
 method while keeping component methods available for research comparison.
 
-- [DONE] Make Product mode the web default and submit only Graph-Aware Hybrid.
+- [DONE] Make Product mode the web default and submit only BPMN-Context-Aware Hybrid Retrieval.
 - [DONE] Move BM25, Semantic, Fusion, and four-method comparison behind an
   explicit Research mode control without removing the reproducible experiment
   path.
@@ -980,3 +996,136 @@ TypeScript type-check, and production build pass. All 11 serial Playwright
 workflows pass after the Product/Research selector update, including BM25
 fallback, four-method comparison, canvas editing, immutable evaluation, and
 reviewer export. No network provider or LLM is enabled.
+
+## 49. Report explanation correction (2026-10-19)
+
+- [DONE] Explain actual fusion ranks, including one-sided and unavailable ranks,
+  rather than asserting every fused candidate was found by both methods.
+- [DONE] Label textual data/status clues as suggestions, not verified dependencies.
+- [DONE] Isolate nested evidence disclosures from candidate-row layout, wrap long
+  source paths/excerpts, and improve keyboard focus and detail readability.
+- [DONE] TypeScript typecheck, two report-explanation regression tests, and
+  `git diff --check` pass. Worker execution required sandbox escalation.
+- [DONE] Browser visual verification of the updated report layout (phase 50).
+- [DONE] Audit backend structured-evidence extraction against actual source lines
+  and correct cross-line evidence attribution (phase 50).
+
+Existing ranking weights, report JSON, and retrieval algorithms are unchanged.
+
+## 50. Evidence correction and report navigation (2026-10-19)
+
+Authorization: user requested priorities 1-3: accurate structured evidence,
+Code/Tests/Docs filtering, and per-file result grouping.
+
+- [DONE] Replace artifact-wide structured labeling with syntax/query co-occurrence
+  on the actual displayed line. Bound excerpts and preserve original line offsets.
+- [DONE] Reject task-ID-only lines, unrelated SQL elsewhere, generic uppercase IDs,
+  test-directory-only hints, comments, and syntax clipped out of excerpts.
+- [DONE] Bump engine identity to avoid collisions with immutable historical reports.
+- [DONE] Add display-only filters and By file view preserving change/function
+  associations, individual actions, scores, original ranks, and unresolved changes.
+- [DONE] Keep full JSON/Markdown exports and evaluation inputs unaffected by filters.
+- [DONE] Increase report detail readability and verify desktop/mobile layout.
+
+Verification: `go test -p 1 ./internal/...`, `go vet -p 1 ./...`, CLI tests
+excluding `TestRunFrozenBenchmark`, TypeScript typecheck, and four focused
+Playwright tests pass. Browser checks cover filters, grouped files, retained
+unresolved text, unchanged report data, original ranks, nested disclosures, and
+mobile overflow. Desktop/mobile screenshots were inspected.
+
+Full `go test ./...` initially failed from Windows memory allocation exhaustion.
+A serial retry passed internal packages but the CLI frozen benchmark failed
+loading the offline embedding runtime. Full real-model benchmark verification
+remains open; no accuracy improvement is claimed. No dependency download or
+external model call occurred. Existing user BPMN files were not edited.
+
+Limitations: patterns are conservative single-line textual hints, not full
+multi-language parsers; some valid multiline syntax will be missed. Result
+categories use layer and path conventions. Newly supported evidence requires a
+fresh analysis; reopening an old report only changes its display.
+
+## 51. Local semantic reliability and scenario workflow
+
+Authorization: user requested the next development priorities (semantic stability,
+scenario coverage, batch web runs, and explicit method differences).
+
+- [DONE] Bound embedding input and thread use; classify memory and input-limit errors in the API, and retain bounded corpus/query cache entries (semantic and API unit tests).
+- [DONE] Add eight reusable synthetic scenarios, including a no-change control, and assert expected BPMN diffs in `internal/diff/catalog_test.go`.
+- [DONE] Add sequential, cancellable Research batch analysis with per-run reports/errors and local summary export (browser tests for partial failures and cancellation).
+- [DONE] Compare shared and method-exclusive files for identical input fingerprints and Top-K (browser unit test).
+- [DONE] Verify `go test -p 1 ./...` (including the frozen offline model case), `go vet -p 1 ./...`, frontend production build/typecheck, 18 browser E2E tests, `gofmt -l`, and `git diff --check`; document limitations.
+
+Design: the existing benchmark runner requires hidden ground truth. The new web
+batch uses the existing analysis API for exploratory runs; it must not fabricate
+accuracy metrics or silently replace failed Semantic runs with BM25. Evaluation
+continues through the existing separate ground-truth workflow. Case-specific
+retrieval exclusions are not introduced to hide cross-module false positives.
+The batch is an exploratory UI, not the hidden-ground-truth benchmark. A failed
+Semantic run remains failed. A cancelled request may still finish on the server
+and appear in Saved analyses. Cross-module candidates remain visible for review;
+the current generic lexical/context terms can over-retrieve without independent
+ground truth for weight tuning.
+
+## 52. Gateway semantics and bounded semantic passages (2026-10-20)
+
+- [DONE] Detect stable-ID gateway type, direction, and default-flow changes as
+  `MODIFY_GATEWAY_SEMANTICS`; preserve separate flow/condition changes and
+  include explicit old/new values in the reason. Synthetic XOR-to-AND test passes.
+- [DONE] Give each source artifact one short semantic passage and a second tail
+  passage when embedding budget permits; rank by the best passage and cite its
+  bounded excerpt. Long-artifact regression test passes.
+- [DONE] Bump engine identity because diff and semantic inputs changed.
+- [DONE] Full `go test -p 1 ./...` (including the offline-model frozen case),
+  `go vet -p 1 ./...`, `gofmt -l`, and `git diff --check` pass.
+- [TODO] Establish hidden scenario ground truth before comparing BM25, Semantic,
+  Fusion, and BPMN-context hybrid accuracy or retuning weights.
+
+Limits: the 600-character bound is not a tokenizer guarantee; long middle
+sections can be missed. No DPR/model download or LLM is added. Graph topology
+alone cannot prove an XOR/AND join type or a code change; BPMN XML semantics
+and candidate evidence are still presented for review.
+
+## 53. Add/remove task demo diagram integrity (2026-10-20)
+
+- [DONE] Add BPMN-DI shapes and edge waypoints to the web's synthetic
+  `insert-task-old/new.bpmn` pair. Reversing the pair tests removal; neither
+  modifies Simple-ERP or its source code.
+- [DONE] Verify graph-diff catalog and TypeScript typecheck.
+- [DONE] Add browser regression checks for every task and nonzero-length
+  sequence-flow path. Both diagrams imported without BPMN warnings and passed
+  individually; screenshots show the added user task and connections.
+- [DONE] Convert the synthetic add/remove gateway-branch pair to visual-ready
+  BPMN-DI, with an explicit XOR split and branch waypoints. Graph-diff catalog
+  still detects `ADD_GATEWAY`/`REMOVE_GATEWAY`, task, and flow changes.
+- [DONE] Center the canvas when fitting an imported diagram. This prevents a
+  compact but tall branch diagram from opening beneath the left tool palette.
+  Typecheck and seven focused browser tests (four diagram imports and three
+  editor regressions) pass; screenshots were inspected.
+- [TODO] Convert the remaining synthetic role, label, move, and unresolved
+  scenarios to visual-ready BPMN-DI if they must be presented in external BPMN
+  editors. Their mapper graph fixtures remain valid, but do not yet claim
+  visual-editor readiness.
+
+One combined Playwright run had a transient Windows worker-process exit; an
+isolated rerun of the affected scenario passed. No mapping accuracy claim is
+derived from canvas rendering.
+
+## 54. Source-backed P2P gateway/task scenario (2026-10-20)
+
+- [DONE] Keep `C:\Simple-ERP` read-only and derive a new P2P BPMN only under
+  `docs/demo-bpmn/`. Its baseline BPMN blob matches `69724e6` and current
+  checkout `c928a29`; the rest of the checkout is dirty and must not be
+  labeled as a frozen `69724e6` source snapshot.
+- [DONE] Add one XOR gateway, one Admin user task, and four changed/new flows,
+  with matching lane references, incoming/outgoing references, and BPMN-DI.
+- [DONE] Run BM25-only CLI smoke against the current Simple-ERP source:
+  exactly `ADD_GATEWAY`, `ADD_TASK`, and four `MODIFY_SEQUENCE_FLOW` changes;
+  5 candidates per change at Top-K 5. Output is ignored under `.data/`.
+- [DONE] Import the complete new BPMN in the local bpmn-js canvas without
+  warnings and assert gateway/task and all four changed edges are rendered.
+- [TODO] Obtain independently reviewed ground truth before claiming which
+  source files truly need modification or comparing mapping accuracy.
+
+The visual scenario tests importability and the smoke run tests mechanics,
+not software correctness or measured retrieval quality. No Simple-ERP source
+or POC TA files were changed by this work.

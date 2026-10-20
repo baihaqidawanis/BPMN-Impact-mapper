@@ -37,6 +37,7 @@ func Markdown(value domain.Report) []byte {
 	fmt.Fprintf(&output, "- Repository: `%s`\n", escape(value.Repository.Name))
 	fmt.Fprintf(&output, "- Revision: `%s`\n", escape(value.Repository.Revision))
 	fmt.Fprintf(&output, "- Changes: %d\n\n", len(value.Changes))
+	output.WriteString("Retrieval scores order candidates; they are not probabilities of a required change. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.\n\n")
 	if len(value.SourceAnalysis) > 0 {
 		output.WriteString("## Source analysis coverage\n\n| File | Language | Adapter | Capabilities | Fallback |\n|---|---|---|---|---|\n")
 		for _, file := range value.SourceAnalysis {
@@ -67,7 +68,7 @@ func Markdown(value domain.Report) []byte {
 			}
 		}
 		if len(change.Impacts) > 0 {
-			output.WriteString("| Action | Confidence | Module | Layer | File | Symbol |\n")
+			output.WriteString("| Action | Retrieval score | Module | Layer | File | Function / code name |\n")
 			output.WriteString("|---|---:|---|---|---|---|\n")
 			for _, impact := range change.Impacts {
 				fmt.Fprintf(&output, "| %s | %.4f | %s | %s | `%s` | `%s` |\n", impact.RequiredAction, impact.Confidence, table(impact.Module), table(impact.Layer), table(impact.File), table(impact.Symbol))

@@ -20,6 +20,9 @@ const (
 	providerVersion    = "sentence-transformers-command-v1"
 	maxEmbeddingTexts  = 5001
 	maxEmbeddingOutput = 96 << 20
+	maxEmbeddingInput  = 16 << 20
+	maxCacheBytes      = 64 << 20
+	maxCacheEntries    = 4
 )
 
 //go:embed embed.py
@@ -31,9 +34,15 @@ var embeddingSlot = make(chan struct{}, 1)
 
 var embeddingCache struct {
 	sync.RWMutex
-	key     [sha256.Size]byte
+	entries map[[sha256.Size]byte]cacheEntry
+	order   [][sha256.Size]byte
+	bytes   int
+}
+
+type cacheEntry struct {
 	vectors [][]float64
 	runtime Identity
+	bytes   int
 }
 
 type Embedder interface {
@@ -97,7 +106,14 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 		return [][]float64{}, nil
 	}
 	if len(texts) > maxEmbeddingTexts {
-		return nil, fmt.Errorf("semantic embedding input exceeds %d texts", maxEmbeddingTexts)
+		return nil, fmt.Errorf("%w: maximum %d texts", ErrInputLimit, maxEmbeddingTexts)
+	}
+	inputBytes := 0
+	for _, text := range texts {
+		inputBytes += len(text)
+		if inputBytes > maxEmbeddingInput {
+			return nil, ErrInputLimit
+		}
 	}
 	if strings.TrimSpace(embedder.Command) == "" || strings.TrimSpace(embedder.Model) == "" {
 		return nil, errors.New("semantic embedding command and model are required")
@@ -109,8 +125,8 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 		return nil, fmt.Errorf("encode semantic input: %w", err)
 	}
 	cacheKey := sha256.Sum256(append([]byte(embedder.Command+"\x00"+embedder.Model+"\x00"), input...))
-	if cached := cachedVectors(cacheKey); cached != nil {
-		embedder.storeRuntimeIdentity(cachedRuntimeIdentity(cacheKey))
+	if cached, identity := cachedEmbedding(cacheKey); cached != nil {
+		embedder.storeRuntimeIdentity(identity)
 		return cached, nil
 	}
 	select {
@@ -119,8 +135,8 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	if cached := cachedVectors(cacheKey); cached != nil {
-		embedder.storeRuntimeIdentity(cachedRuntimeIdentity(cacheKey))
+	if cached, identity := cachedEmbedding(cacheKey); cached != nil {
+		embedder.storeRuntimeIdentity(identity)
 		return cached, nil
 	}
 	command := exec.CommandContext(ctx, embedder.Command, "-c", pythonScript, embedder.Model)
@@ -142,7 +158,7 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 		if message == "" {
 			message = err.Error()
 		}
-		return nil, fmt.Errorf("offline embedding runtime failed: %s", bounded(message, 800))
+		return nil, runtimeFailure(message)
 	}
 	var response struct {
 		Dimension int         `json:"dimension"`
@@ -178,6 +194,18 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 	return cloneVectors(response.Vectors), nil
 }
 
+// Read vectors and their identity under one lock so concurrent cache replacement
+// cannot attach another model's metadata to an otherwise valid cache hit.
+func cachedEmbedding(key [sha256.Size]byte) ([][]float64, Identity) {
+	embeddingCache.RLock()
+	defer embeddingCache.RUnlock()
+	entry, ok := embeddingCache.entries[key]
+	if !ok {
+		return nil, Identity{}
+	}
+	return cloneVectors(entry.vectors), entry.runtime
+}
+
 func (embedder PythonEmbedder) storeRuntimeIdentity(identity Identity) {
 	if embedder.state == nil || identity.PythonVersion == "" {
 		return
@@ -188,29 +216,46 @@ func (embedder PythonEmbedder) storeRuntimeIdentity(identity Identity) {
 }
 
 func cachedVectors(key [sha256.Size]byte) [][]float64 {
-	embeddingCache.RLock()
-	defer embeddingCache.RUnlock()
-	if embeddingCache.vectors == nil || embeddingCache.key != key {
-		return nil
-	}
-	return cloneVectors(embeddingCache.vectors)
+	vectors, _ := cachedEmbedding(key)
+	return vectors
 }
 
 func cachedRuntimeIdentity(key [sha256.Size]byte) Identity {
-	embeddingCache.RLock()
-	defer embeddingCache.RUnlock()
-	if embeddingCache.vectors == nil || embeddingCache.key != key {
-		return Identity{}
-	}
-	return embeddingCache.runtime
+	_, identity := cachedEmbedding(key)
+	return identity
 }
 
 func storeCachedVectors(key [sha256.Size]byte, vectors [][]float64, runtime Identity) {
+	cost := 0
+	for _, vector := range vectors {
+		cost += len(vector) * 8
+	}
+	if cost > maxCacheBytes {
+		return
+	}
 	embeddingCache.Lock()
 	defer embeddingCache.Unlock()
-	embeddingCache.key = key
-	embeddingCache.vectors = cloneVectors(vectors)
-	embeddingCache.runtime = runtime
+	if embeddingCache.entries == nil {
+		embeddingCache.entries = make(map[[sha256.Size]byte]cacheEntry)
+	}
+	if old, ok := embeddingCache.entries[key]; ok {
+		embeddingCache.bytes -= old.bytes
+		for i, item := range embeddingCache.order {
+			if item == key {
+				embeddingCache.order = append(embeddingCache.order[:i], embeddingCache.order[i+1:]...)
+				break
+			}
+		}
+	}
+	for len(embeddingCache.order) >= maxCacheEntries || embeddingCache.bytes+cost > maxCacheBytes {
+		oldest := embeddingCache.order[0]
+		embeddingCache.bytes -= embeddingCache.entries[oldest].bytes
+		delete(embeddingCache.entries, oldest)
+		embeddingCache.order = embeddingCache.order[1:]
+	}
+	embeddingCache.entries[key] = cacheEntry{vectors: cloneVectors(vectors), runtime: runtime, bytes: cost}
+	embeddingCache.order = append(embeddingCache.order, key)
+	embeddingCache.bytes += cost
 }
 
 func cloneVectors(vectors [][]float64) [][]float64 {

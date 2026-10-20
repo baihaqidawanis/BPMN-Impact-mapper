@@ -32,7 +32,7 @@ func run(arguments []string) error {
 	flags := flag.NewFlagSet("bpmn-impact-mapper-server", flag.ContinueOnError)
 	address := flags.String("addr", "127.0.0.1:8080", "HTTP listen address")
 	dataDirectory := flags.String("data-dir", ".data", "local report and temporary artifact directory")
-	analysisTimeout := flags.Duration("analysis-timeout", 2*time.Minute, "maximum duration for one HTTP analysis")
+	analysisTimeout := flags.Duration("analysis-timeout", 10*time.Minute, "maximum duration for one HTTP analysis")
 	maxRequestBytes := flags.Int64("max-request-bytes", 20<<20, "maximum multipart request bytes")
 	maxBPMNBytes := flags.Int64("max-bpmn-bytes", 8<<20, "maximum bytes per uploaded BPMN file")
 	if err := flags.Parse(arguments); err != nil {

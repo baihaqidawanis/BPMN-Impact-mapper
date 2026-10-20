@@ -1,0 +1,16 @@
+.root { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); margin-bottom: 20px; }
+.root h3 { margin: 0; font-size: 18px; }
+.root p { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.root fieldset { border: 0; padding: 0; margin: 18px 0; min-width: 0; }
+.fields { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+.fields label { display: grid; gap: 8px; flex: 1 1 180px; min-width: 0; font-size: 12px; }
+.fields input { min-width: 0; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--canvas); color: var(--ink); }
+.root button { padding: 9px 12px; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--ink); background: var(--surface); cursor: pointer; font-size: 12px; }
+.root button:disabled { opacity: .5; cursor: default; }
+.root button:focus-visible, .root input:focus-visible { outline: 2px solid var(--blue); }
+.methods, .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+.methods label { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.results article { border-top: 1px solid var(--line); padding: 16px 0; }
+.results h4 { margin: 0; font-size: 14px; }
+.run { display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 0; font-size: 12px; }
+.run p { flex-basis: 100%; margin: 0; }

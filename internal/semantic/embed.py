@@ -2,8 +2,14 @@ import json
 import hashlib
 import platform
 import sys
+import os
+
+# Set limits before importing tensor/BLAS libraries, including during import.
+for variable in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ[variable] = "1"
 
 import sentence_transformers
+import torch
 from sentence_transformers import SentenceTransformer
 
 
@@ -31,6 +37,8 @@ def model_artifact_sha256(model, model_name):
 
 
 def main():
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
     model_name = sys.argv[1]
     request = json.load(sys.stdin)
     texts = request.get("texts", [])
@@ -39,7 +47,7 @@ def main():
     model = SentenceTransformer(model_name, local_files_only=True, device="cpu")
     vectors = model.encode(
         texts,
-        batch_size=32,
+        batch_size=8,
         convert_to_numpy=True,
         normalize_embeddings=True,
         show_progress_bar=False,

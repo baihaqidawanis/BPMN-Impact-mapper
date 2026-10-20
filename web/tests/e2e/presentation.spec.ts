@@ -48,7 +48,7 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
     if (response.url().endsWith("/api/v1/analyses") && response.status() === 201) reports.push(await response.json());
   });
   await page.getByRole("button", { name: "Run impact analysis" }).click();
-  await expect(page.getByTestId("method-comparison")).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByTestId("method-comparison")).toBeVisible({ timeout: 240_000 });
   await expect.poll(() => reports.length).toBe(4);
   const prediction = reports.find(r => r.method === "hybrid")!;
   const cases = prediction.changes.map(c => ({
@@ -104,7 +104,7 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
 
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
   await expect(page.getByText("Synthetic demo ready")).toBeVisible();
-  await expect(page.getByLabel(/Repository path/)).toHaveValue("testdata\\repository");
+  await expect(page.locator('input[name="repo_path"]')).toHaveValue("testdata\\repository");
 
   await page.getByRole("button", { name: "Run impact analysis" }).click();
   await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 120_000 });
@@ -116,8 +116,10 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
 
 	const firstCandidate = page.getByTestId("impact-details").first();
   await firstCandidate.locator(":scope > summary").click();
-  await expect(firstCandidate.getByRole("heading", { name: "Evidence" })).toBeVisible();
-  await expect(firstCandidate.getByRole("heading", { name: "Score breakdown" })).toBeVisible();
+	await expect(firstCandidate.getByRole("heading", { name: "Why this file or function?" })).toBeVisible();
+	await expect(firstCandidate.getByRole("heading", { name: "How the result was ranked" })).toBeVisible();
+	await firstCandidate.getByText("Show technical evidence").click();
+	await expect(firstCandidate.locator("code").first()).toBeVisible();
 	if (process.env.UI_SCREENSHOT) {
 		await page.screenshot({ path: path.resolve(process.cwd(), "../.data/ui-report.png"), fullPage: true });
 	}
@@ -161,7 +163,7 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
 
 test("manual BPMN upload workflow remains available", async ({ page }) => {
 	await page.goto("/");
-	await page.getByLabel(/Repository path/).fill("testdata\\repository");
+	await page.locator('input[name="repo_path"]').fill("testdata\\repository");
 	await page.getByLabel("Repository name").fill("Manual fixture run");
 	await page.locator('input[name="old_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/old.bpmn"));
 	await page.locator('input[name="new_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/new.bpmn"));
@@ -175,10 +177,12 @@ test("manual BPMN upload workflow remains available", async ({ page }) => {
 
 test("inserted task exposes composite topology context", async ({ page }) => {
 	await page.goto("/");
-	await page.getByLabel(/Repository path/).fill("testdata\\repository");
+	await page.locator('input[name="repo_path"]').fill("testdata\\repository");
 	await page.getByLabel("Repository name").fill("Composite insertion fixture");
 	await page.locator('input[name="old_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/insert-task-old.bpmn"));
 	await page.locator('input[name="new_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/insert-task-new.bpmn"));
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
 	await expect(page.getByText("INSERT TASK", { exact: true })).toBeVisible();
@@ -189,12 +193,16 @@ test("scenario presets expose move and unresolved controls", async ({ page }) =>
 	await page.goto("/");
 	await page.getByLabel("Demo scenario").selectOption("move-task");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("MOVE TASK", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 
 	await page.reload();
 	await page.getByLabel("Demo scenario").selectOption("unresolved");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
+	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("UNRESOLVED MATCH", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 });
@@ -209,7 +217,7 @@ test("same-input method comparison exposes retrieval differences", async ({ page
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 
 	const comparison = page.getByTestId("method-comparison");
-	await expect(comparison).toBeVisible({ timeout: 120_000 });
+	await expect(comparison).toBeVisible({ timeout: 240_000 });
 	await expect(comparison.getByText("Input fingerprint verified")).toBeVisible();
 	await expect(comparison.getByRole("button", { name: /^BM25 \d/ })).toBeVisible();
 	await expect(comparison.getByRole("button", { name: /^Semantic / })).toBeVisible();

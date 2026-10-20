@@ -12,7 +12,15 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/mapping"
 )
 
-const maxDocumentCharacters = 8000
+// A short passage leaves room for file/function metadata within the model's
+// limited token window. This is a character bound, not a tokenizer guarantee.
+const maxPassageCharacters = 600
+
+type passage struct {
+	text     string
+	excerpt  string
+	location string
+}
 
 type Strategy struct{ Embedder Embedder }
 
@@ -38,7 +46,7 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 		return nil, nil, errors.New("semantic embedder is not configured")
 	}
 	if len(artifacts)+len(changes) > maxEmbeddingTexts {
-		return nil, nil, fmt.Errorf("semantic retrieval supports at most %d combined changes and artifacts", maxEmbeddingTexts)
+		return nil, nil, fmt.Errorf("%w: at most %d combined changes and artifacts", ErrInputLimit, maxEmbeddingTexts)
 	}
 	topK := options.TopK
 	if topK <= 0 {
@@ -57,15 +65,40 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	for _, change := range changes {
 		texts = append(texts, queryText(change))
 	}
-	for _, artifact := range artifacts {
-		texts = append(texts, artifactText(artifact))
+	passages := make([][]passage, len(artifacts))
+	passageIndexes := make([][]int, len(artifacts))
+	// Every artifact gets a first passage. A second, tail passage is added
+	// where budget permits, without making corpus size depend on a query.
+	remaining := maxEmbeddingTexts - len(changes) - len(artifacts)
+	for index, artifact := range artifacts {
+		passages[index] = artifactPassages(artifact)
+		passageIndexes[index] = append(passageIndexes[index], len(texts))
+		texts = append(texts, passages[index][0].text)
+	}
+	for index := range artifacts {
+		if remaining == 0 {
+			break
+		}
+		if len(passages[index]) > 1 {
+			passageIndexes[index] = append(passageIndexes[index], len(texts))
+			texts = append(texts, passages[index][1].text)
+			remaining--
+		}
+	}
+	omittedTailPassages := 0
+	for index := range artifacts {
+		if len(passages[index]) > len(passageIndexes[index]) {
+			omittedTailPassages++
+		}
 	}
 	vectors, err := strategy.Embedder.Embed(ctx, texts)
 	if err != nil {
 		return nil, nil, err
 	}
 	warnings := []domain.Warning{}
-	artifactVectors := vectors[len(changes):]
+	if omittedTailPassages > 0 {
+		warnings = append(warnings, domain.Warning{Code: "SEMANTIC_PASSAGE_LIMIT", Message: fmt.Sprintf("%d long source artifacts were represented only by their first passage because of the embedding input limit", omittedTailPassages)})
+	}
 	for changeIndex := range changes {
 		change := &changes[changeIndex]
 		change.Impacts = []domain.Impact{}
@@ -77,16 +110,24 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 		}
 		ranked := make([]domain.Impact, 0, len(artifacts))
 		for artifactIndex, artifact := range artifacts {
-			score := round(math.Max(0, cosine(vectors[changeIndex], artifactVectors[artifactIndex])))
+			score, bestPassage := 0.0, 0
+			for passageIndex, vectorIndex := range passageIndexes[artifactIndex] {
+				candidate := math.Max(0, cosine(vectors[changeIndex], vectors[vectorIndex]))
+				if candidate > score {
+					score, bestPassage = candidate, passageIndex
+				}
+			}
+			score = round(score)
 			if score < threshold {
 				continue
 			}
+			best := passages[artifactIndex][bestPassage]
 			ranked = append(ranked, domain.Impact{
 				Module: artifact.Module, Layer: artifact.Layer, File: artifact.File,
 				Symbol: displaySymbol(artifact.Symbol), RequiredAction: domain.ActionVerify,
 				Evidence: []domain.Evidence{{
-					Type: "SEMANTIC_SIMILARITY", Location: evidenceLocation(artifact),
-					Excerpt: bounded(strings.TrimSpace(artifact.Content), 240),
+					Type: "SEMANTIC_SIMILARITY", Location: best.location,
+					Excerpt: best.excerpt,
 				}},
 				ScoreBreakdown: domain.ScoreBreakdown{Semantic: score, Total: score},
 				Confidence:     score,
@@ -123,7 +164,8 @@ func queryText(change domain.Change) string {
 			continue
 		}
 		parts = append(parts, "element", element.Name, "type", element.Type, "actor", element.Actor,
-			"state", element.State, "documentation", element.Documentation)
+			"state", element.State, "gateway direction", element.GatewayDirection,
+			"default flow", element.DefaultFlow, "documentation", element.Documentation)
 		parts = append(parts, element.DataRequirements...)
 	}
 	if change.Context != nil {
@@ -135,12 +177,39 @@ func queryText(change domain.Change) string {
 	return strings.Join(nonEmpty(parts), " ")
 }
 
-func artifactText(artifact domain.Artifact) string {
+func artifactPassages(artifact domain.Artifact) []passage {
 	prefix := strings.Join(nonEmpty([]string{
 		"repository artifact", artifact.File, "module", artifact.Module, "layer", artifact.Layer,
 		"language", artifact.Language, "symbol", displaySymbol(artifact.Symbol), "kind", artifact.Symbol.Kind,
 	}), " ")
-	return bounded(prefix+" content "+artifact.Content, maxDocumentCharacters)
+	runes := []rune(artifact.Content)
+	starts := []int{0}
+	if len(runes) > maxPassageCharacters {
+		starts = append(starts, len(runes)-maxPassageCharacters)
+	}
+	result := make([]passage, 0, len(starts))
+	for _, start := range starts {
+		end := start + maxPassageCharacters
+		if end > len(runes) {
+			end = len(runes)
+		}
+		content := strings.TrimSpace(string(runes[start:end]))
+		excerptRunes := []rune(content)
+		excerptStart := 0
+		if start > 0 && len(excerptRunes) > 240 {
+			excerptStart = len(excerptRunes) - 240
+		}
+		line := artifact.Symbol.StartLine
+		if line == 0 {
+			line = 1
+		}
+		line += strings.Count(string(runes[:start]), "\n") + strings.Count(string(excerptRunes[:excerptStart]), "\n")
+		location := fmt.Sprintf("%s:%d", artifact.File, line)
+		result = append(result, passage{
+			text: prefix + " content " + content, excerpt: bounded(string(excerptRunes[excerptStart:]), 240), location: location,
+		})
+	}
+	return result
 }
 
 func queryElements(change domain.Change) []*domain.Element {
@@ -188,13 +257,6 @@ func displaySymbol(symbol domain.Symbol) string {
 		return symbol.Receiver + "." + symbol.Name
 	}
 	return symbol.Name
-}
-
-func evidenceLocation(artifact domain.Artifact) string {
-	if artifact.Symbol.StartLine > 0 {
-		return fmt.Sprintf("%s:%d", artifact.File, artifact.Symbol.StartLine)
-	}
-	return artifact.File
 }
 
 func removeShadowedPackages(impacts []domain.Impact, artifacts []domain.Artifact) []domain.Impact {

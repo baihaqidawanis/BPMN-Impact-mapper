@@ -47,6 +47,26 @@ evidence-based; semantic agreement does not promote VERIFY to MODIFY.
 
 ## Recommended next experiment
 
+### Direct ID and contextual ID clarification (2026-10-20)
+
+`TRACE_ID` checks IDs of the changed element, not every ID in its neighbourhood.
+An inserted task therefore commonly has a zero direct trace contribution even
+when the preceding/following task has an ID in the source. Those neighbouring
+IDs already contribute query terms. Accepted code-evidence candidates now also
+record boundary-checked `CONTEXT_TRACE_ID` occurrences. This annotation adds no
+separate weight, cannot promote VERIFY, and cannot seed source propagation.
+Metadata `left_evidence_version=direct-context-trace-v1` distinguishes new Hybrid
+reports from immutable older reports. Run a new analysis to obtain these excerpts.
+
+The web names the final RRF value a combined ranking score. Direct trace is
+displayed as an evidence status rather than an ambiguous zero bar. Unsupported
+or unused checks are distinguished from a failed exact-ID match. Individual
+search signals and code-evidence weights are separate from the final ranking;
+semantic-only and propagated candidates are not shown the direct 45% formula.
+Markdown uses retrieval-score terminology; the JSON `confidence` field remains
+for compatibility and is not calibrated probability. Existing 45/15/10/10/10/10
+weights and all ranking/action formulas remain unchanged.
+
 Freeze cases covering exact trace, absent/new trace, synonym labels, arbitrary
 paths, and non-Go textual adapters. Evaluate current fixed weights versus
 trace-as-bonus and explicit missing-signal handling using separately reviewed
@@ -63,7 +83,7 @@ identify inventory, baseline parsing, new parsing, mapping or cancellation
 without leaking filesystem paths or source excerpts. Embedding cancellation
 now preserves the context error instead of flattening it into a runtime error.
 The historical user-upload Hybrid failure is not conclusively reproduced;
-successful Fusion alone never proves a graph-aware defect.
+successful Fusion alone never proves a deterministic BPMN-context/evidence defect.
 
 ## Canvas workflow
 

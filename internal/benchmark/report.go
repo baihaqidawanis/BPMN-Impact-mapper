@@ -114,7 +114,7 @@ func format4(value float64) string { return strconv.FormatFloat(value, 'f', 4, 6
 func AblationMarkdown(value Report) []byte {
 	hybrid, found := aggregateFor(value, "hybrid")
 	var output bytes.Buffer
-	fmt.Fprintf(&output, "# BPMN Impact Benchmark - Method Ablation\n\n- Benchmark ID: `%s`\n- Reference: Graph-Aware Hybrid\n- Interpretation: paired aggregate differences on the same frozen scenarios; descriptive, not causal\n\n", value.BenchmarkID)
+	fmt.Fprintf(&output, "# BPMN Impact Benchmark - Method Ablation\n\n- Benchmark ID: `%s`\n- Reference: BPMN-Context-Aware Hybrid Retrieval\n- Interpretation: paired aggregate differences on the same frozen scenarios; descriptive, not causal\n\n", value.BenchmarkID)
 	if !found {
 		output.WriteString("Hybrid aggregate is unavailable; deltas cannot be computed.\n")
 		return output.Bytes()

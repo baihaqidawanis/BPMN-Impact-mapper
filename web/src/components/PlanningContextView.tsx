@@ -47,7 +47,7 @@ export function PlanningContextView({ analysisID }: { analysisID: string }) {
   const evidence = context.changes.reduce((total, change) => total + change.candidates.reduce((sum, candidate) => sum + candidate.evidence.length, 0), 0);
   return <div className={styles.root} data-testid="planning-context-view">
     <header className={styles.header}>
-      <div><span>Pre-LLM audit boundary</span><h3>{context.repository.name}</h3><p>Only these candidates and bounded excerpts may enter a future planning provider.</p></div>
+			<div><span>Pre-LLM audit boundary</span><h3>{context.repository.name}</h3><p>Only these possible impacts and short code excerpts may enter a future planning provider.</p></div>
       <a href={planningContextURL(context.analysis_id)}>Download JSON</a>
     </header>
     <div className={styles.metrics}>
@@ -56,7 +56,7 @@ export function PlanningContextView({ analysisID }: { analysisID: string }) {
       <Metric value={evidence} label="Evidence items" />
       <Metric value={formatBytes(bytes)} label="Payload" />
     </div>
-    <div className={styles.notice}><b>No repository source is sent.</b><span>The future verifier cannot introduce files or symbols outside this context. All outputs are checked again by Go.</span></div>
+		<div className={styles.notice}><b>No repository source is sent.</b><span>A future verifier cannot introduce files or functions outside this context. All outputs are checked again by Go.</span></div>
     <section className={styles.planBoundary}>
       <div><span>Execution boundary</span><h4>{latestPlan ? "Planning record prepared" : "Provider-safe planning contract"}</h4><p>{latestPlan?.status === "DISABLED" ? "No LLM provider is configured. The immutable record proves the current payload and offline fallback without generating a fake plan." : "Create an immutable planning record from this exact context. Until a provider is configured, its status remains DISABLED and no network call occurs."}</p></div>
       <div className={styles.planActions}>
@@ -69,10 +69,10 @@ export function PlanningContextView({ analysisID }: { analysisID: string }) {
     </section>
     <div className={styles.changes}>
       {context.changes.map((change, changeIndex) => <article className={styles.change} key={`${change.change_type}-${change.element_id}`}>
-        <header><span>{String(changeIndex + 1).padStart(2, "0")}</span><div><small>{change.change_type.replaceAll("_", " ")}</small><h4>{change.element_name || change.element_id}</h4><code>{change.element_id}</code></div><b>{change.candidates.length} candidates</b></header>
+        <header><span>{String(changeIndex + 1).padStart(2, "0")}</span><div><small>{change.change_type.replaceAll("_", " ")}</small><h4>{change.element_name || change.element_id}</h4><code>{change.element_id}</code></div><b>{change.candidates.length} possible impacts</b></header>
         {change.reason && <p className={styles.reason}>{change.reason}</p>}
-        {change.candidates.length === 0 ? <p className={styles.empty}>No evidence-bearing candidate is available for planning.</p> : change.candidates.map((candidate, index) => <details className={styles.candidate} key={`${candidate.file}-${candidate.symbol ?? ""}`}>
-          <summary><span>{String(index + 1).padStart(2, "0")}</span><div><b>{candidate.file}</b><small>{candidate.symbol || "file-level candidate"} · {candidate.module} / {candidate.layer}</small></div><em>{candidate.suggested_action}</em><strong>{candidate.retrieval_score.toFixed(3)}</strong></summary>
+        {change.candidates.length === 0 ? <p className={styles.empty}>No evidence-backed file or function is available for planning.</p> : change.candidates.map((candidate, index) => <details className={styles.candidate} key={`${candidate.file}-${candidate.symbol ?? ""}`}>
+          <summary><span>{String(index + 1).padStart(2, "0")}</span><div><b>{candidate.file}</b><small>{candidate.symbol || "whole file"} · {candidate.module} / {candidate.layer}</small></div><em>{candidate.suggested_action}</em><strong>{candidate.retrieval_score.toFixed(3)}</strong></summary>
           <div className={styles.evidence}>{candidate.evidence.map(item => <div key={item.id}><header><b>{item.id}</b><span>{item.type}</span><code>{item.location}</code></header><p>{item.excerpt}</p></div>)}</div>
         </details>)}
       </article>)}

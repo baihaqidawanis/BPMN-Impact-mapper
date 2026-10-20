@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
@@ -74,5 +75,23 @@ func TestSemanticAbstainsBelowThresholdAndPropagatesRuntimeFailure(t *testing.T)
 	strategy.Embedder = fakeEmbedder{err: errors.New("model unavailable")}
 	if _, _, err := strategy.Attach(context.Background(), []domain.Change{change}, []domain.Artifact{artifact}, mapping.Options{}); err == nil {
 		t.Fatal("semantic runtime failure was hidden")
+	}
+}
+
+func TestSemanticLongArtifactUsesBestBoundedPassage(t *testing.T) {
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "NEW", Name: "Check request", Type: "userTask"}}
+	content := "func Start() {\n" + strings.Repeat("x", 700) + "\nfunc CheckRequest() {}"
+	artifact := domain.Artifact{File: "service.go", Module: "app", Layer: "application", Content: content, Symbol: domain.Symbol{Name: "CheckRequest", Kind: "function", StartLine: 10}}
+	strategy := semantic.Strategy{Embedder: fakeEmbedder{vectors: [][]float64{{1, 0}, {0, 1}, {1, 0}}}}
+	result, _, err := strategy.Attach(context.Background(), []domain.Change{change}, []domain.Artifact{artifact}, mapping.Options{TopK: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result[0].Impacts) != 1 || result[0].Impacts[0].Confidence != 1 {
+		t.Fatalf("tail passage was not ranked: %#v", result[0].Impacts)
+	}
+	evidence := result[0].Impacts[0].Evidence[0]
+	if !strings.Contains(evidence.Excerpt, "CheckRequest") || evidence.Location != "service.go:11" {
+		t.Fatalf("evidence does not identify matched passage: %#v", evidence)
 	}
 }

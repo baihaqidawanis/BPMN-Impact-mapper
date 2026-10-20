@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 	"strings"
 	"testing"
 )
@@ -16,6 +18,17 @@ func TestFailureMessagesDoNotExposePathsOrSource(t *testing.T) {
 	}
 	if !strings.Contains(analysisFailureMessage(context.DeadlineExceeded), "timed out") {
 		t.Fatal("missing timeout classification")
+	}
+}
+
+func TestSemanticResourceErrorIsActionableAndRedacted(t *testing.T) {
+	err := fmt.Errorf("apply hybrid: %w: C:/private/model", semantic.ErrRuntimeMemory)
+	got := analysisFailureMessage(err)
+	if !strings.Contains(got, "memory") || strings.Contains(got, "private") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(analysisFailureMessage(semantic.ErrInputLimit), "Top-K") {
+		t.Fatal("missing corpus guidance")
 	}
 }
 

@@ -143,7 +143,7 @@ func runAnalyze(arguments []string, stdout, stderr io.Writer) error {
 	output := flags.String("output", "", "output directory")
 	name := flags.String("repository-name", "", "logical repository name")
 	revision := flags.String("revision", "unspecified", "logical repository revision")
-	timeout := flags.Duration("timeout", 2*time.Minute, "analysis timeout")
+	timeout := flags.Duration("timeout", 10*time.Minute, "analysis timeout")
 	maxFileSize := flags.Int64("max-file-bytes", 1<<20, "maximum indexed file bytes")
 	maxTotalSize := flags.Int64("max-total-bytes", 64<<20, "maximum indexed repository bytes")
 	maxFiles := flags.Int("max-files", 10000, "maximum indexed file count")

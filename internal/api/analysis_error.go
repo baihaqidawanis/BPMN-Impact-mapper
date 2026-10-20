@@ -4,10 +4,18 @@ import (
 	"context"
 	"errors"
 	"strings"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 )
 
 // Classify stages without returning source excerpts, local paths, or subprocess output.
 func analysisFailureMessage(err error) string {
+	if errors.Is(err, semantic.ErrRuntimeMemory) {
+		return "The local semantic model ran out of memory. Close other heavy workloads and retry, or explicitly select BM25. No fallback result was substituted."
+	}
+	if errors.Is(err, semantic.ErrInputLimit) {
+		return "The semantic input is too large. Narrow the repository input or use BM25. Reducing Top-K alone does not reduce the embedding corpus."
+	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return "Analysis timed out or was cancelled. Retry without method comparison; check the backend log if it repeats."
 	}

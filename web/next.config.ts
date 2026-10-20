@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   distDir: process.env.BPMN_MAPPER_TEST_BUILD === "1" ? ".next-test" : ".next",
 	allowedDevOrigins: ["127.0.0.1"],
 	experimental: {
-		// Local CPU embedding startup can exceed the framework's default proxy window.
-		proxyTimeout: 180_000,
+		// Leave room beyond the Go server's 10-minute analysis deadline for its response.
+		proxyTimeout: 660_000,
 	},
   async rewrites() {
     return [

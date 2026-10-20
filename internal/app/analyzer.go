@@ -245,7 +245,7 @@ func inputFingerprint(name, revision string, oldData, newData []byte, inventory 
 func analysisID(fingerprint string, request Request, methodConfig []byte, indexIdentity string) string {
 	hash := sha256.New()
 	writeHash(hash, []byte(indexIdentity))
-	writeHash(hash, []byte("engine-3.4d"))
+	writeHash(hash, []byte("engine-3.4f-gateway-semantic-chunks"))
 	writeHash(hash, []byte(fingerprint))
 	writeHash(hash, []byte(request.Method))
 	writeHash(hash, methodConfig)

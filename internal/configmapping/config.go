@@ -205,7 +205,7 @@ func validAction(action domain.RequiredAction) bool {
 func validChangeType(change domain.ChangeType) bool {
 	switch change {
 	case domain.AddTask, domain.RemoveTask, domain.ModifyTaskLabel, domain.ModifyActorRole,
-		domain.AddGateway, domain.RemoveGateway, domain.ModifyGatewayCondition, domain.ModifySequenceFlow,
+		domain.AddGateway, domain.RemoveGateway, domain.ModifyGatewayCondition, domain.ModifyGatewaySemantics, domain.ModifySequenceFlow,
 		domain.AddDataRequirement, domain.RemoveDataRequirement, domain.AddState,
 		domain.ModifyTerminalOutcome, domain.UnresolvedMatch:
 		return true

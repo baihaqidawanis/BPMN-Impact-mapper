@@ -21,6 +21,7 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planstore"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/reportstore"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 )
 
 const (
@@ -88,10 +89,14 @@ func (handler Handler) checkSemanticRuntime(writer http.ResponseWriter, request 
 	}
 	if err != nil {
 		handler.log(fmt.Errorf("semantic capability check: %w", err))
+		message := "Semantic runtime is unavailable. Select BM25 or configure the local Python embedding model."
+		if errors.Is(err, semantic.ErrRuntimeMemory) || errors.Is(err, semantic.ErrInputLimit) {
+			message = analysisFailureMessage(err)
+		}
 		writeJSON(writer, http.StatusOK, response{
 			Provider: provider,
 			Model:    model,
-			Message:  "Semantic runtime is unavailable. Select BM25 or configure the local Python embedding model.",
+			Message:  message,
 		})
 		return
 	}

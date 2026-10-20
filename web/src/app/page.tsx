@@ -11,6 +11,7 @@ import { BlindReviewPack } from "@/components/BlindReviewPack";
 import { AnalysisHistory } from "@/components/AnalysisHistory";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { PlanningContextView } from "@/components/PlanningContextView";
+import { BatchAnalysis } from "@/components/BatchAnalysis";
 import { createAnalysis } from "@/lib/api";
 import type { Report } from "@/lib/types";
 import styles from "./page.module.css";
@@ -20,6 +21,7 @@ export default function Home() {
   const [comparison, setComparison] = useState<Report[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [batchRunning, setBatchRunning] = useState(false);
   const [view, setView] = useState<"mapping" | "canvas" | "planning" | "history" | "research" | "guide">("mapping");
   const [baseline, setBaseline] = useState<File | null>(null);
   const [edited, setEdited] = useState<File | null>(null);
@@ -93,7 +95,7 @@ export default function Home() {
       {canvasDirty && <div className={styles.draftNotice} role="status"><span>Canvas has unapplied edits. Mapping will use the previously selected BPMN.</span><button type="button" onClick={() => navigate("canvas")}>Review canvas draft</button></div>}
       <div className={styles.workspace}>
 		<div className={styles.leftRail}>
-			<AnalysisForm loading={loading} onSubmit={handleSubmit} baseline={baseline} edited={edited} onBaseline={changeBaseline} onEdited={changeEdited} onOpenEditor={() => navigate("canvas")} />
+			<AnalysisForm loading={loading || batchRunning} onSubmit={handleSubmit} baseline={baseline} edited={edited} onBaseline={changeBaseline} onEdited={changeEdited} onOpenEditor={() => navigate("canvas")} />
 		</div>
         <section className={styles.resultRegion} aria-live="polite">
           {loading && <div className={styles.stateCard}><div className={styles.spinner} /><h3>Analyzing repository</h3><p>Parsing BPMN, indexing allowed files, and ranking evidence…</p></div>}
@@ -121,6 +123,7 @@ export default function Home() {
         {report ? <PlanningContextView key={report.analysis_id} analysisID={report.analysis_id} /> : <section className={styles.stateCard}><h3>No analysis selected</h3><p>Run a mapping or open a saved analysis to inspect its bounded planning context.</p><button type="button" onClick={() => navigate("mapping")}>Go to Mapping</button></section>}
       </div>
       <div hidden={view !== "research"} className={styles.researchPage}>
+        <BatchAnalysis busy={loading} onBusy={setBatchRunning} onOpen={reports=>{setReport(reports.find(r=>r.method==="hybrid")??reports[0]);setComparison(reports);setError("");navigate("mapping");}} />
         {!report ? <section className={styles.stateCard}><h3>No frozen analysis selected</h3><p>Run a mapping or open a saved analysis before preparing reviewer artifacts.</p><button type="button" onClick={() => navigate("mapping")}>Go to Mapping</button></section> : <>
           <section className={styles.researchIntro}><span>Optional research workflow</span><h3>Predictions stay immutable.</h3><p>Annotation, reconciliation, and metrics are post-inference tools. They never change candidate retrieval or the canonical impact report.</p></section>
           <ReviewPanel key={`review-${report.analysis_id}`} report={report} />

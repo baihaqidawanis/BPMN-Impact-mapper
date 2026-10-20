@@ -39,6 +39,11 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 	if strategy.Left != nil {
 		metadata["left_method"] = string(strategy.Left.Method())
 	}
+	if provider, ok := strategy.Left.(mapping.MetadataProvider); ok {
+		for key, value := range provider.MethodMetadata() {
+			metadata["left_"+key] = value
+		}
+	}
 	if strategy.Right != nil {
 		metadata["right_method"] = string(strategy.Right.Method())
 	}

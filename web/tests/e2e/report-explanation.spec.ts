@@ -1,0 +1,54 @@
+import { expect, test } from "@playwright/test";
+import { rankingExplanation, traceExplanation, usesCodeEvidence } from "../../src/lib/report-explanation";
+import type { Impact } from "../../src/lib/types";
+
+function candidate(excerpt?: string): Impact {
+  return {
+    file: "service.go", module: "orders", layer: "application", required_action: "VERIFY",
+    confidence: 0.9, score_breakdown: { trace_id: 0, symbol: 0, path: 0, lexical: 0, structured: 0, bm25: 0, total: 0.9 },
+    evidence: excerpt ? [{ type: "RRF_FUSION", location: "service.go", excerpt }] : [],
+  };
+}
+
+test("ranking explanation distinguishes two ranks from a missing search result", () => {
+  expect(rankingExplanation(candidate("left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60")))
+    .toContain("Code-evidence search: rank 1. Semantic search: rank 10.");
+  expect(rankingExplanation(candidate("left_method=hybrid; left_rank=absent; right_method=semantic; right_rank=1; k=60")))
+    .toContain("Code-evidence search: absent from the ranked list. Semantic search: rank 1.");
+  expect(rankingExplanation(candidate("left_method=bm25; left_rank=1; right_method=semantic; right_rank=absent; k=60")))
+    .toContain("BM25: rank 1. Semantic search: absent from the ranked list.");
+});
+
+test("missing or malformed fusion metadata does not invent agreement", () => {
+  expect(rankingExplanation(candidate())).toContain("does not measure the probability");
+  expect(rankingExplanation(candidate("left_method=hybrid; right_method=semantic"))).toContain("rank unavailable");
+});
+
+test("high fusion score with zero trace is explained without claiming direct evidence", () => {
+  const impact = candidate("left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60");
+  expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("New BPMN ID not found here");
+  expect(rankingExplanation(impact)).toContain("high score is possible even without a direct BPMN ID match");
+  impact.evidence.push({ type: "CONTEXT_TRACE_ID", location: "service.go:4", excerpt: 'trace := "STEP-BEFORE"' });
+  expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("Neighbouring BPMN ID found");
+  expect(traceExplanation(impact, "hybrid", "ADD_TASK").detail).toContain("adds no separate score");
+  expect(impact.score_breakdown.trace_id).toBe(0);
+});
+
+test("unused trace fields are not reported as failed ID searches", () => {
+  for (const method of ["semantic", "bm25", "fusion"] as const) {
+    expect(usesCodeEvidence(candidate(), method)).toBe(false);
+    expect(traceExplanation(candidate(), method, "ADD_TASK").detail).toContain("not proof that the ID is absent");
+  }
+  const semanticOnly = candidate("left_method=hybrid; left_rank=absent; right_method=semantic; right_rank=1; k=60");
+  expect(usesCodeEvidence(semanticOnly, "hybrid")).toBe(false);
+  expect(traceExplanation(semanticOnly, "hybrid", "ADD_TASK").status).toBe("No direct ID evidence recorded");
+});
+
+test("direct and propagated evidence remain distinct", () => {
+  const impact = candidate();
+  impact.evidence.push({ type: "TRACE_ID", location: "service.go:2", excerpt: "STEP-1" });
+  expect(traceExplanation(impact, "hybrid", "MODIFY_TASK_LABEL").status).toBe("Direct BPMN ID found");
+  impact.evidence = [{ type: "PROPAGATION_SEED", location: "other.go", excerpt: "AnotherFunction (exact trace seed)" }];
+  expect(usesCodeEvidence(impact, "hybrid")).toBe(false);
+  expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("Linked through another function");
+});

@@ -27,3 +27,17 @@ func TestEmbeddingCacheCopiesValuesAndRejectsDifferentKey(t *testing.T) {
 		t.Fatal("runtime identity did not follow the cached embedding key")
 	}
 }
+
+func TestEmbeddingCacheKeepsCorpusAndQueryTogether(t *testing.T) {
+	corpus := sha256.Sum256([]byte("two-entry-corpus"))
+	query := sha256.Sum256([]byte("two-entry-query"))
+	identity := Identity{PythonVersion: "3.12.0"}
+	storeCachedVectors(corpus, [][]float64{{1, 0}}, identity)
+	storeCachedVectors(query, [][]float64{{0, 1}}, identity)
+	if got := cachedVectors(corpus); len(got) != 1 || got[0][0] != 1 {
+		t.Fatalf("corpus was evicted by query: %v", got)
+	}
+	if got := cachedVectors(query); len(got) != 1 || got[0][1] != 1 {
+		t.Fatalf("query was not cached: %v", got)
+	}
+}

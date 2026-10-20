@@ -7,6 +7,8 @@
 - Revision: `fixture-v1`
 - Changes: 1
 
+Retrieval scores order candidates; they are not probabilities of a required change. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.
+
 ## 1. ADD_TASK — TASK-VALIDATE
 
 Element: Validate request
@@ -19,7 +21,7 @@ Predecessors: `TASK-CREATE (Create request)`
 
 Successors: `TASK-REGISTER (Register request)`
 
-| Action | Confidence | Module | Layer | File | Symbol |
+| Action | Retrieval score | Module | Layer | File | Function / code name |
 |---|---:|---|---|---|---|
 | ADD | 0.8000 | internal | application | `internal/application/request.go` | `ValidateRequest` |
 

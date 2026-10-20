@@ -25,7 +25,7 @@ Repository + BPMN Lama + BPMN Baru
        1. BM25-only
        2. Semantic-only
        3. BM25 + Semantic Fusion
-       4. Graph-Aware Hybrid
+       4. BPMN-Context-Aware Hybrid Retrieval
                 |
                 v
  Canonical Impact Report + Evidence
@@ -84,9 +84,11 @@ Semantic Retrieval bukan RAG. Ia hanya mengambil kandidat. Pipeline menjadi RAG-
 
 Metode otomatis yang menggabungkan ranked list BM25 dan Semantic menggunakan Reciprocal Rank Fusion (RRF), bukan menjumlahkan cosine dan BM25 mentah yang skalanya berbeda. Implementasi memakai `k=60`, menyimpan kontribusi rank sebagai `RRF_FUSION` evidence, dan selalu menghasilkan action `VERIFY`. Nilai RRF adalah konsensus ranking, bukan probabilitas file pasti berubah.
 
-### 4. Graph-Aware Hybrid
+### 4. BPMN-Context-Aware Hybrid Retrieval
 
-Metode utama yang menambahkan exact trace ID, symbol/path similarity, structured evidence, BPMN graph context, dan static source relations pada hasil retrieval. Implementasi Hybrid sekarang menggabungkan ranking graph-aware tersebut dengan Semantic menggunakan RRF. Kandidat yang hanya berasal dari Semantic tetap `VERIFY`; action kuat hanya dipertahankan bila didukung sisi graph-aware. Implementasi ini masih harus diuji dengan hidden ground truth sebelum diklaim lebih akurat.
+Metode utama yang menambahkan exact trace ID, symbol/path similarity, structured evidence, BPMN context, dan static source relations pada hasil retrieval. Implementasi Hybrid sekarang menggabungkan ranking deterministic tersebut dengan Semantic menggunakan RRF. Kandidat yang hanya berasal dari Semantic tetap `VERIFY`; action kuat hanya dipertahankan bila didukung sisi deterministic evidence. Implementasi ini masih harus diuji dengan hidden ground truth sebelum diklaim lebih akurat.
+
+`BPMN context` berarti informasi lokal dari node yang berubah: predecessor/successor, actor/lane, gateway, serta incoming/outgoing flow. Ini bukan Neo4j, bukan graph database, bukan unified BPMN-source knowledge graph, dan bukan traversal graph untuk mencari source code. Kata `context-aware` dipilih agar tidak tertukar dengan pendekatan graph database.
 
 Walaupun fusion dan Hybrid sudah diimplementasikan, Semantic Retrieval tetap harus dievaluasi sebagai metode independen. Pemisahan ini diperlukan untuk mengukur apakah Semantic benar-benar menambah recall atau hanya menambah false positive.
 
@@ -95,7 +97,7 @@ Walaupun fusion dan Hybrid sudah diimplementasikan, Semantic Retrieval tetap har
 - BM25-only: implemented dan dapat dipilih melalui CLI/API/web;
 - Semantic-only: implemented secara offline dengan local embedding model;
 - BM25 + Semantic Fusion: implemented dengan deterministic RRF;
-- Graph-Aware Hybrid: implemented sebagai fusion antara graph-aware ranking dan Semantic;
+- BPMN-Context-Aware Hybrid Retrieval: implemented sebagai fusion antara ranking deterministic evidence dan Semantic;
 - Configuration-Driven: hanya compatibility adapter internal, bukan metode utama TA;
 - LLM/agentic planning: belum diimplementasikan dan tetap berada setelah evaluasi retrieval.
 
@@ -166,7 +168,7 @@ Eksperimen dibagi menjadi dua bagian agar scope tetap terkendali.
 
 ### Experiment A: impact retrieval
 
-Bandingkan BM25-only, Semantic-only, BM25 + Semantic Fusion, dan Graph-Aware Hybrid pada input dan hidden ground truth yang sama menggunakan Recall@k, Precision@k, MRR/MAP, file/module/layer accuracy, action classification, unresolved rate, false discovery proportion, latency, dan reproducibility.
+Bandingkan BM25-only, Semantic-only, BM25 + Semantic Fusion, dan BPMN-Context-Aware Hybrid Retrieval pada input dan hidden ground truth yang sama menggunakan Recall@k, Precision@k, MRR/MAP, file/module/layer accuracy, action classification, unresolved rate, false discovery proportion, latency, dan reproducibility.
 
 ### Experiment B: agentic planning
 

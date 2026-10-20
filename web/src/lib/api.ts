@@ -16,10 +16,11 @@ export async function checkSemanticRuntime(): Promise<SemanticCapability> {
   return await response.json() as SemanticCapability;
 }
 
-export async function createAnalysis(formData: FormData): Promise<Report> {
+export async function createAnalysis(formData: FormData, signal?: AbortSignal): Promise<Report> {
   const response = await fetch("/backend/api/v1/analyses", {
     method: "POST",
     body: formData,
+    signal,
   });
   if (!response.ok) {
     let message = `Analysis request failed (${response.status}).`;

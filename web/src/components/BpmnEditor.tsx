@@ -36,7 +36,7 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
         modeler.current = instance;
         const { warnings } = await instance.importXML(await initial.text());
         if (disposed) return;
-        instance.get<{ zoom: (value: string) => void }>("canvas").zoom("fit-viewport");
+        instance.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 });
         setNotice(warnings.length ? `${warnings.length} import warnings. Check missing shapes or connections before applying.` : "Double-click to rename. Use the wrench to choose User Task or Service Task.");
         instance.on("commandStack.changed", () => { if (!disposed) { setDirty(true); onDirty(true); } });
         setReady(true);
@@ -73,7 +73,7 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
     setReady(false);
     try {
       await modeler.current?.importXML(await baseline.text());
-      modeler.current?.get<{ zoom: (value: string) => void }>("canvas").zoom("fit-viewport");
+      modeler.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 });
       setDirty(true); onDirty(true); setError(""); setReady(true);
     } catch (cause) { setError(String(cause)); }
   }
@@ -95,7 +95,7 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
         <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ redo: () => void }>("commandStack").redo()}>Redo</button>
         <button type="button" disabled={!ready} onClick={() => zoom(1.25)}>Zoom in</button>
         <button type="button" disabled={!ready} onClick={() => zoom(0.8)}>Zoom out</button>
-        <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ zoom: (value: string) => void }>("canvas").zoom("fit-viewport")}>Fit diagram</button>
+        <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 })}>Fit diagram</button>
         <button type="button" disabled={!ready} onClick={() => void reset()}>Reset to baseline</button>
         <button type="button" disabled={!ready} onClick={() => void download()}>Download BPMN</button>
         <button className={styles.primary} type="button" disabled={!ready} onClick={() => void apply()}>Use edited BPMN</button>

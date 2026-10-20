@@ -2,7 +2,7 @@
 
 BPMN Impact Mapper is an offline, third-party analysis tool that maps semantic BPMN changes to evidence-bearing software impact candidates. It is designed for applications that use BPMN as a specification and traceability source, not necessarily as a runtime workflow engine.
 
-The implemented deterministic core uses the Go standard library. It inventories source without executing it, parses old/new BPMN, computes a conservative graph diff, indexes text plus native Go symbols, exposes four automatic mapping methods, and evaluates completed reports against separately supplied hidden ground truth. Semantic, Fusion, and Graph-Aware Hybrid use a local Python embedding runtime; BM25-only remains Go-only.
+The implemented deterministic core uses the Go standard library. It inventories source without executing it, parses old/new BPMN, computes a conservative graph diff, indexes text plus native Go symbols, exposes four automatic mapping methods, and evaluates completed reports against separately supplied hidden ground truth. Semantic, Fusion, and BPMN-Context-Aware Hybrid Retrieval use a local Python embedding runtime; BM25-only remains Go-only.
 
 ## Scope boundary
 
@@ -80,7 +80,7 @@ go run ./cmd/bpmn-impact-mapper analyze \
 
 Methods:
 
-- `hybrid`: graph-aware method that fuses the deterministic stable-ID, symbol/path/structured, lexical, BM25, and source-relation ranking with Semantic using RRF; deterministic actions are preserved only for candidates independently supported by the graph-aware side;
+- `hybrid`: BPMN-context-aware method that fuses deterministic stable-ID, symbol/path/structured, lexical, BM25, source-relation ranking, and nearby BPMN context with Semantic using RRF; deterministic actions are preserved only for candidates independently supported by the deterministic-evidence side;
 - `fusion`: BM25 + Semantic rank fusion using deterministic RRF (`k=60`); every candidate action is `VERIFY`;
 - `bm25`: deterministic lexical baseline; every candidate action is `VERIFY`;
 - `semantic`: offline embedding/cosine baseline; every candidate action is
@@ -120,9 +120,18 @@ The presentation MVP uses a Go HTTP server and a Next.js frontend. It has no aut
 Start the Go API from the repository root:
 
 ```powershell
-$env:GOCACHE = (Resolve-Path .gocache).Path
-go run ./cmd/bpmn-impact-mapper-server --addr 127.0.0.1:8080 --data-dir .data
+$env:GOCACHE = Join-Path (Get-Location) '.gocache'
+go run .\cmd\bpmn-impact-mapper-server
 ```
+
+The API defaults to `127.0.0.1:8080`, `.data`, and a 10-minute analysis
+deadline. The Next.js rewrite proxy allows 11 minutes so the API can return
+its timeout response. Both terminals must be restarted after changing these
+settings. A measured cold Hybrid CLI analysis of the local Simple-ERP P2P
+gateway/task scenario completed in about 2 minutes 48 seconds on 2026-10-20;
+this is one machine/input measurement, not a performance guarantee. Do not
+remove timeouts: CPU embedding must remain cancellable. Lowering Top-K changes
+displayed results, not the number of source passages embedded.
 
 In another terminal, start Next.js:
 
@@ -140,7 +149,17 @@ For presentation, select **Load synthetic demo** and then **Run impact analysis*
 
 The demo selector also provides focused insert-task, add/remove gateway branch, move-task, and ambiguous-match scenarios. These are deterministic functionality demonstrations, not accuracy evidence.
 
-The default **Product** mode runs only Graph-Aware Hybrid. Switch to **Research** mode to select BM25, Semantic, or Fusion, or select **Compare mapping methods** to run the same input sequentially through all four configurations. The comparison verifies one shared input fingerprint and shows retrieval counts, unresolved cases, overlap, and per-change top candidates. These are research controls, not user-facing accuracy claims. On the current machine a cold Semantic run can take tens of seconds because the local model starts in a separate process; identical embeddings are reused in memory by the following Fusion and Hybrid runs.
+In **Research**, the batch panel can run up to 10 uploaded BPMN variants against
+one baseline or load eight synthetic scenarios (add/remove task, add/remove
+branch, move task, change role/label, and no change). Select one or more methods;
+the UI runs them sequentially, keeps each report or failure, supports stopping
+the queue, and exports a local run summary. Use a frozen, server-local repository
+snapshot throughout the batch. Opening a scenario with multiple successful
+methods shows files shared across methods and files found by only one method
+at the selected Top-K. This is retrieval comparison, **not accuracy**: accuracy
+requires an independent hidden ground truth in the separate evaluation flow.
+
+The default **Product** mode runs only BPMN-Context-Aware Hybrid Retrieval. Switch to **Research** mode to select BM25, Semantic, or Fusion, or select **Compare mapping methods** to run the same input sequentially through all four configurations. The comparison verifies one shared input fingerprint and shows retrieval counts, unresolved cases, overlap, and per-change top candidates. These are research controls, not user-facing accuracy claims. On the current machine a cold Semantic run can take tens of seconds because the local model starts in a separate process; identical embeddings are reused in memory by the following Fusion and Hybrid runs.
 
 Semantic, Fusion, and Hybrid display a local runtime check before analysis. The
 check never downloads a model or calls a network service. If it is unavailable,
@@ -220,7 +239,7 @@ go run ./cmd/bpmn-impact-mapper benchmark `
   --output outputs\benchmark
 ```
 
-The manifest pins SHA-256 for old/new BPMN and hidden ground truth. It runs BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid on the same input. Configuration-driven mapping can be added as an optional legacy comparator, but then its mapping JSON path and SHA-256 are mandatory. The runner additionally requires a shared method-independent repository/BPMN input fingerprint and byte-identical predictions across repetitions. Deterministic metrics are written to `benchmark-report.json`, `.md`, and spreadsheet-ready `.csv`; `benchmark-ablation.md/.csv` reports each configuration's paired aggregate delta against Hybrid without claiming causality. Raw volatile wall-clock measurements remain in `benchmark-timing.json`, while `benchmark-comparison.md/.csv` place labeled latency summaries beside deterministic metrics without adding latency to the benchmark identity.
+The manifest pins SHA-256 for old/new BPMN and hidden ground truth. It runs BM25, Semantic, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval on the same input. Configuration-driven mapping can be added as an optional legacy comparator, but then its mapping JSON path and SHA-256 are mandatory. The runner additionally requires a shared method-independent repository/BPMN input fingerprint and byte-identical predictions across repetitions. Deterministic metrics are written to `benchmark-report.json`, `.md`, and spreadsheet-ready `.csv`; `benchmark-ablation.md/.csv` reports each configuration's paired aggregate delta against Hybrid without claiming causality. Raw volatile wall-clock measurements remain in `benchmark-timing.json`, while `benchmark-comparison.md/.csv` place labeled latency summaries beside deterministic metrics without adding latency to the benchmark identity.
 
 The tracked benchmark includes a vocabulary-mismatch control whose BPMN task
 has no stable ID or exact label token in the expected source symbol. This is a

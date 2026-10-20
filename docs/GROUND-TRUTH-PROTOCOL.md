@@ -7,7 +7,7 @@ should be affected by each BPMN change, including the expected action. It is
 created only after mapper predictions have been frozen. A candidate returned by
 the mapper is never ground truth merely because it has a high score.
 
-The same ground truth must evaluate BM25, Semantic, Fusion, and Graph-Aware
+The same ground truth must evaluate BM25, Semantic, Fusion, and BPMN-Context-Aware Hybrid Retrieval
 Hybrid. Creating different labels for different methods invalidates the
 comparison.
 

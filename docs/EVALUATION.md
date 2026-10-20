@@ -2,7 +2,7 @@
 
 ## Fair comparison
 
-The target retrieval comparison is BM25-only, Semantic-only, BM25 + Semantic RRF, and Graph-Aware Hybrid. Each must receive the same frozen repository snapshot, old/new BPMN pairs, scenario cards, Top-K, and output schema. LLM planning is evaluated separately after retrieval so generation quality cannot hide retrieval errors.
+The target retrieval comparison is BM25-only, Semantic-only, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval. Each must receive the same frozen repository snapshot, old/new BPMN pairs, scenario cards, Top-K, and output schema. LLM planning is evaluated separately after retrieval so generation quality cannot hide retrieval errors.
 
 ## Artifact separation
 
@@ -38,7 +38,7 @@ Canonical prediction and ground-truth byte hashes bind every evaluation artifact
 
 ## Frozen benchmark orchestration
 
-Phase 2B adds a versioned manifest with repository metadata and SHA-256 locks for BPMN pairs and hidden ground truth. Every primary manifest must include BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid; repetitions must be between 2 and 10. Configuration-driven mapping is an optional legacy comparator and requires a frozen mapping path plus SHA-256 when selected. The report's method-independent `input_fingerprint` hashes repository metadata, allowed repository contents, both BPMNs, and ingestion configuration. A run fails when fingerprints differ across methods, an optional expected fingerprint does not match, or repeated canonical prediction/evaluation hashes drift.
+Phase 2B adds a versioned manifest with repository metadata and SHA-256 locks for BPMN pairs and hidden ground truth. Every primary manifest must include BM25, Semantic, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval; repetitions must be between 2 and 10. Configuration-driven mapping is an optional legacy comparator and requires a frozen mapping path plus SHA-256 when selected. The report's method-independent `input_fingerprint` hashes repository metadata, allowed repository contents, both BPMNs, and ingestion configuration. A run fails when fingerprints differ across methods, an optional expected fingerprint does not match, or repeated canonical prediction/evaluation hashes drift.
 
 Ground-truth bytes are parsed only after the corresponding inference call returns. Timing uses a separate non-deterministic artifact and does not affect benchmark IDs or metric reports. Method aggregates are macro means across scenarios; counts remain summed.
 

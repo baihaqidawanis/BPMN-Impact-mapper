@@ -1,0 +1,10 @@
+[
+  {"id":"insert-task","name":"Add a task","old":"insert-task-old.bpmn","new":"insert-task-new.bpmn","required_changes":["ADD_TASK","MODIFY_SEQUENCE_FLOW"]},
+  {"id":"remove-task","name":"Remove a task","old":"insert-task-new.bpmn","new":"insert-task-old.bpmn","required_changes":["REMOVE_TASK","MODIFY_SEQUENCE_FLOW"]},
+  {"id":"add-branch","name":"Add a gateway branch","old":"add-branch-old.bpmn","new":"add-branch-new.bpmn","required_changes":["ADD_GATEWAY","ADD_TASK","MODIFY_SEQUENCE_FLOW"]},
+  {"id":"remove-branch","name":"Remove a gateway branch","old":"add-branch-new.bpmn","new":"add-branch-old.bpmn","required_changes":["REMOVE_GATEWAY","REMOVE_TASK","MODIFY_SEQUENCE_FLOW"]},
+  {"id":"move-task","name":"Change task order","old":"move-task-old.bpmn","new":"move-task-new.bpmn","required_changes":["MODIFY_SEQUENCE_FLOW"]},
+  {"id":"role","name":"Change the responsible role","old":"role-old.bpmn","new":"role-new.bpmn","required_changes":["MODIFY_ACTOR_ROLE"]},
+  {"id":"label","name":"Change a task label","old":"role-old.bpmn","new":"label-new.bpmn","required_changes":["MODIFY_TASK_LABEL"]},
+  {"id":"no-change","name":"Unchanged BPMN (control)","old":"role-old.bpmn","new":"role-old.bpmn","required_changes":[]}
+]

@@ -10,6 +10,7 @@ const (
 	AddGateway             ChangeType = "ADD_GATEWAY"
 	RemoveGateway          ChangeType = "REMOVE_GATEWAY"
 	ModifyGatewayCondition ChangeType = "MODIFY_GATEWAY_CONDITION"
+	ModifyGatewaySemantics ChangeType = "MODIFY_GATEWAY_SEMANTICS"
 	ModifySequenceFlow     ChangeType = "MODIFY_SEQUENCE_FLOW"
 	AddDataRequirement     ChangeType = "ADD_DATA_REQUIREMENT"
 	RemoveDataRequirement  ChangeType = "REMOVE_DATA_REQUIREMENT"

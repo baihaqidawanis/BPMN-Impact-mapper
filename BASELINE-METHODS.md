@@ -12,7 +12,7 @@ generate source-code changes.
 | BM25 | Deterministic lexical ranking over bounded file/symbol documents | Exact vocabulary baseline; all candidates are `VERIFY` |
 | Semantic | Offline sentence embeddings plus cosine similarity | Vocabulary-mismatch baseline; all candidates are `VERIFY` |
 | Fusion | Reciprocal Rank Fusion (RRF) over BM25 and Semantic ranks | Lexical-semantic rank consensus; all candidates are `VERIFY` |
-| Graph-Aware Hybrid | RRF over deterministic graph/evidence ranking and Semantic, plus conservative Go source-relation propagation | Main treatment; strong actions survive only when independently supported by deterministic evidence |
+| BPMN-Context-Aware Hybrid Retrieval | RRF over deterministic BPMN-context/evidence ranking and Semantic, plus conservative Go source-relation propagation | Main treatment; strong actions survive only when independently supported by deterministic evidence |
 
 Configuration-Driven JSON remains an optional legacy comparator. It is not a
 primary automatic method because preparing its mappings requires manual prior
@@ -63,7 +63,7 @@ meanings. The implementation follows Cormack, Clarke, and Buettcher,
 *Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning
 Methods* (SIGIR 2009), DOI: <https://doi.org/10.1145/1571941.1572114>.
 
-## 4. Graph-Aware Hybrid
+## 4. BPMN-Context-Aware Hybrid Retrieval
 
 The deterministic side combines stable trace IDs, symbols, paths/modules,
 labels/domain terms, structural hints, BM25, BPMN neighborhood context, and the
@@ -78,8 +78,11 @@ an emerging technique for versioning and impact analysis. BECIA also discusses
 dependency/traceability-based change-impact propagation:
 <https://doi.org/10.1007/s41870-023-01471-9>.
 
-Graph-Aware Hybrid is a synthesis implemented by this project, not a claim that
-one cited paper proposed the same pipeline.
+BPMN-Context-Aware Hybrid Retrieval is a synthesis implemented by this project,
+not a claim that one cited paper proposed the same pipeline. “BPMN context”
+means the changed element's nearby predecessor/successor, actor/lane, gateway,
+and incoming/outgoing flow. It is not a Neo4j graph database, a unified BPMN-
+source knowledge graph, or graph traversal across the repository.
 
 ## Evaluation boundary
 

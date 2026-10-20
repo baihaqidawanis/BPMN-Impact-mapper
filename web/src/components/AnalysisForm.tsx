@@ -141,13 +141,13 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 					<button type="button" aria-pressed={!researchMode} onClick={() => { setResearchMode(false); setMethod("hybrid"); setCompareMethods(false); }}>Product</button>
 					<button type="button" aria-pressed={researchMode} onClick={() => setResearchMode(true)}>Research</button>
 				</div>
-				{researchMode ? <p className={styles.modeNote}><b>Research mode</b> exposes baselines and controlled method comparison. It does not change the production recommendation.</p> : <div className={styles.methodSummary}><span>Production method</span><b>Graph-Aware Hybrid</b><small>BM25, semantic retrieval, and graph/source evidence are combined automatically.</small></div>}
+				{researchMode ? <p className={styles.modeNote}><b>Research mode</b> exposes baselines and controlled method comparison. It does not change the production recommendation.</p> : <div className={styles.methodSummary}><span>Production method</span><b>BPMN-Context-Aware Hybrid Retrieval</b><small>BM25, semantic retrieval, BPMN context, and source evidence are combined automatically.</small></div>}
 				<input type="hidden" name="method" value={researchMode ? method : "hybrid"} />
 				<div className={styles.grid}>
 					{researchMode && <label className={styles.field}>
 						<span>Experimental method</span>
 						<select aria-label="Experimental method" value={method} onChange={(event) => setMethod(event.target.value as AnalysisMethod)}>
-							<option value="hybrid">Graph-aware deterministic hybrid</option>
+							<option value="hybrid">BPMN-context-aware hybrid</option>
 							<option value="fusion">BM25 + Semantic fusion (RRF)</option>
 							<option value="bm25">BM25 lexical baseline</option>
 							<option value="semantic">Semantic embedding baseline</option>
@@ -157,7 +157,7 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 				</div>
 				{researchMode && <label className={styles.checkField}>
 					<input name="compare_methods" type="checkbox" checked={compareMethods} onChange={(event) => setCompareMethods(event.target.checked)} />
-					<span><b>Compare mapping methods</b><small>Runs BM25, Semantic, rank fusion, and Graph-Aware Hybrid on the same input.</small></span>
+					<span><b>Compare mapping methods</b><small>Runs BM25, Semantic, rank fusion, and BPMN-Context-Aware Hybrid Retrieval on the same input.</small></span>
 				</label>}
 
 				{(compareMethods || method !== "bm25") && (

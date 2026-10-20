@@ -28,6 +28,10 @@ type artifactImpact struct {
 
 func (Hybrid) Method() domain.AnalysisMethod { return domain.MethodHybrid }
 
+func (Hybrid) MethodMetadata() map[string]string {
+	return map[string]string{"evidence_version": "direct-context-trace-v1"}
+}
+
 func (Hybrid) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
 	attached, warnings := Attach(changes, artifacts, config)
 	return attached, warnings, nil
@@ -210,9 +214,9 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 	if lexical > 0 {
 		evidence = append(evidence, evidenceAt("LABEL_TOKEN", artifact, firstPresent(query, artifact.Content)))
 	}
-	structured, structuredType := structuredSignal(artifact, query)
+	structured, structuredEvidence := structuredSignal(artifact, query)
 	if structured > 0 {
-		evidence = append(evidence, evidenceAt(structuredType, artifact, firstPresent(query, artifact.Content)))
+		evidence = append(evidence, structuredEvidence)
 	}
 	bm25Score := 0.0
 	if maxBM25 > 0 {
@@ -226,6 +230,10 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 	if total < config.CandidateThreshold || len(evidence) == 0 {
 		return domain.Impact{}, false
 	}
+	// Neighbour IDs explain the context that already contributed query terms.
+	// They are not direct traces of the changed element, cannot earn its 45%
+	// contribution, and must never promote an action or seed propagation.
+	evidence = append(evidence, contextTraceEvidence(change, artifact, stableIDs)...)
 	sort.SliceStable(evidence, func(i, j int) bool {
 		if evidence[i].Type != evidence[j].Type {
 			return evidence[i].Type < evidence[j].Type
@@ -247,6 +255,31 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 	}, true
 }
 
+func contextTraceEvidence(change domain.Change, artifact domain.Artifact, directIDs []string) []domain.Evidence {
+	if change.Context == nil {
+		return nil
+	}
+	seen := make(map[string]bool, len(directIDs))
+	for _, id := range directIDs {
+		seen[strings.ToLower(id)] = true
+	}
+	var result []domain.Evidence
+	neighbors := append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...)
+	for _, neighbor := range neighbors {
+		key := strings.ToLower(neighbor.ID)
+		if key == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		if containsStableID(artifact.Content, neighbor.ID) {
+			item := evidenceAtStableID(artifact, neighbor.ID)
+			item.Type = "CONTEXT_TRACE_ID"
+			result = append(result, item)
+		}
+	}
+	return result
+}
+
 func queryFor(change domain.Change) ([]string, []string) {
 	var raw []string
 	var ids []string
@@ -256,6 +289,9 @@ func queryFor(change domain.Change) ([]string, []string) {
 		}
 		ids = append(ids, element.ID)
 		raw = append(raw, element.ID, element.Name, element.Actor, element.State, element.Documentation)
+		if strings.HasSuffix(element.Type, "Gateway") {
+			raw = append(raw, element.Type, element.GatewayDirection, element.DefaultFlow)
+		}
 		raw = append(raw, element.DataRequirements...)
 		raw = append(raw, element.Incoming...)
 		raw = append(raw, element.Outgoing...)
@@ -398,49 +434,6 @@ func containsStableID(content, id string) bool {
 
 func isIdentifierRune(value rune) bool {
 	return unicode.IsLetter(value) || unicode.IsDigit(value) || value == '_'
-}
-
-func structuredSignal(artifact domain.Artifact, query []string) (float64, string) {
-	lower := strings.ToLower(artifact.Content)
-	if firstPresent(query, artifact.Content) == "" {
-		return 0, ""
-	}
-	switch {
-	case artifact.Layer == "test" || strings.Contains(strings.ToLower(artifact.File), "test"):
-		return 1, "TEST_NAME"
-	case strings.Contains(lower, "/api/") || strings.Contains(lower, "handlefunc") || strings.Contains(lower, "router."):
-		return 1, "API_ROUTE"
-	case strings.Contains(lower, "insert into") || strings.Contains(lower, "create table") || strings.Contains(lower, "select "):
-		return 1, "DATABASE_TABLE"
-	case strings.Contains(lower, "audit") || strings.Contains(lower, "trace"):
-		return 1, "AUDIT_ACTION"
-	case containsUpperConstant(artifact.Content):
-		return 0.7, "STATE_STATUS"
-	default:
-		return 0, ""
-	}
-}
-
-func containsUpperConstant(content string) bool {
-	for _, field := range strings.Fields(content) {
-		trimmed := strings.Trim(field, "\"'`,;:()[]{}")
-		if len(trimmed) < 3 {
-			continue
-		}
-		letters, upper := 0, 0
-		for _, r := range trimmed {
-			if unicode.IsLetter(r) {
-				letters++
-				if unicode.IsUpper(r) {
-					upper++
-				}
-			}
-		}
-		if letters >= 3 && letters == upper {
-			return true
-		}
-	}
-	return false
 }
 
 func evidenceAt(kind string, artifact domain.Artifact, needle string) domain.Evidence {

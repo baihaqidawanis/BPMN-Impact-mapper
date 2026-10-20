@@ -1,5 +1,27 @@
 # Methodology
 
+### Structured evidence correction (2026-10-19)
+
+Structured hints now require recognizable syntax and a query token within the
+same displayed source line (maximum 240 characters). SQL elsewhere in a function
+cannot label a task-ID assignment as DATABASE_TABLE. Test-directory membership,
+the word `trace`, and arbitrary uppercase IDs alone do not establish a test name,
+audit action, or state. Patterns cover a conservative subset of SQL, route
+declarations, test declarations, audit calls, and state/status assignments.
+These remain text heuristics; multiline statements and framework-specific forms
+can be missed, and comments embedded in other syntax are not fully parsed.
+Weights are unchanged; unsupported structured clues now contribute zero.
+
+Engine identity is bumped to `engine-3.4e-line-evidence` so reruns do not collide
+with saved reports from the earlier algorithm. Historical reports are preserved.
+Compare methods using fresh reports from the same engine version.
+
+The web Code/Tests/Docs filter uses reported layer plus generic path/extension
+conventions. Code includes remaining configuration/schema files. This is a display
+classification, not a language/framework guarantee. File grouping retains every
+change/function association and original rank, without averaging scores or actions.
+Filters do not alter retrieval, exports, or evaluation inputs.
+
 ## Interpretation boundary
 
 The method identifies candidates, not proven causal impacts. A stable BPMN ID found in source is direct traceability evidence; BM25 and lexical similarity remain retrieval evidence. A high score is not empirical probability.
@@ -43,11 +65,18 @@ Documents and ties use stable artifact IDs. Within each change query, BM25 is no
 
 Query construction is change-aware: additions use the new element, removals use the old element, modifications use both, and recognized composite operations add predecessor/successor context. This avoids mixing removed wording into pure-addition queries while preserving both sides of a modification.
 
+Generic process words in a BPMN label or its neighbors can also occur in
+unrelated modules. BM25 normalization and rank fusion are relative rankings, so
+they can place such cross-module matches high even without a causal dependency.
+These remain `VERIFY`; there is no Simple-ERP-specific suppression rule. Any
+new generic negative evidence or weight change must be evaluated against
+independent, hidden ground truth before it becomes the product default.
+
 The BM25 baseline uses only this normalized score, requires positive lexical evidence, and labels every result `VERIFY`. It does not inherit trace-ID action classification from the hybrid method.
 
 ## Same-input comparison and reviewer boundary
 
-The web comparison repeats byte-identical BPMN/repository/top-k inputs and requires one shared method-independent input fingerprint. BM25, Semantic, BM25 + Semantic RRF, and Graph-Aware Hybrid participate. Candidate count, unresolved count, set overlap, and ranked lists describe retrieval behavior only. They must not be reported as accuracy before reconciliation against hidden ground truth.
+The web comparison repeats byte-identical BPMN/repository/top-k inputs and requires one shared method-independent input fingerprint. BM25, Semantic, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval participate. Candidate count, unresolved count, set overlap, and ranked lists describe retrieval behavior only. They must not be reported as accuracy before reconciliation against hidden ground truth.
 
 Reviewer export happens after inference and remains browser-local. A reviewer may accept a predicted file, change its expected action, add an omitted file manually, or record an empty negative case. Predictions are prompts rather than truth; independent reviewers must use frozen implementation evidence, and disagreements remain explicit through `reconcile`. Annotation JSON never becomes analyzer input.
 
@@ -107,7 +136,7 @@ falls back to another method.
 The adapter invokes only its embedded trusted Python helper, forces offline
 model loading, bounds documents and process output, and honors cancellation. It
 never imports or executes code from the analyzed repository. Model/provider are
-stored in canonical report metadata. Semantic participates in Graph-Aware
+stored in canonical report metadata. Semantic participates in BPMN-Context-Aware
 Hybrid through RRF; it cannot promote deterministic actions. Cross-machine
 numerical reproducibility and retrieval accuracy remain evaluation work. See
 [SEMANTIC_RETRIEVAL.md](SEMANTIC_RETRIEVAL.md).

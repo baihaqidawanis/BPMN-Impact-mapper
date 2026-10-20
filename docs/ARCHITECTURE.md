@@ -12,7 +12,7 @@ The target repository is passive data. No component imports, compiles, starts, o
 2. `bpmn.Parse` tokenizes bounded XML, rejects directives, extracts supported nodes, lanes, data state/requirements, and sequence flows, then builds incoming/outgoing adjacency maps.
 3. `diff.Compare` matches stable IDs first. A conservative unique structural fallback can match changed IDs; ties become `UNRESOLVED_MATCH`.
 4. The indexing registry dispatches `.go` files to `go/parser` and every other allowed text file to the generic adapter. Relation extractors run only over compatible indexed files; adapter failures fall back to text with a warning.
-5. The selected `mapping.Strategy` runs configuration-driven compatibility, BM25-only, offline Semantic, BM25 + Semantic RRF fusion, or Graph-Aware Hybrid retrieval and emits only candidates with evidence. The fusion adapter composes strategies through the application port instead of coupling their implementations.
+5. The selected `mapping.Strategy` runs configuration-driven compatibility, BM25-only, offline Semantic, BM25 + Semantic RRF fusion, or BPMN-Context-Aware Hybrid Retrieval and emits only candidates with evidence. The fusion adapter composes strategies through the application port instead of coupling their implementations.
 6. `app.Analyzer` constructs a deterministic report and warnings. `report.JSON` is authoritative; `report.Markdown` is a pure view of the same object.
 7. Separately, `experiment.Run` decodes a completed report and hidden ground truth, then invokes pure `evaluation.Evaluate`; there is no reverse edge into inference.
 8. `benchmark.Runner` coordinates injected analyzer, file, and prediction-renderer ports. The experiment adapter supplies local filesystem behavior; hidden ground truth is read only after a completed prediction.
@@ -39,7 +39,7 @@ The resolver compares complete supported method names and normalized parameter/r
 
 `domain.Graph` contains stable-ID maps for elements and flows plus `Incoming` and `Outgoing` adjacency maps. Serialized report elements contain sorted incoming/outgoing flow IDs, so no Go map iteration order reaches public output.
 
-The parser recognizes task variants, call/subprocess activities, common events, five gateway types, sequence flows, lanes, data object/store references, data associations, conditions, and data states. Unsupported executable BPMN semantics are not simulated.
+The parser recognizes task variants, call/subprocess activities, common events, five gateway types, sequence flows, lanes, data object/store references, data associations, conditions, and data states. The diff now reports changes to a stable-ID gateway's XML type (for example XOR to AND), direction, and default flow as `MODIFY_GATEWAY_SEMANTICS`. It does not infer the gateway type from branch counts or simulate execution. Unsupported executable BPMN semantics are not simulated.
 
 ## Determinism
 

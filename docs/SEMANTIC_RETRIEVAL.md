@@ -21,7 +21,7 @@ The target automatic comparison is:
 1. BM25-only: deterministic lexical retrieval;
 2. Semantic-only: embedding similarity without exact-word dependence;
 3. BM25 + Semantic rank fusion;
-4. Graph-Aware Hybrid: fusion plus exact, structural, and source-relation evidence.
+4. BPMN-Context-Aware Hybrid Retrieval: fusion plus exact, structural, and source-relation evidence.
 
 Semantic Retrieval stays independently measurable even though experimental fusion
 is now available. It is not RAG: retrieval ranks candidates, while RAG additionally sends
@@ -32,6 +32,9 @@ retrieved context to a generative model.
 - Construct a bounded query from change type, old/new label, element type,
   actor/lane, and immediate graph neighbors.
 - Construct allowed repository documents at file and symbol granularity.
+- Embed a bounded first passage per artifact and, within the 5,001-text
+  request limit, a bounded tail passage for long artifacts. Select the best
+  cosine score per artifact and show an excerpt from that passage.
 - Encode queries and documents with one pinned local embedding model.
 - Rank by cosine similarity with deterministic tie-breaking.
 - Emit only indexed files/symbols and bounded source excerpts as evidence.
@@ -52,6 +55,15 @@ fingerprint hashes loaded weights, module configuration, tokenizer vocabulary,
 dimension, selected model name, and library version without exposing a local
 cache path.
 
+Each passage is limited to 600 characters before repository metadata is added.
+This reduces silent truncation by the model's token window, but character count
+cannot guarantee a specific number of wordpieces. For long symbols/files, only
+the head and tail are represented; middle code can still be missed. If the
+embedding-text budget prevents a tail passage, the report emits
+`SEMANTIC_PASSAGE_LIMIT`. Cosine values and RRF agreement remain ranking
+signals, not calibrated impact probabilities. No DPR or code-specific model is
+installed or claimed here.
+
 ## Implemented rank fusion
 
 `fusion` runs BM25-only and Semantic-only against the same changes and indexed
@@ -66,9 +78,9 @@ two-list contribution `2 / 61`, sorts ties by file and symbol, keeps Top-K, and
 records both contributing ranks as `RRF_FUSION` evidence. The normalized value
 is rank consensus, not probability. `fusion` always emits `VERIFY`.
 
-`hybrid` applies the same RRF mechanism to the existing graph-aware ranking and
+`hybrid` applies the same RRF mechanism to the existing deterministic BPMN-context/evidence ranking and
 Semantic ranking. A candidate introduced only by Semantic is forced to
-`VERIFY`; a stronger action is retained only when the graph-aware method already
+`VERIFY`; a stronger action is retained only when the deterministic BPMN-context/evidence method already
 supported it. On an equal RRF score, a graph-supported candidate precedes a
 Semantic-only candidate before the file/symbol tie-break. This prevents
 embedding similarity from inventing or displacing stronger causal evidence.
@@ -77,6 +89,14 @@ The Python adapter serializes model workers per server process and retains only
 the most recent input hash and vectors in memory. Therefore the web comparison
 can reuse identical embeddings across Semantic, Fusion, and Hybrid without
 persisting repository text.
+
+Semantic Retrieval is not a vector database and is not RAG. For each bounded
+analysis, the local model embeds the BPMN-change query and allowed indexed
+source artifacts, then calculates cosine similarity in process memory. A vector
+database would only make repeated or very large retrieval faster; it is not
+required to make the similarity semantic. The workflow becomes RAG-like only
+when selected, bounded evidence is subsequently supplied to a generative LLM
+for planning.
 
 The web performs an explicit capability check before a method that needs
 embeddings. The check embeds one fixed, non-repository sentence using the same
@@ -116,6 +136,18 @@ traceability problem, and semantic natural-language-to-code matching. None
 directly proves BPMN-change-to-source-impact accuracy.
 
 ## Evaluation gate
+
+The local worker now bounds JSON input size, serializes one embedding request at
+a time, limits numerical-library threads, and uses small embedding batches.
+An in-process cache retains up to four corpus/query embedding results within a
+64 MiB vector budget, avoiding repeated Python model launches when comparing
+methods on identical inputs. The cache is discarded on server restart and does
+not change the computed vectors or ranking.
+Memory and input-limit failures are surfaced to the API without local paths or
+subprocess output; the UI does not silently substitute another method. These
+controls reduce resource spikes but do not guarantee that the local model fits
+every machine. The Research batch UI is exploratory and may be stopped; it does
+not compute accuracy or replace the hidden-ground-truth benchmark.
 
 - Freeze repository revision, BPMN mutations, model, configuration, and Top-K.
 - Include vocabulary-mismatch cases without stable task IDs in source.
