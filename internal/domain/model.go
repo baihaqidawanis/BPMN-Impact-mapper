@@ -110,16 +110,17 @@ type Evidence struct {
 }
 
 type ScoreBreakdown struct {
-	Dependency float64 `json:"dependency,omitempty"`
-	Semantic   float64 `json:"semantic,omitempty"`
-	RRF        float64 `json:"rrf,omitempty"`
-	TraceID    float64 `json:"trace_id"`
-	Symbol     float64 `json:"symbol"`
-	Path       float64 `json:"path"`
-	Lexical    float64 `json:"lexical"`
-	Structured float64 `json:"structured"`
-	BM25       float64 `json:"bm25"`
-	Total      float64 `json:"total"`
+	EvidenceScore *float64 `json:"evidence_score,omitempty"`
+	Dependency    float64  `json:"dependency,omitempty"`
+	Semantic      float64  `json:"semantic,omitempty"`
+	RRF           float64  `json:"rrf,omitempty"`
+	TraceID       float64  `json:"trace_id"`
+	Symbol        float64  `json:"symbol"`
+	Path          float64  `json:"path"`
+	Lexical       float64  `json:"lexical"`
+	Structured    float64  `json:"structured"`
+	BM25          float64  `json:"bm25"`
+	Total         float64  `json:"total"`
 }
 
 type Impact struct {
@@ -160,6 +161,7 @@ type Change struct {
 	ChangeType       ChangeType     `json:"change_type"`
 	OldElement       *Element       `json:"old_element"`
 	NewElement       *Element       `json:"new_element"`
+	PartOf           string         `json:"part_of,omitempty"`
 	Impacts          []Impact       `json:"impacts"`
 	UnresolvedImpact []string       `json:"unresolved_impacts"`
 	Reason           string         `json:"reason,omitempty"`

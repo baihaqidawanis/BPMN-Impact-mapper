@@ -80,9 +80,13 @@ go run ./cmd/bpmn-impact-mapper analyze \
 
 Methods:
 
-- `hybrid`: BPMN-context-aware method that fuses deterministic stable-ID, symbol/path/structured, lexical, BM25, source-relation ranking, and nearby BPMN context with Semantic using RRF; deterministic actions are preserved only for candidates independently supported by the deterministic-evidence side;
+All public methods select their highest-ranked candidate per file before applying `--top-k`; one file cannot consume several slots through multiple functions. Fusion still combines the complete function-level rankings internally. The displayed scores remain retrieval signals, not probabilities.
+
+For an opt-in, score-free source-link experiment on an existing report, run `go run ./cmd/bpmn-impact-mapper probe-relations --repo <repository> --report <impact-report.json> --top-seeds 5`. It prints linked route/handler/service evidence and a proposed file order; it does not change the report or production Hybrid. See [source-relation probe](docs/RELATION_PROBE.md).
+
+- `hybrid`: BPMN-context-aware BM25 and Semantic rankings combined using RRF (`k=60`). Direct IDs, paths, function names, and code patterns are displayed as optional evidence; they have no separate ranking weights. Retrieved candidates remain `VERIFY`;
 - `fusion`: BM25 + Semantic rank fusion using deterministic RRF (`k=60`); every candidate action is `VERIFY`;
-- `bm25`: deterministic lexical baseline; every candidate action is `VERIFY`;
+- `bm25`: deterministic lexical baseline using changed-element words without neighbouring BPMN labels; every candidate action is `VERIFY`;
 - `semantic`: offline embedding/cosine baseline; every candidate action is
   `VERIFY`, and semantic similarity is not a probability;
 
@@ -95,9 +99,9 @@ Fusion can be run with `--method fusion`. It combines ranks rather than adding
 raw BM25 and cosine values, because those scores are not on a common scale.
 Its normalized RRF value is rank consensus, not an accuracy probability.
 
-Hybrid treats a label-only task change conservatively: even a high-scoring exact trace remains `VERIFY`, because changed wording does not by itself prove changed software behavior. Exact trace evidence still raises and explains the candidate ranking.
+Hybrid treats even an exact task-ID trace conservatively: the trace explains a possible connection but does not prove that code must change. A new task ID missing from old source is expected and does not penalize either ranking.
 
-Topology edits may also carry optional composite context: `INSERT_TASK`, `REMOVE_TASK_WITH_REWIRE`, `ADD_GATEWAY_BRANCH`, `MOVE_TASK`, or `REMOVE_GATEWAY_BRANCH`. Atomic changes remain canonical, while predecessor/successor context contributes deterministic retrieval terms. A composite label explains related BPMN edits; it is not proof that a source change is required.
+Topology edits may also carry optional composite context: `INSERT_TASK`, `REMOVE_TASK_WITH_REWIRE`, `ADD_GATEWAY_BRANCH`, `MOVE_TASK`, or `REMOVE_GATEWAY_BRANCH`. Atomic changes remain canonical, while predecessor/successor context informs the retrieval query. A composite label explains related BPMN edits; it is not proof that a source change is required.
 
 Required output:
 
@@ -110,6 +114,14 @@ Useful limits and controls:
 - `--max-file-bytes`, `--max-total-bytes`, and `--max-files`;
 - `--top-k`;
 - `--timeout`.
+
+The default source corpus omits conventional BPMN specification trees under
+`docs/bpm`, `docs/bpm-*`, `docs/bpmn`, `docs/bpmn-*`, or
+`docs/process-model*`; audit/review/test-plan and ground-truth write-ups; build/test
+outputs, and dependency lockfiles. The old/new BPMN files are read separately
+as comparison inputs. For other repository conventions, add `--ignore` patterns.
+These exclusions reduce leakage/noise, but cannot replace a frozen source
+snapshot and independently prepared ground truth.
 
 The analyzer never invokes Git in the target repository. Supply `--revision` as frozen experiment metadata.
 

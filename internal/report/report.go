@@ -37,7 +37,11 @@ func Markdown(value domain.Report) []byte {
 	fmt.Fprintf(&output, "- Repository: `%s`\n", escape(value.Repository.Name))
 	fmt.Fprintf(&output, "- Revision: `%s`\n", escape(value.Repository.Revision))
 	fmt.Fprintf(&output, "- Changes: %d\n\n", len(value.Changes))
-	output.WriteString("Retrieval scores order candidates; they are not probabilities of a required change. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.\n\n")
+	if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+		output.WriteString("Hybrid combines BPMN-context BM25 and Semantic positions with RRF. IDs, function names, paths, and code patterns are optional evidence, not separate ranking weights. A new BPMN ID absent from old source causes no score penalty. Scores order candidates; they are not probabilities of a required change.\n\n")
+	} else {
+		output.WriteString("Retrieval scores order candidates; they are not probabilities of a required change. Code evidence, meaning match and rank agreement are separate measurements. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. A new task or gateway may not have an ID in source yet; the current code-evidence weights are not recalibrated. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.\n\n")
+	}
 	if len(value.SourceAnalysis) > 0 {
 		output.WriteString("## Source analysis coverage\n\n| File | Language | Adapter | Capabilities | Fallback |\n|---|---|---|---|---|\n")
 		for _, file := range value.SourceAnalysis {
@@ -49,7 +53,20 @@ func Markdown(value domain.Report) []byte {
 		}
 		output.WriteByte('\n')
 	}
+	primaryIDs := map[string]bool{}
+	for _, change := range value.Changes {
+		if change.PartOf == "" {
+			if change.NewElement != nil {
+				primaryIDs[change.NewElement.ID] = true
+			} else if change.OldElement != nil {
+				primaryIDs[change.OldElement.ID] = true
+			}
+		}
+	}
 	for index, change := range value.Changes {
+		if change.PartOf != "" && primaryIDs[change.PartOf] {
+			continue
+		}
 		id, name := elementIdentity(change)
 		fmt.Fprintf(&output, "## %d. %s — %s\n\n", index+1, escape(string(change.ChangeType)), escape(id))
 		if name != "" {
@@ -67,6 +84,16 @@ func Markdown(value domain.Report) []byte {
 				fmt.Fprintf(&output, "Successors: %s\n\n", values)
 			}
 		}
+		var supportingFlows []string
+		for _, detail := range value.Changes {
+			if detail.PartOf == id {
+				flowID, _ := elementIdentity(detail)
+				supportingFlows = append(supportingFlows, flowID)
+			}
+		}
+		if len(supportingFlows) > 0 {
+			fmt.Fprintf(&output, "Supporting sequence-flow edits (mapped with this task): %s.\n\n", escape(strings.Join(supportingFlows, ", ")))
+		}
 		if len(change.Impacts) > 0 {
 			output.WriteString("| Action | Retrieval score | Module | Layer | File | Function / code name |\n")
 			output.WriteString("|---|---:|---|---|---|---|\n")
@@ -80,6 +107,25 @@ func Markdown(value domain.Report) []byte {
 					fmt.Fprintf(&output, " / `%s`", escape(impact.Symbol))
 				}
 				output.WriteString("\n\n")
+				if impact.ScoreBreakdown.EvidenceScore != nil {
+					fmt.Fprintf(&output, "Code-evidence score: %.4f. ", *impact.ScoreBreakdown.EvidenceScore)
+				} else if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+					fmt.Fprintf(&output, "BM25 word match: %.4f. ", impact.ScoreBreakdown.BM25)
+				} else {
+					output.WriteString("Code-evidence score: not scored. ")
+				}
+				if impact.ScoreBreakdown.Semantic > 0 {
+					fmt.Fprintf(&output, "Meaning match: %.4f. ", impact.ScoreBreakdown.Semantic)
+				} else {
+					output.WriteString("Meaning match: not scored. ")
+				}
+				if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+					fmt.Fprintf(&output, "Score: BM25=%.4f, semantic=%.4f, RRF=%.4f (ranking only).\n\n", impact.ScoreBreakdown.BM25, impact.ScoreBreakdown.Semantic, impact.ScoreBreakdown.RRF)
+				} else if impact.ScoreBreakdown.RRF > 0 {
+					fmt.Fprintf(&output, "Rank agreement: %.4f.\n\n", impact.ScoreBreakdown.RRF)
+				} else {
+					output.WriteString("Rank agreement: not combined.\n\n")
+				}
 				if impact.ScoreBreakdown.RRF > 0 {
 					fmt.Fprintf(&output, "Score: trace=%.4f, symbol=%.4f, path=%.4f, lexical=%.4f, structured=%.4f, BM25=%.4f, semantic=%.4f, RRF=%.4f, total=%.4f.\n\n", impact.ScoreBreakdown.TraceID, impact.ScoreBreakdown.Symbol, impact.ScoreBreakdown.Path, impact.ScoreBreakdown.Lexical, impact.ScoreBreakdown.Structured, impact.ScoreBreakdown.BM25, impact.ScoreBreakdown.Semantic, impact.ScoreBreakdown.RRF, impact.ScoreBreakdown.Total)
 				} else {

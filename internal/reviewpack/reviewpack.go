@@ -85,7 +85,7 @@ func Build(inputs []Input, reviewerA, reviewerB string) (Pack, error) {
 	if err := validateReport(base, ordered[0].SHA256); err != nil {
 		return Pack{}, fmt.Errorf("report 1: %w", err)
 	}
-	cases, err := casesFrom(base.Changes)
+	cases, err := casesFrom(domain.IndependentChanges(base.Changes))
 	if err != nil {
 		return Pack{}, err
 	}
@@ -116,7 +116,7 @@ func Build(inputs []Input, reviewerA, reviewerB string) (Pack, error) {
 		if input.Report.Repository != base.Repository {
 			return Pack{}, errors.New("prediction reports have different repository metadata")
 		}
-		candidateCases, err := casesFrom(input.Report.Changes)
+		candidateCases, err := casesFrom(domain.IndependentChanges(input.Report.Changes))
 		if err != nil {
 			return Pack{}, fmt.Errorf("report %d: %w", index+1, err)
 		}

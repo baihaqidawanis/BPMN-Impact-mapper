@@ -1,7 +1,88 @@
 # BPMN Impact Mapper — Phase 1 Plan
 
 Status: **DONE — Phase 4.0 persisted analysis history verified**
-Last updated: 2026-10-20
+Last updated: 2026-10-22
+
+## Source-relation ablation probe (2026-10-22)
+
+- [DONE] Add a separate, offline `probe-relations` CLI and pure `internal/relationprobe` component. It requires exact cited frontend HTTP-call-line evidence, follows a unique indexed route to a Go handler and at most one method/interface call, and shows an alternate existing-file order without changing canonical scores/actions or product Hybrid. Synthetic tests cover deterministic path selection and abstention when the source line is not cited or the target file was not retrieved.
+- [DONE] Read-only Simple-ERP PDF-task probe found `purchase-request-panel.tsx:31` → `Handler.create` at `handler.go:22` → `Service.CreateRequest` call at `handler.go:96`. The score-free proposal moves existing handler/service files from ranks 14/15 to 3/4 and puts four provisional core files in Top-5. This is **one exposed development case**, not blind accuracy evidence or a validated production ranking improvement. The command explicitly warns that a saved report and current repository snapshot are not cryptographically rebound.
+- [DONE] `go test -p 1 ./...`, `go vet -p 1 ./...`, and `git diff --check` pass. The actual Simple-ERP `probe-relations` CLI returns the two cited paths and the score-free Top-5 proposal in about two seconds without re-running embeddings. Keep this as an opt-in CLI diagnostic, not a fifth public mapping method. No BPMN or Simple-ERP changes.
+- [TODO] Test relation-aware ordering on multiple frozen scenarios with independent labels and negative controls before considering a versioned production reranker. Record false positives from shared routes, ambiguous links, and unsupported languages; abstain rather than infer missing edges.
+
+## One-scenario method diagnosis and file-level Top-K (2026-10-22)
+
+- [DONE] Run BM25, Semantic, Fusion, and Hybrid on the same Simple-ERP required-PDF task insertion with identical input fingerprint `afe268d3154d34a28084b9bb01434307`. The provisional four-file reference is a development diagnostic, not blind ground truth. At the old artifact-level output, BM25 found one core file in its first 20 artifacts, Semantic three, Fusion two, and Hybrid four; at Top-5, BM25 found zero, Semantic one, Fusion two, and Hybrid two. Results cannot establish general accuracy from one scenario.
+- [DONE] Found a comparison defect independent of those labels: BM25/Semantic/Fusion public Top-K consumed slots with multiple functions from the same file, while Hybrid already selected one best function per file. Make all four public reports file-diverse before Top-K, while retaining complete artifact rankings *inside* RRF. Added standalone adapter tests; engine identity is `engine-3.5d-file-level-topk` so prior reports are not silently comparable.
+- [DONE] `go test -p 1 ./...`, `go vet -p 1 ./...`, and `git diff --check` pass. Same-input read-only Simple-ERP Hybrid smoke with engine 3.5d has the identical Top-20 file/symbol order and RRF values as 3.5c (20 distinct files, zero warnings, matching input fingerprint). Standalone BM25 and Fusion now each emit 20 distinct files at Top-20. Fusion still places the provisional Postgres store and frontend panel at ranks 3 and 4 but not the handler/service within Top-20; file diversity alone is not an accuracy fix. Reports are ignored under `.data/`; no Simple-ERP file was changed. Do not calibrate lexical/semantic weights from the one provisional reference.
+- [TODO] Evaluate source-relation evidence (frontend route → handler → service) as a separately versioned ablation on multiple development scenarios. The current index already extracts conservative links, but promoting linked files from one example could add false positives elsewhere. Hidden scenarios remain necessary for final Recall/Precision claims.
+
+## Semantic passage coverage and ranking boundary (2026-10-22)
+
+- [DONE] Sample bounded head, tail, and middle source passages for Semantic retrieval instead of head/tail only; select a query-overlapping evidence line within the winning passage when available. Version the engine as `engine-3.5c-semantic-middle-passages` and record the passage strategy in method metadata. Unit tests cover a middle-only match and accurate bounded excerpt location.
+- [DONE] Keep production Hybrid as BPMN-context BM25 + Semantic RRF. Task IDs, neighbouring IDs, path/function names, and code clues remain evidence, not a hidden third weighted score. For `ADD_TASK`/`ADD_GATEWAY`, missing new IDs in old source are expected. Consider a separately versioned trace/context reranker only after a blinded multi-scenario ablation; action classification remains separate from ranking.
+- [DONE] `go test -p 1 ./...`, `go vet -p 1 ./...`, and `git diff --check` pass. A local synthetic Semantic CLI smoke wrote JSON/Markdown under ignored `.data/semantic-passage-smoke`: 12 BPMN changes, zero warnings, and method metadata `passage_version=head-middle-tail-v1`. The command took roughly 15 seconds on this machine; that is an operational smoke, not a controlled latency benchmark. More passages can increase embedding cost. Retrieval accuracy still requires independent ground truth.
+- [DONE] Read-only Simple-ERP one-scenario diagnostic (required supporting PDF task) with engine 3.5c: four provisional core file ranks are 1 (Postgres store), 2 (frontend purchase-request panel), 14 (HTTP handler file; displayed function `Handler.Register`), and 15 (application service). Previous 3.5b ranks were 1, 2, 12, and 11 respectively. Provisional file Recall@5 stays 2/4 and Recall@20 stays 4/4; this is **not** an independent accuracy metric because the reference was drafted after mapper inspection. The middle-passage change did not improve this case. Documents, integration tests, historical migrations, and a finance store still outrank two core files. BM25 ranks the HTTP handler function 174 and service 82; Semantic ranks them 19 and 42, so RRF cannot by itself infer the missing create-operation dependency. Do not fit weights or declare a gain from this one case.
+- [TODO] Diagnose generalizable retrieval improvements with a separate development scenario before changing production weights. Candidate work: query-role ablation (changed label versus BPMN neighbours), function-level source-relation propagation with explicit path evidence, and displaying implementation versus documentation/test candidates separately. Keep the frozen one-scenario draft out of inference and reserve independent scenarios for final evaluation.
+
+## Production Hybrid simplification (2026-10-22)
+
+- [DONE] Replace the production Hybrid's six-weight code-evidence ranking with BPMN-context BM25 plus Semantic, combined by equal-position RRF. The plain BM25 research baseline uses only changed-element text; the production BM25 branch also uses BPMN neighbours. The old weighted adapter remains for historical regression tests only. Exact IDs, neighbouring IDs, function/path names, and code-pattern hints remain bounded explanatory evidence without separate score contributions. New element IDs do not penalize ranking; retrieved candidates remain `VERIFY` until an independently justified action classifier exists. Engine identity is `engine-3.5b-context-bm25-hybrid`.
+- [DONE] Update the web score explanation, Markdown, README, and methodology to distinguish current reports from legacy saved reports. Added lexical-branch and composition-root tests. Go unit suite and local synthetic Hybrid smoke pass; the synthetic scenario had no semantic candidate over threshold, which is recorded rather than silently treated as agreement.
+- [DONE] A fresh Simple-ERP L3 task-insertion diagnostic with context BM25 places the core existing files at file ranks 1, 2, 11, and 12 versus 1, 3, 11, and 21 previously. The selected HTTP symbol is `Handler.Register`, not the more relevant `Handler.create`; finance, migrations, and sales still appear. This is not adjudicated accuracy and does not establish superiority. Go `test -p 1 ./...`, `vet -p 1 ./...`, web typecheck/build, six focused Playwright explanation tests, and `git diff --check` pass. Full Playwright runs past the initial UI tests but local embedding capability checks hit `MemoryError` with Next+Chrome active; full E2E is not a passing gate on this machine yet.
+- [TODO] Build a method-blind, adjudicated multi-scenario benchmark before claiming that simplified Hybrid improves accuracy. Report Recall@k, Precision@k, MRR, false positives, action accuracy, and latency by change type. Keep any weight calibration on development scenarios only.
+
+## Named task context-anchor query correction (2026-10-22)
+
+- [DONE] The uploaded required-PDF scenario exposed long BPMN documentation acting as generic search noise: only one of four core code files was in the displayed Top-5, while Sales/Finance ranked highly. This is a diagnostic case, not validated ground truth.
+- [DONE] Build a language-agnostic bounded context anchor from a phrase shared by changed-task documentation and adjacent BPMN labels, with a shared-neighbor-token fallback. Named add/remove task queries now use the task label plus that anchor instead of the whole instruction paragraph; BM25 retains neighbor labels and structural hints use only the short anchor. No Simple-ERP identifier/path or retrieval weight was hardcoded.
+- [DONE] Same-input local smoke moves purchasing frontend 14→3, handler 37→11, service absent→21, Sales store 4→absent from displayed Top-50; candidates 43→26. Finance store remains 14 and historical migration remains 4. Final analysis ID `d3c4a1fc5ad19dfdefed7bfda5d3805c` differs from the previous engine; method metadata records query version on both retrieval branches. `go test -p 1 ./...`, `go vet -p 1 ./...`, gofmt, and `git diff --check` pass. One candidate-tie warning remains. Independent ground truth is still pending; rank movement is not measured accuracy.
+
+## L3 PR attachment scenario reference (2026-10-22)
+
+- [DONE] Keep one isolated `ADD_TASK` scenario with three supporting plain-flow edits; no new gateway. Add a visible `Upload required supporting PDF` task label and explicit mandatory, bounded, atomically persisted PDF requirement in its BPMN documentation. Stable task ID and sequence flows are unchanged.
+- [DONE] Record a provisional, source-inspected existing-file impact reference in `docs/ground-truth/pr-supporting-document-reference-draft.md`. The author has seen prior mapper output, so this is not blind ground truth and must not be used to claim accuracy.
+- [TODO] Confirm the reference through a separate authorized implementation diff or independent reviewers; freeze the pre-change repository revision and only then export evaluator ground-truth JSON. Keep both draft and final labels outside inference.
+
+## Named task semantic-query focus (2026-10-22)
+
+- [DONE] Confirmed the three zero-candidate sequence-flow edits in the uploaded L3 PR report are `part_of` the added task. Their impacts are intentionally retrieved once under that task; independent flow changes still map independently. No duplicate retrieval was added.
+- [DONE] Remove predecessor/successor labels from the semantic query for a named added/removed task so the embedding targets the changed responsibility. Preserve graph neighbors for topology-only and unlabeled changes, and in BM25/code-evidence retrieval. Unit tests, `go test -p 1 ./...`, `go vet -p 1 ./...`, gofmt, and `git diff --check` pass. Same-input read-only Simple-ERP smoke: purchasing frontend 5→4, purchasing service 10→7, HTTP handler 15→12, Sales store 21→27; finance store stays 8, migration `purpose` moves 4→5. Candidate count stays 35 with zero warnings. This is a diagnostic ranking comparison, not measured accuracy.
+- [TODO] Do not claim improved precision from changed ranks without independent file-level ground truth. Semantic-only cross-module candidates remain visible as `VERIFY` pending adjudication.
+
+## Structural evidence precision audit (2026-10-22)
+
+- [DONE] Audit the latest L3 PR `ADD_TASK` report: unrelated Sales/Finance SQL earned `DATABASE_TABLE=1` from task words elsewhere on a line, even when its matched table was unrelated.
+- [DONE] Require query overlap with the extracted SQL table identifier for `DATABASE_TABLE`; targeted positive/negative unit tests pass. No Simple-ERP term, path, or scoring-weight change was introduced.
+- [DONE] Follow-up smoke found that a neighbour-task word still gave an unrelated `products` table full structural credit. Use only changed-element words for structural clues and scale SQL-table strength by identifier-token coverage; preserve neighbour words in lexical/BM25. Focused tests pass.
+- [DONE] Follow-up smoke found Sales still earned `AUDIT_ACTION=1` from an unrelated `request` variable even though its quoted action ID was `CREATE_SALES_ORDER`. Restrict audit/route hints to their action ID/path and test unrelated arguments.
+- [DONE] Follow-up smoke found `STATE_STATUS=0.7` from an unrelated `DocumentNo` field on the same line as `Status: "DRAFT"`. Limit state/test hints to their matched syntax span; add negative regression tests.
+- [DONE] Four read-only Simple-ERP L3 PR smoke runs isolated the SQL, neighbour-query, audit, and status same-line false signals. Final local report under ignored `.data/structured-span-smoke-20261022` moves Sales `Store.CreateOrder` from rank 8 to 21 and removes its structural credit; purchasing frontend moves 6 to 5, service 13 to 10, HTTP handler 21 to 15. Candidate count falls 43 to 35 with no warnings; all remain `VERIFY`. These are diagnostic rank movements, not measured accuracy.
+- [DONE] Final `go test -p 1 ./...`, `go vet -p 1 ./...`, `git diff --check`, and gofmt pass. Git emits only existing LF/CRLF conversion warnings. Simple-ERP was read-only; mapper's existing dirty worktree and unrelated edits were preserved. No commit or push.
+- [TODO] Independent ground truth remains necessary before calibrating weights or claiming better Precision/Recall. User review should distinguish contextual files from necessary edits.
+
+## Literal HTTP route links for new-task review (2026-10-22)
+
+- [DONE] Add a generic, conservative index relation from a literal JS/TS `api`/`fetch` call (explicit HTTP method) to a unique Go route registration and statically resolved handler. Ambiguous or dynamic routes abstain; synthetic positive, ambiguity, and ordering tests pass.
+- [DONE] Let an existing frontend lexical candidate activate only its matching call line or a route line with two distinct query terms. Linked Go handler and one direct Go service call remain `VERIFY`; existing candidates gain located evidence without a score boost. Threshold and false-route-line tests pass.
+- [DONE] Full `go test -p 1 ./...` and `go vet -p 1 ./...` pass; two read-only Simple-ERP L3 PR CLI smoke runs completed. The second run shows `Service.CreateRequest` with `HTTP_ROUTE_HANDLER` and `HANDLER_CALLS` evidence, while the HTTP handler itself is not in displayed Top-20. This is a rank visibility limitation, not a failed route link. No Simple-ERP-specific rule was added.
+- [DONE] User reran the L3 request-task scenario with a larger Top-K and shared `impact-report-ffb70870f4c15ed001c6949841f06e43.json`: frontend, service, and handler appeared with route evidence, alongside unrelated Sales/Finance candidates. That review triggered the later structural-evidence audit above. At this earlier stage analysis identity was `engine-3.4o-http-route-score`; local smoke artifacts remain ignored under `.data`.
+
+## Comparison and scoring explanation correction (2026-10-22)
+
+- [DONE] Keep the raw four BPMN changes in canonical JSON, but count only independent mapping units in Compare methods, Saved analyses unresolved summaries, and blind reviewer packs. Supporting flow edits are not three failed retrievals. Domain, filestore, and reviewer-pack tests cover this rule.
+- [DONE] Explain the two separate Hybrid rankings in the web report: six weighted code-evidence signals (including BM25) versus Semantic cosine ranking, then equal-position RRF. Semantic is not a missing seventh weight. Comparison overlap is explicitly Jaccard set overlap, not accuracy.
+- [DONE] Recompute `CANDIDATE_TIE` from displayed fused candidates after file diversity. Upstream code-evidence/semantic ties no longer masquerade as final RRF ties. Fusion regression tests pass.
+- [DONE] Verification: `go test -p 1 ./...`, `go vet -p 1 ./...`, web `npm run typecheck`, production `npm run build`, eight focused Playwright report tests, and `git diff --check` pass. The first sandboxed Playwright attempt exited `spawn EPERM`; the same tests passed after local child-process execution was permitted. No Simple-ERP end-to-end rerun or ground-truth accuracy claim was made.
+- [TODO] User reviews a fresh Simple-ERP comparison report. Old saved reports remain unchanged; analysis identity is `engine-3.4m-report-unit-tie` for new runs. Independent, adjudicated ground truth is still required for accuracy claims and weight calibration.
+
+## Insert-task retrieval and report grouping (2026-10-22)
+
+- [DONE] Use shared changed-task and neighbor terms to focus path/function evidence for newly inserted tasks without requiring a generated task ID in existing source. Focused retrieval tests and full Go suite passed.
+- [DONE] Treat only an unlabelled one-to-two sequence-flow replacement as a supporting detail of `INSERT_TASK`; preserve every raw graph change in JSON while running retrieval once for the primary task. Diff, analyzer, and Markdown tests passed; an earlier L3 PR CLI probe showed one mapped task plus three raw supporting flows.
+- [DONE] Select the best-ranked function per file for production Hybrid display Top-K, preserving original RRF scores; leave research methods' artifact-level ranking intact. Fusion unit test covers file selection and unchanged baseline behavior.
+- [DONE] Code checks: `go test -p 1 ./...`, `go vet -p 1 ./...`, web `npm run typecheck`, and `git diff --check` passed. Next production build compiled but stopped at TypeScript worker spawn with `EPERM` in this environment; direct typecheck passed.
+- [TODO] User will run the L3 PR scenario in the web app and share a new report. Check candidate relevance and omissions against independent truth before claiming accuracy; no new end-to-end result is asserted for the final file-diversity selection.
 
 ## Trace evidence and score explanation (2026-10-20)
 
@@ -199,15 +280,15 @@ The repository model can label likely layers (`domain`, `application`, `adapter`
 
 ## 12. BM25 retrieval
 
-Tokenization lowercases Unicode letters/digits, splits camel/snake/kebab boundaries, preserves stable IDs as normalized tokens, and removes no domain-specific terms. BM25 uses audited constants `k1=1.2`, `b=0.75`, a deterministic document order, and the Robertson IDF variant `ln(1 + (N-df+0.5)/(df+0.5))`. Equal scores tie by relative path then symbol.
+Tokenization lowercases Unicode letters/digits, splits camel/snake/kebab boundaries, and removes no domain-specific terms. Exact stable IDs are matched separately as direct trace evidence; their fragmented pieces are not ordinary lexical query terms for labelled elements. BM25 uses audited constants `k1=1.2`, `b=0.75`, a deterministic document order, and the Robertson IDF variant `ln(1 + (N-df+0.5)/(df+0.5))`. Equal scores tie by relative path then symbol.
 
-Queries contain changed element IDs, labels, actors, flow conditions, data names, and neighboring labels. Empty/no-signal queries abstain.
+Queries prioritize changed labels, state/data terms, and neighboring labels; actors are included for role changes. Unlabelled elements fall back to ID fragments. Flow IDs and generic change-type words do not enter labelled lexical queries. Empty/no-signal queries abstain.
 
 ## 13. Evidence, scoring, confidence, and unresolved rules
 
 Evidence types include `TRACE_ID`, `LABEL_TOKEN`, `DOMAIN_TERM`, `PATH`, `SYMBOL`, `API_ROUTE`, `STATE_STATUS`, `DATABASE_TABLE`, `AUDIT_ACTION`, `TEST_NAME`, `BM25`, and `STRUCTURAL`.
 
-Default score weights (configuration may override, then normalization is documented):
+Default code-evidence weights (fixed for this experimental baseline):
 
 | Signal | Weight |
 |---|---:|
@@ -218,7 +299,7 @@ Default score weights (configuration may override, then normalization is documen
 | API/state/table/audit/test structured hints | 0.10 |
 | normalized BM25 | 0.10 |
 
-Each component is clipped to `[0,1]`; total is their weighted sum divided by active total weight. BM25 normalization is `score / maxScore` within a query. Confidence is the explainable normalized score, not a calibrated probability.
+Each component is clipped to `[0,1]`; the code-evidence score is the weighted sum with no missing-signal renormalization. BM25 normalization is `score / maxScore` within a query. Semantic retrieval is a separate ranking, and RRF combines positions rather than these numeric scores. Neither the code-evidence score nor the final ranking score is a calibrated probability.
 
 Rules:
 
@@ -1129,3 +1210,60 @@ derived from canvas rendering.
 The visual scenario tests importability and the smoke run tests mechanics,
 not software correctness or measured retrieval quality. No Simple-ERP source
 or POC TA files were changed by this work.
+
+## 55. Corpus and lexical-query correction (2026-10-21)
+
+Motivation: a user-supplied P2P impact report indexed 319 files, including a
+large BPMN specification/tooling tree. Fragmented generated IDs and flow labels
+also contributed generic query words, placing documentation and unrelated
+source artifacts above several purchase-request functions. The initial report
+is diagnostic evidence only; it is not labelled ground truth.
+
+- [DONE] Exclude conventional BPMN specification trees, audit/review/test-plan
+  and phase-design artifacts, traceability verification scripts, build/test
+  output, and lockfiles from prediction input. Inventory tests verify exclusions
+  and preserve ordinary business-rule documentation.
+- [DONE] Query labels, state/data terms, and named BPMN neighbors without
+  generated flow/element ID fragments or change-type words; retain exact
+  changed-element IDs as separate `TRACE_ID` evidence. Unlabelled elements
+  retain an ID-fragment fallback. Actor terms enter actor-role changes.
+- [DONE] Cite the line with the most distinct lexical query terms, or the path
+  when the match is path-only. Unit tests cover both excerpt cases.
+- [DONE] Bump analysis identity to `engine-3.4i-focused-retrieval-queries`;
+  methodology, security policy, and README reflect the changed inference
+  inputs. Historical reports remain intact.
+- [DONE] `go test -p 1 ./...`, `go vet -p 1 ./...`, and `git diff --check`
+  pass. A full offline Hybrid CLI run over the read-only current Simple-ERP
+  checkout produced six BPMN changes from 198 indexed files and no runtime
+  error. The former report indexed 319 files; the corpora are not identical
+  and their ranking scores must not be compared as an accuracy metric.
+- [DONE] Separate code-evidence, semantic, and RRF numbers in JSON,
+  Markdown, and web UI; label missing direct IDs for new BPMN elements as
+  expected without silently changing retrieval weights. Focused Go report,
+  fusion and retrieval tests, full `go test -p 1 ./...`, `go vet -p 1 ./...`,
+  web typecheck, and `git diff --check` passed.
+- [DONE] Repeat the full CLI run byte-for-byte: canonical JSON and Markdown
+  SHA-256 hashes match across two full offline Hybrid executions with the
+  same inputs/configuration before the final Semantic query correction
+  (`F6D0C6E9BAEAB3FB6EC3F590F38840BDF506033DE9FBAB836413981B01BA8EE2`
+  for JSON). This hash is not the final engine version's reproducibility proof.
+- [DONE] Focus Semantic queries on process labels/neighbor names rather than
+  generic change/type/actor boilerplate. Unit tests pass. On the same P2P
+  input, the offline smoke run still yields six BPMN changes; the plausible
+  purchase-request UI component appears in the larger Top-50 review pool and
+  unrelated Sales/Inventory store candidates move below Top-20. This is
+  screening evidence, not measured accuracy.
+- [DONE] Repeat final-engine Hybrid execution with identical Top-K 50:
+  JSON and Markdown are byte-identical (`CFA1708C8499E1B6BB858539E6ADB9E127BF12146A19ACE3064CFE293F094EC5`
+  JSON SHA-256). All emitted candidates have evidence, no absolute local path
+  appeared, and an old=new BM25 control yielded zero changes/warnings.
+- [TODO] Obtain independent, adjudicated hidden ground truth and measure
+  Recall@k/Precision@k, cross-module false positives, and omitted
+  frontend/API candidates before adjusting signal weights or fusion policy.
+
+Self-review: the new query reduces obvious structural-token noise but does not
+prove the top-ranked functions must change. The result still includes some
+cross-domain candidates and omits a plausible purchase-request UI component
+from Top-20. RRF agreement and its high number are not calibrated confidence.
+No Simple-ERP-specific suppression, external model, or automatic code edit was
+introduced. Repo architecture remains Go-owned analysis with UI as an adapter.

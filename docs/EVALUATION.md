@@ -4,6 +4,12 @@
 
 The target retrieval comparison is BM25-only, Semantic-only, BM25 + Semantic RRF, and BPMN-Context-Aware Hybrid Retrieval. Each must receive the same frozen repository snapshot, old/new BPMN pairs, scenario cards, Top-K, and output schema. LLM planning is evaluated separately after retrieval so generation quality cannot hide retrieval errors.
 
+From engine 3.5d, each public method displays one best artifact per file before
+Top-K. The evaluator scores file-level ranks, so this avoids giving one method
+fewer distinct file slots merely because several functions in one file ranked
+highly. Internal RRF branches still rank artifacts before fusion. Do not mix
+older artifact-Top-K reports with file-Top-K reports in one comparison.
+
 ## Artifact separation
 
 - method input: allowed repository source, old/new BPMN, frozen method configuration;

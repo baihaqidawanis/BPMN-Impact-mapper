@@ -89,7 +89,7 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	indexed := registry.Build(inventory)
 	artifacts, indexWarnings := indexed.Artifacts, indexed.Warnings
 	changes := diff.Compare(oldGraph, newGraph)
-	changes, retrievalWarnings, err := strategy.Attach(ctx, changes, artifacts, request.Retrieval)
+	changes, retrievalWarnings, err := attachPrimaryChanges(ctx, strategy, changes, artifacts, request.Retrieval)
 	if err != nil {
 		return domain.Report{}, fmt.Errorf("apply %s mapping: %w", method, err)
 	}
@@ -245,7 +245,7 @@ func inputFingerprint(name, revision string, oldData, newData []byte, inventory 
 func analysisID(fingerprint string, request Request, methodConfig []byte, indexIdentity string) string {
 	hash := sha256.New()
 	writeHash(hash, []byte(indexIdentity))
-	writeHash(hash, []byte("engine-3.4f-gateway-semantic-chunks"))
+	writeHash(hash, []byte("engine-3.5d-file-level-topk"))
 	writeHash(hash, []byte(fingerprint))
 	writeHash(hash, []byte(request.Method))
 	writeHash(hash, methodConfig)

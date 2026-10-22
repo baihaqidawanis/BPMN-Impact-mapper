@@ -146,6 +146,7 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 		"TRANSFORMERS_OFFLINE=1",
 		"TOKENIZERS_PARALLELISM=false",
 		"PYTHONHASHSEED=0",
+		"PYTHONIOENCODING=utf-8",
 	)
 	var stdout, stderr bytes.Buffer
 	command.Stdout = &limitedWriter{target: &stdout, remaining: maxEmbeddingOutput}
@@ -155,8 +156,8 @@ func (embedder PythonEmbedder) Embed(ctx context.Context, texts []string) ([][]f
 			return nil, fmt.Errorf("offline embedding interrupted: %w", ctx.Err())
 		}
 		message := strings.TrimSpace(stderr.String())
-		if message == "" {
-			message = err.Error()
+		if message == "" || !strings.Contains(message, "Traceback") {
+			message += "\nworker exited: " + err.Error()
 		}
 		return nil, runtimeFailure(message)
 	}

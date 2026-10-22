@@ -3,10 +3,11 @@ package domain
 type Capability string
 
 const (
-	TextOnly      Capability = "TEXT_ONLY"
-	ASTSymbols    Capability = "AST_SYMBOLS"
-	StaticCalls   Capability = "STATIC_CALLS"
-	TypeRelations Capability = "TYPE_RELATIONS"
+	TextOnly       Capability = "TEXT_ONLY"
+	ASTSymbols     Capability = "AST_SYMBOLS"
+	StaticCalls    Capability = "STATIC_CALLS"
+	TypeRelations  Capability = "TYPE_RELATIONS"
+	HTTPRouteLinks Capability = "HTTP_ROUTE_LINKS"
 )
 
 type RelationKind string
@@ -15,14 +16,17 @@ const (
 	RelationCalls             RelationKind = "CALLS"
 	RelationCallsMethod       RelationKind = "CALLS_METHOD"
 	RelationInterfaceDispatch RelationKind = "INTERFACE_DISPATCH"
+	RelationHTTPRoute         RelationKind = "HTTP_ROUTE"
 )
 
 // SourceRelation links indexed artifacts. Evidence is located in repository-relative source.
 type SourceRelation struct {
-	Kind     RelationKind
-	TargetID string
-	Location string
-	Excerpt  string
+	Kind           RelationKind
+	TargetID       string
+	Location       string
+	Excerpt        string
+	TargetLocation string
+	TargetExcerpt  string
 }
 
 // FileAnalysis describes actual processing, including degraded text fallback.

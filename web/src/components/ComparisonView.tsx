@@ -1,5 +1,6 @@
 import type { AnalysisMethod, Change, Report } from "@/lib/types";
 import { methodDifferences } from "@/lib/method-differences";
+import { candidateKeys, changeKey, comparisonChanges, overlapPercent, unresolvedComparisonChanges } from "@/lib/method-comparison";
 import styles from "./ComparisonView.module.css";
 
 interface Props {
@@ -12,7 +13,7 @@ export function ComparisonView({ reports, selectedMethod, onSelect }: Props) {
   const hybrid = reports.find((report) => report.method === "hybrid");
   const differences = methodDifferences(reports);
   const sharedFingerprint = new Set(reports.map((report) => report.input_fingerprint)).size === 1;
-  const changeKeys = Array.from(new Set(reports.flatMap((report) => report.changes.map(changeKey)))).sort();
+  const changeKeys = Array.from(new Set(reports.flatMap((report) => comparisonChanges(report).map(changeKey)))).sort();
 
   return (
     <section className={styles.comparison} data-testid="method-comparison">
@@ -20,23 +21,23 @@ export function ComparisonView({ reports, selectedMethod, onSelect }: Props) {
         <div><p>Controlled retrieval comparison</p><h2>Same input, different methods</h2></div>
         <span className={sharedFingerprint ? styles.valid : styles.invalid}>{sharedFingerprint ? "Input fingerprint verified" : "Input mismatch"}</span>
       </header>
-      <p className={styles.disclaimer}>Candidate counts and overlap describe retrieval behavior, not accuracy. Accuracy requires independent reconciled ground truth.</p>
+      <p className={styles.disclaimer}>Counts cover independent BPMN changes. Supporting flow edits remain in JSON but are not separate mapping failures. Overlap is shared file/change matches divided by the union with Hybrid; it is not accuracy.</p>
       <div className={styles.methods}>
         {reports.map((report) => {
           const candidates = candidateKeys(report);
-          const unresolved = report.changes.filter((change) => change.impacts.length === 0 || (change.unresolved_impacts?.length ?? 0) > 0).length;
-          const overlap = hybrid ? overlapPercent(candidates, candidateKeys(hybrid)) : 0;
+          const unresolved = unresolvedComparisonChanges(report);
+          const overlap = hybrid && report.method !== hybrid.method ? `${overlapPercent(candidates, candidateKeys(hybrid))}%` : hybrid ? "Reference" : "Unavailable";
           return <button type="button" aria-pressed={selectedMethod === report.method} onClick={() => onSelect(report)} key={report.method}>
             <span>{methodLabel(report.method)}</span>
 							<b>{candidates.size}</b><small>file/change matches</small>
-            <dl><div><dt>Unresolved</dt><dd>{unresolved}</dd></div><div><dt>Hybrid overlap</dt><dd>{overlap}%</dd></div></dl>
+            <dl><div><dt>Unresolved changes</dt><dd>{unresolved}</dd></div><div><dt>Hybrid overlap</dt><dd>{overlap}</dd></div></dl>
           </button>;
         })}
       </div>
       <details className={styles.matrix}>
         <summary>Compare top candidates per BPMN change</summary>
         <div className={styles.tableWrap}><table><thead><tr><th>Change</th>{reports.map((report) => <th key={report.method}>{methodLabel(report.method)}</th>)}</tr></thead>
-          <tbody>{changeKeys.map((key) => <tr key={key}><th>{key.replace("|", " · ")}</th>{reports.map((report) => <td key={report.method}>{topCandidates(report.changes.find((change) => changeKey(change) === key))}</td>)}</tr>)}</tbody>
+          <tbody>{changeKeys.map((key) => <tr key={key}><th>{key.replace("|", " · ")}</th>{reports.map((report) => <td key={report.method}>{topCandidates(comparisonChanges(report).find((change) => changeKey(change) === key))}</td>)}</tr>)}</tbody>
         </table></div>
       </details>
       <details className={styles.matrix}>
@@ -54,22 +55,6 @@ function methodLabel(method: AnalysisMethod): string {
 	if (method === "fusion") return "BM25 + Semantic";
   if (method === "configuration") return "Configuration";
   return "Hybrid";
-}
-
-function changeKey(change: Change): string {
-  return `${change.change_type}|${change.new_element?.id ?? change.old_element?.id ?? "unresolved"}`;
-}
-
-function candidateKeys(report: Report): Set<string> {
-  return new Set(report.changes.flatMap((change) => change.impacts.map((impact) => `${changeKey(change)}|${impact.file}`)));
-}
-
-function overlapPercent(left: Set<string>, right: Set<string>): number {
-  const union = new Set([...left, ...right]);
-  if (union.size === 0) return 100;
-  let shared = 0;
-  for (const item of left) if (right.has(item)) shared++;
-  return Math.round((shared / union.size) * 100);
 }
 
 function topCandidates(change?: Change) {

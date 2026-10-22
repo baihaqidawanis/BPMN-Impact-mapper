@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { groupResults, resultCategory } from "../../src/lib/report-results";
+import { groupResults, independentChanges, resultCategory } from "../../src/lib/report-results";
+import { candidateKeys, comparisonChanges, overlapPercent, unresolvedComparisonChanges } from "../../src/lib/method-comparison";
+import { methodDifferences } from "../../src/lib/method-differences";
 import type { Impact, Report } from "../../src/lib/types";
 
 const impact = (file: string, symbol = "CheckRequest"): Impact => ({
@@ -25,6 +27,22 @@ test("result grouping preserves change links, original ranks, and report bytes",
   expect(resultCategory(impact("frontend\\__tests__\\form.spec.tsx"))).toBe("tests");
   expect(resultCategory(impact("docs/testing.md"))).toBe("docs");
   expect(resultCategory(impact("src/latest.go"))).toBe("code");
+});
+
+test("simple inserted task groups supporting flow edits without deleting raw JSON changes", () => {
+  const grouped: Report = { ...report, changes: [
+    report.changes[0],
+    { ...report.changes[1], part_of: "T-2", impacts: [], unresolved_impacts: [] },
+  ] };
+  const before = JSON.stringify(grouped);
+  expect(independentChanges(grouped).map(item => item.index)).toEqual([0]);
+  expect(comparisonChanges(grouped)).toHaveLength(1);
+  expect(unresolvedComparisonChanges(grouped)).toBe(0);
+  expect(candidateKeys(grouped).size).toBe(3);
+  expect(overlapPercent(candidateKeys(grouped), candidateKeys(grouped))).toBe(100);
+  expect(methodDifferences([grouped, { ...grouped, method: "semantic" }])).toHaveLength(3);
+  expect(grouped.changes).toHaveLength(2);
+  expect(JSON.stringify(grouped)).toBe(before);
 });
 
 test("report filters and file view work without rerunning analysis", async ({ page }) => {

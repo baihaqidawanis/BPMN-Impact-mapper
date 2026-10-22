@@ -40,7 +40,10 @@ def main():
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
     model_name = sys.argv[1]
-    request = json.load(sys.stdin)
+    # Go sends UTF-8 JSON bytes. Reading sys.stdin as text on Windows may use
+    # a legacy code page and turn source Unicode into surrogate-escaped text,
+    # which the tokenizer rejects.
+    request = json.load(sys.stdin.buffer)
     texts = request.get("texts", [])
     if not isinstance(texts, list) or not all(isinstance(value, str) for value in texts):
         raise ValueError("texts must be a list of strings")

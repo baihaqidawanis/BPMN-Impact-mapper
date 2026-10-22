@@ -132,7 +132,7 @@ func (store ReportStore) List(ctx context.Context) ([]domain.ReportSummary, erro
 			return nil, err
 		}
 		summary := domain.ReportSummary{AnalysisID: value.AnalysisID, InputFingerprint: value.InputFingerprint, Method: value.Method, Repository: value.Repository, Changes: len(value.Changes), Warnings: len(value.Warnings)}
-		for _, change := range value.Changes {
+		for _, change := range domain.IndependentChanges(value.Changes) {
 			summary.Candidates += len(change.Impacts)
 			if len(change.Impacts) == 0 || len(change.UnresolvedImpact) > 0 {
 				summary.Unresolved++

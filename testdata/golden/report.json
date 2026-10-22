@@ -30,6 +30,7 @@
             }
           ],
           "score_breakdown": {
+            "evidence_score": 0.8,
             "trace_id": 1,
             "symbol": 0.5,
             "path": 0.25,

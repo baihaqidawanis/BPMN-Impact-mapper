@@ -20,6 +20,7 @@ type Strategy struct {
 	Left                mapping.Strategy
 	Right               mapping.Strategy
 	PreserveLeftActions bool
+	DiversifyFiles      bool
 	K                   int
 }
 
@@ -35,6 +36,9 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 		"candidate_pool": "all threshold-qualified artifacts before display top-k",
 		"rrf_k":          fmt.Sprint(k),
 		"score_meaning":  "normalized rank consensus; not probability",
+	}
+	if strategy.DiversifyFiles {
+		metadata["display_selection"] = "highest-ranked-candidate-per-file-before-top-k"
 	}
 	if strategy.Left != nil {
 		metadata["left_method"] = string(strategy.Left.Method())
@@ -86,18 +90,45 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	if k <= 0 {
 		k = DefaultRRFK
 	}
+	tieDelta := options.TieDelta
+	if tieDelta <= 0 {
+		tieDelta = 0.01
+	}
 	result := cloneChanges(changes)
+	warnings := make([]domain.Warning, 0)
 	for index := range result {
-		result[index].Impacts = fuse(left[index].Impacts, right[index].Impacts, topK, k, strategy.PreserveLeftActions, strategy.Left.Method(), strategy.Right.Method())
+		result[index].Impacts = fuse(left[index].Impacts, right[index].Impacts, topK, k, strategy.PreserveLeftActions, strategy.DiversifyFiles, strategy.Left.Method(), strategy.Right.Method())
 		result[index].UnresolvedImpact = []string{}
 		if len(result[index].Impacts) == 0 {
 			result[index].UnresolvedImpact = uniqueStrings(append(append([]string{}, left[index].UnresolvedImpact...), right[index].UnresolvedImpact...))
 			if len(result[index].UnresolvedImpact) == 0 {
 				result[index].UnresolvedImpact = []string{"rank fusion found no candidate"}
 			}
+		} else if len(result[index].Impacts) > 1 && math.Abs(result[index].Impacts[0].Confidence-result[index].Impacts[1].Confidence) <= tieDelta {
+			warnings = append(warnings, domain.Warning{Code: "CANDIDATE_TIE", Message: fmt.Sprintf("%s has displayed rank-fusion candidates within %.2f", changeIdentifier(result[index]), tieDelta)})
 		}
 	}
-	return result, mergeWarnings(leftWarnings, rightWarnings), nil
+	return result, mergeWarnings(withoutCandidateTies(leftWarnings), withoutCandidateTies(rightWarnings), warnings), nil
+}
+
+func withoutCandidateTies(warnings []domain.Warning) []domain.Warning {
+	result := make([]domain.Warning, 0, len(warnings))
+	for _, warning := range warnings {
+		if warning.Code != "CANDIDATE_TIE" {
+			result = append(result, warning)
+		}
+	}
+	return result
+}
+
+func changeIdentifier(change domain.Change) string {
+	id := "unresolved"
+	if change.NewElement != nil {
+		id = change.NewElement.ID
+	} else if change.OldElement != nil {
+		id = change.OldElement.ID
+	}
+	return string(change.ChangeType) + ":" + id
 }
 
 type rankedImpact struct {
@@ -107,7 +138,7 @@ type rankedImpact struct {
 	rrf       float64
 }
 
-func fuse(left, right []domain.Impact, topK, k int, preserveLeftActions bool, leftMethod, rightMethod domain.AnalysisMethod) []domain.Impact {
+func fuse(left, right []domain.Impact, topK, k int, preserveLeftActions, diversifyFiles bool, leftMethod, rightMethod domain.AnalysisMethod) []domain.Impact {
 	byKey := map[string]*rankedImpact{}
 	leftKeys := map[string]bool{}
 	for rank, impact := range left {
@@ -163,6 +194,18 @@ func fuse(left, right []domain.Impact, topK, k int, preserveLeftActions bool, le
 		}
 		return ranked[i].Symbol < ranked[j].Symbol
 	})
+	if diversifyFiles {
+		selected := make([]domain.Impact, 0, len(ranked))
+		seenFiles := make(map[string]bool, len(ranked))
+		for _, impact := range ranked {
+			if seenFiles[impact.File] {
+				continue
+			}
+			seenFiles[impact.File] = true
+			selected = append(selected, impact)
+		}
+		ranked = selected
+	}
 	if len(ranked) > topK {
 		ranked = ranked[:topK]
 	}
@@ -188,6 +231,9 @@ func mergeImpact(left, right domain.Impact) domain.Impact {
 	left.ScoreBreakdown.Path = math.Max(left.ScoreBreakdown.Path, right.ScoreBreakdown.Path)
 	left.ScoreBreakdown.Lexical = math.Max(left.ScoreBreakdown.Lexical, right.ScoreBreakdown.Lexical)
 	left.ScoreBreakdown.Structured = math.Max(left.ScoreBreakdown.Structured, right.ScoreBreakdown.Structured)
+	if left.ScoreBreakdown.EvidenceScore == nil {
+		left.ScoreBreakdown.EvidenceScore = right.ScoreBreakdown.EvidenceScore
+	}
 	return left
 }
 

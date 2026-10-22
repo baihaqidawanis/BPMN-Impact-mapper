@@ -21,7 +21,7 @@ The target automatic comparison is:
 1. BM25-only: deterministic lexical retrieval;
 2. Semantic-only: embedding similarity without exact-word dependence;
 3. BM25 + Semantic rank fusion;
-4. BPMN-Context-Aware Hybrid Retrieval: fusion plus exact, structural, and source-relation evidence.
+4. BPMN-Context-Aware Hybrid Retrieval: BPMN-neighbour context in BM25, fused with Semantic retrieval, plus bounded explanatory evidence.
 
 Semantic Retrieval stays independently measurable even though experimental fusion
 is now available. It is not RAG: retrieval ranks candidates, while RAG additionally sends
@@ -29,12 +29,18 @@ retrieved context to a generative model.
 
 ## Implemented method contract
 
-- Construct a bounded query from change type, old/new label, element type,
-  actor/lane, and immediate graph neighbors.
+- Construct a bounded query from changed labels, state/data/condition text.
+  For a named added/removed task, use its own responsibility plus at most one
+  short process phrase shared by its documentation and an adjacent BPMN label;
+  omit the rest of the instruction paragraph. If no shared phrase exists,
+  use a token common to two adjacent labels. Retain full neighbors for
+  topology-only changes and otherwise unlabeled elements. Include actor/lane on role changes;
+  use element type/reason only when a useful label is absent. Generated BPMN
+  IDs and generic change-type boilerplate are not embedded.
 - Construct allowed repository documents at file and symbol granularity.
 - Embed a bounded first passage per artifact and, within the 5,001-text
-  request limit, a bounded tail passage for long artifacts. Select the best
-  cosine score per artifact and show an excerpt from that passage.
+  request limit, a bounded tail and middle passage for long artifacts. Select
+  the best cosine score per artifact and show a bounded excerpt from that passage.
 - Encode queries and documents with one pinned local embedding model.
 - Rank by cosine similarity with deterministic tie-breaking.
 - Emit only indexed files/symbols and bounded source excerpts as evidence.
@@ -57,10 +63,14 @@ cache path.
 
 Each passage is limited to 600 characters before repository metadata is added.
 This reduces silent truncation by the model's token window, but character count
-cannot guarantee a specific number of wordpieces. For long symbols/files, only
-the head and tail are represented; middle code can still be missed. If the
-embedding-text budget prevents a tail passage, the report emits
-`SEMANTIC_PASSAGE_LIMIT`. Cosine values and RRF agreement remain ranking
+cannot guarantee a specific number of wordpieces. For long symbols/files, at
+most three fixed passages (head, tail, middle) are represented; code between
+these samples can still be missed. Every artifact gets its head before extra
+passages are allocated round-robin. If the embedding-text budget prevents an
+extra passage, the report emits `SEMANTIC_PASSAGE_LIMIT`. The excerpt selects
+the line with most query-word overlap within the best passage, or its centre
+if there is no overlap. It is an inspection aid, not an attribution of the
+cosine score to that one line. Cosine values and RRF agreement remain ranking
 signals, not calibrated impact probabilities. No DPR or code-specific model is
 installed or claimed here.
 
@@ -78,17 +88,34 @@ two-list contribution `2 / 61`, sorts ties by file and symbol, keeps Top-K, and
 records both contributing ranks as `RRF_FUSION` evidence. The normalized value
 is rank consensus, not probability. `fusion` always emits `VERIFY`.
 
-`hybrid` applies the same RRF mechanism to the existing deterministic BPMN-context/evidence ranking and
-Semantic ranking. A candidate introduced only by Semantic is forced to
-`VERIFY`; a stronger action is retained only when the deterministic BPMN-context/evidence method already
-supported it. On an equal RRF score, a graph-supported candidate precedes a
-Semantic-only candidate before the file/symbol tie-break. This prevents
-embedding similarity from inventing or displacing stronger causal evidence.
+For file-level reports, standalone BM25 and Semantic and both fused methods
+display the highest-ranked artifact per file before Top-K. Fusion still uses
+the complete artifact-level BM25/Semantic lists internally before this display
+selection, so RRF arithmetic is unchanged. Reports from older engine versions
+may contain duplicate files and are not directly comparable at a fixed Top-K.
+
+`hybrid` applies the same RRF mechanism to BPMN-context BM25 and Semantic
+ranking. Context BM25 includes neighbouring BPMN labels; the standalone BM25
+baseline does not. Exact task IDs, nearby IDs, file paths, function names, and
+code-pattern hints remain bounded explanatory evidence, not independently
+weighted ranking branches. Path/function words can already occur in indexed
+BM25 and Semantic text; another weight would double-count them. A newly added
+task ID is expected to be absent in the old source and is not penalized.
+All retrieved Hybrid candidates are `VERIFY`: neither agreement nor an exact
+ID alone proves that a code edit is required. A separate versioned reranker
+could be tested later against blinded ground truth, not silently added to the
+current method.
 
 The Python adapter serializes model workers per server process and retains only
 the most recent input hash and vectors in memory. Therefore the web comparison
 can reuse identical embeddings across Semantic, Fusion, and Hybrid without
 persisting repository text.
+
+The Go-to-Python request is UTF-8 JSON and is decoded from stdin bytes, not
+from the Windows console code page. This prevents non-ASCII source text from
+becoming surrogate-escaped characters rejected by the tokenizer. Build caches
+such as `.gocache` are excluded from repository inventory; they are not source
+evidence and needlessly enlarge the embedding corpus.
 
 Semantic Retrieval is not a vector database and is not RAG. For each bounded
 analysis, the local model embeds the BPMN-change query and allowed indexed

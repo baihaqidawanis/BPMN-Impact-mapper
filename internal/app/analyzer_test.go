@@ -70,6 +70,40 @@ func TestAnalyzeEndToEndIsDeterministicAndPrivate(t *testing.T) {
 	}
 }
 
+func TestInsertTaskKeepsFlowDiffWithoutDuplicateRetrieval(t *testing.T) {
+	root := filepath.Join("..", "..", "testdata")
+	result, err := wiring.NewAnalyzer().Analyze(context.Background(), app.Request{
+		RepositoryPath: filepath.Join(root, "repository"),
+		OldBPMNPath:    filepath.Join(root, "bpmn", "insert-task-old.bpmn"),
+		NewBPMNPath:    filepath.Join(root, "bpmn", "insert-task-new.bpmn"),
+		Method:         domain.MethodBM25,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Changes) != 4 {
+		t.Fatalf("raw changes lost: %d", len(result.Changes))
+	}
+	primary, details := 0, 0
+	for _, change := range result.Changes {
+		if change.PartOf != "" {
+			details++
+			if len(change.Impacts) != 0 || len(change.UnresolvedImpact) != 0 {
+				t.Fatalf("supporting flow retrieved independently: %#v", change)
+			}
+		} else if change.ChangeType == domain.AddTask {
+			primary++
+		}
+	}
+	if primary != 1 || details != 3 {
+		t.Fatalf("primary=%d details=%d", primary, details)
+	}
+	markdown := string(report.Markdown(result))
+	if !strings.Contains(markdown, "Supporting sequence-flow edits (mapped with this task)") || strings.Count(markdown, "## 4. ADD_TASK") != 1 || strings.Contains(markdown, "## 1. MODIFY_SEQUENCE_FLOW") {
+		t.Fatalf("Markdown did not group supporting edits: %s", markdown)
+	}
+}
+
 func TestAnalyzeHonorsCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

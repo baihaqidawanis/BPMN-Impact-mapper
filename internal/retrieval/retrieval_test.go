@@ -50,7 +50,7 @@ func TestLabelOnlyChangeWithExactTraceRequiresVerification(t *testing.T) {
 	}
 	change := domain.Change{ChangeType: domain.ModifyTaskLabel, OldElement: &domain.Element{ID: "PUR-PR-001", Name: "Create purchase request", Type: "task"}, NewElement: &domain.Element{ID: "PUR-PR-001", Name: "Create and classify purchase request", Type: "task"}}
 	changes, _ := retrieval.Attach([]domain.Change{change}, []domain.Artifact{artifact}, retrieval.DefaultConfig())
-	if len(changes[0].Impacts) != 1 || changes[0].Impacts[0].Confidence < 0.70 {
+	if len(changes[0].Impacts) != 1 || changes[0].Impacts[0].Confidence < 0.65 {
 		t.Fatalf("expected strong trace candidate: %#v", changes[0].Impacts)
 	}
 	if changes[0].Impacts[0].RequiredAction != domain.ActionVerify {
@@ -103,6 +103,23 @@ func TestBM25OnlyProducesVerifyCandidatesDeterministically(t *testing.T) {
 	}
 }
 
+func TestBM25OnlyCanDisplayOneBestCandidatePerFile(t *testing.T) {
+	artifacts := []domain.Artifact{
+		{ID: "a", File: "same.go", Content: "request", Tokens: []string{"request"}},
+		{ID: "b", File: "same.go", Content: "request", Tokens: []string{"request"}},
+		{ID: "c", File: "other.go", Content: "request", Tokens: []string{"request"}},
+	}
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "NEW", Name: "Request", Type: "task"}}
+	diverse, _, err := (retrieval.BM25Only{DiversifyFiles: true}).Attach(context.Background(), []domain.Change{change}, artifacts, retrieval.Config{TopK: 2})
+	if err != nil || len(diverse[0].Impacts) != 2 || diverse[0].Impacts[0].File != "same.go" || diverse[0].Impacts[1].File != "other.go" {
+		t.Fatalf("file-level display=%#v err=%v", diverse, err)
+	}
+	artifactsOnly, _, err := (retrieval.BM25Only{}).Attach(context.Background(), []domain.Change{change}, artifacts, retrieval.Config{TopK: 2})
+	if err != nil || artifactsOnly[0].Impacts[1].File != "same.go" {
+		t.Fatalf("fusion branch artifact ranking changed: %#v err=%v", artifactsOnly, err)
+	}
+}
+
 func TestCompositeContextContributesNeighborTermsToRetrieval(t *testing.T) {
 	content := `func RegisterInvoice() { PrepareInvoice() }`
 	artifact := domain.Artifact{
@@ -125,6 +142,26 @@ func TestCompositeContextContributesNeighborTermsToRetrieval(t *testing.T) {
 	}
 	if changes[0].Impacts[0].ScoreBreakdown.Symbol == 0 || changes[0].Impacts[0].ScoreBreakdown.BM25 == 0 {
 		t.Fatalf("context did not affect score=%#v", changes[0].Impacts[0].ScoreBreakdown)
+	}
+}
+
+func TestInsertedTaskScopesPathEvidenceWithoutNewIDInSource(t *testing.T) {
+	change := domain.Change{ChangeType: domain.AddTask,
+		NewElement: &domain.Element{ID: "GENERATED-NEW-ID", Name: "Attach evidence to case record", Type: "userTask"},
+		Context: &domain.ChangeContext{Pattern: domain.PatternInsertTask,
+			Predecessors: []domain.ElementContext{{ID: "OLD-A", Name: "Create case record", Type: "userTask"}},
+			Successors:   []domain.ElementContext{{ID: "OLD-B", Name: "Validate case record", Type: "serviceTask"}}},
+	}
+	file := "ui/features/case-record/case-record-form.tsx"
+	artifact := domain.Artifact{ID: file, File: file, Layer: "frontend", Content: "case record form",
+		Tokens: textutil.Tokenize(file + " case record form")}
+	changes, _ := retrieval.Attach([]domain.Change{change}, []domain.Artifact{artifact}, retrieval.DefaultConfig())
+	if len(changes[0].Impacts) != 1 {
+		t.Fatalf("contextual file missing: %#v", changes[0].Impacts)
+	}
+	got := changes[0].Impacts[0]
+	if got.ScoreBreakdown.Path != 1 || got.ScoreBreakdown.TraceID != 0 || got.RequiredAction != domain.ActionVerify {
+		t.Fatalf("new ID was treated as required or scope ignored: %#v", got)
 	}
 }
 

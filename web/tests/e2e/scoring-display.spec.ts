@@ -5,8 +5,9 @@ test("hybrid separates neighbouring IDs, unused checks and combined ranks", asyn
   const candidate: Impact = {
     file: "application/request.go", symbol: "SubmitRequest", module: "orders", layer: "application", required_action: "VERIFY",
     confidence: 0.9357,
-    score_breakdown: { trace_id: 0, symbol: 0.2, path: 0, lexical: 1, structured: 0, bm25: 0.6, semantic: 0.36, rrf: 0.9357, total: 0.9357 },
+    score_breakdown: { trace_id: 0, symbol: 0, path: 0, lexical: 0, structured: 0, bm25: 0.6, semantic: 0.36, rrf: 0.9357, total: 0.9357 },
     evidence: [
+      { type: "BM25", location: "application/request.go:9", excerpt: "request" },
       { type: "CONTEXT_TRACE_ID", location: "application/request.go:12", excerpt: 'trace := "STEP-BEFORE"' },
       { type: "SYMBOL", location: "application/request.go:9", excerpt: "func SubmitRequest()" },
       { type: "RRF_FUSION", location: "application/request.go", excerpt: "left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60" },
@@ -28,14 +29,12 @@ test("hybrid separates neighbouring IDs, unused checks and combined ranks", asyn
   await page.getByRole("button", { name: "Run impact analysis" }).click();
   const first = page.getByTestId("impact-details").first();
   await first.locator(":scope > summary").click();
-  await expect(first.getByText("combined ranking score", { exact: true })).toBeVisible();
+  await expect(first.getByText("rank agreement", { exact: true })).toBeVisible();
   await expect(first.getByText("Neighbouring BPMN ID found", { exact: true })).toBeVisible();
-  await expect(first.getByText(/Code-evidence search: rank 1. Semantic search: rank 10/)).toBeVisible();
+  await expect(first.getByText(/BPMN-context BM25: rank 1. Semantic search: rank 10/)).toBeVisible();
   await first.getByText("Show search signals", { exact: true }).click();
-  await expect(first.getByText("No contribution", { exact: true })).toHaveCount(2);
-  await expect(first.getByText("0.000", { exact: true })).toHaveCount(0);
-  await first.getByText("Weights used by code-evidence search", { exact: true }).click();
-  await expect(first.getByText(/The final score combines the code-evidence/)).toBeVisible();
+  await expect(first.getByText("Weights used by code-evidence search", { exact: true })).toHaveCount(0);
+  await expect(first.getByText(/they do not subtract from either score/)).toBeVisible();
   const second = page.getByTestId("impact-details").nth(1);
   await second.locator(":scope > summary").click();
   await expect(second.getByText("No direct ID evidence recorded", { exact: true })).toBeVisible();

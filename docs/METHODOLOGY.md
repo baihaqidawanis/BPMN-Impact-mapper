@@ -1,5 +1,181 @@
 # Methodology
 
+## Current production ranking (engine 3.5d)
+
+The production Hybrid has two ranking branches: BPMN-context BM25 and
+Semantic cosine retrieval. RRF combines their positions with equal votes
+(`k=60`); file diversity is applied to the displayed Hybrid list. The lexical
+query includes the changed element plus applicable predecessor/successor
+labels; long task documentation is replaced by a short shared process anchor
+for named task additions/removals. The plain BM25 research baseline omits
+neighbour labels, keeping BPMN-context retrieval as a distinct comparison.
+
+Direct changed-element IDs, neighbouring IDs, function names, file paths, and
+conservative code-pattern clues are **explanatory evidence only** in this
+method. They do not carry independent weights and cannot lower BM25 or cosine.
+The source index still contains path/function text, so BM25 can naturally
+retrieve on those words; they are not counted a second time. A new BPMN ID
+missing from old source is expected and causes no score penalty. Hybrid
+currently labels retrieved candidates `VERIFY`; rank consensus cannot prove a
+required edit. `confidence`/`total` retain the RRF ordering value for JSON
+compatibility, not a calibrated probability. The six-signal weighted
+`retrieval.Hybrid` remains a legacy experimental implementation for tests and
+old reports, but is no longer wired to the production `hybrid` method.
+
+The dated notes below document earlier iterations; where they describe a
+45% ID weight, code-evidence ranking, or source-relation propagation, they
+refer to that legacy implementation. Compare only reports produced by the
+same engine version; evaluate changes against independent ground truth before
+claiming an accuracy improvement.
+
+Current Semantic indexing samples at most three bounded passages per artifact:
+head, tail, and middle, within the global embedding budget. The best passage
+sets the cosine score; its bounded evidence excerpt is chosen for inspection,
+not claimed as a line-level explanation of the model. This changes rankings and
+analysis identity, so compare only same-engine reports. The next research gate
+is a frozen, independently labeled multi-scenario benchmark. Only if an
+ablation shows benefit should exact-ID/structural evidence become an optional,
+versioned reranking variant. Do not treat it as a third score now: absent IDs
+are normal for additions, and path/function text already enters retrieval.
+
+### SQL table evidence precision (2026-10-22)
+
+`DATABASE_TABLE` requires BPMN query-word overlap with the extracted table
+identifier itself. Merely mentioning query words in a selected column,
+predicate, variable, or string value no longer earns structural credit. For
+this and other structural hints, the query comes from the changed BPMN element;
+adjacent tasks remain lexical/BM25 context but cannot masquerade as direct
+structural evidence. A table receives strength proportional to the fraction
+of its name tokens matched by that changed-element query, with common word
+inflections recognized. This is not a SQL parser; complex joins and dynamic
+SQL may abstain. `AUDIT_ACTION` now requires overlap with a quoted uppercase
+action identifier, and `API_ROUTE` with the literal route path; unrelated
+function arguments no longer earn these structural signals. `STATE_STATUS`
+uses the status-assignment fragment, and `TEST_NAME` the matched test
+declaration, rather than arbitrary words elsewhere on the line. Dynamic
+actions and routes may abstain. BM25 and Semantic rankings are unchanged. No
+file, module, or business term is hardcoded. Engine identity is
+`engine-3.4s-structured-span-evidence`.
+
+### Literal cross-layer HTTP evidence (2026-10-22)
+
+The Hybrid code-evidence index now recognizes a narrow cross-language relation:
+an explicit-method JS/TS `api` or `fetch` call with a literal path can link to
+one unique Go route registration with the same HTTP method and path, provided
+the native Go indexer resolves the registered handler. This uses generic
+syntax patterns and repository-local source; it does not depend on a BPMN
+runtime, stable task ID in code, framework folder, or case-study vocabulary.
+Dynamic paths, ambiguous duplicate registrations, test files, unsupported
+client syntax, and unresolved handlers abstain. `HTTP_ROUTE_LINKS` reports
+that this limited extractor ran, not that every endpoint was understood. No
+JavaScript/TypeScript AST support or universal framework support is claimed.
+
+A frontend candidate must cite the exact client-call line via BM25/label words,
+or that line must contain at least two distinct meaningful query words (common
+inflections count), before the relation may suggest the Go handler. Existing handler and
+one direct static service-call candidate gain located evidence without a score
+increase. An absent handler can enter at the frontend evidence score because
+the exact method+path link transfers the source candidate's relevance without
+an additional ranking penalty. One further static call to a service enters
+at half that score, subject to the usual threshold. Both are `VERIFY`, never
+proof of a required edit. These factors are uncalibrated review heuristics,
+not probabilities. This relation is used
+only in code-evidence Hybrid, not BM25-only or Semantic-only. Engine identity
+is `engine-3.4o-http-route-score`; previous saved analyses do not
+change retroactively.
+
+### Inserted-task context and supporting flows (2026-10-22)
+
+For `ADD_TASK` with a verified one-predecessor/one-successor insertion,
+path/function matching also considers tokens shared by the new task label and
+its adjacent BPMN labels. At least two shared words are required. This uses
+the existing path (10%) and function/name (15%) weights, not a new task-ID
+match or a claim that neighbouring source code must change. BM25 and semantic
+queries remain unchanged. The direct-ID contribution remains zero when the
+generated ID does not occur in current source; all such candidates remain
+`VERIFY` unless independent strong evidence exists. No business vocabulary or
+Simple-ERP path is embedded in this rule.
+
+All four public methods now display the highest-ranked function/class/component
+candidate per file before applying Top-K. This makes file-level Top-K slots
+comparable and stops several functions from one file consuming the review list.
+BM25 and Semantic retain their full artifact rankings as the internal inputs to
+Fusion/Hybrid RRF; only standalone display and final fused display are
+file-diverse. No BM25, cosine, or RRF score is increased by this selection.
+Selection does not prove that a newly visible file needs a change. Symbol-level
+retrieval comparisons remain a separate research question, not measured by the
+current file-level evaluator.
+
+A plain, unlabelled old sequence flow replaced by two plain flows around the
+new task is retained as three raw `MODIFY_SEQUENCE_FLOW` records in canonical
+JSON with `part_of` pointing to the new task ID. Repository retrieval runs
+once for that primary task. The web and Markdown reports summarize the three
+flow edits under it. Labelled/conditional flows and other topology changes
+still receive independent retrieval. Thus raw diff counts and mapped change
+counts differ by design; the result must not be read as three extra software
+changes. Engine identity is `engine-3.4m-report-unit-tie`.
+
+Method comparison, saved-analysis unresolved counts, and blind reviewer packs
+use independent changes as evaluation units; the supporting flow records are
+still exported in canonical JSON. Fused candidate-tie warnings refer to the
+two displayed RRF scores after file-diverse selection, not ties in an
+underlying retriever. File/change overlap is Jaccard set overlap against the
+Hybrid list, not precision or recall.
+
+These changes improve focus and report usability; they do not establish
+precision/recall without an adjudicated, withheld implementation truth set.
+
+### Separate retrieval scores (2026-10-22)
+
+Hybrid reports now retain `score_breakdown.evidence_score` before rank fusion.
+`semantic` is cosine-based meaning similarity; `rrf` is normalized ranking
+agreement. The legacy `confidence` and `total` fields still contain the final
+method ranking score for compatibility, **not** a probability of required code
+change. For a new task/gateway, an absent source ID is expected; the interface
+labels it accordingly, but the existing 45% ID contribution remains zero.
+This is an explanation/serialization change, not weight recalibration or an
+accuracy claim. Engine identity `engine-3.4j-separated-score-explanation`
+keeps saved analysis IDs distinct. Recalibration requires adjudicated ground
+truth and comparison across controlled scenarios.
+
+### Corpus and query correction (2026-10-21)
+
+Default inventory now excludes process-specification trees under conventional
+`docs/bpm`, `docs/bpm-*`, `docs/bpmn`, `docs/bpmn-*`, and
+`docs/process-model*` paths; audit/review/test-plan and phase-design artifacts;
+build/test outputs; and dependency lockfiles. BPMN input files remain separately readable
+and are never prediction documents. Other naming schemes require explicit
+`--ignore` rules. This is a leakage/noise policy, not a Simple-ERP mapping rule.
+
+BM25 and the deterministic branch of Hybrid now query changed element names,
+state/data terms, and bounded predecessor/successor names. Actor words are
+included for actor-role changes. Generated element/flow IDs and change-type
+labels no longer contribute fragmented lexical terms; exact changed-element
+IDs remain eligible for `TRACE_ID` evidence and the 45% direct-trace signal.
+Unlabelled elements fall back to their IDs. Consequently, a newly generated
+task ID absent from code cannot boost an unrelated file merely through shared
+ID fragments. BM25-only remains a lexical baseline and does not infer actions.
+
+Semantic-only and the Semantic side of RRF use the same focus principle:
+the changed task's own label dominates a named add/remove embedding query.
+At most one short process phrase shared by task documentation and adjacent
+labels is appended; full instruction paragraphs are omitted. When the
+documentation has no shared phrase, one token common to two adjacent labels
+can provide context. The deterministic/BM25 branch still uses neighboring
+labels but excludes the long instruction paragraph for named add/remove tasks;
+structural hints use the changed label and same short anchor. Generic
+`ADD_TASK`/`userTask` boilerplate and actor words for non-role changes are
+omitted; gateway direction and state/data text remain where relevant. This is
+query construction, not a new embedding model or a calibrated weight.
+
+BM25/label evidence now cites the source line with the most distinct query
+terms, or the path when only path tokens match. This changes explanations,
+not BM25 arithmetic. Analysis identity is `engine-3.4i-focused-retrieval-queries`
+to prevent collisions with previously saved reports. The source corpus and
+query have changed, so old and new reports must not be treated as a controlled
+method comparison even if BPMN inputs match. No accuracy improvement is
+claimed without hidden, adjudicated ground truth.
+
 ### Structured evidence correction (2026-10-19)
 
 Structured hints now require recognizable syntax and a query token within the
@@ -72,7 +248,7 @@ These remain `VERIFY`; there is no Simple-ERP-specific suppression rule. Any
 new generic negative evidence or weight change must be evaluated against
 independent, hidden ground truth before it becomes the product default.
 
-The BM25 baseline uses only this normalized score, requires positive lexical evidence, and labels every result `VERIFY`. It does not inherit trace-ID action classification from the hybrid method.
+The BM25 baseline uses only this normalized score and the changed element's own text (not graph-neighbour labels), requires positive lexical evidence, and labels every result `VERIFY`. It does not inherit trace-ID action classification from the legacy weighted method.
 
 ## Same-input comparison and reviewer boundary
 
@@ -80,9 +256,9 @@ The web comparison repeats byte-identical BPMN/repository/top-k inputs and requi
 
 Reviewer export happens after inference and remains browser-local. A reviewer may accept a predicted file, change its expected action, add an omitted file manually, or record an empty negative case. Predictions are prompts rather than truth; independent reviewers must use frozen implementation evidence, and disagreements remain explicit through `reconcile`. Annotation JSON never becomes analyzer input.
 
-## Evidence and score
+## Legacy weighted evidence score (not the current production Hybrid)
 
-The default weighted score is:
+The earlier experimental score was:
 
 ```text
 0.45 exact stable trace ID
@@ -95,7 +271,7 @@ The default weighted score is:
 
 Components are clipped to `[0,1]`, totals are rounded to four decimals, and the full breakdown is emitted. Structured hints currently recognize generic test, route, SQL/table, audit/trace, and uppercase state/status shapes. They are evidence labels, not framework-specific parsers.
 
-Candidates below `0.20` are omitted. A candidate with exact trace evidence and score at least `0.70` receives the change-derived action (`ADD`, `REMOVE`, or `MODIFY`), except `MODIFY_TASK_LABEL`, which remains `VERIFY`: wording traceability alone does not prove a software-behavior change. Other retained candidates also receive `VERIFY`. BM25-only candidates can never cross the candidate threshold under default weights, preventing weak lexical results from appearing without another signal. If an accepted Go function/type/method candidate explains a file, its package-level candidate is suppressed while distinct matching symbols remain separate. No candidate produces an unresolved reason. Top candidates within `0.01` produce a tie warning.
+That legacy strategy omits candidates below `0.20` and may classify exact-trace candidates using the `0.70` threshold. It is retained for regression comparison only. These thresholds and weights do not describe the current production Hybrid. Current Hybrid, standalone BM25, and standalone Semantic return `VERIFY` for retrieved candidates; no candidate produces an unresolved reason.
 
 ## Action semantics
 

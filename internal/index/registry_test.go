@@ -22,7 +22,7 @@ func TestCapabilitiesReflectFallbackAndMixedLanguages(t *testing.T) {
 	for _, f := range result.Files {
 		switch f.File {
 		case "valid.go":
-			if !reflect.DeepEqual(f.Capabilities, []domain.Capability{domain.ASTSymbols, domain.StaticCalls, domain.TypeRelations}) {
+			if !reflect.DeepEqual(f.Capabilities, []domain.Capability{domain.ASTSymbols, domain.HTTPRouteLinks, domain.StaticCalls, domain.TypeRelations}) {
 				t.Fatalf("Go capabilities=%v", f)
 			}
 		case "broken.go":

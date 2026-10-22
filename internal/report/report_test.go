@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
@@ -27,7 +28,19 @@ func TestCanonicalJSONAndMarkdownGolden(t *testing.T) {
 	}
 }
 
+func TestCurrentHybridMarkdownExplainsTwoRankings(t *testing.T) {
+	value := goldenReport()
+	value.MethodMetadata = map[string]string{"left_ranking_version": "context-bm25-v1"}
+	value.Changes[0].Impacts[0].ScoreBreakdown = domain.ScoreBreakdown{BM25: 0.7, Semantic: 0.4, RRF: 0.9, Total: 0.9}
+	value.Changes[0].Impacts[0].RequiredAction = domain.ActionVerify
+	markdown := string(report.Markdown(value))
+	if !strings.Contains(markdown, "BM25 word match: 0.7000") || !strings.Contains(markdown, "IDs, function names, paths, and code patterns are optional evidence") || strings.Contains(markdown, "current code-evidence weights are not recalibrated") {
+		t.Fatalf("current Hybrid explanation is misleading: %s", markdown)
+	}
+}
+
 func goldenReport() domain.Report {
+	evidenceScore := 0.8
 	return domain.Report{
 		AnalysisID: "abc123", InputFingerprint: "input123", Method: domain.MethodHybrid, Repository: domain.Repository{Name: "synthetic", Revision: "fixture-v1"},
 		Changes: []domain.Change{{
@@ -39,7 +52,7 @@ func goldenReport() domain.Report {
 				RelatedFlowIDs: []string{"FLOW-CREATE-VALIDATE", "FLOW-VALIDATE-REGISTER"}},
 			Impacts: []domain.Impact{{Module: "internal", Layer: "application", File: "internal/application/request.go", Symbol: "ValidateRequest", RequiredAction: domain.ActionAdd,
 				Evidence:       []domain.Evidence{{Type: "TRACE_ID", Location: "internal/application/request.go:4", Excerpt: "TASK-VALIDATE"}},
-				ScoreBreakdown: domain.ScoreBreakdown{TraceID: 1, Symbol: 0.5, Path: 0.25, Lexical: 0.5, Structured: 1, BM25: 1, Total: 0.8}, Confidence: 0.8}},
+				ScoreBreakdown: domain.ScoreBreakdown{EvidenceScore: &evidenceScore, TraceID: 1, Symbol: 0.5, Path: 0.25, Lexical: 0.5, Structured: 1, BM25: 1, Total: 0.8}, Confidence: 0.8}},
 			UnresolvedImpact: []string{}, Reason: "task added",
 		}},
 		Warnings: []domain.Warning{{Code: "EXAMPLE", Message: "synthetic warning"}},

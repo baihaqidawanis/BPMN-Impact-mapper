@@ -1,6 +1,12 @@
 import type { Impact, Report } from "./types";
 
 export type ResultCategory = "all" | "code" | "tests" | "docs";
+
+export function independentChanges(report: Report) {
+  const primaryIds = new Set(report.changes.filter(change => !change.part_of).map(change => change.new_element?.id ?? change.old_element?.id));
+  return report.changes.map((change, index) => ({ change, index }))
+    .filter(({ change }) => !change.part_of || !primaryIds.has(change.part_of));
+}
 export function resultCategory(impact: Impact): Exclude<ResultCategory, "all"> {
   const file = impact.file.replaceAll("\\", "/").toLowerCase();
   if (impact.layer === "documentation" || /(^|\/)(docs?|documentation)(\/|$)/.test(file) || /\.(md|mdx|rst|txt|bpmn)$/.test(file)) return "docs";

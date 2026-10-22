@@ -29,7 +29,7 @@ type artifactImpact struct {
 func (Hybrid) Method() domain.AnalysisMethod { return domain.MethodHybrid }
 
 func (Hybrid) MethodMetadata() map[string]string {
-	return map[string]string{"evidence_version": "direct-context-trace-v1"}
+	return map[string]string{"evidence_version": "structured-span-evidence-v1", "query_version": "named-task-short-context-anchor-v1"}
 }
 
 func (Hybrid) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
@@ -37,11 +37,13 @@ func (Hybrid) Attach(_ context.Context, changes []domain.Change, artifacts []dom
 	return attached, warnings, nil
 }
 
-type BM25Only struct{}
+// DiversifyFiles selects the highest-ranked artifact per file for a file-level
+// report. Keep it disabled inside fusion so artifact ranks remain comparable.
+type BM25Only struct{ DiversifyFiles bool }
 
 func (BM25Only) Method() domain.AnalysisMethod { return domain.MethodBM25 }
 
-func (BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
+func (strategy BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
 	defaults := DefaultConfig()
 	if config.TopK <= 0 {
 		config.TopK = defaults.TopK
@@ -56,23 +58,30 @@ func (BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []d
 			}
 			continue
 		}
-		query, _ := queryFor(*change)
+		withoutContext := *change
+		withoutContext.Context = nil
+		query, _ := queryFor(withoutContext)
 		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
 			change.UnresolvedImpact = append(change.UnresolvedImpact, "BM25 found no lexical candidate")
 			continue
 		}
 		maximum := ranked[0].Score
+		seenFiles := map[string]bool{}
 		for _, candidate := range ranked {
 			if len(change.Impacts) >= config.TopK {
 				break
 			}
 			normalized := round(candidate.Score / maximum)
 			artifact := candidate.Artifact
+			if strategy.DiversifyFiles && seenFiles[artifact.File] {
+				continue
+			}
+			seenFiles[artifact.File] = true
 			change.Impacts = append(change.Impacts, domain.Impact{
 				Module: artifact.Module, Layer: artifact.Layer, File: artifact.File,
 				Symbol: displaySymbol(artifact.Symbol), RequiredAction: domain.ActionVerify,
-				Evidence:       []domain.Evidence{evidenceAt("BM25", artifact, firstPresent(query, artifact.Content))},
+				Evidence:       []domain.Evidence{evidenceAtQuery("BM25", artifact, query)},
 				ScoreBreakdown: domain.ScoreBreakdown{BM25: normalized, Total: normalized}, Confidence: normalized,
 			})
 		}
@@ -123,6 +132,7 @@ func Attach(changes []domain.Change, artifacts []domain.Artifact, config Config)
 			}
 		}
 		scored = propagate(scored, artifacts, config.CandidateThreshold)
+		scored = propagateHTTPRoutes(scored, artifacts, query, config.CandidateThreshold)
 		impacts := removeShadowedPackageImpacts(scored)
 		sort.SliceStable(impacts, func(i, j int) bool {
 			if math.Abs(impacts[i].Confidence-impacts[j].Confidence) > 1e-12 {
@@ -193,6 +203,7 @@ func removeShadowedPackageImpacts(scored []artifactImpact) []domain.Impact {
 func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stableIDs []string, rawBM25, maxBM25 float64, config Config) (domain.Impact, bool) {
 	pathTokens := textutil.Tokenize(artifact.File)
 	symbolTokens := textutil.Tokenize(artifact.Symbol.Name + " " + artifact.Symbol.Receiver)
+	scope := insertTaskScopeTokens(change)
 	trace := 0.0
 	evidence := []domain.Evidence{}
 	for _, id := range stableIDs {
@@ -202,19 +213,19 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 			break
 		}
 	}
-	symbol := overlapInflections(symbolTokens, query)
+	symbol := math.Max(overlapInflections(symbolTokens, query), overlapInflections(symbolTokens, scope))
 	if symbol > 0 {
 		evidence = append(evidence, evidenceAt("SYMBOL", artifact, artifact.Symbol.Name))
 	}
-	pathScore := overlapInflections(pathTokens, query)
+	pathScore := math.Max(overlapInflections(pathTokens, query), overlapInflections(pathTokens, scope))
 	if pathScore > 0 {
 		evidence = append(evidence, domain.Evidence{Type: "PATH", Location: artifact.File, Excerpt: bounded(artifact.File, 240)})
 	}
 	lexical := overlap(artifact.Tokens, query)
 	if lexical > 0 {
-		evidence = append(evidence, evidenceAt("LABEL_TOKEN", artifact, firstPresent(query, artifact.Content)))
+		evidence = append(evidence, evidenceAtQuery("LABEL_TOKEN", artifact, query))
 	}
-	structured, structuredEvidence := structuredSignal(artifact, query)
+	structured, structuredEvidence := structuredSignal(artifact, structuralQueryFor(change, query))
 	if structured > 0 {
 		evidence = append(evidence, structuredEvidence)
 	}
@@ -223,7 +234,7 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 		bm25Score = rawBM25 / maxBM25
 	}
 	if bm25Score > 0 {
-		evidence = append(evidence, evidenceAt("BM25", artifact, firstPresent(query, artifact.Content)))
+		evidence = append(evidence, evidenceAtQuery("BM25", artifact, query))
 	}
 	total := 0.45*trace + 0.15*symbol + 0.10*pathScore + 0.10*lexical + 0.10*structured + 0.10*bm25Score
 	total = round(total)
@@ -250,9 +261,59 @@ func scoreArtifact(change domain.Change, artifact domain.Artifact, query, stable
 	return domain.Impact{
 		Module: artifact.Module, Layer: artifact.Layer, File: artifact.File, Symbol: displaySymbol(artifact.Symbol),
 		RequiredAction: action, Evidence: evidence,
-		ScoreBreakdown: domain.ScoreBreakdown{TraceID: trace, Symbol: round(symbol), Path: round(pathScore), Lexical: round(lexical), Structured: round(structured), BM25: round(bm25Score), Total: total},
+		ScoreBreakdown: domain.ScoreBreakdown{EvidenceScore: &total, TraceID: trace, Symbol: round(symbol), Path: round(pathScore), Lexical: round(lexical), Structured: round(structured), BM25: round(bm25Score), Total: total},
 		Confidence:     total,
 	}, true
+}
+
+// Scope terms must occur in the changed task label and at least one adjacent
+// BPMN label. This gives a new task's known process context a fair chance in
+// path/function matching without manufacturing a direct task-ID trace.
+func insertTaskScopeTokens(change domain.Change) []string {
+	if change.ChangeType != domain.AddTask || change.NewElement == nil || change.Context == nil || change.Context.Pattern != domain.PatternInsertTask {
+		return nil
+	}
+	neighbors := append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...)
+	neighborSet := map[string]bool{}
+	for _, neighbor := range neighbors {
+		for _, token := range textutil.Tokenize(neighbor.Name) {
+			neighborSet[token] = true
+		}
+	}
+	shared := []string{}
+	for _, token := range textutil.UniqueSorted(textutil.Tokenize(change.NewElement.Name)) {
+		if len([]rune(token)) >= 4 && (neighborSet[token] || containsInflection(neighborSet, token)) {
+			shared = append(shared, token)
+		}
+	}
+	if len(shared) < 2 {
+		return nil
+	}
+	return shared
+}
+
+// Structural clues are about the changed element, not all adjacent BPMN
+// labels. Neighbour terms remain available to lexical/BM25 retrieval but
+// cannot make an unrelated table or API route look like direct task evidence.
+func structuralQueryFor(change domain.Change, fallback []string) []string {
+	parts := []string{}
+	for _, element := range queryElements(change) {
+		if element == nil {
+			continue
+		}
+		parts = append(parts, element.Name, element.State)
+		if (change.ChangeType == domain.AddTask || change.ChangeType == domain.RemoveTask) && strings.TrimSpace(element.Name) != "" {
+			parts = append(parts, textutil.ContextAnchor(element.Documentation, retrievalNeighborNames(change.Context)))
+		} else {
+			parts = append(parts, element.Documentation)
+		}
+		parts = append(parts, element.DataRequirements...)
+	}
+	tokens := textutil.UniqueSorted(textutil.Tokenize(strings.Join(parts, " ")))
+	if len(tokens) == 0 {
+		return fallback
+	}
+	return tokens
 }
 
 func contextTraceEvidence(change domain.Change, artifact domain.Artifact, directIDs []string) []domain.Evidence {
@@ -288,23 +349,49 @@ func queryFor(change domain.Change) ([]string, []string) {
 			continue
 		}
 		ids = append(ids, element.ID)
-		raw = append(raw, element.ID, element.Name, element.Actor, element.State, element.Documentation)
+		// Generated BPMN IDs, flow IDs, and change-type words are structural
+		// metadata. Splitting them into lexical terms makes unrelated source
+		// artifacts look relevant (for example every task mentioning "flow").
+		// Direct IDs are matched independently as exact trace evidence.
+		raw = append(raw, element.Name, element.State)
+		if (change.ChangeType == domain.AddTask || change.ChangeType == domain.RemoveTask) && strings.TrimSpace(element.Name) != "" {
+			raw = append(raw, textutil.ContextAnchor(element.Documentation, retrievalNeighborNames(change.Context)))
+		} else {
+			raw = append(raw, element.Documentation)
+		}
+		if change.ChangeType == domain.ModifyActorRole {
+			raw = append(raw, element.Actor)
+		}
 		if strings.HasSuffix(element.Type, "Gateway") {
-			raw = append(raw, element.Type, element.GatewayDirection, element.DefaultFlow)
+			raw = append(raw, element.GatewayDirection)
 		}
 		raw = append(raw, element.DataRequirements...)
-		raw = append(raw, element.Incoming...)
-		raw = append(raw, element.Outgoing...)
 	}
 	if change.Context != nil {
-		raw = append(raw, string(change.Context.Pattern))
 		for _, element := range append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...) {
-			raw = append(raw, element.ID, element.Name, element.Type)
+			raw = append(raw, element.Name)
 		}
-		raw = append(raw, change.Context.RelatedFlowIDs...)
 	}
-	raw = append(raw, string(change.ChangeType))
+	if len(raw) == 0 || strings.TrimSpace(strings.Join(raw, "")) == "" {
+		// Unlabelled BPMN elements still need a lexical fallback. Exact-ID
+		// evidence remains the decisive signal for these cases.
+		raw = append(raw, ids...)
+	}
 	return textutil.UniqueSorted(textutil.Tokenize(strings.Join(raw, " "))), textutil.UniqueSorted(ids)
+}
+
+func retrievalNeighborNames(context *domain.ChangeContext) []string {
+	if context == nil {
+		return nil
+	}
+	names := make([]string, 0, len(context.Predecessors)+len(context.Successors))
+	for _, element := range context.Predecessors {
+		names = append(names, element.Name)
+	}
+	for _, element := range context.Successors {
+		names = append(names, element.Name)
+	}
+	return names
 }
 
 func queryElements(change domain.Change) []*domain.Element {
@@ -489,14 +576,39 @@ func bounded(value string, max int) string {
 	return string(runes[:max-1]) + "…"
 }
 
-func firstPresent(query []string, content string) string {
-	lower := strings.ToLower(content)
-	for _, token := range query {
-		if len(token) > 1 && strings.Contains(lower, token) {
-			return token
+// A lexical evidence excerpt must show the strongest local overlap, not the
+// first occurrence of a common query word in a long documentation file.
+// When BM25 matched only path/symbol tokens, cite the path instead of an
+// unrelated first source line.
+func evidenceAtQuery(kind string, artifact domain.Artifact, query []string) domain.Evidence {
+	terms := make(map[string]bool, len(query))
+	for _, term := range query {
+		if len(term) > 1 {
+			terms[term] = true
 		}
 	}
-	return ""
+	bestLine, bestCount, bestExcerpt := 0, 0, ""
+	for index, line := range strings.Split(artifact.Content, "\n") {
+		count := 0
+		seen := make(map[string]bool)
+		for _, token := range textutil.Tokenize(line) {
+			if terms[token] && !seen[token] {
+				count++
+				seen[token] = true
+			}
+		}
+		if count > bestCount {
+			bestLine, bestCount = index+1, count
+			bestExcerpt = bounded(strings.TrimSpace(line), 240)
+		}
+	}
+	if bestLine == 0 {
+		return domain.Evidence{Type: kind, Location: artifact.File, Excerpt: bounded(artifact.File, 240)}
+	}
+	if artifact.Symbol.StartLine > 0 {
+		bestLine += artifact.Symbol.StartLine - 1
+	}
+	return domain.Evidence{Type: kind, Location: fmt.Sprintf("%s:%d", artifact.File, bestLine), Excerpt: bestExcerpt}
 }
 
 func strongAction(change domain.ChangeType) domain.RequiredAction {

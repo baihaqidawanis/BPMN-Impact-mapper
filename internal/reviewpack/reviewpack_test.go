@@ -73,6 +73,21 @@ func TestBuildRejectsMismatchedAndInvalidInputs(t *testing.T) {
 	}
 }
 
+func TestBuildReviewsInsertedTaskOnceWhileKeepingRawFlows(t *testing.T) {
+	item := input(domain.MethodHybrid, "one", "one")
+	item.Report.Changes[0] = domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "task", Type: "userTask"}}
+	item.Report.Changes = append(item.Report.Changes, domain.Change{
+		ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "flow", Type: "sequenceFlow"}, PartOf: "task",
+	})
+	pack, err := reviewpack.Build([]reviewpack.Input{item}, "reviewer-a", "reviewer-b")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pack.Manifest.Cases) != 1 || pack.Manifest.Cases[0].ElementID != "task" || len(item.Report.Changes) != 2 {
+		t.Fatalf("review cases=%#v raw changes=%#v", pack.Manifest.Cases, item.Report.Changes)
+	}
+}
+
 func TestManifestValidationAndCompletedCoverage(t *testing.T) {
 	pack, err := reviewpack.Build([]reviewpack.Input{input(domain.MethodHybrid, "one", "one")}, "a", "b")
 	if err != nil {

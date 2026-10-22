@@ -11,9 +11,7 @@ export function hasFusion(impact: Impact): boolean {
 
 // A semantic-only or propagated candidate has no direct evidence score to explain.
 export function usesCodeEvidence(impact: Impact, method: AnalysisMethod): boolean {
-  if (method !== "hybrid" || impact.evidence.some(item => item.type === "PROPAGATION_SEED")) return false;
-  const fields = fusionFields(impact);
-  return !fields || (fields.left_method === "hybrid" && /^[1-9]\d*$/.test(fields.left_rank ?? ""));
+  return method === "hybrid" && impact.score_breakdown.evidence_score !== undefined;
 }
 
 export function traceExplanation(impact: Impact, method: AnalysisMethod, changeType: string): { status: string; detail: string } {
@@ -26,11 +24,11 @@ export function traceExplanation(impact: Impact, method: AnalysisMethod, changeT
   if (impact.evidence.some(item => item.type === "PROPAGATION_SEED")) {
     return { status: "Linked through another function", detail: "A source-code relation connects this candidate to a directly traced function. The changed BPMN ID is not directly evidenced here." };
   }
-  if (!usesCodeEvidence(impact, method)) {
-    return { status: "No direct ID evidence recorded", detail: "This result does not include a direct BPMN-ID check from the code-evidence ranking. A zero in the exported field is not proof that the ID is absent." };
+  if (method !== "hybrid" || !impact.evidence.some(item => item.type === "BM25")) {
+    return { status: "No direct ID evidence recorded", detail: "This candidate has no recorded direct BPMN ID match; that alone does not rule out an impact." };
   }
   if (changeType === "ADD_TASK" || changeType === "ADD_GATEWAY") {
-    return { status: "New BPMN ID not found here", detail: "A newly added element often has no ID in the existing implementation yet. Other words, process context and semantic similarity can still identify relevant files." };
+    return { status: "New BPMN ID not yet available in source", detail: "Expected for a new task or gateway. The ID is an optional trace clue, not a penalty in the BM25 or semantic ranking." };
   }
   return { status: "Changed BPMN ID not found here", detail: "No direct ID match was found in this candidate's indexed text. Software does not need to store BPMN IDs; this alone does not rule out an impact." };
 }
@@ -39,7 +37,7 @@ export function traceExplanation(impact: Impact, method: AnalysisMethod, changeT
 export function rankingExplanation(impact: Impact): string {
   const fields = fusionFields(impact);
   if (!fields) return "The score orders possible impacts. It does not measure the probability that code must change.";
-  const method = (name: string) => ({ hybrid: "Code-evidence search", bm25: "BM25", semantic: "Semantic search" }[name] ?? "Search");
+  const method = (name: string) => ({ hybrid: impact.score_breakdown.evidence_score === undefined ? "BPMN-context BM25" : "Code-evidence search", bm25: "BM25", semantic: "Semantic search" }[name] ?? "Search");
   const describe = (side: string) => {
     const rank = fields[`${side}_rank`];
     const name = method(fields[`${side}_method`]);
@@ -47,5 +45,5 @@ export function rankingExplanation(impact: Impact): string {
     if (/^[1-9]\d*$/.test(rank ?? "")) return `${name}: rank ${rank}.`;
     return `${name}: rank unavailable.`;
   };
-  return `${describe("left")} ${describe("right")} The combined score uses these positions, not the sum of the clue scores. A high score is possible even without a direct BPMN ID match. It is not a probability that code must change.`;
+  return `${describe("left")} ${describe("right")} The combined score uses these positions, not the raw search scores. A high score is possible even without a direct BPMN ID match. It is not a probability that code must change.`;
 }

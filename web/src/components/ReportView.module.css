@@ -45,6 +45,7 @@
 .warnings p b { margin-right: 6px; color: var(--blue); }
 
 .changeList { display: grid; gap: 12px; }
+.groupNote { margin: 0 0 12px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .change { overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); }
 .changeHead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 18px 19px; }
 .index { display: grid; place-items: center; align-self: start; width: 32px; height: 32px; border-radius: 9px; background: var(--black); color: #ffffff; font-size: 9px; font-weight: 700; }
@@ -94,6 +95,10 @@
 .technical > .evidence:first-of-type, .technical > .signalList { margin-top: 9px; }
 .technical p { color: var(--muted); font-size: 9px; line-height: 1.45; }
 .scoreSummary { margin: 0; color: var(--charcoal); font-size: 12px; line-height: 1.6; }
+.scoreCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin: 0 0 12px; }
+.scoreCards > div { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.scoreCards dt { color: var(--muted); font-size: 10px; }
+.scoreCards dd { margin: 5px 0 0; color: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums; }
 .traceStatus { margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .traceStatus b { color: var(--ink); font-size: 12px; font-weight: 600; }
 .traceStatus p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }

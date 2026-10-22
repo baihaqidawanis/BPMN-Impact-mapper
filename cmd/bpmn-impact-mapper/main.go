@@ -28,7 +28,7 @@ func main() {
 
 func run(arguments []string, stdout, stderr io.Writer) error {
 	if len(arguments) == 0 {
-		return errors.New("usage: bpmn-impact-mapper <analyze|evaluate|benchmark|reconcile|prepare-review|mutate> [flags]")
+		return errors.New("usage: bpmn-impact-mapper <analyze|evaluate|benchmark|reconcile|prepare-review|mutate|probe-relations> [flags]")
 	}
 	switch arguments[0] {
 	case "analyze":
@@ -43,8 +43,10 @@ func run(arguments []string, stdout, stderr io.Writer) error {
 		return runPrepareReview(arguments[1:], stdout, stderr)
 	case "mutate":
 		return runMutate(arguments[1:], stdout, stderr)
+	case "probe-relations":
+		return runProbeRelations(arguments[1:], stdout, stderr)
 	default:
-		return fmt.Errorf("unknown command %q; expected analyze, evaluate, benchmark, reconcile, prepare-review, or mutate", arguments[0])
+		return fmt.Errorf("unknown command %q; expected analyze, evaluate, benchmark, reconcile, prepare-review, mutate, or probe-relations", arguments[0])
 	}
 }
 

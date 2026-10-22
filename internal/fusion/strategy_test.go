@@ -56,6 +56,28 @@ func TestRRFRewardsAgreementAndMergesEvidence(t *testing.T) {
 	}
 }
 
+func TestFusionKeepsCodeEvidenceScoreSeparateFromRankAgreement(t *testing.T) {
+	evidenceScore := 0.2968
+	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{{
+		File: "a.go", RequiredAction: domain.ActionVerify,
+		ScoreBreakdown: domain.ScoreBreakdown{EvidenceScore: &evidenceScore, Total: evidenceScore},
+		Evidence:       []domain.Evidence{{Type: "BM25", Location: "a.go:1", Excerpt: "request"}},
+	}}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{{
+		File: "a.go", ScoreBreakdown: domain.ScoreBreakdown{Semantic: 0.4, Total: 0.4},
+		Evidence: []domain.Evidence{{Type: "SEMANTIC_SIMILARITY", Location: "a.go:1", Excerpt: "request"}},
+	}}}}}
+	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right}
+	changes, _, err := strategy.Attach(context.Background(), []domain.Change{{ChangeType: domain.AddTask}}, nil, mapping.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := changes[0].Impacts[0].ScoreBreakdown
+	if got.EvidenceScore == nil || *got.EvidenceScore != evidenceScore || got.Semantic != 0.4 || got.RRF != 1 || got.Total != 1 {
+		t.Fatalf("separate scores lost during fusion: %#v", got)
+	}
+}
+
 func TestGraphAwareHybridPreservesOnlyLeftActions(t *testing.T) {
 	base := []domain.Change{{ChangeType: domain.ModifyTaskLabel}}
 	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{impact("direct.go", domain.ActionModify, "TRACE_ID")}}}}
@@ -135,5 +157,55 @@ func TestFusionUsesFullPoolBeforeDisplayTopK(t *testing.T) {
 	many, _, err := strategy.Attach(context.Background(), []domain.Change{{}}, artifacts, mapping.Options{TopK: 3})
 	if err != nil || !reflect.DeepEqual(one[0].Impacts[0], many[0].Impacts[0]) {
 		t.Fatal("display top-k changed winner or score")
+	}
+}
+
+func TestProductHybridKeepsBestFunctionPerFileBeforeTopK(t *testing.T) {
+	first := impact("backend/store.go", domain.ActionVerify, "BM25")
+	first.Symbol = "Store.Create"
+	second := impact("backend/store.go", domain.ActionVerify, "BM25")
+	second.Symbol = "Store.Copy"
+	frontend := impact("frontend/request.tsx", domain.ActionVerify, "BM25")
+	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{first, second, frontend}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{first, second, frontend}}}}
+	base := []domain.Change{{ChangeType: domain.AddTask}}
+	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right, DiversifyFiles: true}
+	result, _, err := strategy.Attach(context.Background(), base, make([]domain.Artifact, 3), mapping.Options{TopK: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := result[0].Impacts
+	if len(got) != 2 || got[0].File != first.File || got[0].Symbol != first.Symbol || got[1].File != frontend.File {
+		t.Fatalf("file-diverse selection did not retain the best symbol and next file: %#v", got)
+	}
+	if got[0].Confidence != 1 || got[1].Confidence >= got[0].Confidence {
+		t.Fatalf("RRF scores were altered by display selection: %#v", got)
+	}
+	strategy.DiversifyFiles = false
+	baseline, _, err := strategy.Attach(context.Background(), base, make([]domain.Artifact, 3), mapping.Options{TopK: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if baseline[0].Impacts[1].Symbol != second.Symbol {
+		t.Fatalf("research fusion should preserve artifact-level ranking: %#v", baseline[0].Impacts)
+	}
+}
+
+func TestFusionTieWarningUsesDisplayedRRFResults(t *testing.T) {
+	base := []domain.Change{{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "task"}}}
+	left := fakeStrategy{method: domain.MethodHybrid, warnings: []domain.Warning{{Code: "CANDIDATE_TIE", Message: "left candidates tie"}}, changes: []domain.Change{{Impacts: []domain.Impact{
+		impact("a.go", domain.ActionVerify, "BM25"), impact("b.go", domain.ActionVerify, "BM25"),
+	}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{impact("a.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}}}}
+	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right}
+	_, warnings, err := strategy.Attach(context.Background(), base, make([]domain.Artifact, 2), mapping.Options{TopK: 2})
+	if err != nil || len(warnings) != 0 {
+		t.Fatalf("upstream tie incorrectly reported as final tie: %v %#v", err, warnings)
+	}
+	right.changes[0].Impacts = []domain.Impact{impact("b.go", domain.ActionVerify, "SEMANTIC_SIMILARITY"), impact("a.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}
+	strategy.Right = right
+	_, warnings, err = strategy.Attach(context.Background(), base, make([]domain.Artifact, 2), mapping.Options{TopK: 2})
+	if err != nil || len(warnings) != 1 || warnings[0].Code != "CANDIDATE_TIE" {
+		t.Fatalf("final rank tie missing: %v %#v", err, warnings)
 	}
 }

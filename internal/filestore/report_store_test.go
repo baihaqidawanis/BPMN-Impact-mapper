@@ -63,6 +63,24 @@ func TestReportStoreListIsDeterministicAndSkipsUnsafeEntries(t *testing.T) {
 	}
 }
 
+func TestReportStoreListDoesNotCountSupportingFlowsAsUnresolved(t *testing.T) {
+	store := ReportStore{Root: t.TempDir()}
+	value := domain.Report{
+		AnalysisID: "cccccccccccccccccccccccccccccccc", Method: domain.MethodHybrid,
+		Changes: []domain.Change{
+			{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "task"}, Impacts: []domain.Impact{{File: "request.go"}}},
+			{ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "flow"}, PartOf: "task"},
+		},
+	}
+	if err := store.Save(context.Background(), value); err != nil {
+		t.Fatal(err)
+	}
+	listed, err := store.List(context.Background())
+	if err != nil || len(listed) != 1 || listed[0].Changes != 2 || listed[0].Candidates != 1 || listed[0].Unresolved != 0 {
+		t.Fatalf("listed=%#v err=%v", listed, err)
+	}
+}
+
 func TestReportStoreRejectsTraversalAndMissing(t *testing.T) {
 	store := ReportStore{Root: t.TempDir()}
 	if err := store.Save(context.Background(), domain.Report{AnalysisID: "../escape"}); err == nil {

@@ -17,7 +17,22 @@ func TestBuildHonorsSecurityAndIgnoreRules(t *testing.T) {
 	write(t, root, ".env", "SECRET=value")
 	write(t, root, "private.key", "key")
 	write(t, root, "node_modules/library.js", "excluded")
+	write(t, root, ".gocache/00/build-entry", "excluded Go build cache")
+	write(t, root, ".next/server/page.js", "excluded Next build cache")
+	write(t, root, "__pycache__/module.pyc", "excluded Python cache")
+	write(t, root, "test-results/.last-run.json", "generated test result")
+	write(t, root, "playwright-report/index.html", "generated test report")
+	write(t, root, "frontend/tsconfig.tsbuildinfo", "generated TypeScript metadata")
+	write(t, root, "frontend/package-lock.json", "dependency lockfile")
 	write(t, root, "docs/PROCESS-MAPPING.md", "leakage")
+	write(t, root, "docs/bpm-project/tools/build.py", "generated BPMN documentation tool")
+	write(t, root, "docs/bpmn/README.md", "process model specification")
+	write(t, root, "docs/P2P-REVIEW.md", "post-implementation source review")
+	write(t, root, "docs/AUDIT.md", "post-implementation source audit")
+	write(t, root, "docs/MANUAL-TEST-SCENARIOS.md", "test plan with credentials")
+	write(t, root, "docs/PHASE-1-DESIGN.md", "implementation design")
+	write(t, root, "scripts/verify-traceability.sh", "evaluation helper")
+	write(t, root, "docs/BUSINESS-RULES.md", "allowed business rules")
 	write(t, root, "ground-truth/hidden.json", "leakage")
 	write(t, root, "checkpoints/review.md", "leakage")
 	write(t, root, "docs/REVIEW-FINDINGS.md", "review artifact leakage")
@@ -37,7 +52,7 @@ func TestBuildHonorsSecurityAndIgnoreRules(t *testing.T) {
 	for _, file := range result.Files {
 		paths = append(paths, file.RelativePath)
 	}
-	if !reflect.DeepEqual(paths, []string{"a.txt", "internal/plans/service.go", "z.go"}) {
+	if !reflect.DeepEqual(paths, []string{"a.txt", "docs/BUSINESS-RULES.md", "internal/plans/service.go", "z.go"}) {
 		t.Fatalf("paths=%v", paths)
 	}
 	second, err := ingest.Build(context.Background(), root, ingest.Options{Ignore: []string{"skip/**"}})

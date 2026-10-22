@@ -43,6 +43,10 @@ type Inventory struct {
 var excludedDirectories = map[string]bool{
 	".git": true, "node_modules": true, "vendor": true, "dist": true,
 	"build": true, "cache": true, ".cache": true, "coverage": true,
+	".gocache": true, ".next": true, ".turbo": true,
+	"__pycache__": true, ".pytest_cache": true, ".mypy_cache": true,
+	".ruff_cache": true, ".venv": true, "venv": true,
+	"test-results": true, "playwright-report": true, ".nyc_output": true,
 }
 
 func Build(ctx context.Context, root string, options Options) (Inventory, error) {
@@ -101,7 +105,7 @@ func Build(ctx context.Context, root string, options Options) (Inventory, error)
 			return nil
 		}
 		if entry.IsDir() {
-			if excludedDirectories[name] || leakageDirectory(rel) || matchesAny(rel, options.Ignore) {
+			if excludedDirectories[name] || leakageDirectory(rel) || processSpecificationDirectory(rel) || matchesAny(rel, options.Ignore) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -193,7 +197,29 @@ func leakageFile(relative string) bool {
 			return true
 		}
 	}
+	// Audit/reviewer/test-plan write-ups and phase implementation designs may
+	// encode the answer to a later impact experiment.
+	if strings.HasPrefix(lower, "docs/") && (strings.Contains(base, "audit") || strings.Contains(base, "review") ||
+		strings.Contains(base, "test-scenarios") || (strings.Contains(base, "phase-") && strings.Contains(base, "-design"))) {
+		return true
+	}
+	if strings.HasPrefix(lower, "scripts/") && strings.Contains(base, "traceability") {
+		return true
+	}
 	return false
+}
+
+// BPMN specifications and their generated preview/tooling catalogs are method
+// inputs, not repository implementation evidence. This is a generic naming
+// convention; additional repository-specific trees still use Options.Ignore.
+func processSpecificationDirectory(relative string) bool {
+	parts := strings.Split(strings.ToLower(filepath.ToSlash(relative)), "/")
+	if len(parts) != 2 || parts[0] != "docs" {
+		return false
+	}
+	name := parts[1]
+	return name == "bpm" || strings.HasPrefix(name, "bpm-") || name == "bpmn" || strings.HasPrefix(name, "bpmn-") ||
+		name == "process-model" || strings.HasPrefix(name, "process-model-")
 }
 
 func leakageDirectory(relative string) bool {
@@ -208,7 +234,9 @@ func containsPathSegment(relative, segment string) bool {
 func generatedFile(name string) bool {
 	return strings.HasSuffix(name, ".min.js") || strings.HasSuffix(name, ".min.css") ||
 		strings.HasSuffix(name, ".map") || strings.HasSuffix(name, ".generated.go") ||
-		strings.HasSuffix(name, ".g.cs")
+		strings.HasSuffix(name, ".g.cs") || strings.HasSuffix(name, ".tsbuildinfo") ||
+		name == "package-lock.json" || name == "pnpm-lock.yaml" ||
+		name == "yarn.lock" || name == "go.sum"
 }
 
 func isBinary(content []byte) bool {

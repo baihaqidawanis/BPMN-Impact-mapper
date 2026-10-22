@@ -12,9 +12,9 @@ function candidate(excerpt?: string): Impact {
 
 test("ranking explanation distinguishes two ranks from a missing search result", () => {
   expect(rankingExplanation(candidate("left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60")))
-    .toContain("Code-evidence search: rank 1. Semantic search: rank 10.");
+    .toContain("BPMN-context BM25: rank 1. Semantic search: rank 10.");
   expect(rankingExplanation(candidate("left_method=hybrid; left_rank=absent; right_method=semantic; right_rank=1; k=60")))
-    .toContain("Code-evidence search: absent from the ranked list. Semantic search: rank 1.");
+    .toContain("BPMN-context BM25: absent from the ranked list. Semantic search: rank 1.");
   expect(rankingExplanation(candidate("left_method=bm25; left_rank=1; right_method=semantic; right_rank=absent; k=60")))
     .toContain("BM25: rank 1. Semantic search: absent from the ranked list.");
 });
@@ -26,7 +26,8 @@ test("missing or malformed fusion metadata does not invent agreement", () => {
 
 test("high fusion score with zero trace is explained without claiming direct evidence", () => {
   const impact = candidate("left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60");
-  expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("New BPMN ID not found here");
+  impact.evidence.push({ type: "BM25", location: "service.go:1", excerpt: "request" });
+  expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("New BPMN ID not yet available in source");
   expect(rankingExplanation(impact)).toContain("high score is possible even without a direct BPMN ID match");
   impact.evidence.push({ type: "CONTEXT_TRACE_ID", location: "service.go:4", excerpt: 'trace := "STEP-BEFORE"' });
   expect(traceExplanation(impact, "hybrid", "ADD_TASK").status).toBe("Neighbouring BPMN ID found");
@@ -37,7 +38,7 @@ test("high fusion score with zero trace is explained without claiming direct evi
 test("unused trace fields are not reported as failed ID searches", () => {
   for (const method of ["semantic", "bm25", "fusion"] as const) {
     expect(usesCodeEvidence(candidate(), method)).toBe(false);
-    expect(traceExplanation(candidate(), method, "ADD_TASK").detail).toContain("not proof that the ID is absent");
+    expect(traceExplanation(candidate(), method, "ADD_TASK").detail).toContain("does not rule out an impact");
   }
   const semanticOnly = candidate("left_method=hybrid; left_rank=absent; right_method=semantic; right_rank=1; k=60");
   expect(usesCodeEvidence(semanticOnly, "hybrid")).toBe(false);

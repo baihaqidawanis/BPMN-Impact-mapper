@@ -30,6 +30,10 @@ func TestSemanticResourceErrorIsActionableAndRedacted(t *testing.T) {
 	if !strings.Contains(analysisFailureMessage(semantic.ErrInputLimit), "Top-K") {
 		t.Fatal("missing corpus guidance")
 	}
+	workerMessage := analysisFailureMessage(fmt.Errorf("apply hybrid: %w: C:/private/model", semantic.ErrRuntimeWorker))
+	if !strings.Contains(workerMessage, "worker stopped") || strings.Contains(workerMessage, "private") {
+		t.Fatal(workerMessage)
+	}
 }
 
 func TestWebRequestTrimsPastedRepositoryPath(t *testing.T) {

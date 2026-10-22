@@ -39,11 +39,57 @@ func Compare(oldGraph, newGraph *domain.Graph) []domain.Change {
 	}
 	changes = append(changes, compareFlows(oldGraph, newGraph)...)
 	annotateChangeContexts(oldGraph, newGraph, changes)
+	markInsertTaskFlowDetails(oldGraph, newGraph, changes)
 	sort.SliceStable(changes, func(i, j int) bool {
 		ki, kj := changeKey(changes[i]), changeKey(changes[j])
 		return ki < kj
 	})
 	return changes
+}
+
+// A simple insertion replaces one unlabelled P->S flow with unlabelled
+// P->Task and Task->S flows. These raw changes remain in the result, but do
+// not need three additional, identical repository retrievals. Labelled or
+// conditional flows retain independent impact analysis.
+func markInsertTaskFlowDetails(oldGraph, newGraph *domain.Graph, changes []domain.Change) {
+	for _, primary := range changes {
+		if primary.ChangeType != domain.AddTask || primary.NewElement == nil || primary.Context == nil || primary.Context.Pattern != domain.PatternInsertTask || len(primary.Context.Predecessors) != 1 || len(primary.Context.Successors) != 1 {
+			continue
+		}
+		id := primary.NewElement.ID
+		predecessor, successor := primary.Context.Predecessors[0].ID, primary.Context.Successors[0].ID
+		oldIDs := directFlowIDs(oldGraph, predecessor, successor)
+		incoming := directFlowIDs(newGraph, predecessor, id)
+		outgoing := directFlowIDs(newGraph, id, successor)
+		if len(oldIDs) != 1 || len(incoming) != 1 || len(outgoing) != 1 {
+			continue
+		}
+		oldFlow, inFlow, outFlow := oldGraph.Flows[oldIDs[0]], newGraph.Flows[incoming[0]], newGraph.Flows[outgoing[0]]
+		if !plainFlow(oldFlow) || !plainFlow(inFlow) || !plainFlow(outFlow) {
+			continue
+		}
+		allowed := map[string]bool{oldFlow.ID: true, inFlow.ID: true, outFlow.ID: true}
+		for index := range changes {
+			change := &changes[index]
+			if change.ChangeType != domain.ModifySequenceFlow || (change.OldElement == nil && change.NewElement == nil) {
+				continue
+			}
+			if change.OldElement != nil && !allowed[change.OldElement.ID] || change.NewElement != nil && !allowed[change.NewElement.ID] {
+				continue
+			}
+			// A reused ID may represent one of the new endpoints; a distinct
+			// condition/name modification must never be swallowed by grouping.
+			if change.OldElement != nil && !plainFlow(oldGraph.Flows[change.OldElement.ID]) || change.NewElement != nil && !plainFlow(newGraph.Flows[change.NewElement.ID]) {
+				continue
+			}
+			change.PartOf = id
+			change.Context = nil // avoid mislabelling an insertion as MOVE_TASK
+		}
+	}
+}
+
+func plainFlow(flow *domain.Flow) bool {
+	return flow != nil && strings.TrimSpace(flow.Name) == "" && strings.TrimSpace(flow.Condition) == ""
 }
 
 func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.Change) {

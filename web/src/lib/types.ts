@@ -28,6 +28,7 @@ export interface Evidence {
 }
 
 export interface ScoreBreakdown {
+  evidence_score?: number;
   dependency?: number;
   semantic?: number;
   rrf?: number;
@@ -55,6 +56,7 @@ export interface Change {
   change_type: string;
   old_element: ElementRef | null;
   new_element: ElementRef | null;
+  part_of?: string;
   impacts: Impact[];
   unresolved_impacts: string[];
   reason?: string;

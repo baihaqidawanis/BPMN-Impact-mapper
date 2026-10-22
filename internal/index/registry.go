@@ -51,7 +51,7 @@ func (registry Registry) Identity() string {
 }
 
 func DefaultRegistry() Registry {
-	return Registry{Adapters: []SourceAdapter{GoAdapter{}}, Extractors: []RelationExtractor{GoCallExtractor{}}}
+	return Registry{Adapters: []SourceAdapter{GoAdapter{}}, Extractors: []RelationExtractor{GoCallExtractor{}, HTTPRouteExtractor{}}}
 }
 
 func (TextAdapter) Name() string                      { return "generic-text" }
@@ -131,7 +131,13 @@ func (registry Registry) Build(inventory ingest.Inventory) Result {
 				if x.Location != y.Location {
 					return x.Location < y.Location
 				}
-				return x.Excerpt < y.Excerpt
+				if x.Excerpt != y.Excerpt {
+					return x.Excerpt < y.Excerpt
+				}
+				if x.TargetLocation != y.TargetLocation {
+					return x.TargetLocation < y.TargetLocation
+				}
+				return x.TargetExcerpt < y.TargetExcerpt
 			})
 		}
 		for i := range result.Files {

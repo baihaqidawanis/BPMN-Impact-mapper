@@ -16,6 +16,9 @@ func analysisFailureMessage(err error) string {
 	if errors.Is(err, semantic.ErrInputLimit) {
 		return "The semantic input is too large. Narrow the repository input or use BM25. Reducing Top-K alone does not reduce the embedding corpus."
 	}
+	if errors.Is(err, semantic.ErrRuntimeWorker) {
+		return "The local semantic worker stopped unexpectedly. Check available memory and the backend log, then retry; BM25 remains available. No fallback result was substituted."
+	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return "Analysis timed out or was cancelled. Retry without method comparison; check the backend log if it repeats."
 	}

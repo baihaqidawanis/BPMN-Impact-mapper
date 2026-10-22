@@ -36,16 +36,18 @@ func (resolver strategyResolver) Resolve(method domain.AnalysisMethod, configPat
 			return nil, nil, err
 		}
 		return fusion.Strategy{
-			MethodName: domain.MethodHybrid, Left: retrieval.Hybrid{}, Right: semanticStrategy,
-			PreserveLeftActions: true,
+			MethodName: domain.MethodHybrid, Left: retrieval.ContextBM25{}, Right: semanticStrategy,
+			PreserveLeftActions: false,
+			DiversifyFiles:      true,
 		}, fusionIdentity(domain.MethodHybrid, identity), nil
 	case domain.MethodBM25:
-		return retrieval.BM25Only{}, nil, nil
+		return retrieval.BM25Only{DiversifyFiles: true}, nil, nil
 	case domain.MethodSemantic:
 		strategy, identity, err := resolver.semanticStrategy()
 		if err != nil {
 			return nil, nil, err
 		}
+		strategy.DiversifyFiles = true
 		return strategy, identity, nil
 	case domain.MethodFusion:
 		semanticStrategy, identity, err := resolver.semanticStrategy()
@@ -54,6 +56,7 @@ func (resolver strategyResolver) Resolve(method domain.AnalysisMethod, configPat
 		}
 		return fusion.Strategy{
 			MethodName: domain.MethodFusion, Left: retrieval.BM25Only{}, Right: semanticStrategy,
+			DiversifyFiles: true,
 		}, fusionIdentity(domain.MethodFusion, identity), nil
 	case domain.MethodConfiguration:
 		mapper, err := configmapping.Load(configPath)

@@ -111,6 +111,42 @@ func TestCompareRecognizesCompositeChangeContext(t *testing.T) {
 	}
 }
 
+func TestPlainInsertGroupsOnlyItsThreeFlowEdits(t *testing.T) {
+	changes := diff.Compare(parseFixture(t, "insert-task-old.bpmn"), parseFixture(t, "insert-task-new.bpmn"))
+	if len(changes) != 4 {
+		t.Fatalf("expected task plus three raw flow changes, got %d", len(changes))
+	}
+	primary, details := 0, 0
+	for _, change := range changes {
+		if change.ChangeType == domain.AddTask {
+			primary++
+			if change.PartOf != "" {
+				t.Fatalf("primary task grouped under another change: %#v", change)
+			}
+		}
+		if change.ChangeType == domain.ModifySequenceFlow {
+			if change.PartOf != "TASK-REVIEW" || change.Context != nil {
+				t.Fatalf("plain inserted flow not grouped correctly: %#v", change)
+			}
+			details++
+		}
+	}
+	if primary != 1 || details != 3 {
+		t.Fatalf("primary=%d details=%d", primary, details)
+	}
+
+	oldGraph := graphWithFlow("F", "A", "B", "approved", &domain.Element{ID: "A", Name: "Prepare", Type: "task", ProcessID: "P"}, &domain.Element{ID: "B", Name: "Review", Type: "task", ProcessID: "P"})
+	newGraph := graphWithFlow("F1", "A", "N", "approved", &domain.Element{ID: "A", Name: "Prepare", Type: "task", ProcessID: "P"}, &domain.Element{ID: "N", Name: "New step", Type: "task", ProcessID: "P"}, &domain.Element{ID: "B", Name: "Review", Type: "task", ProcessID: "P"})
+	newGraph.Flows["F2"] = &domain.Flow{ID: "F2", SourceRef: "N", TargetRef: "B"}
+	newGraph.Outgoing["N"] = []string{"F2"}
+	newGraph.Incoming["B"] = []string{"F2"}
+	for _, change := range diff.Compare(oldGraph, newGraph) {
+		if change.ChangeType == domain.ModifySequenceFlow && change.PartOf != "" {
+			t.Fatalf("conditional flow was grouped: %#v", change)
+		}
+	}
+}
+
 func TestCompareDoesNotStructurallyMatchAcrossProcesses(t *testing.T) {
 	oldGraph := graphWithElements(&domain.Element{ID: "OLD-TASK", Name: "Review", Type: "userTask", Actor: "Manager", ProcessID: "PROCESS-A"})
 	newGraph := graphWithElements(&domain.Element{ID: "NEW-TASK", Name: "Review", Type: "userTask", Actor: "Manager", ProcessID: "PROCESS-B"})

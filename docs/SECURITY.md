@@ -18,11 +18,11 @@
 
 ## Default exclusions
 
-Directories: `.git`, `node_modules`, `vendor`, `dist`, `build`, cache directories, and coverage.
+Directories: `.git`, `node_modules`, `vendor`, `dist`, `build`, common Go/Next/Python caches, test results/reports, and coverage. Conventional BPMN specification trees under `docs/bpm`, `docs/bpm-*`, `docs/bpmn`, `docs/bpmn-*`, and `docs/process-model*` are treated as method inputs rather than source evidence.
 
 Secrets: `.env*`, common key/certificate/keystore extensions, and credential/private-key filename markers.
 
-Generated/binary: source maps, common minified assets, common generated Go/C# suffixes, and content detected as binary.
+Generated/binary: source maps, common minified assets, common generated Go/C# suffixes, TypeScript build metadata, dependency lockfiles, and content detected as binary.
 
 Process inputs: repository `.bpmn` files are not part of the software-source retrieval corpus. XML-named copies of selected BPMN/configuration inputs are removed by exact-content matching.
 
@@ -38,7 +38,7 @@ bytes, disables redirects in its default client, returns generic HTTP failures,
 and never persists or logs its API key. Typed planning validation remains the
 authority after provider output.
 
-Leakage artifacts: process mapping, traceability coverage, checkpoint trees, release-candidate/review-finding documents, documentation plan trees, audit/implementation plans, generated impact reports, and ground-truth paths/files.
+Leakage artifacts: process mapping, traceability coverage/verification scripts, checkpoint trees, release-candidate/review-finding documents, documentation plan trees, audit/test-scenario/phase-design/implementation plans, generated impact reports, and ground-truth paths/files.
 
 Caller-supplied `--ignore` globs extend, but do not weaken, defaults.
 
