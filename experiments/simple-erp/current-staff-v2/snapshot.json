@@ -1,0 +1,34 @@
+{
+  "baseline_path": "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn",
+  "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+  "pairs": [
+    {
+      "id": "current-staff-v2-add-task",
+      "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "changed_sha256": "ebc3999183ef5bab27a87e0ca26d7e1208a21ce57475072fbe8ef0fbefe0400d"
+    },
+    {
+      "id": "current-staff-v2-add-xor",
+      "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "changed_sha256": "f837fef487d9a94222ad6d038252cfdf146140feb52002f385b4c3cdbe658cdb"
+    },
+    {
+      "id": "current-staff-v2-add-and",
+      "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "changed_sha256": "f3022ddb224de9cf5a3ec52d74d094c7e07848d9e73f86b7ed13e751cda8b3a6"
+    },
+    {
+      "id": "current-staff-v2-combined",
+      "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "changed_sha256": "a5594a55042f62c7badb3d8e2fc11fad7488bda8f638d0f80290c1a18172c301"
+    },
+    {
+      "id": "current-staff-v2-unchanged-control",
+      "baseline_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "changed_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9"
+    }
+  ],
+  "bpmn_files_checked": 10,
+  "strict_findings": 0,
+  "reference_status": "provisional source-derived diagnostic; not independent ground truth"
+}

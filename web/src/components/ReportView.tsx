@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { planningContextURL, reportDownloadURL } from "@/lib/api";
 import { groupResults, independentChanges, matchesCategory, type ResultCategory } from "@/lib/report-results";
-import { hasFusion, rankingExplanation, traceExplanation, usesCodeEvidence } from "@/lib/report-explanation";
+import { fusionCalculation, hasFusion, rankingExplanation, traceExplanation, usesCodeEvidence } from "@/lib/report-explanation";
 import type { AnalysisMethod, Change, Impact, Report, ScoreBreakdown } from "@/lib/types";
 import styles from "./ReportView.module.css";
 
@@ -16,10 +16,11 @@ export function ReportView({ report }: { report: Report }) {
   const unresolvedCount = report.changes.reduce((sum, change) => sum + (change.unresolved_impacts?.length ?? 0), 0);
   const visibleChanges = independentChanges(report);
   const groupedFlowCount = report.changes.length - visibleChanges.length;
+  const partialBpmnSupport = report.warnings.some(warning => warning.code === "BPMN_PARTIAL_SUPPORT");
   return (
 		<div className={styles.report} data-testid="report-view">
       <div className={styles.reportHeader}>
-        <div><p>Analysis complete</p><h2>{report.repository.name}</h2><span>{report.repository.revision} · {report.method}{report.method_metadata?.model ? ` · ${report.method_metadata.model}` : ""}</span></div>
+        <div><p>{partialBpmnSupport ? "Analysis finished with BPMN limitations" : "Analysis complete"}</p><h2>{report.repository.name}</h2><span>{report.repository.revision} · {report.method}{report.method_metadata?.model ? ` · ${report.method_metadata.model}` : ""}</span></div>
         <div className={styles.downloads}>
           <a href={reportDownloadURL(report.analysis_id, "json")}>JSON</a>
           <a href={reportDownloadURL(report.analysis_id, "md")}>Markdown</a>
@@ -27,12 +28,13 @@ export function ReportView({ report }: { report: Report }) {
         </div>
       </div>
       <div className={styles.metrics}>
-        <Metric value={report.changes.length} label="BPMN changes" />
+        <Metric value={report.changes.length} label={partialBpmnSupport ? "Detected BPMN changes" : "BPMN changes"} />
         <Metric value={candidateCount} label="Candidates" />
         <Metric value={unresolvedCount} label="Unresolved" tone={unresolvedCount ? "warn" : "ok"} />
         <Metric value={report.warnings.length} label="Warnings" tone={report.warnings.length ? "warn" : "ok"} />
       </div>
-      {groupedFlowCount > 0 && <p className={styles.groupNote}>{visibleChanges.length} independent change{visibleChanges.length === 1 ? "" : "s"}; {groupedFlowCount} sequence-flow edit{groupedFlowCount === 1 ? "" : "s"} grouped with an inserted task. Raw edits remain in JSON.</p>}
+      {groupedFlowCount > 0 && <p className={styles.groupNote}>{visibleChanges.length} independent change{visibleChanges.length === 1 ? "" : "s"}; {groupedFlowCount} sequence-flow edit{groupedFlowCount === 1 ? "" : "s"} grouped with their primary change. Raw edits remain in JSON.</p>}
+      {partialBpmnSupport && <p className={styles.warnings} role="status">Some BPMN behavior is outside the current comparison coverage. Zero detected changes does not prove the process is unchanged. Review the limitations below.</p>}
       {report.warnings.length > 0 && (
         <div className={styles.warnings}><strong>Analysis warnings</strong>{report.warnings.map((warning) => <p key={`${warning.code}-${warning.message}`}><b>{warning.code}</b> {warning.message}</p>)}</div>
       )}
@@ -81,8 +83,31 @@ function ChangeCard({ change, index, method, category, supportingFlows }: { chan
       </div>
       {change.reason && <p className={styles.reason}>{change.reason}</p>}
 		{change.context && <div className={styles.context}><b>{change.context.pattern.replaceAll("_", " ")}</b><span>{contextSummary(change)}</span></div>}
-      {supportingFlows.length > 0 && <div className={styles.context}><b>FLOW DETAILS</b><span>{supportingFlows.length} rewired flow{supportingFlows.length === 1 ? "" : "s"}: {supportingFlows.map(item => item.new_element?.id ?? item.old_element?.id).join(", ")}. Retrieved once for the inserted task.</span></div>}
+      <details className={styles.contextDetails}>
+        <summary>BPMN context recorded for this change</summary>
+        {change.context ? <>
+          <dl>
+            <div><dt>Process</dt><dd>{change.context.process_name || "Not recorded"}</dd></div>
+            <div><dt>Directly before</dt><dd>{change.context.predecessors?.map(item => item.name || item.id).join(", ") || "Not recorded"}</dd></div>
+            <div><dt>Directly after</dt><dd>{change.context.successors?.map(item => item.name || item.id).join(", ") || "Not recorded"}</dd></div>
+            <div><dt>Branch conditions / labels</dt><dd>{change.context.branch_terms?.join("; ") || "Not recorded"}</dd></div>
+            <div><dt>Related flow IDs</dt><dd>{change.context.related_flow_ids?.join(", ") || "Not recorded"}</dd></div>
+          </dl>
+          {!!change.context.branch_changes?.length && <div>{change.context.branch_changes.map(branch => <div key={branch.flow_id}><b>{branch.flow_id}</b><p>Before: {branch.old_condition || branch.old_label || "No branch condition"}</p><p>After: {branch.new_condition || branch.new_label || "No branch condition"}</p></div>)}</div>}
+          <p>These are recorded BPMN relationships, not an extra score. Hybrid BM25 uses available process, neighbour and branch text. Semantic builds its query separately; for a named added/removed task it uses the task meaning, selected supporting text and available process name rather than copying every neighbour label. Flow IDs describe structure, not extra ranking weights.</p>
+        </> : <p>No structural context was recorded for this change. Do not assume that neighbouring tasks were used. The element text may still provide a search query.</p>}
+      </details>
+      {supportingFlows.length > 0 && <div className={styles.context}><b>FLOW DETAILS</b><span>{supportingFlows.length} related flow edit{supportingFlows.length === 1 ? "" : "s"}: {supportingFlows.map(item => item.new_element?.id ?? item.old_element?.id).join(", ")}. File candidates are listed once under this BPMN change.</span></div>}
       {visible.length > 0 ? <div className={styles.impacts}>{visible.map(({impact, rank}) => <ImpactRow method={method} changeType={change.change_type} impact={impact} rank={rank} key={`${impact.file}-${impact.symbol}-${rank}`} />)}</div> : <p className={styles.noImpact}>{change.impacts.length ? "No matches in this category. Choose All to see the other results." : "No evidence-bearing candidate crossed the retrieval threshold."}</p>}
+      {!!change.related_files?.length && <details className={styles.structural}>
+        <summary>Related source connections ({change.related_files.length})</summary>
+        <p>Possible callers found through indexed source connections. These connections add no retrieval score and are not extra ranked predictions for Precision/Recall. A connection does not prove a change is required.</p>
+        {change.related_files.map(file => <section key={file.file} aria-label={`Related file ${file.file}`}>
+          <p><b>{file.file}</b> · {file.module} / {file.layer} · VERIFY · {file.ranked_position ? `Also in ranked list at ${file.ranked_position}` : "Not ranked"}</p>
+          <p>Connected to {file.seed_function} in {file.seed_file} through {file.hops} source connections.</p>
+          <details><summary>Show connection evidence</summary>{file.evidence.map((e, index) => <div key={index}><p><b>{e.type}</b> {e.location}</p><pre>{e.excerpt}</pre></div>)}</details>
+        </section>)}
+      </details>}
       {(change.unresolved_impacts?.length ?? 0) > 0 && <div className={styles.unresolved}><b>Unresolved impact</b>{change.unresolved_impacts.map((item) => <p key={item}>{item}</p>)}</div>}
     </article>
   );
@@ -118,10 +143,17 @@ function ImpactRow({ impact, rank, method, changeType }: { impact: Impact; rank:
           {method === "fusion" && <p className={styles.scoreSummary}>BM25 and Semantic each rank files independently. RRF combines their ranking positions equally, not their raw scores.</p>}
           <dl className={styles.scoreCards}>
             <div><dt>{usesCodeEvidence(impact, method) ? "Code evidence" : "BM25 word match"}</dt><dd>{usesCodeEvidence(impact, method) ? impact.score_breakdown.evidence_score?.toFixed(3) : impact.evidence.some(item => item.type === "BM25") ? impact.score_breakdown.bm25?.toFixed(3) ?? "Not scored" : "Not scored"}</dd></div>
-            <div><dt>Meaning match</dt><dd>{impact.evidence.some(item => item.type === "SEMANTIC_SIMILARITY") ? impact.score_breakdown.semantic?.toFixed(3) ?? "Not scored" : "Not scored"}</dd></div>
+            <div><dt>Semantic similarity</dt><dd>{impact.evidence.some(item => item.type === "SEMANTIC_SIMILARITY") ? impact.score_breakdown.semantic?.toFixed(3) ?? "Not scored" : "Not scored"}</dd></div>
             <div><dt>Rank agreement</dt><dd>{hasFusion(impact) ? impact.score_breakdown.rrf?.toFixed(3) ?? impact.confidence.toFixed(3) : "Not combined"}</dd></div>
           </dl>
           <p className={styles.scoreSummary}>{rankingExplanation(impact)}</p>
+          <details className={styles.technical}><summary>How these numbers are calculated</summary>
+            <p>BM25 scores matching query words using their frequency, rarity across indexed documents, and document length. The score is divided by the highest BM25 score for this query; 1 means the highest word-match score, not 100% accuracy.</p>
+            <p>Semantic similarity compares the embedding vectors of the query and indexed source passages using cosine similarity: dot(query, passage) / (length(query) × length(passage)). The search keeps the best passage match for each candidate. A score such as 0.4 is not 40% accuracy and is not directly comparable with BM25.</p>
+            {fusionCalculation(impact) && <p>{fusionCalculation(impact)}</p>}
+            {usesCodeEvidence(impact, method) && <p>This older report uses the weighted code-evidence score for the left ranking; its BM25 value is one of those signals.</p>}
+            <p>Technical evidence lists the recorded source locations and excerpts. It explains why a candidate was retrieved, not proof that it must change. Precision, Recall and MAP require a separate reference list.</p>
+          </details>
           <details className={styles.technical}><summary>Show search signals</summary><ScoreTable impact={impact} method={method} />
             <p>{usesCodeEvidence(impact, method) ? "These are legacy weighted search signals. Missing matches do not prove that a file is unrelated." : "BM25 and Semantic are separate search scores. IDs, function names, paths, and code patterns appear under technical evidence only; they do not subtract from either score."}</p>
             {usesCodeEvidence(impact, method) && <details><summary>Weights used by code-evidence search</summary><p>Changed-element ID 45%, function/class/component name 15%, file path 10%, query words 10%, code clues 10%, BM25 10%. These initial research weights order the code-evidence list only. A missing direct ID contributes zero; other signals are not rescaled. Neighbouring IDs add context evidence, not the 45% direct-ID contribution.</p>{hasFusion(impact) && <p>The final score combines the code-evidence and semantic positions using RRF (k=60). It does not use this weighted sum as a probability.</p>}</details>}
@@ -135,6 +167,7 @@ function ImpactRow({ impact, rank, method, changeType }: { impact: Impact; rank:
 function plainReasons(impact: Impact): string[] {
 	const types = new Set(impact.evidence.map((item) => item.type));
 	const reasons: string[] = [];
+	if (types.has("SYMBOL_SCOPE_UNRESOLVED")) reasons.push("This file is a candidate, but the evidence does not identify one specific function yet.");
 	if (types.has("SYMBOL") && impact.symbol) reasons.push(`The name ${impact.symbol} shares words with the search query.`);
 	if (types.has("LABEL_TOKEN") || types.has("BM25")) reasons.push("Contains words from the BPMN change or its surrounding process.");
 	if (types.has("PATH")) reasons.push("Located in a folder or module related to this process.");
@@ -146,8 +179,9 @@ function plainReasons(impact: Impact): string[] {
 function evidenceLabel(type: string): string {
 	const labels: Record<string, string> = {
 		TRACE_ID: "changed-element BPMN ID", CONTEXT_TRACE_ID: "neighbouring BPMN ID (context only)", SYMBOL: "function / class / code name", PATH: "related file path",
-		LABEL_TOKEN: "matching BPMN words", BM25: "exact-word match", SEMANTIC_SIMILARITY: "meaning match",
+		LABEL_TOKEN: "matching BPMN words", BM25: "exact-word match", SEMANTIC_SIMILARITY: "semantic similarity",
 		RRF_FUSION: "search positions", DATABASE_TABLE: "possible data clue (text pattern)", STATE_STATUS: "possible status clue", AUDIT_ACTION: "possible audit clue",
+		SYMBOL_SCOPE_UNRESOLVED: "function not established",
 	};
 	return labels[type] ?? type;
 }
@@ -163,7 +197,7 @@ function scoreLabel(name: keyof ScoreBreakdown): string {
 	const labels: Partial<Record<keyof ScoreBreakdown, string>> = {
 		trace_id: "task ID", symbol: "function / class / component", path: "file path",
 		lexical: "query words", structured: "code clues", bm25: "BM25 word match",
-		semantic: "meaning match", rrf: "ranking agreement", dependency: "code relation", total: "combined score",
+		semantic: "semantic similarity", rrf: "ranking agreement", dependency: "code relation", total: "combined score",
 	};
 	return labels[name] ?? name.replaceAll("_", " ");
 }

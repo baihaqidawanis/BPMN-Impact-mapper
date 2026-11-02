@@ -1,4 +1,5 @@
 .root { display: grid; gap: 16px; max-width: 1100px; margin: 0 auto; }
+.offline > summary { padding: 12px 0; color: var(--muted); font-size: 12px; cursor: pointer; }
 .header { display: flex; align-items: end; justify-content: space-between; gap: 24px; padding: 4px 0 22px; border-bottom: 1px solid var(--line); }
 .header span { color: var(--blue); font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .header h3 { margin: 7px 0 5px; font-size: 24px; letter-spacing: -.035em; }
@@ -76,3 +77,7 @@
   .candidate summary strong { display: none; }
   .root > footer { flex-direction: column; }
 }
+
+.contextDetails { border-top: 1px solid var(--line); padding-top: 16px; }
+.contextDetails > summary { cursor: pointer; font-size: 13px; font-weight: 550; margin-bottom: 18px; color: var(--charcoal); }
+.contextDetails > footer { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; color: var(--muted); font-size: 11px; }

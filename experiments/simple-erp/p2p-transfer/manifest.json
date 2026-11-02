@@ -1,0 +1,40 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "label_provenance": "single-source-review",
+  "methods": [
+    "bm25",
+    "semantic",
+    "fusion",
+    "hybrid"
+  ],
+  "scenarios": [
+    {
+      "id": "p2p-transfer-checks",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "p2p-transfer-frozen",
+      "old_bpmn_path": "experiments/simple-erp/p2p-transfer/checks/before.bpmn",
+      "old_bpmn_sha256": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+      "new_bpmn_path": "experiments/simple-erp/p2p-transfer/checks/after.bpmn",
+      "new_bpmn_sha256": "fe2a9c4411fe906daaecad64baea0ce7c32202379a5fef5dd09f8f6f05fe7923",
+      "ground_truth_path": "experiments/simple-erp/p2p-transfer/checks/reference.json",
+      "ground_truth_sha256": "7e7f9bd19155d699469cddd05d99c0ddd37793ab2ac4743862712c2c0a1eef78",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "p2p-transfer-unchanged-control",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "p2p-transfer-frozen",
+      "old_bpmn_path": "experiments/simple-erp/p2p-transfer/unchanged-control/before.bpmn",
+      "old_bpmn_sha256": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+      "new_bpmn_path": "experiments/simple-erp/p2p-transfer/unchanged-control/after.bpmn",
+      "new_bpmn_sha256": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+      "ground_truth_path": "experiments/simple-erp/p2p-transfer/unchanged-control/reference.json",
+      "ground_truth_sha256": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+      "truth_scope": "complete"
+    }
+  ]
+}

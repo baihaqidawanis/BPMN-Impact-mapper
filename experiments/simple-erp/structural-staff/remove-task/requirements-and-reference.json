@@ -1,0 +1,18 @@
+{
+  "scenario": "remove-task",
+  "requirement": "Cancellation no longer requires collecting a reason; keep creator, state and version guards. The cancel command still exists.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "6b4d5cfec3a18bc35772be7c0b3c3ec710acfbdbb202ddd4eada3195226d05af",
+  "changed_sha256": "5270f4d81cbbae2ee652bc1404ee4b50bfc025d99e5c3cb44a0b299699323a06",
+  "expected_existing_files": [
+    "frontend/features/inventory/inventory-adjustment-panel.tsx",
+    "backend/internal/inventory/adapter/postgres/store.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}

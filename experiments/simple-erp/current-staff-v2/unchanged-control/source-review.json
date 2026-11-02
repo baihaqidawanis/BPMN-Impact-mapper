@@ -1,0 +1,11 @@
+{
+  "requirement": "No BPMN or software change.",
+  "scope": "one selected primary change; other changes not labelled or counted as negatives",
+  "reference_status": "provisional source-derived diagnostic; prepared before inference, not independent ground truth",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  },
+  "reasoning": "Submit currently only checks DRAFT/version. Reason field exists but UI submits empty reason. Master active checks during create do not ensure they remain active at submit. Operations integration tests exercise existing submit/guards. No schema or new endpoint required."
+}

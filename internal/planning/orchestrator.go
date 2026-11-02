@@ -94,6 +94,24 @@ func (orchestrator Orchestrator) Run(ctx context.Context, report domain.Report) 
 	}
 	result.Plans = finalPlans
 	result.ReviewIssues = cleanStrings(review.Issues)
+	for _, change := range bundle.Changes {
+		if change.ContextTruncated {
+			result.ReviewIssues = append(result.ReviewIssues, "BPMN requirement text was truncated; inspect the original specification before accepting this plan.")
+		}
+		if change.ContextIncomplete {
+			result.ReviewIssues = append(result.ReviewIssues, "Directed gateway condition changes are unavailable; rerun this saved analysis before accepting a plan.")
+		}
+	}
+	if bundle.WarningsTruncated {
+		result.ReviewIssues = append(result.ReviewIssues, "Some analysis warnings were truncated; inspect the canonical report.")
+	}
+	for _, w := range bundle.Warnings {
+		if w.Code == "BPMN_PARTIAL_SUPPORT" {
+			result.ReviewIssues = append(result.ReviewIssues, "BPMN behavior is only partially supported; model approval cannot resolve this analysis limitation.")
+			break
+		}
+	}
+	result.ReviewIssues = cleanStrings(result.ReviewIssues)
 	result.Status = StatusNeedsReview
 	if review.Approved && len(result.ReviewIssues) == 0 {
 		result.Status = StatusComplete
@@ -233,7 +251,13 @@ func validatePlanText(plan FilePlan) error {
 	if len(steps) > maxPlanSteps {
 		return errors.New("plan has too many steps")
 	}
-	for _, value := range append([]string{plan.Summary}, steps...) {
+	if len(plan.ProposedChanges) > 8 || len(plan.AcceptanceChecks) > 8 {
+		return errors.New("too many proposed changes or acceptance checks")
+	}
+	text := append([]string{plan.Summary}, steps...)
+	text = append(text, plan.ProposedChanges...)
+	text = append(text, plan.AcceptanceChecks...)
+	for _, value := range text {
 		if len([]rune(value)) > maxStepRunes {
 			return errors.New("planning text exceeds the per-item limit")
 		}
@@ -322,6 +346,8 @@ func validAction(action domain.RequiredAction) bool {
 func sortPlans(plans []FilePlan) {
 	for index := range plans {
 		plans[index].Steps = cleanStrings(plans[index].Steps)
+		plans[index].ProposedChanges = cleanStrings(plans[index].ProposedChanges)
+		plans[index].AcceptanceChecks = cleanStrings(plans[index].AcceptanceChecks)
 		plans[index].EvidenceIDs = cleanStrings(plans[index].EvidenceIDs)
 	}
 	sort.Slice(plans, func(i, j int) bool {

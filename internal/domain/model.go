@@ -76,11 +76,12 @@ type Flow struct {
 }
 
 type Graph struct {
-	Elements map[string]*Element
-	Flows    map[string]*Flow
-	Incoming map[string][]string
-	Outgoing map[string][]string
-	Warnings []string
+	ProcessNames map[string]string
+	Elements     map[string]*Element
+	Flows        map[string]*Flow
+	Incoming     map[string][]string
+	Outgoing     map[string][]string
+	Warnings     []string
 }
 
 type Symbol struct {
@@ -142,6 +143,7 @@ const (
 	PatternAddGatewayBranch     ChangePattern = "ADD_GATEWAY_BRANCH"
 	PatternMoveTask             ChangePattern = "MOVE_TASK"
 	PatternRemoveGatewayBranch  ChangePattern = "REMOVE_GATEWAY_BRANCH"
+	PatternModifyGatewayBranch  ChangePattern = "MODIFY_GATEWAY_BRANCH"
 )
 
 type ElementContext struct {
@@ -151,13 +153,26 @@ type ElementContext struct {
 }
 
 type ChangeContext struct {
-	Pattern        ChangePattern    `json:"pattern"`
-	Predecessors   []ElementContext `json:"predecessors,omitempty"`
-	Successors     []ElementContext `json:"successors,omitempty"`
-	RelatedFlowIDs []string         `json:"related_flow_ids,omitempty"`
+	BranchChanges   []BranchChange   `json:"branch_changes,omitempty"`
+	ConditionDelta  []string         `json:"condition_delta,omitempty"`
+	BaselineAnchors []BaselineAnchor `json:"baseline_anchors,omitempty"`
+	ProcessName     string           `json:"process_name,omitempty"`
+	Pattern         ChangePattern    `json:"pattern"`
+	Predecessors    []ElementContext `json:"predecessors,omitempty"`
+	Successors      []ElementContext `json:"successors,omitempty"`
+	BranchTerms     []string         `json:"branch_terms,omitempty"`
+	RelatedFlowIDs  []string         `json:"related_flow_ids,omitempty"`
+}
+
+type BaselineAnchor struct {
+	ElementContext
+	Direction string   `json:"direction"`
+	Hops      int      `json:"hops"`
+	FlowPath  []string `json:"flow_path"`
 }
 
 type Change struct {
+	RelatedFiles     []RelatedFile  `json:"related_files,omitempty"`
 	ChangeType       ChangeType     `json:"change_type"`
 	OldElement       *Element       `json:"old_element"`
 	NewElement       *Element       `json:"new_element"`
@@ -166,6 +181,28 @@ type Change struct {
 	UnresolvedImpact []string       `json:"unresolved_impacts"`
 	Reason           string         `json:"reason,omitempty"`
 	Context          *ChangeContext `json:"context,omitempty"`
+}
+
+// RelatedFile is an unranked source association, not a proven required change.
+type RelatedFile struct {
+	RankedPosition int        `json:"ranked_position,omitempty"`
+	File           string     `json:"file"`
+	Module         string     `json:"module"`
+	Layer          string     `json:"layer"`
+	SeedFile       string     `json:"seed_file"`
+	SeedFunction   string     `json:"seed_function"`
+	Hops           int        `json:"hops"`
+	Evidence       []Evidence `json:"evidence"`
+}
+
+type BranchChange struct {
+	FlowID       string `json:"flow_id"`
+	OldCondition string `json:"old_condition,omitempty"`
+	NewCondition string `json:"new_condition,omitempty"`
+	OldLabel     string `json:"old_label,omitempty"`
+	NewLabel     string `json:"new_label,omitempty"`
+	OldTarget    string `json:"old_target,omitempty"`
+	NewTarget    string `json:"new_target,omitempty"`
 }
 
 type Repository struct {

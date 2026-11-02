@@ -23,6 +23,13 @@ func Markdown(value Report) []byte {
 	fmt.Fprintf(&output, "- Prediction SHA-256: `%s`\n", value.PredictionSHA256)
 	fmt.Fprintf(&output, "- Ground truth SHA-256: `%s`\n\n", value.GroundTruthSHA256)
 	metrics := value.Metrics
+	output.WriteString("Ranking metrics depend on the reference, which may be provisional. R-precision checks the top R files, where R is the reference file count. AP rewards all relevant files occurring early; MAP averages AP. Empty-reference cases have undefined positive ranking metrics and are evaluated as abstentions. Fixed-k precision divides by k even when fewer candidates exist.\n\n")
+	if p := metrics.PositiveRanking; p != nil {
+		fmt.Fprintf(&output, "## Positive-reference changes (%d)\n\n| Metric | Value |\n|---|---:|\n| MAP | %.4f |\n| MRR | %.4f |\n| R-precision | %.4f |\n| Precision@5 / @10 | %.4f / %.4f |\n| Recall@5 / @10 | %.4f / %.4f |\n\n", p.Count, p.MAP, p.MRR, p.RPrecision, p.Precision5, p.Precision10, p.Recall5, p.Recall10)
+	} else {
+		output.WriteString("Positive-reference ranking: n/a (no positive reference cases).\n\n")
+	}
+	output.WriteString("## All labeled atomic changes (legacy aggregate)\n\n")
 	output.WriteString("| Metric | Value |\n|---|---:|\n")
 	fmt.Fprintf(&output, "| Recall@1 / @3 / @5 | %.4f / %.4f / %.4f |\n", metrics.Recall.At1, metrics.Recall.At3, metrics.Recall.At5)
 	fmt.Fprintf(&output, "| Precision@1 / @3 / @5 | %.4f / %.4f / %.4f |\n", metrics.Precision.At1, metrics.Precision.At3, metrics.Precision.At5)
@@ -30,7 +37,13 @@ func Markdown(value Report) []byte {
 	fmt.Fprintf(&output, "| File precision / recall / F1 | %.4f / %.4f / %.4f |\n", metrics.FilePrecision, metrics.FileRecall, metrics.FileF1)
 	fmt.Fprintf(&output, "| Module / layer / action accuracy | %.4f / %.4f / %.4f |\n", metrics.ModuleAccuracy, metrics.LayerAccuracy, metrics.ActionAccuracy)
 	fmt.Fprintf(&output, "| Required-action macro-F1 | %.4f |\n", metrics.ActionMacroF1)
-	fmt.Fprintf(&output, "| Unresolved rate | %.4f |\n| False discovery proportion (FP/(TP+FP)) | %.4f |\n\n", metrics.UnresolvedRate, metrics.FalsePositiveRate)
+	fmt.Fprintf(&output, "| Unresolved/abstention rate | %.4f |\n| False discovery proportion (FP/(TP+FP)) | %.4f |\n", metrics.UnresolvedRate, metrics.FalsePositiveRate)
+	if metrics.NegativeControls > 0 {
+		fmt.Fprintf(&output, "| Correct negative controls | %d / %d (%.4f) |\n", metrics.CorrectAbstentions, metrics.NegativeControls, metrics.NegativeControlAccuracy)
+	} else {
+		output.WriteString("| Correct negative controls | n/a (0 labeled negative cases) |\n")
+	}
+	output.WriteByte('\n')
 	output.WriteString("## Required-action confusion matrix\n\nRows are expected actions; columns are predicted actions. A relevant file that was not retrieved is predicted as `UNRESOLVED`. Macro-F1 includes only classes with ground-truth support.\n\n| Expected \\ Predicted |")
 	for _, label := range metrics.ActionConfusion.Labels {
 		fmt.Fprintf(&output, " %s |", label)

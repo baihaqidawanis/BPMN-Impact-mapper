@@ -27,6 +27,21 @@ type Options struct {
 	Ignore       []string `json:"ignore,omitempty"`
 }
 
+// Normalized resolves omitted limits to the values enforced by Build. It
+// lets equivalent CLI and HTTP inputs share one analysis fingerprint.
+func (options Options) Normalized() Options {
+	if options.MaxFileSize <= 0 {
+		options.MaxFileSize = defaultMaxFileSize
+	}
+	if options.MaxTotalSize <= 0 {
+		options.MaxTotalSize = defaultMaxTotalSize
+	}
+	if options.MaxFiles <= 0 {
+		options.MaxFiles = defaultMaxFiles
+	}
+	return options
+}
+
 type File struct {
 	RelativePath string
 	AbsolutePath string
@@ -43,7 +58,7 @@ type Inventory struct {
 var excludedDirectories = map[string]bool{
 	".git": true, "node_modules": true, "vendor": true, "dist": true,
 	"build": true, "cache": true, ".cache": true, "coverage": true,
-	".gocache": true, ".next": true, ".turbo": true,
+	".gocache": true, ".next": true, ".turbo": true, ".generated": true,
 	"__pycache__": true, ".pytest_cache": true, ".mypy_cache": true,
 	".ruff_cache": true, ".venv": true, "venv": true,
 	"test-results": true, "playwright-report": true, ".nyc_output": true,
@@ -53,15 +68,7 @@ func Build(ctx context.Context, root string, options Options) (Inventory, error)
 	if err := ctx.Err(); err != nil {
 		return Inventory{}, err
 	}
-	if options.MaxFileSize <= 0 {
-		options.MaxFileSize = defaultMaxFileSize
-	}
-	if options.MaxTotalSize <= 0 {
-		options.MaxTotalSize = defaultMaxTotalSize
-	}
-	if options.MaxFiles <= 0 {
-		options.MaxFiles = defaultMaxFiles
-	}
+	options = options.Normalized()
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		return Inventory{}, fmt.Errorf("absolute repository path: %w", err)
@@ -214,7 +221,7 @@ func leakageFile(relative string) bool {
 // convention; additional repository-specific trees still use Options.Ignore.
 func processSpecificationDirectory(relative string) bool {
 	parts := strings.Split(strings.ToLower(filepath.ToSlash(relative)), "/")
-	if len(parts) != 2 || parts[0] != "docs" {
+	if len(parts) != 2 || (parts[0] != "docs" && parts[0] != "scripts") {
 		return false
 	}
 	name := parts[1]

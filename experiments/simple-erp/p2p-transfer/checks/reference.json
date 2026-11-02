@@ -1,0 +1,89 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_GATEWAY",
+      "element_id": "SubmitChecksSplit",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "CheckActiveProducts",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "CheckEstimatedPrices",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "ADD_GATEWAY",
+      "element_id": "SubmitChecksJoin",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "CombineSubmitChecks",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "ADD_GATEWAY",
+      "element_id": "SubmitEligibility",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    }
+  ]
+}

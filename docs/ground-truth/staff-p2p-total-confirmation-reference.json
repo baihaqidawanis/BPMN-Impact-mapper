@@ -1,0 +1,39 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "role_staff_l3_pr_create_confirm_total",
+      "expected": [
+        {
+          "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+          "module": "frontend",
+          "layer": "frontend",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "frontend/e2e/operations.spec.ts",
+          "module": "frontend",
+          "layer": "test",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "frontend/e2e/dashboard.spec.ts",
+          "module": "frontend",
+          "layer": "test",
+          "required_action": "MODIFY"
+        }
+      ]
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "role_staff_l3_pr_create_Flow_1",
+      "expected": []
+    },
+    {
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "role_staff_l3_pr_create_Flow_confirm_total",
+      "expected": []
+    }
+  ]
+}

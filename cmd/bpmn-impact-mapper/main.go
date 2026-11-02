@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/benchmark"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/experiment"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/ingest"
@@ -28,7 +29,7 @@ func main() {
 
 func run(arguments []string, stdout, stderr io.Writer) error {
 	if len(arguments) == 0 {
-		return errors.New("usage: bpmn-impact-mapper <analyze|evaluate|benchmark|reconcile|prepare-review|mutate|probe-relations> [flags]")
+		return errors.New("usage: bpmn-impact-mapper <analyze|evaluate|benchmark|reconcile|prepare-review|mutate|probe-relations|planning-context> [flags]")
 	}
 	switch arguments[0] {
 	case "analyze":
@@ -45,8 +46,10 @@ func run(arguments []string, stdout, stderr io.Writer) error {
 		return runMutate(arguments[1:], stdout, stderr)
 	case "probe-relations":
 		return runProbeRelations(arguments[1:], stdout, stderr)
+	case "planning-context":
+		return runPlanningContext(arguments[1:], stdout, stderr)
 	default:
-		return fmt.Errorf("unknown command %q; expected analyze, evaluate, benchmark, reconcile, prepare-review, mutate, or probe-relations", arguments[0])
+		return fmt.Errorf("unknown command %q; expected analyze, evaluate, benchmark, reconcile, prepare-review, mutate, probe-relations, or planning-context", arguments[0])
 	}
 }
 
@@ -114,6 +117,11 @@ func runReconcile(arguments []string, stdout, stderr io.Writer) error {
 }
 
 func runBenchmark(arguments []string, stdout, stderr io.Writer) error {
+	return runBenchmarkWithAnalyzer(arguments, stdout, stderr, wiring.NewAnalyzer())
+}
+
+// Composition boundary for deterministic CLI unit tests without Python/model dependencies.
+func runBenchmarkWithAnalyzer(arguments []string, stdout, stderr io.Writer, analyzer benchmark.Analyzer) error {
 	flags := flag.NewFlagSet("benchmark", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	manifest := flags.String("manifest", "", "frozen benchmark manifest JSON")
@@ -127,7 +135,7 @@ func runBenchmark(arguments []string, stdout, stderr io.Writer) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), *timeout)
 	defer cancel()
-	result, err := experiment.RunBenchmark(ctx, *manifest, *output, wiring.NewAnalyzer())
+	result, err := experiment.RunBenchmark(ctx, *manifest, *output, analyzer)
 	if err != nil {
 		return err
 	}

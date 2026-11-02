@@ -13,6 +13,9 @@
           "required_action": "ADD"
         }
       ]
-    }
+    },
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-VOCAB-1", "expected": []},
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-VOCAB-2", "expected": []},
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-VOCAB-OLD", "expected": []}
   ]
 }

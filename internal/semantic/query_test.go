@@ -57,3 +57,16 @@ func TestNamedTaskQueryKeepsShortProcessAnchorWithoutInstructionNoise(t *testing
 		t.Fatalf("query = %q", got)
 	}
 }
+
+func TestHybridCanUseExplicitProcessNameWithoutChangingSemanticBaseline(t *testing.T) {
+	change := domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{Name: "Attach supporting document", Type: "userTask"}, Context: &domain.ChangeContext{ProcessName: "Expense reimbursement", Predecessors: []domain.ElementContext{{ID: "GENERATED-88", Name: "Start"}}}}
+	plain := (Strategy{}).queryText(change)
+	contextual := (Strategy{IncludeProcessContext: true}).queryText(change)
+	if plain != "Attach supporting document" || !strings.Contains(contextual, "Expense reimbursement") || strings.Contains(contextual, "GENERATED-88") {
+		t.Fatalf("plain=%q contextual=%q", plain, contextual)
+	}
+	change.Context.ProcessName = strings.Repeat("x", 500)
+	if len((Strategy{IncludeProcessContext: true}).queryText(change)) > len(plain)+171 {
+		t.Fatal("unbounded process context")
+	}
+}

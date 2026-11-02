@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"><process id="P" name="Document copy">
+<startEvent id="S"/><task id="Read" name="Read invoice"/><exclusiveGateway id="Gate" name="Copy invoice allowed?"/><task id="Proceed" name="Continue copy"/><endEvent id="E"/>
+<sequenceFlow id="A" sourceRef="S" targetRef="Read"/><sequenceFlow id="B" sourceRef="Read" targetRef="Gate"/>
+<sequenceFlow id="C" sourceRef="Gate" targetRef="Proceed"><conditionExpression>status == REJECTED || status == CANCELLED</conditionExpression></sequenceFlow>
+<sequenceFlow id="D" sourceRef="Proceed" targetRef="E"/>
+</process></definitions>

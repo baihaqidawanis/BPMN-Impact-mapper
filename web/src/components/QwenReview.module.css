@@ -1,0 +1,39 @@
+.panel { display: grid; gap: 16px; padding: 20px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.panel > header, .result article > header { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.panel header div > span { color: var(--muted); font-size: 11px; }
+.panel h3 { margin: 5px 0 0; font-size: 21px; letter-spacing: -.025em; }
+.panel p { margin: 0; font-size: 13px; line-height: 1.65; color: var(--muted); }
+.panel button, .actions a { padding: 10px 13px; border: 1px solid var(--line-strong); border-radius: 7px; background: transparent; color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; text-decoration: none; }
+.panel button:disabled { opacity: .55; cursor: default; }
+.panel .primary { background: var(--blue); border-color: var(--blue); color: white; }
+.connection { padding: 11px 13px; background: var(--canvas); border-radius: 7px; font-size: 12px; line-height: 1.6; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fields label { display: grid; gap: 8px; font-size: 12px; font-weight: 550; min-width: 0; }
+.fields input, .fields select { width: 100%; min-width: 0; padding: 11px; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; }
+.scope { border-left: 2px solid var(--line-strong); padding-left: 13px; }
+.mode { display: grid; gap: 8px; max-width: 360px; font-size: 12px; font-weight: 550; }
+.mode select { padding: 10px; border: 1px solid var(--line-strong); border-radius: 7px; color: var(--ink); background: var(--surface); font: inherit; }
+.coverage { display: grid; gap: 8px; padding: 14px; background: var(--canvas); border-radius: 8px; font-size: 12px; }
+.coverage h4 { margin: 0; font-size: 13px; }
+.coverage progress { width: 100%; height: 8px; accent-color: var(--blue); }
+.actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.result { display: grid; gap: 15px; padding-top: 18px; border-top: 1px solid var(--line); }
+.status { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; align-items: center; }
+.status span, .result small { color: var(--muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.result details { border: 1px solid var(--line); border-radius: 7px; padding: 12px; }
+.result summary { cursor: pointer; font-size: 13px; font-weight: 550; }
+.result article { display: grid; gap: 10px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.result article b { font-size: 13px; overflow-wrap: anywhere; }
+.result article header span { font-size: 11px; }
+.result ol, .result ul { margin: 0; padding-left: 22px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.result article h4 { margin: 4px 0 0; font-size: 12px; font-weight: 550; }
+.issues { padding: 14px; background: var(--canvas); border-radius: 8px; }
+.issues h4 { margin: 0 0 8px; font-size: 13px; }
+.panel .error { color: #a42323; }
+@media (max-width: 700px) { .panel { padding: 16px; } .fields { grid-template-columns: 1fr; } .panel > header { align-items: flex-start; flex-direction: column; } }
+
+.repository { display: grid; gap: 8px; align-content: start; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--canvas); }
+.repository > span { font-size: 11px; color: var(--muted); }
+.repository code { font-size: 12px; overflow-wrap: anywhere; }
+.repository button { justify-self: start; padding: 0; border: 0; color: var(--blue); font-size: 11px; }
+.fields label small { font-size: 11px; line-height: 1.5; color: var(--muted); }

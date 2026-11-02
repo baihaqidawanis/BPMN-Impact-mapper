@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnalysisForm } from "@/components/AnalysisForm";
 import { BpmnEditor } from "@/components/BpmnEditor";
+import { BpmnLibrary } from "@/components/BpmnLibrary";
 import { InterpretationGuide } from "@/components/InterpretationGuide";
 import { ReportView } from "@/components/ReportView";
 import { ComparisonView } from "@/components/ComparisonView";
@@ -12,25 +13,70 @@ import { AnalysisHistory } from "@/components/AnalysisHistory";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import { PlanningContextView } from "@/components/PlanningContextView";
 import { BatchAnalysis } from "@/components/BatchAnalysis";
+import { BenchmarkSummary } from "@/components/BenchmarkSummary";
+import { analysisRepository, rememberAnalysisRepository } from "@/lib/analysis-repository";
+import { WorkspaceShell, type WorkspaceView } from "@/components/WorkspaceShell";
+import { WorkspaceOverview } from "@/components/WorkspaceOverview";
+import { runAnalysis } from "@/features/analysis/run-analysis";
 import { createAnalysis } from "@/lib/api";
+import { RND_ENABLED } from "@/lib/features";
+import { useSavedAnalysis } from "@/lib/useSavedAnalysis";
 import type { Report } from "@/lib/types";
 import styles from "./page.module.css";
 
 export default function Home() {
-  const [report, setReport] = useState<Report | null>(null);
+  const { report, setReport, restoring, restoreNotice } = useSavedAnalysis();
+  const [inputGeneration,setInputGeneration]=useState(0);
+  useEffect(()=>{
+    const query=new URL(window.location.href).searchParams;
+    const target=query.get("view");
+    if(target==="analysis")setView("mapping");
+    else if(target && ["overview","mapping","canvas","library","history","research","guide"].includes(target))setView(target as WorkspaceView);
+    else if(query.has("analysis"))setView("mapping");
+  },[]);
   const [comparison, setComparison] = useState<Report[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [batchRunning, setBatchRunning] = useState(false);
-  const [view, setView] = useState<"mapping" | "canvas" | "planning" | "history" | "research" | "guide">("mapping");
+  const [selectedView, setView] = useState<WorkspaceView>("overview");
+  const view = selectedView === "research" && !RND_ENABLED ? "mapping" : selectedView;
   const [baseline, setBaseline] = useState<File | null>(null);
   const [edited, setEdited] = useState<File | null>(null);
   const [editorInput, setEditorInput] = useState<File | null>(null);
   const [canvasDirty, setCanvasDirty] = useState(false);
 
+  const [repositoryPath, setRepositoryPath] = useState("");
+  const [reportRepositoryPath, setReportRepositoryPath] = useState("");
+  const [workspaceStage, setWorkspaceStage] = useState<"mapping" | "planning">("mapping");
+  const [planningAnalysis, setPlanningAnalysis] = useState("");
+  useEffect(() => {
+    const path = report ? analysisRepository(report.analysis_id) : "";
+    setReportRepositoryPath(path);
+    if (report) setRepositoryPath(path);
+    document.getElementById("analysis-inputs")?.scrollTo({ top: 0 });
+  }, [report?.analysis_id]);
+
+  function workflow(stage: "mapping" | "planning") {
+    if (stage === "planning" && !report) return;
+    setWorkspaceStage(stage);
+    if (stage === "planning" && report) setPlanningAnalysis(report.analysis_id);
+    requestAnimationFrame(() => document.getElementById("analysis-workflow")?.scrollIntoView({ block: "start" }));
+  }
+  function repositoryForReport(path: string) {
+    if (report) rememberAnalysisRepository(report.analysis_id, path);
+    setReportRepositoryPath(path);
+    setRepositoryPath(path);
+  }
+
   function navigate(next: typeof view) {
+    if (next === "mapping") setWorkspaceStage("mapping");
+    if (next === "research" && !RND_ENABLED) return;
     if (next === "canvas" && baseline && !editorInput) setEditorInput(edited || baseline);
     setView(next);
+    requestAnimationFrame(()=>window.scrollTo(0,0));
+    const url=new URL(window.location.href);
+    url.searchParams.set("view",next==="mapping"?"analysis":next);
+    window.history.replaceState(window.history.state,"",url);
   }
 
   function changeBaseline(file: File | null) {
@@ -42,29 +88,16 @@ export default function Home() {
   }
 
   async function handleSubmit(formData: FormData) {
+    setReport(null);
+    setWorkspaceStage("mapping");
+    setPlanningAnalysis("");
     setLoading(true);
     setError("");
     setComparison([]);
     try {
-			const compare = formData.get("compare_methods") === "on";
-			formData.delete("compare_methods");
-			if (!compare) {
-				setReport(await createAnalysis(formData));
-				return;
-			}
-			const methods: Report["method"][] = ["bm25", "semantic", "fusion", "hybrid"];
-			const reports: Report[] = [];
-			for (const method of methods) {
-				const request = cloneFormData(formData);
-				request.set("method", method);
-				request.delete("mapping_config_path");
-				reports.push(await createAnalysis(request));
-			}
-			if (new Set(reports.map((item) => item.input_fingerprint)).size !== 1) {
-				throw new Error("Comparison reports did not share the same input fingerprint.");
-			}
-			setComparison(reports);
-			setReport(reports.find((item) => item.method === "hybrid") ?? reports[0]);
+      const result=await runAnalysis(formData,createAnalysis,(saved,path)=>rememberAnalysisRepository(saved.analysis_id,path));
+      setComparison(result.comparison);
+      setReport(result.report);
     } catch (requestError) {
       setReport(null);
 			setComparison([]);
@@ -75,36 +108,44 @@ export default function Home() {
   }
 
   return (
-    <main className={styles.shell}>
-      <header className={styles.header}>
-        <div className={styles.brandMark} aria-hidden="true"><span /><span /><span /></div>
-        <div>
-          <p className={styles.eyebrow}>Deterministic impact analysis</p>
-          <h1>BPMN Impact Mapper</h1>
-        </div>
-        <div className={styles.status}><span />{loading ? "Analysis in progress" : "Local workspace"}</div>
-      </header>
-      <nav className={styles.navigation} aria-label="Workspace navigation">
-        {([ ["mapping", "Mapping"], ["canvas", "BPMN Canvas"], ["planning", "Planning"], ["history", "Saved analyses"], ["research", "Research"], ["guide", "Guide"] ] as const).map(([id, label]) =>
-          <button key={id} type="button" aria-current={view === id ? "page" : undefined} onClick={() => navigate(id)}>{label}{id === "canvas" && baseline && <span className={styles.dot} aria-hidden="true" />}</button>
-        )}
-      </nav>
-      <div className={styles.sectionTitle}><div><h2>{view === "mapping" ? "Map process changes." : view === "canvas" ? "Shape the next process." : view === "planning" ? "Inspect planning context." : view === "history" ? "Previous analyses." : view === "research" ? "Evaluate the method." : "Understand the evidence."}</h2><p>{view === "mapping" ? "Choose a repository and compare BPMN versions. Edit your process in Canvas whenever needed." : view === "canvas" ? "Work on a copy of your baseline, then use it for impact mapping." : view === "planning" ? "Review the bounded evidence package before any model is allowed to plan." : view === "history" ? "Open a saved report without running the analysis again." : view === "research" ? "Prepare independent labels and measure retrieval without feeding answers into inference." : "How methods, evidence and scores should be interpreted."}</p></div>{view === "mapping" && report && <span className={styles.reportBadge}>{report.changes.length} changes · {report.method}</span>}</div>
+    <WorkspaceShell view={view} onNavigate={navigate} research={RND_ENABLED} busy={loading||batchRunning}>
+      <div hidden={view!=="overview"}><WorkspaceOverview active={view==="overview"} current={report} onStart={()=>{
+        if(loading||batchRunning)return;
+        if(canvasDirty&&!window.confirm("Start a new analysis and discard the current canvas draft? Download it first if needed."))return;
+        setReport(null);setComparison([]);setError("");changeBaseline(null);setRepositoryPath("");setPlanningAnalysis("");setInputGeneration(v=>v+1);navigate("mapping");
+      }} onContinue={()=>navigate("mapping")} onOpen={saved=>{setReport(saved);setComparison([]);setError("");navigate("mapping");}} onLibrary={()=>navigate("library")} onHistory={()=>navigate("history")}/></div>
+      <div className={styles.sectionTitle} hidden={view==="overview"}><div><h1>{view === "mapping" ? "Analysis workspace" : view === "canvas" ? "BPMN comparison" : view === "library" ? "BPMN library" : view === "history" ? "Saved analyses" : view === "research" ? "Method evaluation" : "Reading the report"}</h1><p>{view === "mapping" ? "Compare BPMN versions, inspect affected files, then prepare a change plan." : view === "canvas" ? "Work on a copy of your baseline, then use it for impact mapping." : view === "library" ? "Keep process versions locally and reuse them in Mapping or Canvas." : view === "history" ? "Open a saved report without running the analysis again." : view === "research" ? "Compare saved test results, run scenarios, and check mapping against expected files." : "How methods, evidence and scores should be interpreted."}</p></div>{view === "mapping" && report && <span className={styles.reportBadge}>{report.changes.length} changes  |  {report.method}</span>}</div>
 
       <div hidden={view !== "mapping"}>
+      {restoreNotice && <div className={styles.draftNotice} role="status"><span>{restoreNotice}</span><button type="button" onClick={() => navigate("history")}>Saved analyses</button></div>}
       {canvasDirty && <div className={styles.draftNotice} role="status"><span>Canvas has unapplied edits. Mapping will use the previously selected BPMN.</span><button type="button" onClick={() => navigate("canvas")}>Review canvas draft</button></div>}
       <div className={styles.workspace}>
-		<div className={styles.leftRail}>
-			<AnalysisForm loading={loading || batchRunning} onSubmit={handleSubmit} baseline={baseline} edited={edited} onBaseline={changeBaseline} onEdited={changeEdited} onOpenEditor={() => navigate("canvas")} />
+		<div id="analysis-inputs" className={styles.leftRail}>
+			<AnalysisForm key={inputGeneration} completedRepository={report?.repository} repositoryPath={repositoryPath} onRepositoryPath={setRepositoryPath} enableResearch={RND_ENABLED} loading={loading || batchRunning} onSubmit={handleSubmit} baseline={baseline} edited={edited} onBaseline={changeBaseline} onEdited={changeEdited} onOpenEditor={() => navigate("canvas")} />
 		</div>
-        <section className={styles.resultRegion} aria-live="polite">
-          {loading && <div className={styles.stateCard}><div className={styles.spinner} /><h3>Analyzing repository</h3><p>Parsing BPMN, indexing allowed files, and ranking evidence…</p></div>}
+        <section className={styles.resultRegion} aria-label="Analysis results">
+          <p className={styles.srOnly} role="status">{loading ? "Analyzing repository." : report ? `${report.changes.length} BPMN changes ready for review.` : ""}</p>
+          <div className={styles.workflowBar} id="analysis-workflow">
+            <div role="group" aria-label="Analysis workflow" className={styles.workflowSteps}>
+              <button type="button" aria-pressed={workspaceStage === "mapping"} onClick={() => workflow("mapping")}>Mapping</button>
+              <button type="button" aria-pressed={false} onClick={()=>navigate("canvas")}>Canvas</button>
+              <button type="button" aria-pressed={workspaceStage === "planning"} disabled={!report || loading} onClick={() => workflow("planning")}>Planning</button>
+            </div>
+            <span className={styles.workflowRepository}>{report?.repository.name || "No analysis selected"}</span>
+          </div>
+          <div id="mapping-results" hidden={workspaceStage !== "mapping"}>
+          {restoring && !loading && <div className={styles.stateCard} role="status"><h3>Reopening saved report</h3><p>Loading the completed analysis. Mapping is not being run again.</p></div>}
+          {loading && <div className={styles.stateCard}><div className={styles.spinner} /><h3>Analyzing repository</h3><p>Parsing BPMN, indexing allowed files, and ranking evidence...</p></div>}
           {!loading && error && <div className={`${styles.stateCard} ${styles.error}`}><strong>Analysis could not be completed</strong><p>{error}</p></div>}
-          {!loading && !error && !report && <div className={styles.stateCard}><div className={styles.emptyGlyph}>↗</div><h3>Your impact report will appear here</h3><p>Configure the repository and provide both BPMN versions to begin.</p></div>}
+          {!restoring && !loading && !error && !report && <div className={styles.stateCard}><span className={styles.kicker}>No analysis yet</span><h3>Your impact report will appear here</h3><p>Configure the repository and provide both BPMN versions to begin.</p></div>}
           {!loading && report && <>
 				{comparison.length > 1 && <ComparisonView reports={comparison} selectedMethod={report.method} onSelect={setReport} />}
 				<ReportView report={report} />
 			</>}
+          </div>
+          <div id="planning-results" hidden={workspaceStage !== "planning"}>
+            {report && planningAnalysis === report.analysis_id && <PlanningContextView key={report.analysis_id} analysisID={report.analysis_id} repositoryPath={reportRepositoryPath} onRepositoryPath={repositoryForReport} />}
+          </div>
         </section>
       </div>
       </div>
@@ -116,28 +157,27 @@ export default function Home() {
           <small>Drafts stay available across tabs in this session. Download them before refreshing.</small>
         </section>}
       </div>
+      <div hidden={view !== "library"}>
+        <BpmnLibrary active={view === "library"} baseline={baseline} edited={edited} hasBaseline={!!baseline} onUse={(file, target) => {
+          if (canvasDirty && !window.confirm("Replace the current canvas draft? Download it first if you need to keep it.")) return;
+          if (target === "baseline") changeBaseline(file); else changeEdited(file);
+          navigate("mapping");
+        }} />
+      </div>
       <div hidden={view !== "history"} className={styles.historyPage}>
-        <AnalysisHistory refreshKey={report?.analysis_id ?? ""} onOpen={(saved) => { setReport(saved); setComparison([]); setError(""); navigate("mapping"); }} />
+        <AnalysisHistory refreshKey={report?.analysis_id ?? ""} onOpen={(saved) => { setReport(saved); setWorkspaceStage("mapping"); setComparison([]); setError(""); navigate("mapping"); }} />
       </div>
-      <div hidden={view !== "planning"} className={styles.planningPage}>
-        {report ? <PlanningContextView key={report.analysis_id} analysisID={report.analysis_id} /> : <section className={styles.stateCard}><h3>No analysis selected</h3><p>Run a mapping or open a saved analysis to inspect its bounded planning context.</p><button type="button" onClick={() => navigate("mapping")}>Go to Mapping</button></section>}
-      </div>
-      <div hidden={view !== "research"} className={styles.researchPage}>
-        <BatchAnalysis busy={loading} onBusy={setBatchRunning} onOpen={reports=>{setReport(reports.find(r=>r.method==="hybrid")??reports[0]);setComparison(reports);setError("");navigate("mapping");}} />
-        {!report ? <section className={styles.stateCard}><h3>No frozen analysis selected</h3><p>Run a mapping or open a saved analysis before preparing reviewer artifacts.</p><button type="button" onClick={() => navigate("mapping")}>Go to Mapping</button></section> : <>
-          <section className={styles.researchIntro}><span>Optional research workflow</span><h3>Predictions stay immutable.</h3><p>Annotation, reconciliation, and metrics are post-inference tools. They never change candidate retrieval or the canonical impact report.</p></section>
+      {RND_ENABLED && <div hidden={view !== "research"} className={styles.researchPage}>
+        <BenchmarkSummary />
+        <BatchAnalysis busy={loading} onBusy={setBatchRunning} onOpen={reports=>{setReport(reports.find(r=>r.method==="hybrid")??reports[0]);setWorkspaceStage("mapping");setComparison(reports);setError("");navigate("mapping");}} />
+        {!report ? <section className={styles.stateCard}><h3>Choose a report to evaluate</h3><p>Run a mapping or open a saved analysis to check it against expected files.</p><button type="button" onClick={() => navigate("mapping")}>Go to Mapping</button></section> : <>
+          <section className={styles.researchIntro}><span>Check the results</span><h3>Compare predictions with expected files</h3><p>A reference lists the files expected to be affected. Evaluation checks how many the mapper found and how high it ranked them. It does not change the original mapping report.</p></section>
           <ReviewPanel key={`review-${report.analysis_id}`} report={report} />
           <BlindReviewPack key={`pack-${(comparison.length ? comparison : [report]).map(r => r.analysis_id).join("|")}`} reports={comparison.length ? comparison : [report]} />
           <EvaluationDashboard key={`evaluation-${(comparison.length ? comparison : [report]).map(r => r.analysis_id).join("|")}`} reports={comparison.length ? comparison : [report]} />
         </>}
-      </div>
-      <div hidden={view !== "guide"} className={styles.guidePage}><InterpretationGuide /><section className={styles.stateCard}><h3>One baseline, two ways to compare</h3><p>Upload both BPMN files in Mapping, or open a baseline in BPMN Canvas and edit a copy. Use edited BPMN transfers the current draft to Mapping. Changing the baseline starts a new canvas; switching tabs preserves edits and undo history.</p><p>Scores describe retrieval relevance or agreement, not certainty that a file needs changing. Inspect evidence before deciding on an action.</p></section></div>
-    </main>
+      </div>}
+      <div hidden={view !== "guide"} className={styles.guidePage}><InterpretationGuide /><section className={styles.stateCard}><h3>One baseline, two ways to compare</h3><p>Upload both BPMN files in Mapping, or open a baseline in BPMN Canvas and edit a copy. Canvas shows the original read-only above the editable new version; color outlines are a quick visual preview, while the backend report is the authoritative diff. Expand the editor for precise edits. Use edited BPMN transfers the current draft to Mapping. Changing the baseline starts a new canvas; switching tabs preserves edits and undo history.</p><p>Scores describe retrieval relevance or agreement, not certainty that a file needs changing. Inspect evidence before deciding on an action.</p></section></div>
+    </WorkspaceShell>
   );
-}
-
-function cloneFormData(source: FormData): FormData {
-	const result = new FormData();
-	for (const [name, value] of source.entries()) result.append(name, value);
-	return result;
 }

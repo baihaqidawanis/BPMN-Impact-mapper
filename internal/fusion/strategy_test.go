@@ -56,6 +56,118 @@ func TestRRFRewardsAgreementAndMergesEvidence(t *testing.T) {
 	}
 }
 
+func TestProductionHybridAbstainsFromUnsupportedFunctionWithoutChangingFileRank(t *testing.T) {
+	file := "billing/store.go"
+	change := domain.Change{ChangeType: domain.ModifyGatewayCondition, NewElement: &domain.Element{ID: "GW-1", Name: "Eligible?", Type: "exclusiveGateway"}}
+	selected := impact(file, domain.ActionVerify, "BM25")
+	selected.Symbol = "Store.PostInvoice"
+	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+	artifacts := []domain.Artifact{
+		{ID: "post", File: file, Symbol: domain.Symbol{Name: "PostInvoice", Receiver: "Store", Kind: "method"}, Content: "func (Store) PostInvoice() { /* invoice amount */ }"},
+		{ID: "approve", File: file, Symbol: domain.Symbol{Name: "ApproveInvoice", Receiver: "Store", Kind: "method"}, Content: "func (Store) ApproveInvoice() { /* eligibility */ }"},
+	}
+	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right, DiversifyFiles: true, ConservativeSymbols: true}
+	result, _, err := strategy.Attach(context.Background(), []domain.Change{change}, artifacts, mapping.Options{TopK: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := result[0].Impacts[0]
+	if got.File != file || got.Symbol != "" || got.Confidence != 1 || got.RequiredAction != domain.ActionVerify {
+		t.Fatalf("unsupported function was asserted or file rank changed: %#v", got)
+	}
+	if !evidenceType(got.Evidence, "SYMBOL_SCOPE_UNRESOLVED") {
+		t.Fatalf("missing function-level abstention evidence: %#v", got.Evidence)
+	}
+	if strategy.MethodMetadata()["symbol_selection"] == "" {
+		t.Fatal("symbol-selection rule not recorded in method metadata")
+	}
+}
+
+func TestProductionHybridKeepsUniquelySupportedFunction(t *testing.T) {
+	for _, test := range []struct {
+		name            string
+		label           string
+		id              string
+		selectedContent string
+		otherContent    string
+		selectedName    string
+		otherName       string
+		wantSymbol      string
+	}{
+		{"direct ID", "Eligible?", "GW-1", `func Approve() { trace := "GW-1" }`, `func Reject() {}`, "Approve", "Reject", "Approve"},
+		{"two unique label words", "Approve expense claim", "GW-1", `func ApproveClaim() {}`, `func RejectClaim() {}`, "ApproveClaim", "RejectClaim", "ApproveClaim"},
+		{"ambiguous label words", "Approve expense claim", "GW-1", `func ApproveClaim() {}`, `func ApproveClaimAgain() {}`, "ApproveClaim", "ApproveClaimAgain", ""},
+		{"shared direct ID", "Eligible?", "GW-1", `func Approve() { trace := "GW-1" }`, `func Reject() { trace := "GW-1" }`, "Approve", "Reject", ""},
+		{"ID prefix is not exact", "Eligible?", "GW-1", `func Approve() { trace := "GW-12" }`, `func Reject() {}`, "Approve", "Reject", ""},
+		{"Unicode ID boundary is exact", "Eligible?", "GW-1", `func Approve() { trace := "ÄGW-1" }`, `func Reject() {}`, "Approve", "Reject", ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			file := "claims.go"
+			selected := impact(file, domain.ActionVerify, "BM25")
+			selected.Symbol = test.selectedName
+			left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+			right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+			artifacts := []domain.Artifact{
+				{ID: "selected", File: file, Symbol: domain.Symbol{Name: test.selectedName, Kind: "function"}, Content: test.selectedContent},
+				{ID: "other", File: file, Symbol: domain.Symbol{Name: test.otherName, Kind: "function"}, Content: test.otherContent},
+			}
+			strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right, ConservativeSymbols: true}
+			result, _, err := strategy.Attach(context.Background(), []domain.Change{{ChangeType: domain.ModifyGatewayCondition, NewElement: &domain.Element{ID: test.id, Name: test.label}}}, artifacts, mapping.Options{TopK: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := result[0].Impacts[0].Symbol; got != test.wantSymbol {
+				t.Fatalf("symbol = %q, want %q", got, test.wantSymbol)
+			}
+		})
+	}
+}
+
+func TestProductionHybridDoesNotPresentGoPackageAsFunction(t *testing.T) {
+	file := "claims/store.go"
+	selected := impact(file, domain.ActionVerify, "BM25")
+	selected.Symbol = "claims"
+	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{selected}}}}
+	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right, ConservativeSymbols: true}
+	artifacts := []domain.Artifact{{ID: file, File: file, Symbol: domain.Symbol{Name: "claims", Kind: "package"}, Content: "package claims"}}
+	result, _, err := strategy.Attach(context.Background(), []domain.Change{{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "NEW", Name: "Check claim"}}}, artifacts, mapping.Options{TopK: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := result[0].Impacts[0].Symbol; got != "" {
+		t.Fatalf("package name displayed as affected function: %q", got)
+	}
+}
+
+func evidenceType(items []domain.Evidence, kind string) bool {
+	for _, item := range items {
+		if item.Type == kind {
+			return true
+		}
+	}
+	return false
+}
+
+func TestFusionWarnsWhenSemanticSupportIsSparse(t *testing.T) {
+	left := fakeStrategy{method: domain.MethodBM25, changes: []domain.Change{{Impacts: []domain.Impact{
+		impact("a.go", domain.ActionVerify, "BM25"), impact("b.go", domain.ActionVerify, "BM25"), impact("c.go", domain.ActionVerify, "BM25"),
+	}}}}
+	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{impact("b.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}}}}
+	strategy := fusion.Strategy{MethodName: domain.MethodFusion, Left: left, Right: right}
+	_, warnings, err := strategy.Attach(context.Background(), []domain.Change{{ChangeType: domain.AddTask}}, nil, mapping.Options{TopK: 3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, warning := range warnings {
+		if warning.Code == "FUSION_SPARSE_SUPPORT" {
+			return
+		}
+	}
+	t.Fatal("sparse semantic list was not surfaced")
+}
+
 func TestFusionKeepsCodeEvidenceScoreSeparateFromRankAgreement(t *testing.T) {
 	evidenceScore := 0.2968
 	left := fakeStrategy{method: domain.MethodHybrid, changes: []domain.Change{{Impacts: []domain.Impact{{
@@ -199,8 +311,13 @@ func TestFusionTieWarningUsesDisplayedRRFResults(t *testing.T) {
 	right := fakeStrategy{method: domain.MethodSemantic, changes: []domain.Change{{Impacts: []domain.Impact{impact("a.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}}}}
 	strategy := fusion.Strategy{MethodName: domain.MethodHybrid, Left: left, Right: right}
 	_, warnings, err := strategy.Attach(context.Background(), base, make([]domain.Artifact, 2), mapping.Options{TopK: 2})
-	if err != nil || len(warnings) != 0 {
+	if err != nil {
 		t.Fatalf("upstream tie incorrectly reported as final tie: %v %#v", err, warnings)
+	}
+	for _, warning := range warnings {
+		if warning.Code == "CANDIDATE_TIE" {
+			t.Fatalf("upstream tie incorrectly reported as final tie: %#v", warnings)
+		}
 	}
 	right.changes[0].Impacts = []domain.Impact{impact("b.go", domain.ActionVerify, "SEMANTIC_SIMILARITY"), impact("a.go", domain.ActionVerify, "SEMANTIC_SIMILARITY")}
 	strategy.Right = right

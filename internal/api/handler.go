@@ -14,7 +14,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/agentjobs"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/bpmnlib"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/mapping"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
@@ -31,6 +33,8 @@ const (
 )
 
 type Handler struct {
+	Library        bpmnlib.Store
+	Agents         *agentjobs.Service
 	Analyzer       app.Analyzer
 	Store          reportstore.Store
 	Planner        planning.Orchestrator
@@ -45,6 +49,14 @@ type Handler struct {
 func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
 	switch {
+	case request.URL.Path == "/api/v1/bpmn-library" || strings.HasPrefix(request.URL.Path, "/api/v1/bpmn-library/"):
+		handler.library(writer, request)
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/capabilities/agents/check":
+		handler.agentCapability(writer, request)
+	case request.Method == http.MethodPost && isAgentStart(request.URL.Path):
+		handler.startAgents(writer, request)
+	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/api/v1/agent-sessions/"):
+		handler.getAgentSession(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/capabilities/semantic/check":
 		handler.checkSemanticRuntime(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/review-packs":

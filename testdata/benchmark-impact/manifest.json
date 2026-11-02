@@ -1,0 +1,47 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "methods": ["bm25", "semantic", "fusion", "hybrid"],
+  "scenarios": [
+    {
+      "id": "synthetic-add-confirmation-task",
+      "repository_path": "testdata/benchmark-impact/repository",
+      "repository_name": "fixture-impact",
+      "revision": "fixture-v1",
+      "expected_input_fingerprint": "967a384eeb33a28be15fa385c04d1a6c",
+      "old_bpmn_path": "testdata/benchmark-impact/task-old.bpmn",
+      "old_bpmn_sha256": "9fff7bf0c9f6b38ad21d21f723e0cbee3738174d8912fa2ea65137a1571952cf",
+      "new_bpmn_path": "testdata/benchmark-impact/task-new.bpmn",
+      "new_bpmn_sha256": "f8342fcb051148d2d659a0ca0a925733b4ec13b2adfbfc3ce6d302e3d525bb3c",
+      "ground_truth_path": "testdata/benchmark-impact/task-truth.json",
+      "ground_truth_sha256": "96b53d2310d2bad41af806b4f14e8dd9c10540325e7b29c3b99ef2100f3df3d4"
+    },
+    {
+      "id": "synthetic-add-approval-gateway",
+      "repository_path": "testdata/benchmark-impact/repository",
+      "repository_name": "fixture-impact",
+      "revision": "fixture-v1",
+      "expected_input_fingerprint": "f2c630ab611416cfbaae07dcdd8369e6",
+      "old_bpmn_path": "testdata/benchmark-impact/gateway-old.bpmn",
+      "old_bpmn_sha256": "193691c1621027394a4f80d0c3d20f8dc8e0a01d3ef4a50ff518d9613af2313f",
+      "new_bpmn_path": "testdata/benchmark-impact/gateway-new.bpmn",
+      "new_bpmn_sha256": "8ea3060d551084bb4c1bcfcc87ffd1c3d4b2043ff9aa3fffe7bb9cbe2a7ce79b",
+      "ground_truth_path": "testdata/benchmark-impact/gateway-truth.json",
+      "ground_truth_sha256": "316c08dd5cb2c860ae7dfcc931fcd97a3fe5d91cb5e0a6cf526446ae4cac98af"
+    },
+    {
+      "id": "synthetic-flow-label-negative",
+      "repository_path": "testdata/repository",
+      "repository_name": "synthetic-repository",
+      "revision": "fixture-v1",
+      "expected_input_fingerprint": "27df05f4ffd6ce1d9fd5cce23f5f75f8",
+      "old_bpmn_path": "testdata/bpmn/old.bpmn",
+      "old_bpmn_sha256": "394cd3196f0df5ed8fd09a497cf4b85bb46d9f803f5b307533f9e13bf1a94d15",
+      "new_bpmn_path": "testdata/benchmark-controls/flow-label-only-new.bpmn",
+      "new_bpmn_sha256": "3319b79dcad52222f49f9eefbb96d57732207d1d7d1916fc4597b0de5cfb51d6",
+      "ground_truth_path": "testdata/benchmark-controls/ground-truth-label-only.json",
+      "ground_truth_sha256": "04007aa7b8fcdf838eb50f81aa2c5d4a44efdc912c8b85ef556e5f64b978a8f3"
+    }
+  ]
+}

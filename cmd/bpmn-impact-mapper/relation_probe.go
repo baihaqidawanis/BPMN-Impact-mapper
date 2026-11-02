@@ -27,6 +27,8 @@ func runProbeRelations(arguments []string, stdout, stderr io.Writer) error {
 	repository := flags.String("repo", "", "local repository path, read only")
 	reportPath := flags.String("report", "", "existing canonical impact-report.json")
 	topSeeds := flags.Int("top-seeds", 5, "maximum displayed candidates per change used as relation seeds (1-20)")
+	callers := flags.Bool("source-callers", false, "include bounded reverse source-caller associations (unranked)")
+	inspect := flags.String("inspect-source", "", "comma-separated relative files; print indexed relation metadata only")
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -52,19 +54,52 @@ func runProbeRelations(arguments []string, stdout, stderr io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("inventory repository: %w", err)
 	}
-	indexed := index.DefaultRegistry().Build(inventory)
+	registry := index.DefaultRegistry()
+	if *callers {
+		registry = index.SourceContextRegistry()
+	}
+	indexed := registry.Build(inventory)
 	result := struct {
-		AnalysisID string                   `json:"analysis_id"`
-		Warning    string                   `json:"warning"`
-		Findings   []relationprobe.Finding  `json:"findings"`
-		Proposals  []relationprobe.Proposal `json:"proposals"`
+		AnalysisID      string                   `json:"analysis_id"`
+		Warning         string                   `json:"warning"`
+		Findings        []relationprobe.Finding  `json:"findings"`
+		Proposals       []relationprobe.Proposal `json:"proposals"`
+		CallerChanges   []domain.Change          `json:"caller_changes,omitempty"`
+		SourceArtifacts []sourceArtifactInfo     `json:"source_artifacts,omitempty"`
 	}{
 		AnalysisID: report.AnalysisID,
 		Warning:    "experimental only: repository snapshot equality with the saved report is not verified; proposed order is not a calibrated score or canonical report change",
 		Findings:   relationprobe.Probe(report, indexed.Artifacts, *topSeeds),
 	}
 	result.Proposals = relationprobe.Propose(report, result.Findings)
+	if *inspect != "" {
+		selected := map[string]bool{}
+		for _, f := range strings.Split(*inspect, ",") {
+			selected[strings.TrimSpace(strings.ReplaceAll(f, "\\", "/"))] = true
+		}
+		for _, a := range indexed.Artifacts {
+			if selected[a.File] {
+				result.SourceArtifacts = append(result.SourceArtifacts, sourceArtifactInfo{a.ID, a.File, a.Symbol, a.Relations})
+			}
+		}
+	}
+	if *callers {
+		for _, c := range report.Changes {
+			files := relationprobe.CallerFiles(c, indexed.Artifacts)
+			if len(files) == 0 {
+				continue
+			}
+			result.CallerChanges = append(result.CallerChanges, domain.Change{ChangeType: c.ChangeType, OldElement: c.OldElement, NewElement: c.NewElement, RelatedFiles: files})
+		}
+	}
 	encoder := json.NewEncoder(stdout)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(result)
+}
+
+type sourceArtifactInfo struct {
+	ID        string                  `json:"id"`
+	File      string                  `json:"file"`
+	Symbol    domain.Symbol           `json:"symbol"`
+	Relations []domain.SourceRelation `json:"relations"`
 }

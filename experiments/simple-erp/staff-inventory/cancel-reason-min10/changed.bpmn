@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:tns="https://simple-erp.local/bpm-haqi/role-staff-l3-adj-cancel" id="Definitions_role_staff_l3_adj_cancel" targetNamespace="https://simple-erp.local/bpm-haqi/role-staff-l3-adj-cancel" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_staff_l3_adj_cancel" name="Batalkan adjustment draft atau approved - Staff" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+Jika stok berubah setelah APPROVED, Staff membatalkan dengan alasan, membuat draft baru dari snapshot terkini, lalu meminta approval ulang. Pelaksana request: Staff; guard backend tetap berlaku.
+backend/internal/inventory/adapter/postgres/store.go :: TransitionAdjustment</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_staff_l3_adj_cancel">
+      <bpmn:lane id="Lane_role_staff_l3_adj_cancel_0" name="Staff">
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_staff_l3_adj_cancel_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_effect0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_cancel_failed</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_staff_l3_adj_cancel_start" name="Kebutuhan aksi">
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_staff_l3_adj_cancel_input" name="Isi alasan pembatalan adjustment minimal 10 karakter setelah trim">
+      <bpmn:documentation>Aktor alternatif pada lane, bukan dua persetujuan.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_staff_l3_adj_cancel_check" name="DRAFT atau APPROVED; versi cocok; creator atau Super Admin aktif; alasan ada">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. Jika stok berubah setelah APPROVED, Staff membatalkan dengan alasan, membuat draft baru dari snapshot terkini, lalu meminta approval ulang.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="role_staff_l3_adj_cancel_valid" name="Syarat terpenuhi?" gatewayDirection="Diverging">
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="role_staff_l3_adj_cancel_effect0" name="Ubah adjustment CANCELLED">
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_adj_cancel_effect1" name="Audit ACT-INV-ADJ-CANCEL; commit">
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_cancel_Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_0" sourceRef="role_staff_l3_adj_cancel_start" targetRef="role_staff_l3_adj_cancel_input" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_1" sourceRef="role_staff_l3_adj_cancel_input" targetRef="role_staff_l3_adj_cancel_check" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_2" sourceRef="role_staff_l3_adj_cancel_check" targetRef="role_staff_l3_adj_cancel_valid" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_3" name="Ya" sourceRef="role_staff_l3_adj_cancel_valid" targetRef="role_staff_l3_adj_cancel_effect0">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Ya</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_4" sourceRef="role_staff_l3_adj_cancel_effect0" targetRef="role_staff_l3_adj_cancel_effect1" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_5" sourceRef="role_staff_l3_adj_cancel_effect1" targetRef="role_staff_l3_adj_cancel_done" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_cancel_Flow_6" name="Tidak" sourceRef="role_staff_l3_adj_cancel_valid" targetRef="role_staff_l3_adj_cancel_failed">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="text/plain">Tidak</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="role_staff_l3_adj_cancel_done" name="Aksi selesai; hasil diterima">
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="role_staff_l3_adj_cancel_failed" name="Ditolak / gagal; tidak commit">
+      <bpmn:incoming>role_staff_l3_adj_cancel_Flow_6</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_staff_l3_adj_cancel">
+    <bpmn:participant id="Pool_role_staff_l3_adj_cancel" name="Simple ERP" processRef="Process_role_staff_l3_adj_cancel" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="Diagram_role_staff_l3_adj_cancel">
+    <bpmndi:BPMNPlane id="Plane_role_staff_l3_adj_cancel" bpmnElement="Collab_role_staff_l3_adj_cancel">
+      <bpmndi:BPMNShape id="Pool_role_staff_l3_adj_cancel_di" bpmnElement="Pool_role_staff_l3_adj_cancel" isHorizontal="true" bioc:stroke="#000000" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#000000">
+        <dc:Bounds x="20" y="100" width="2020" height="440" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_adj_cancel_1_di" bpmnElement="Lane_role_staff_l3_adj_cancel_1" isHorizontal="true" bioc:stroke="#000000" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#000000">
+        <dc:Bounds x="50" y="320" width="1990" height="220" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_adj_cancel_0_di" bpmnElement="Lane_role_staff_l3_adj_cancel_0" isHorizontal="true" bioc:stroke="#000000" bioc:fill="#ffffff" color:background-color="#ffffff" color:border-color="#000000">
+        <dc:Bounds x="50" y="100" width="1990" height="220" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_start_di" bpmnElement="role_staff_l3_adj_cancel_start" bioc:stroke="#4caf50" bioc:fill="#c8e6c9" color:background-color="#c8e6c9" color:border-color="#4caf50">
+        <dc:Bounds x="200" y="171" width="38" height="38" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="181" y="214" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_input_di" bpmnElement="role_staff_l3_adj_cancel_input" bioc:stroke="#9c27b0" bioc:fill="#f3e5f5" color:background-color="#f3e5f5" color:border-color="#9c27b0">
+        <dc:Bounds x="425" y="145" width="178" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_check_di" bpmnElement="role_staff_l3_adj_cancel_check" bioc:stroke="#ff9800" bioc:fill="#fff3e0" color:background-color="#fff3e0" color:border-color="#ff9800">
+        <dc:Bounds x="650" y="362" width="178" height="96" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_valid_di" bpmnElement="role_staff_l3_adj_cancel_valid" isMarkerVisible="true" bioc:stroke="#ffc107" bioc:fill="#fff8e1" color:background-color="#fff8e1" color:border-color="#ffc107">
+        <dc:Bounds x="875" y="383" width="54" height="54" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="858" y="359" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_effect0_di" bpmnElement="role_staff_l3_adj_cancel_effect0" bioc:stroke="#ff9800" bioc:fill="#fff3e0" color:background-color="#fff3e0" color:border-color="#ff9800">
+        <dc:Bounds x="1100" y="365" width="178" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_effect1_di" bpmnElement="role_staff_l3_adj_cancel_effect1" bioc:stroke="#ff9800" bioc:fill="#fff3e0" color:background-color="#fff3e0" color:border-color="#ff9800">
+        <dc:Bounds x="1325" y="365" width="178" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_done_di" bpmnElement="role_staff_l3_adj_cancel_done" bioc:stroke="#f44336" bioc:fill="#ffcdd2" color:background-color="#ffcdd2" color:border-color="#f44336">
+        <dc:Bounds x="1581" y="391" width="38" height="38" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1536" y="434" width="129" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_cancel_failed_di" bpmnElement="role_staff_l3_adj_cancel_failed" bioc:stroke="#f44336" bioc:fill="#ffcdd2" color:background-color="#ffcdd2" color:border-color="#f44336">
+        <dc:Bounds x="1581" y="471" width="38" height="38" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1531" y="514" width="138" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_0_di" bpmnElement="role_staff_l3_adj_cancel_Flow_0" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="238" y="190" />
+        <di:waypoint x="331.5" y="190" />
+        <di:waypoint x="331.5" y="190" />
+        <di:waypoint x="425" y="190" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_1_di" bpmnElement="role_staff_l3_adj_cancel_Flow_1" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="603" y="190" />
+        <di:waypoint x="626.5" y="190" />
+        <di:waypoint x="626.5" y="410" />
+        <di:waypoint x="650" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_2_di" bpmnElement="role_staff_l3_adj_cancel_Flow_2" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="828" y="410" />
+        <di:waypoint x="851.5" y="410" />
+        <di:waypoint x="851.5" y="410" />
+        <di:waypoint x="875" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_3_di" bpmnElement="role_staff_l3_adj_cancel_Flow_3" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="929" y="410" />
+        <di:waypoint x="1014.5" y="410" />
+        <di:waypoint x="1014.5" y="410" />
+        <di:waypoint x="1100" y="410" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="999" y="383" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_4_di" bpmnElement="role_staff_l3_adj_cancel_Flow_4" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="1278" y="410" />
+        <di:waypoint x="1301.5" y="410" />
+        <di:waypoint x="1301.5" y="410" />
+        <di:waypoint x="1325" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_5_di" bpmnElement="role_staff_l3_adj_cancel_Flow_5" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="1503" y="410" />
+        <di:waypoint x="1581" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_cancel_Flow_6_di" bpmnElement="role_staff_l3_adj_cancel_Flow_6" bioc:stroke="#000000" color:border-color="#000000">
+        <di:waypoint x="902" y="437" />
+        <di:waypoint x="902" y="490" />
+        <di:waypoint x="1581" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1001" y="463" width="27" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

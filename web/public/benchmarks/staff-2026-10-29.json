@@ -1,0 +1,53 @@
+{
+    "version":  1,
+    "snapshot_id":  "staff-file-fusion-2026-10-29",
+    "date":  "2026-10-29",
+    "repository":  "Simple-ERP",
+    "role":  "Staff",
+    "revision_label":  "c934497-dirty",
+    "scenario_count":  5,
+    "positive_scenarios":  4,
+    "negative_controls":  1,
+    "repetitions":  2,
+    "reference_status":  "provisional-source-review",
+    "ranking_policy":  "Hybrid uses file-level RRF; other methods use consolidated saved predictions",
+    "source_summary_sha256":  "efbd723b55b2f6bb81f4ac4fad24bf8786b825428e161f76c5c39e48e6fefe4a",
+    "results":  [
+                    {
+                        "method":  "bm25",
+                        "precision_at_5":  0.15,
+                        "recall_at_5":  0.375,
+                        "recall_at_10":  0.458325,
+                        "map":  0.2375,
+                        "mrr":  0.358325,
+                        "r_precision":  0.125
+                    },
+                    {
+                        "method":  "semantic",
+                        "precision_at_5":  0.2,
+                        "recall_at_5":  0.416675,
+                        "recall_at_10":  0.666675,
+                        "map":  0.300025,
+                        "mrr":  0.35,
+                        "r_precision":  0.166675
+                    },
+                    {
+                        "method":  "fusion",
+                        "precision_at_5":  0.2,
+                        "recall_at_5":  0.416675,
+                        "recall_at_10":  0.75,
+                        "map":  0.22015,
+                        "mrr":  0.274975,
+                        "r_precision":  0.083325
+                    },
+                    {
+                        "method":  "hybrid",
+                        "precision_at_5":  0.45,
+                        "recall_at_5":  0.875,
+                        "recall_at_10":  1,
+                        "map":  0.7389,
+                        "mrr":  0.833325,
+                        "r_precision":  0.58335
+                    }
+                ]
+}

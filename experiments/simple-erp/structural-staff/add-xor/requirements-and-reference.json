@@ -1,0 +1,18 @@
+{
+  "scenario": "add-xor",
+  "requirement": "Require a non-empty reason on adjustment submit; reject without changing state if absent. Existing reason request/storage fields are reused.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "daceb5d9e075230b24446e8773a13e7c0932d1eb19d2fa1af290bcce1f0f20fe",
+  "expected_existing_files": [
+    "frontend/features/inventory/inventory-adjustment-panel.tsx",
+    "backend/internal/inventory/adapter/postgres/store.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}

@@ -37,10 +37,10 @@ func Markdown(value domain.Report) []byte {
 	fmt.Fprintf(&output, "- Repository: `%s`\n", escape(value.Repository.Name))
 	fmt.Fprintf(&output, "- Revision: `%s`\n", escape(value.Repository.Revision))
 	fmt.Fprintf(&output, "- Changes: %d\n\n", len(value.Changes))
-	if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+	if strings.HasPrefix(value.MethodMetadata["left_ranking_version"], "context-bm25-") {
 		output.WriteString("Hybrid combines BPMN-context BM25 and Semantic positions with RRF. IDs, function names, paths, and code patterns are optional evidence, not separate ranking weights. A new BPMN ID absent from old source causes no score penalty. Scores order candidates; they are not probabilities of a required change.\n\n")
 	} else {
-		output.WriteString("Retrieval scores order candidates; they are not probabilities of a required change. Code evidence, meaning match and rank agreement are separate measurements. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. A new task or gateway may not have an ID in source yet; the current code-evidence weights are not recalibrated. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.\n\n")
+		output.WriteString("Retrieval scores order candidates; they are not probabilities of a required change. BM25, semantic similarity and rank agreement have different scales. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only.\n\n")
 	}
 	if len(value.SourceAnalysis) > 0 {
 		output.WriteString("## Source analysis coverage\n\n| File | Language | Adapter | Capabilities | Fallback |\n|---|---|---|---|---|\n")
@@ -76,12 +76,31 @@ func Markdown(value domain.Report) []byte {
 			fmt.Fprintf(&output, "Reason: %s\n\n", escape(change.Reason))
 		}
 		if change.Context != nil {
-			fmt.Fprintf(&output, "Composite pattern: `%s`\n\n", escape(string(change.Context.Pattern)))
+			if change.Context.Pattern != "" || len(change.Context.BaselineAnchors) == 0 {
+				fmt.Fprintf(&output, "Composite pattern: `%s`\n\n", escape(string(change.Context.Pattern)))
+			}
+			if len(change.Context.BaselineAnchors) > 0 {
+				output.WriteString("Experimental baseline task anchors (query context, not proven code dependencies):\n\n")
+				for _, a := range change.Context.BaselineAnchors {
+					fmt.Fprintf(&output, "- %s: `%s` %s; %d hops via `%s`\n", escape(a.Direction), escape(a.ID), escape(a.Name), a.Hops, escape(strings.Join(a.FlowPath, " -> ")))
+				}
+				output.WriteByte('\n')
+			}
 			if values := contextElements(change.Context.Predecessors); values != "" {
 				fmt.Fprintf(&output, "Predecessors: %s\n\n", values)
 			}
 			if values := contextElements(change.Context.Successors); values != "" {
 				fmt.Fprintf(&output, "Successors: %s\n\n", values)
+			}
+			for _, branch := range change.Context.BranchChanges {
+				old, next := branch.OldCondition, branch.NewCondition
+				if old == "" {
+					old = branch.OldLabel
+				}
+				if next == "" {
+					next = branch.NewLabel
+				}
+				fmt.Fprintf(&output, "Branch `%s`: before `%s`; after `%s`.\n\n", escape(branch.FlowID), escape(old), escape(next))
 			}
 		}
 		var supportingFlows []string
@@ -92,7 +111,17 @@ func Markdown(value domain.Report) []byte {
 			}
 		}
 		if len(supportingFlows) > 0 {
-			fmt.Fprintf(&output, "Supporting sequence-flow edits (mapped with this task): %s.\n\n", escape(strings.Join(supportingFlows, ", ")))
+			fmt.Fprintf(&output, "Supporting sequence-flow edits (mapped with this change): %s.\n\n", escape(strings.Join(supportingFlows, ", ")))
+		}
+		if len(change.RelatedFiles) > 0 {
+			output.WriteString("### Related source files (unranked)\n\nObserved source connections, not proof these files must change. They are separate from ranked impacts and retrieval metrics.\n\n")
+			for _, f := range change.RelatedFiles {
+				fmt.Fprintf(&output, "- VERIFY `%s`: possible caller of `%s` in `%s` (%d source edges).\n", escape(f.File), escape(f.SeedFunction), escape(f.SeedFile), f.Hops)
+				for _, e := range f.Evidence {
+					fmt.Fprintf(&output, "  - %s `%s`: %s\n", escape(e.Type), escape(e.Location), escape(e.Excerpt))
+				}
+			}
+			output.WriteByte('\n')
 		}
 		if len(change.Impacts) > 0 {
 			output.WriteString("| Action | Retrieval score | Module | Layer | File | Function / code name |\n")
@@ -109,7 +138,7 @@ func Markdown(value domain.Report) []byte {
 				output.WriteString("\n\n")
 				if impact.ScoreBreakdown.EvidenceScore != nil {
 					fmt.Fprintf(&output, "Code-evidence score: %.4f. ", *impact.ScoreBreakdown.EvidenceScore)
-				} else if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+				} else if strings.HasPrefix(value.MethodMetadata["left_ranking_version"], "context-bm25-") {
 					fmt.Fprintf(&output, "BM25 word match: %.4f. ", impact.ScoreBreakdown.BM25)
 				} else {
 					output.WriteString("Code-evidence score: not scored. ")
@@ -119,7 +148,7 @@ func Markdown(value domain.Report) []byte {
 				} else {
 					output.WriteString("Meaning match: not scored. ")
 				}
-				if value.MethodMetadata["left_ranking_version"] == "context-bm25-v1" {
+				if strings.HasPrefix(value.MethodMetadata["left_ranking_version"], "context-bm25-") {
 					fmt.Fprintf(&output, "Score: BM25=%.4f, semantic=%.4f, RRF=%.4f (ranking only).\n\n", impact.ScoreBreakdown.BM25, impact.ScoreBreakdown.Semantic, impact.ScoreBreakdown.RRF)
 				} else if impact.ScoreBreakdown.RRF > 0 {
 					fmt.Fprintf(&output, "Rank agreement: %.4f.\n\n", impact.ScoreBreakdown.RRF)

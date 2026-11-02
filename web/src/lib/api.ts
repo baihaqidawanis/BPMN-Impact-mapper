@@ -50,8 +50,8 @@ export async function listAnalyses(): Promise<ReportSummary[]> {
   return value.analyses;
 }
 
-export async function getAnalysis(analysisID: string): Promise<Report> {
-  const response = await fetch(`/backend/api/v1/analyses/${encodeURIComponent(analysisID)}`, { cache: "no-store" });
+export async function getAnalysis(analysisID: string, signal?: AbortSignal): Promise<Report> {
+  const response = await fetch(`/backend/api/v1/analyses/${encodeURIComponent(analysisID)}`, { cache: "no-store", signal });
   if (!response.ok) throw new Error("The selected analysis is unavailable.");
   return await response.json() as Report;
 }

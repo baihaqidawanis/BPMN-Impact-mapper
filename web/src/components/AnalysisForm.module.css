@@ -1,7 +1,7 @@
 .panel {
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: 12px;
   background: var(--surface);
   box-shadow: var(--shadow);
 }
@@ -26,26 +26,26 @@
   border-radius: 9px;
   background: var(--black);
   color: #ffffff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .heading h2 { margin: 0 0 4px; font-size: 17px; font-weight: 650; letter-spacing: -0.025em; }
-.heading p { margin: 0; color: var(--muted); font-size: 12px; }
+.heading p { margin: 0; color: var(--muted); font-size: 13px; }
 
 .demoButton {
-  width: calc(100% - 44px);
-  min-height: 39px;
+  width: 100%;
+  min-height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: 16px 22px 0;
+  margin: 0;
   border: 1px solid rgba(0, 113, 227, 0.24);
   border-radius: 10px;
   background: var(--blue-soft);
   color: var(--blue);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
@@ -53,16 +53,16 @@
 
 .demoButton:hover:not(:disabled) { border-color: var(--blue); background: rgba(0, 113, 227, 0.12); }
 .demoButton:disabled { opacity: 0.55; cursor: wait; }
-.demoError { margin: 8px 22px 0; color: var(--charcoal); font-size: 11px; line-height: 1.45; }
-.demoChoice { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; margin: 16px 22px 0; color: var(--muted); font-size: 10px; font-weight: 650; }
+.demoError { margin: 8px 22px 0; color: var(--charcoal); font-size: 13px; line-height: 1.45; }
+.demoToolbar { display: grid; grid-template-columns: minmax(0, 1fr) 134px; align-items: end; gap: 10px; padding: 16px 22px 0; }
+.demoChoice { display: grid; gap: 7px; margin: 0; min-width: 0; color: var(--muted); font-size: 12px; font-weight: 550; }
 .demoChoice select { min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--canvas); color: var(--ink); font: inherit; }
-.demoChoice + .demoButton { margin-top: 9px; }
 
 .form { display: grid; gap: 16px; padding: 20px 22px 22px; }
 .field { display: grid; gap: 7px; }
-.field > span { color: var(--charcoal); font-size: 12px; font-weight: 650; }
+.field > span { color: var(--charcoal); font-size: 13px; font-weight: 650; }
 .field > span b { color: var(--blue); }
-.field small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.field small { color: var(--muted); font-size: 12px; line-height: 1.4; }
 
 .field input,
 .field select {
@@ -74,20 +74,23 @@
   outline: 0;
   background: var(--canvas);
   color: var(--ink);
-  font-size: 12px;
+  font-size: 13px;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .field input:focus,
 .field select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1); background: #ffffff; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px; }
+.grid > :only-child { grid-column: 1 / -1; }
+.field input[type="number"] { max-width: 120px; }
+.form > p { overflow-wrap: anywhere; }
 
 .divider {
   display: flex;
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -97,7 +100,7 @@
 .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 
 .fileField {
-  display: flex;
+  display: grid;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -108,21 +111,21 @@
 }
 
 .fileField > span { display: grid; gap: 3px; min-width: 120px; }
-.fileField b { font-size: 11px; }
-.fileField small { color: var(--muted); font-size: 9px; }
-.fileField input { min-width: 0; max-width: 190px; color: var(--muted); font-size: 9px; }
-.fileField input::file-selector-button { margin-right: 8px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: #ffffff; color: var(--ink); font-size: 9px; font-weight: 650; cursor: pointer; }
+.fileField b { font-size: 13px; }
+.fileField small { color: var(--muted); font-size: 12px; }
+.fileField input { min-width: 0; width: 100%; max-width: 100%; color: var(--muted); font-size: 12px; }
+.fileField input::file-selector-button { margin-right: 8px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: #ffffff; color: var(--ink); font-size: 12px; font-weight: 650; cursor: pointer; }
 
-.demoActive { display: grid; gap: 3px; margin-top: -5px; padding: 10px 11px; border-left: 2px solid var(--blue); background: var(--blue-soft); color: var(--charcoal); font-size: 10px; line-height: 1.4; }
-.demoActive b { color: var(--blue); font-size: 11px; }
+.demoActive { display: grid; gap: 3px; margin-top: -5px; padding: 10px 11px; border-left: 2px solid var(--blue); background: var(--blue-soft); color: var(--charcoal); font-size: 12px; line-height: 1.4; }
+.demoActive b { color: var(--blue); font-size: 13px; }
 
 .modeSwitch { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 11px; background: var(--canvas); }
-.modeSwitch button { min-height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; }
+.modeSwitch button { min-height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
 .modeSwitch button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, .08); }
 .methodSummary { display: grid; gap: 3px; padding: 12px; border-left: 2px solid var(--blue); background: var(--blue-soft); }
-.methodSummary span { color: var(--muted); font-size: 9px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; }
-.methodSummary b { color: var(--blue); font-size: 12px; }
-.methodSummary small, .modeNote { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.methodSummary span { color: var(--muted); font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em; }
+.methodSummary b { color: var(--blue); font-size: 13px; }
+.methodSummary small, .modeNote { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .modeNote { margin: 0; padding: 10px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--canvas); }
 .modeNote b { color: var(--ink); }
 
@@ -140,8 +143,8 @@
 
 .checkField input { margin-top: 2px; accent-color: var(--blue); }
 .checkField span { display: grid; gap: 3px; }
-.checkField b { color: var(--ink); font-size: 11px; }
-.checkField small { color: var(--muted); font-size: 9px; line-height: 1.45; }
+.checkField b { color: var(--ink); font-size: 13px; }
+.checkField small { color: var(--muted); font-size: 12px; line-height: 1.45; }
 
 .runtimeCheck {
   display: grid;
@@ -154,9 +157,9 @@
   background: var(--canvas);
 }
 .runtimeCheck > div { display: grid; gap: 3px; }
-.runtimeCheck b { color: var(--ink); font-size: 11px; }
-.runtimeCheck small { color: var(--muted); font-size: 9px; line-height: 1.4; }
-.runtimeCheck button { padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: #ffffff; color: var(--ink); font: inherit; font-size: 9px; font-weight: 650; cursor: pointer; }
+.runtimeCheck b { color: var(--ink); font-size: 13px; }
+.runtimeCheck small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.runtimeCheck button { padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: #ffffff; color: var(--ink); font: inherit; font-size: 12px; font-weight: 650; cursor: pointer; }
 .runtimeCheck button:disabled { opacity: .55; cursor: wait; }
 .runtimeCheck[data-state="ready"] { border-color: rgba(0, 113, 227, .3); background: var(--blue-soft); }
 .runtimeCheck[data-state="ready"] b { color: var(--blue); }
@@ -173,7 +176,7 @@
   border-radius: 11px;
   background: var(--blue);
   color: #ffffff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
   transition: transform 0.15s, background 0.15s;
@@ -182,6 +185,52 @@
 .submit:hover:not(:disabled) { transform: translateY(-1px); background: var(--blue-hover); }
 .submit:disabled { opacity: 0.55; cursor: wait; }
 .submit span { font-size: 18px; }
-.note { margin: -3px 0 0; text-align: center; color: var(--muted); font-size: 9px; }
+.note { margin: -3px 0 0; text-align: center; color: var(--muted); font-size: 12px; }
 
 @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } .fileField { align-items: flex-start; flex-direction: column; } .fileField input { max-width: 100%; } }
+
+.panel { box-shadow: none; border-radius: 10px; }
+.heading { padding: 19px 20px 16px; }
+.heading > span { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line-strong); color: var(--muted); background: none; font-weight: 500; }
+.heading h2 { font-size: 16px; }
+.heading p { font-size: 12px; }
+.demoButton { border-color: var(--line-strong); background: var(--surface); color: var(--charcoal); font-size: 11px; border-radius: 7px; }
+.demoButton:hover:not(:disabled) { background: var(--canvas); border-color: var(--muted); }
+.form { padding: 18px 20px 20px; }
+.field > span { font-size: 12px; font-weight: 550; }
+.field input, .field select { border-radius: 7px; background: var(--surface); }
+
+.demoToolbar { grid-template-columns:minmax(0,1fr); gap:9px; padding:16px 20px 0; }
+.demoButton { width:100%; min-height:34px; }
+
+.heading { padding:22px 22px 18px; }
+.heading h2 { font-size:17px; font-weight:600; }
+.heading p { line-height:1.6; }
+.form { gap:20px; padding:22px; }
+.field input,.field select { min-height:40px; border-color:#d1d6d8; border-radius:6px; }
+.field small { font-size:11px; line-height:1.55; }
+.divider { text-transform:none; letter-spacing:0; font-weight:600; color:var(--ink); font-size:12px; margin-top:3px; }
+.divider::before { display:none; }
+.fileField { padding:14px; background:#fafbf9; border:1px solid #dce0df; border-radius:7px; gap:9px; }
+.fileField b { font-weight:550; }
+.fileField small { font-size:11px; overflow-wrap:anywhere; }
+.canvasLink { border:0; background:transparent; border-radius:0; padding:0 0 3px; font-size:12px; text-align:left; }
+.methodSummary { background:transparent; border:0; padding:0; gap:6px; }
+.methodSummary span { text-transform:none; letter-spacing:0; font-size:12px; color:var(--ink); font-weight:550; }
+.methodSummary b { font-weight:500; line-height:1.5; }
+.modeSwitch { border-radius:6px; padding:3px; }
+.modeSwitch button { border-radius:4px; font-weight:500; font-size:12px; }
+.runtimeCheck { padding:12px 0; border:0; border-block:1px solid var(--line); border-radius:0; background:transparent; gap:8px; }
+.runtimeCheck[data-state=ready] { background:transparent; border-color:var(--line); }
+.runtimeCheck b { font-size:12px; font-weight:550; }
+.runtimeCheck small { font-size:11px; }
+.runtimeCheck button { padding:7px; border-radius:5px; font-size:11px; font-weight:500; }
+.submit { border-radius:6px; font-weight:550; min-height:43px; }
+.submit:hover:not(:disabled) { transform:none; }
+.note { font-size:11px; text-align:left; line-height:1.7; }
+.demoSection { border-top:1px solid var(--line); padding:18px 22px 22px; background:#fafbf9; }
+.demoSection>p { font-size:12px; color:var(--muted); margin:0 0 12px; }
+.demoToolbar { padding:0; gap:10px; }
+.demoButton { background:transparent; font-size:12px; font-weight:500; }
+.demoChoice select { background:white; border-radius:5px; }
+.demoError { margin:10px 0 0; }

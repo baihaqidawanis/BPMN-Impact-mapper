@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "MODIFY_GATEWAY_CONDITION",
+      "element_id": "role_staff_l3_pr_copy_valid",
+      "expected": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+          "required_action": "MODIFY"
+        }
+      ]
+    }
+  ]
+}

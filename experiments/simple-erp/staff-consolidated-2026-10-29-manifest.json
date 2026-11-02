@@ -1,0 +1,76 @@
+{
+    "version":  "1",
+    "repetitions":  2,
+    "top_k":  10,
+    "label_provenance":  "single-source-review",
+    "methods":  [
+                    "bm25",
+                    "semantic",
+                    "fusion",
+                    "hybrid"
+                ],
+    "scenarios":  [
+                      {
+                          "id":  "staff-inventory-submit-nonzero-delta",
+                          "repository_path":  "../Simple-ERP",
+                          "repository_name":  "Simple-ERP",
+                          "revision":  "c934497-dirty",
+                          "expected_input_fingerprint":  "3928eae772d9ea5782461b3e3d11da5a",
+                          "old_bpmn_path":  "experiments/simple-erp/frozen-staff-baselines/role-staff-l3-adj-submit.bpmn",
+                          "old_bpmn_sha256":  "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+                          "new_bpmn_path":  "experiments/simple-erp/staff-inventory/role-staff-l3-adj-submit-nonzero-delta.bpmn",
+                          "new_bpmn_sha256":  "e40124746ac36683e784184ff1517455f514fb29b27e850903ee2c9adc993f9b",
+                          "ground_truth_path":  "docs/ground-truth/staff-source-review-nonzero-delta-2026-10-28.json",
+                          "ground_truth_sha256":  "ecae065497effeac6cf7addb424156fcf38c517cd0803deec8f9ceebe2c68b61"
+                      },
+                      {
+                          "id":  "staff-p2p-failure-flow-display-label",
+                          "repository_path":  "../Simple-ERP",
+                          "repository_name":  "Simple-ERP",
+                          "revision":  "c934497-dirty",
+                          "expected_input_fingerprint":  "f6095e7ad63be127073ee7be96cec810",
+                          "old_bpmn_path":  "experiments/simple-erp/frozen-staff-baselines/role-staff-l3-pr-create.bpmn",
+                          "old_bpmn_sha256":  "93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c",
+                          "new_bpmn_path":  "experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-sequence-label.bpmn",
+                          "new_bpmn_sha256":  "b7f84aa786367a38e769bbcc5322157ab054e5822c715196248aa1d73e0607eb",
+                          "ground_truth_path":  "docs/ground-truth/staff-source-review-flow-label-2026-10-28.json",
+                          "ground_truth_sha256":  "9f652d7ae333bddf5b41665c81b4883662ba8b4967af5ba5e3ee2d7dfc6c8fcd"
+                      },
+                      {
+                          "id":  "staff-pr-positive-price",
+                          "repository_path":  "../Simple-ERP",
+                          "repository_name":  "Simple-ERP",
+                          "revision":  "c934497-dirty",
+                          "old_bpmn_path":  "experiments/simple-erp/frozen-staff-baselines/role-staff-l3-pr-create.bpmn",
+                          "old_bpmn_sha256":  "93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c",
+                          "new_bpmn_path":  "experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-positive-price.bpmn",
+                          "new_bpmn_sha256":  "539af56fbfdface3dcd75b3123a6ddba0fc01e3cfd5e8bd539747054b6ad2fa2",
+                          "ground_truth_path":  "docs/ground-truth/staff-pr-positive-price-reference.json",
+                          "ground_truth_sha256":  "fc030cf9057bb17d34162d088a7b7e08838b23c69c5b698225d2a59651935f37"
+                      },
+                      {
+                          "id":  "staff-inventory-required-submit-reason",
+                          "repository_path":  "../Simple-ERP",
+                          "repository_name":  "Simple-ERP",
+                          "revision":  "c934497-dirty",
+                          "old_bpmn_path":  "experiments/simple-erp/frozen-staff-baselines/role-staff-l3-adj-submit.bpmn",
+                          "old_bpmn_sha256":  "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+                          "new_bpmn_path":  "experiments/simple-erp/staff-inventory/role-staff-l3-adj-submit-reason-task.bpmn",
+                          "new_bpmn_sha256":  "078e362843fde3374c5673db69a6b6b7edbe58c6a4ba43f86fd3a4dfd2cdcf3e",
+                          "ground_truth_path":  "docs/ground-truth/staff-inventory-submit-reason-task-reference.json",
+                          "ground_truth_sha256":  "e58255789940f015cce9c1ab780852d70181ba51a2f06d74e39544892f5955ce"
+                      },
+                      {
+                          "id":  "staff-pr-confirm-total-v2",
+                          "repository_path":  "../Simple-ERP",
+                          "repository_name":  "Simple-ERP",
+                          "revision":  "c934497-dirty",
+                          "old_bpmn_path":  "experiments/simple-erp/frozen-staff-baselines/role-staff-l3-pr-create.bpmn",
+                          "old_bpmn_sha256":  "93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c",
+                          "new_bpmn_path":  "experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-confirm-total-v2.bpmn",
+                          "new_bpmn_sha256":  "370ecbca3c7f48134c8132461d86d55b90d59cac69860567612c069dad859be7",
+                          "ground_truth_path":  "docs/ground-truth/staff-p2p-total-confirmation-reference.json",
+                          "ground_truth_sha256":  "b240c01cb895e3506e05fd8da5fa120f05189f0e299a235efe908f09d5c61095"
+                      }
+                  ]
+}

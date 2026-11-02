@@ -1,14 +1,41 @@
 # Methodology
 
-## Current production ranking (engine 3.5d)
+## Current production ranking (versioned method metadata)
 
 The production Hybrid has two ranking branches: BPMN-context BM25 and
 Semantic cosine retrieval. RRF combines their positions with equal votes
 (`k=60`); file diversity is applied to the displayed Hybrid list. The lexical
+query and its source corpus remain unchanged by the 2026-10-29 file-ranking
+experiment. Production Hybrid now deduplicates each branch by file before
+assigning RRF positions and combines file votes. This prevents function count
+from consuming file-ranking slots and allows agreement on a file even when
+the retrievers select different functions. It does not assert agreement on a
+function; the existing conservative source-backed resolver handles that scope.
+Sequence-flow eligibility retains artifact ranks. Method metadata records the
+ranking unit. Plain Fusion remains the artifact-level comparison. The lexical
 query includes the changed element plus applicable predecessor/successor
 labels; long task documentation is replaced by a short shared process anchor
 for named task additions/removals. The plain BM25 research baseline omits
 neighbour labels, keeping BPMN-context retrieval as a distinct comparison.
+
+Gateway correction (2026-10-28): branch conditions are direct gateway
+semantics, even though BPMN XML stores them on outgoing sequence flows.
+Plain BM25 now keeps conditions and their explanatory branch labels; it still
+excludes process and neighbour names. For change detection, explicit conditions
+take precedence over display labels; without an explicit condition, the branch
+label is a surrogate. Retrieval retains both expression and annotation, since
+a label may explain a terse expression in business language. Added/removed gateways
+use their outgoing conditions; condition modifications use changed old/new
+branches, including deleted branches. This is query construction, not a new
+retrieval method or a weight change.
+
+A condition edit with unchanged flow endpoints is reported under the matching
+gateway change. Its atomic flow diff remains in JSON with `part_of`; rewiring,
+added/removed flows and separate display-label edits stay independent. An exact
+flow ID or eligible multiword label in source retains a separate, source-filtered
+verification. Grouping removes duplicate retrievals, not actual diff records.
+The policy version is included in report metadata/analysis identity. Prior
+reports and ground-truth labels must not be rewritten to match new predictions.
 
 Direct changed-element IDs, neighbouring IDs, function names, file paths, and
 conservative code-pattern clues are **explanatory evidence only** in this
@@ -168,6 +195,30 @@ structural hints use the changed label and same short anchor. Generic
 omitted; gateway direction and state/data text remain where relevant. This is
 query construction, not a new embedding model or a calibrated weight.
 
+For `MODIFY_GATEWAY_CONDITION`, the query also uses the changed outgoing
+branch's old/new label and condition, its adjacent BPMN element names, and the
+process name. These are graph-derived query terms, not a source-code dependency
+claim. An absent exact gateway ID in code remains normal; candidates stay
+`VERIFY` unless a separate direct rule establishes an action. The lexical and
+semantic query metadata versions are incremented so reports from different
+query rules are not mistaken for identical-method repetitions. This adjustment
+has synthetic positive/negative tests but no independently adjudicated accuracy
+claim on Simple-ERP.
+
+The production Hybrid ranks at file/function passage granularity but reports
+a function name only when its native-indexed source span uniquely contains the
+changed BPMN ID, or its function/type name uniquely matches at least two
+nontrivial words from the changed element label. Otherwise the candidate stays
+at file level with `SYMBOL_SCOPE_UNRESOLVED` evidence. This changes neither
+file ranking nor RRF score and never upgrades `VERIFY` to `MODIFY`. It is a
+conservative display/abstention rule, not a learned confidence threshold;
+multilingual labels and absent generated IDs can hide a truly relevant function.
+The rule is versioned in method metadata and analysis identity. BM25-only,
+semantic-only, and research fusion rankings remain unchanged for comparison.
+`MODIFY_SEQUENCE_FLOW` is exempt because direct flow-label source eligibility
+uses the original file/symbol key; rewriting that key would invalidate the
+eligibility check after retrieval.
+
 BM25/label evidence now cites the source line with the most distinct query
 terms, or the path when only path tokens match. This changes explanations,
 not BM25 arithmetic. Analysis identity is `engine-3.4i-focused-retrieval-queries`
@@ -244,9 +295,24 @@ Query construction is change-aware: additions use the new element, removals use 
 Generic process words in a BPMN label or its neighbors can also occur in
 unrelated modules. BM25 normalization and rank fusion are relative rankings, so
 they can place such cross-module matches high even without a causal dependency.
-These remain `VERIFY`; there is no Simple-ERP-specific suppression rule. Any
-new generic negative evidence or weight change must be evaluated against
-independent, hidden ground truth before it becomes the product default.
+These remain `VERIFY`; there is no Simple-ERP-specific suppression rule. A
+shared, method-independent eligibility rule handles the narrower case of a
+sequence flow whose **display label alone** changes while its endpoints and
+explicit condition are unchanged. Retrieval runs only over artifacts with an
+exact flow-ID reference or an exact old/new label phrase (at least two words
+and eight characters). Such a candidate remains `VERIFY` and carries
+`FLOW_ID_REFERENCE` or `FLOW_LABEL_TEXT` evidence. Without a direct reference,
+the flow has no candidate and reports an unresolved impact; this does not prove
+`NO_ACTION`. An empty explicit condition can make the label itself a branch
+condition, so that case is not gated. Add/remove/rewired flows and condition
+changes are not gated. The configuration-driven compatibility method retains
+its explicit mapping independently. This common eligibility rule is versioned
+in method metadata and the analysis ID. Any displayed score for an eligible
+label-only candidate is a rank **within that restricted source set**, not a
+probability or a score comparable to a full-corpus change. A matching comment
+or documentation phrase can still be a false positive. Its false-negative and
+false-positive trade-off remains to be measured against independent, hidden ground truth;
+synthetic controls and an exposed case-study probe are not accuracy estimates.
 
 The BM25 baseline uses only this normalized score and the changed element's own text (not graph-neighbour labels), requires positive lexical evidence, and labels every result `VERIFY`. It does not inherit trace-ID action classification from the legacy weighted method.
 

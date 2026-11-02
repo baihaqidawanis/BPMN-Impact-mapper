@@ -11,6 +11,19 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 )
 
+func TestExperimentalBaselineAnchorsRemainAuditableInMarkdown(t *testing.T) {
+	value := domain.Report{Changes: []domain.Change{{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "New", Name: "New check", Type: "serviceTask"}, Context: &domain.ChangeContext{BaselineAnchors: []domain.BaselineAnchor{{ElementContext: domain.ElementContext{ID: "Before", Name: "Existing task"}, Direction: "predecessor", Hops: 2, FlowPath: []string{"F1", "F2"}}}}}}}
+	text := string(report.Markdown(value))
+	for _, part := range []string{"query context, not proven code dependencies", "Existing task", "2 hops", "F1 -> F2"} {
+		if !strings.Contains(text, part) {
+			t.Fatal("missing anchor audit detail", part, text)
+		}
+	}
+	if strings.Contains(text, "Composite pattern: ``") {
+		t.Fatal("empty pattern label")
+	}
+}
+
 func TestCanonicalJSONAndMarkdownGolden(t *testing.T) {
 	value := goldenReport()
 	jsonData, err := report.JSON(value)

@@ -2,12 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/review"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
 
 func TestRunAnalyzeWritesBothArtifacts(t *testing.T) {
@@ -146,14 +149,43 @@ func TestRunPrepareReviewCreatesBlindImmutablePack(t *testing.T) {
 func TestRunFrozenBenchmark(t *testing.T) {
 	t.Chdir(filepath.Join("..", ".."))
 	output := t.TempDir()
-	arguments := []string{"benchmark", "--manifest", filepath.Join("testdata", "benchmark", "manifest.json"), "--output", output}
-	if err := run(arguments, &bytes.Buffer{}, &bytes.Buffer{}); err != nil {
+	arguments := []string{"--manifest", filepath.Join("testdata", "benchmark", "manifest.json"), "--output", output}
+	embedder := &benchmarkFixtureEmbedder{}
+	if err := runBenchmarkWithAnalyzer(arguments, &bytes.Buffer{}, &bytes.Buffer{}, wiring.NewAnalyzerWithSemanticEmbedder(embedder)); err != nil {
 		t.Fatal(err)
+	}
+	if embedder.calls == 0 {
+		t.Fatal("semantic benchmark path was not exercised")
 	}
 	for _, name := range []string{"benchmark-report.json", "benchmark-report.md", "benchmark-report.csv", "benchmark-timing.json", "benchmark-comparison.md", "benchmark-comparison.csv", "benchmark-ablation.md", "benchmark-ablation.csv"} {
 		if info, err := os.Stat(filepath.Join(output, name)); err != nil || info.Size() == 0 {
 			t.Fatalf("missing %s: %v", name, err)
 		}
+	}
+}
+
+// Deliberately constant vectors: this tests CLI orchestration/artifacts, never model accuracy.
+type benchmarkFixtureEmbedder struct{ calls int }
+
+func (*benchmarkFixtureEmbedder) Identity() semantic.Identity {
+	return semantic.Identity{Provider: "unit-test", Model: "constant-fixture-not-a-quality-model"}
+}
+func (e *benchmarkFixtureEmbedder) Embed(_ context.Context, texts []string) ([][]float64, error) {
+	e.calls++
+	result := make([][]float64, len(texts))
+	for i := range texts {
+		result[i] = []float64{1, 0}
+	}
+	return result, nil
+}
+
+func TestRunFrozenBenchmarkWithLocalModel(t *testing.T) {
+	if os.Getenv("BPMN_IMPACT_RUN_MODEL_TESTS") != "1" {
+		t.Skip("opt-in integration: local Python/model and sufficient memory required")
+	}
+	t.Chdir(filepath.Join("..", ".."))
+	if err := run([]string{"benchmark", "--manifest", "testdata/benchmark/manifest.json", "--output", t.TempDir()}, &bytes.Buffer{}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
 	}
 }
 

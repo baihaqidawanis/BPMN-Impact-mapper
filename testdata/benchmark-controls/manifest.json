@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 5,
+  "methods": ["bm25", "semantic", "fusion", "hybrid"],
+  "scenarios": [
+    {
+      "id": "synthetic-flow-display-label-negative",
+      "repository_path": "testdata/repository",
+      "repository_name": "synthetic-repository",
+      "revision": "fixture-v1",
+      "expected_input_fingerprint": "27df05f4ffd6ce1d9fd5cce23f5f75f8",
+      "old_bpmn_path": "testdata/bpmn/old.bpmn",
+      "old_bpmn_sha256": "394cd3196f0df5ed8fd09a497cf4b85bb46d9f803f5b307533f9e13bf1a94d15",
+      "new_bpmn_path": "testdata/benchmark-controls/flow-label-only-new.bpmn",
+      "new_bpmn_sha256": "3319b79dcad52222f49f9eefbb96d57732207d1d7d1916fc4597b0de5cfb51d6",
+      "ground_truth_path": "testdata/benchmark-controls/ground-truth-label-only.json",
+      "ground_truth_sha256": "04007aa7b8fcdf838eb50f81aa2c5d4a44efdc912c8b85ef556e5f64b978a8f3"
+    }
+  ]
+}

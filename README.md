@@ -4,18 +4,53 @@ BPMN Impact Mapper is an offline, third-party analysis tool that maps semantic B
 
 The implemented deterministic core uses the Go standard library. It inventories source without executing it, parses old/new BPMN, computes a conservative graph diff, indexes text plus native Go symbols, exposes four automatic mapping methods, and evaluates completed reports against separately supplied hidden ground truth. Semantic, Fusion, and BPMN-Context-Aware Hybrid Retrieval use a local Python embedding runtime; BM25-only remains Go-only.
 
+## Mulai di sini
+
+Jalankan dua terminal PowerShell:
+
+```powershell
+cd C:\BPMN-Impact-Mapper; $env:GOCACHE='C:\BPMN-Impact-Mapper\.gocache'; go run .\cmd\bpmn-impact-mapper-server
+```
+
+```powershell
+cd C:\BPMN-Impact-Mapper\web; npm run dev
+```
+
+Buka http://localhost:3000. Panduan yang dipakai sekarang:
+
+- [Skenario Staff terbaru dan isian web](experiments/simple-erp/current-staff/README.md)
+- [Tabel mapping baseline Staff P2P L3](experiments/simple-erp/baseline-traceability/README.md)
+- [Peta dokumentasi](docs/README.md)
+- [Alur Workspace: Mapping dan Planning](docs/WORKSPACE-UX-2026-11-02.md)
+- [Kesiapan sebelum model lab dan source connections](docs/PRE-LLM-READINESS.md)
+- [Eksperimen dan baseline historis](experiments/README.md)
+- [Arah TA](TA-DIRECTION-CONCLUSION.md) dan [metode](BASELINE-METHODS.md)
+
+Source backend: `cmd/` dan `internal/`. Frontend: `web/`. Fixture sintetis:
+`testdata/`. Data analisis lokal: `.data/`. Hasil eksperimen: `outputs/`.
+Upload/gambar/report/executable lama dari root disimpan di
+`outputs/manual-inputs/`, dengan manifest lokasi dan hash. Tidak dihapus.
+
 ## Scope boundary
 
 ### Edit BPMN in the web
 
-The web workspace has four top-level views: **Mapping**, **BPMN Canvas**,
-**Saved analyses**, and **Guide**. Upload a baseline from Mapping or Canvas,
+The web has **Workspace**, **BPMN Canvas**, **Saved analyses**, and **Guide**.
+**Research** is available when RND is enabled. Workspace contains Mapping and
+Planning stages, sharing the selected analysis and a device-local repository
+path. Upload a baseline from Mapping or Canvas,
 then edit its independent copy with the bpmn-js palette (task/gateway/flows;
 wrench for task type). Select **Use edited BPMN** to return the current version
 to Mapping, then run impact analysis. Uploading a separate new BPMN remains
 supported. Switching views preserves editor state and undo/redo history. The
 Mapping view warns when the canvas contains edits that have not been applied.
 Drafts live in browser memory: download before refreshing.
+Completed reports are stored under `.data/analyses` by the backend. Opening or
+creating one adds `?analysis=<id>` to the URL; refreshing that URL reopens the
+saved report with a GET, without rerunning mapping. Saved analyses also lists
+previous reports. Keep the same backend data directory across restarts.
+Uploaded BPMN files, canvas drafts, comparison tabs and reviewer/evaluation
+inputs are not restored by this report-selection link.
 See [scoring audit and editor limitations](docs/SCORING-AUDIT.md).
 
 The mapper recommends artifacts for human review. It does not modify source, generate code, run the analyzed repository, migrate a database, deploy software, or prove that a candidate must change. Unsupported or ambiguous cases are reported as unresolved.
@@ -37,6 +72,18 @@ The indexing registry supports ordered `SourceAdapter` and `RelationExtractor` e
   `all-MiniLM-L6-v2` model; the analyzer forces offline model loading
 
 ## Build and test
+
+Unit tests do not require Python or a downloaded embedding model. The frozen
+benchmark CLI unit test uses explicitly labelled fixture vectors to verify
+orchestration and artifacts, not model quality. Its real-model integration test
+is opt-in and requires the existing offline Python/MiniLM runtime and enough
+free memory:
+
+```powershell
+$env:BPMN_IMPACT_RUN_MODEL_TESTS='1'; go test ./cmd/bpmn-impact-mapper -run '^TestRunFrozenBenchmarkWithLocalModel$' -count=1
+```
+
+Unset `BPMN_IMPACT_RUN_MODEL_TESTS` afterward to return to the normal unit suite.
 
 ```powershell
 go test ./...
@@ -144,6 +191,15 @@ gateway/task scenario completed in about 2 minutes 48 seconds on 2026-10-20;
 this is one machine/input measurement, not a performance guarantee. Do not
 remove timeouts: CPU embedding must remain cancellable. Lowering Top-K changes
 displayed results, not the number of source passages embedded.
+
+If Hybrid/semantic analysis reports `local embedding worker stopped unexpectedly`
+with Windows exit `0xc0000005`, the Python native runtime crashed before a
+report was produced. A repeat of one staff inventory scenario succeeded twice
+after two such failures with identical output hashes; the cause was not proven.
+Check available memory/commit headroom, close unneeded applications yourself,
+restart the backend, and retry the same inputs. Do not interpret a failed run
+as an unresolved mapping, or substitute BM25 output while calling it Hybrid.
+The mapper does not close other applications or change repository source.
 
 In another terminal, start Next.js:
 
@@ -256,6 +312,47 @@ The manifest pins SHA-256 for old/new BPMN and hidden ground truth. It runs BM25
 The tracked benchmark includes a vocabulary-mismatch control whose BPMN task
 has no stable ID or exact label token in the expected source symbol. This is a
 synthetic method control, not case-study accuracy evidence.
+Its older request-change fixture intentionally labels only 2 of 12 changes and
+now declares `truth_scope: "subset"`. The runner shows those diagnostic metrics
+per scenario but excludes them from method aggregates; a complete scenario is
+required for every aggregate. New manifests use complete coverage by default.
+
+A smaller [synthetic control pack](testdata/benchmark-controls/README.md)
+freezes task-add, task-remove, gateway-add, and label-only comparisons for
+deterministic cross-method regression tests. Its separate one-case benchmark
+checks that a label-only negative control abstains across all four methods;
+it does not establish Simple-ERP accuracy.
+
+The [positive/negative synthetic benchmark](testdata/benchmark-impact/README.md)
+adds authored file-level truth for one task insertion and one gateway branch,
+plus the label-only abstention case. Its manifest locks input fingerprints and
+executes all four methods twice. The batch evaluator requires truth for every
+BPMN change, including supporting sequence flows. These controls expose
+ranking and action-classification errors but are not independently reviewed
+Simple-ERP accuracy results.
+
+A separate [Staff source-review diagnostic](experiments/simple-erp/STAFF-SOURCE-REVIEW-DIAGNOSTIC-2026-10-28.md)
+compares the same four methods on one stock-rule change and one label-only
+control. Its source-inspected labels were frozen before this run's ranking,
+but come from a single assistant reviewer and are explicitly marked
+`single-source-review` in the benchmark exports. Treat its metrics as
+diagnostics, not independently adjudicated accuracy.
+
+The [gateway retrieval follow-up](experiments/simple-erp/GATEWAY-RETRIEVAL-FIX-2026-10-28.md)
+documents corrected branch queries, duplicate-flow grouping, and before/after
+diagnostics with unchanged reference labels.
+
+The [consolidated Staff benchmark](experiments/simple-erp/STAFF-CONSOLIDATED-2026-10-29.md)
+combines five existing Staff cases and documents a separate positive-change
+summary alongside the canonical atomic-change metrics.
+
+The [file-level fusion follow-up](experiments/simple-erp/FILE-FUSION-2026-10-29.md)
+records the Hybrid ranking correction, unchanged references, before/after
+metrics and the fixed-denominator precision ceiling.
+
+The [positive-ranking and passage audit](experiments/simple-erp/ADJACENT-PASSAGES-2026-10-29.md)
+documents R-precision, positive-case MAP, the updated Research dashboard,
+and an unsuccessful passage experiment kept out of production.
 
 Latency output is shared-process and sequential. The first embedding method
 includes cold model startup while later methods may reuse the embedding cache;
@@ -311,6 +408,16 @@ With `--manifest`, reconciliation verifies the pack ID, case digest, canonical r
 - `internal/configmapping`, `internal/retrieval`: outward method adapters;
 - `internal/evaluation`: pure post-inference evaluation use case;
 - `internal/benchmark`: injected-port benchmark orchestration and deterministic aggregation;
+
+The planning HTTP adapter is tested with local mock servers. It rejects
+redirects (including with a caller-supplied HTTP client), credentials/query
+parameters in endpoint URLs, oversized serialized requests/responses, null or
+missing required response fields, trailing JSON, and explicitly incomplete
+model completions. Evidence text is marked as untrusted data in the prompt;
+the orchestrator separately validates referenced files, evidence, and actions.
+These checks establish the integration contract, not the quality of a real
+model's reasoning. The server still uses `NoLLMProvider`; lab-model activation
+and real-model evaluation remain pending.
 - `internal/review`: pure two-reviewer reconciliation;
 - `internal/reviewpack`: pure blind-review pack validation and rendering;
 - `internal/scenario`: case-agnostic, deterministic BPMN mutation use case;
@@ -335,3 +442,24 @@ The concise four-method research baseline and its primary literature are in
 - local files can change during analysis (TOCTOU); use a frozen snapshot for experiments;
 - Current synthetic evaluation verifies mechanics, not research performance or generalization.
 - ZIP/Git URL ingestion, additional native language adapters, external LLM providers, and large-scale experiment orchestration are deferred.
+
+### Local BPMN library
+
+Open **BPMN Library** to save a versioned diagram and reuse it as the baseline
+or changed BPMN. Entries persist in the backend data directory, including after
+refresh/restart. See [library guide](docs/BPMN-LIBRARY.md). It works without VPN
+and does not run Qwen or change repository source. Restart the backend after
+updating to enable its new library endpoints.
+
+### Workspace navigation
+
+The start page is Overview. Use Analysis for inputs, Canvas, mapping and Planning;
+Library stores process diagrams and History reopens saved reports. The sidebar
+collapses on desktop and opens/closes as a mobile menu. Direct input link:
+`/?view=analysis`. See [UI workflow notes](docs/WORKSPACE-REDESIGN-2026-11-02.md).
+
+### Next connected test
+
+Use [Pre-Qwen handoff](docs/PRE-QWEN-HANDOFF.md) and the active Staff v2 scenario
+pack for the current ERP baseline. Historical experiment pairs/reports remain
+frozen. The handoff separates offline checks from actual lab-model validation.

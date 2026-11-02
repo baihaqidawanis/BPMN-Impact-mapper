@@ -11,6 +11,70 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
+func TestParsedProcessNameSurvivesInsertAndRemoveContext(t *testing.T) {
+	parse := func(body string) *domain.Graph {
+		t.Helper()
+		xml := `<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"><process id="P" name="Expense reimbursement"><startEvent id="S"/><endEvent id="E"/>` + body + `</process></definitions>`
+		graph, err := bpmn.Parse([]byte(xml), bpmn.Limits{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return graph
+	}
+	oldGraph := parse(`<sequenceFlow id="F" sourceRef="S" targetRef="E"/>`)
+	newGraph := parse(`<userTask id="T" name="Attach receipt"/><sequenceFlow id="F" sourceRef="S" targetRef="T"/><sequenceFlow id="G" sourceRef="T" targetRef="E"/>`)
+	for _, test := range []struct {
+		old, next *domain.Graph
+		kind      domain.ChangeType
+	}{
+		{oldGraph, newGraph, domain.AddTask}, {newGraph, oldGraph, domain.RemoveTask},
+	} {
+		found := false
+		for _, change := range diff.Compare(test.old, test.next) {
+			if change.ChangeType != test.kind {
+				continue
+			}
+			found = true
+			if change.Context == nil || change.Context.ProcessName != "Expense reimbursement" {
+				t.Fatalf("missing process context: %#v", change)
+			}
+		}
+		if !found {
+			t.Fatalf("missing %s", test.kind)
+		}
+	}
+}
+
+func TestModifiedGatewayConditionIncludesChangedBranchContext(t *testing.T) {
+	parse := func(condition string) *domain.Graph {
+		t.Helper()
+		xml := `<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"><process id="P" name="Expense approval"><task id="Submit" name="Submit claim"/><exclusiveGateway id="Decision" name="Eligible?"/><task id="Pay" name="Pay claim"/><task id="Reject" name="Reject claim"/><sequenceFlow id="F1" sourceRef="Submit" targetRef="Decision"/><sequenceFlow id="F2" sourceRef="Decision" targetRef="Pay" name="Approved"><conditionExpression>` + condition + `</conditionExpression></sequenceFlow><sequenceFlow id="F3" sourceRef="Decision" targetRef="Reject" name="Rejected"/></process></definitions>`
+		graph, err := bpmn.Parse([]byte(xml), bpmn.Limits{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return graph
+	}
+	changes := diff.Compare(parse("amount approved"), parse("amount approved and within budget"))
+	for _, change := range changes {
+		if change.ChangeType != domain.ModifyGatewayCondition {
+			continue
+		}
+		context := change.Context
+		if context == nil || context.ProcessName != "Expense approval" || context.Pattern != domain.PatternModifyGatewayBranch {
+			t.Fatalf("missing gateway context: %#v", change)
+		}
+		if !strings.Contains(strings.Join(context.BranchTerms, " "), "within budget") || !strings.Contains(strings.Join(context.BranchTerms, " "), "amount approved") {
+			t.Fatalf("changed branch conditions missing: %#v", context.BranchTerms)
+		}
+		if len(context.Predecessors) != 1 || len(context.Successors) != 2 || !strings.Contains(strings.Join(context.RelatedFlowIDs, " "), "F2") {
+			t.Fatalf("gateway neighborhood missing: %#v", context)
+		}
+		return
+	}
+	t.Fatal("MODIFY_GATEWAY_CONDITION not detected")
+}
+
 func TestCompareDetectsRequiredTaxonomy(t *testing.T) {
 	oldGraph := parseFixture(t, "old.bpmn")
 	newGraph := parseFixture(t, "new.bpmn")
@@ -55,6 +119,42 @@ func TestCompareDetectsGatewaySemanticsWithStableID(t *testing.T) {
 				t.Fatalf("gateway semantic change missed: %#v", got)
 			}
 		})
+	}
+}
+
+func TestGatewayBranchLabelDoesNotChangeExplicitCondition(t *testing.T) {
+	elements := func() []*domain.Element {
+		return []*domain.Element{
+			{ID: "GW", Name: "Valid?", Type: "exclusiveGateway", ProcessID: "P"},
+			{ID: "DONE", Name: "Done", Type: "endEvent", ProcessID: "P"},
+		}
+	}
+	oldGraph := graphWithFlow("F", "GW", "DONE", "input valid", elements()...)
+	newGraph := graphWithFlow("F", "GW", "DONE", "input valid", elements()...)
+	oldGraph.Flows["F"].Name = "Ya"
+	newGraph.Flows["F"].Name = "Data valid"
+	changes := diff.Compare(oldGraph, newGraph)
+	if len(changes) != 1 || changes[0].ChangeType != domain.ModifySequenceFlow {
+		t.Fatalf("branch label alone changed gateway condition: %#v", changes)
+	}
+	if changes[0].Reason != "sequence flow label changed" {
+		t.Fatalf("label-only flow not explained precisely: %q", changes[0].Reason)
+	}
+
+	newGraph.Flows["F"].Condition = "input valid and within budget"
+	changes = diff.Compare(oldGraph, newGraph)
+	if len(changes) != 2 || changes[0].ChangeType != domain.ModifySequenceFlow || changes[1].ChangeType != domain.ModifyGatewayCondition {
+		t.Fatalf("explicit gateway condition change missed: %#v", changes)
+	}
+	if changes[0].Reason != "sequence flow condition, label changed" {
+		t.Fatalf("condition and label edits not distinguished: %q", changes[0].Reason)
+	}
+
+	oldGraph.Flows["F"].Condition = ""
+	newGraph.Flows["F"].Condition = ""
+	changes = diff.Compare(oldGraph, newGraph)
+	if len(changes) != 2 || changes[0].ChangeType != domain.ModifySequenceFlow || changes[1].ChangeType != domain.ModifyGatewayCondition {
+		t.Fatalf("label-only gateway condition surrogate missed: %#v", changes)
 	}
 }
 

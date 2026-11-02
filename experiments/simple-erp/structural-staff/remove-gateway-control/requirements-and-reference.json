@@ -1,0 +1,10 @@
+{
+  "scenario": "remove-gateway-control",
+  "requirement": "Notation-only simplification: keep validation and failure behaviour in the existing service task, show failure through a boundary error event instead of an explicit yes/no gateway. No source requirement changes.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "70e17a23c1743148aac9508786da743c58977981cc676a095e69cce5f27a69ed",
+  "expected_existing_files": [],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {}
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_TaskControl_New">
+  <process id="Process_Request" isExecutable="false">
+    <startEvent id="START" name="Need identified"/>
+    <userTask id="TASK-ENTER" name="Enter request amount"/>
+    <userTask id="TASK-CONFIRM" name="Confirm request amount before submission"/>
+    <serviceTask id="TASK-SUBMIT" name="Submit request"/>
+    <endEvent id="END" name="Request submitted"/>
+    <sequenceFlow id="FLOW-START-ENTER" sourceRef="START" targetRef="TASK-ENTER"/>
+    <sequenceFlow id="FLOW-ENTER-SUBMIT" sourceRef="TASK-ENTER" targetRef="TASK-CONFIRM"/>
+    <sequenceFlow id="FLOW-CONFIRM-SUBMIT" sourceRef="TASK-CONFIRM" targetRef="TASK-SUBMIT"/>
+    <sequenceFlow id="FLOW-SUBMIT-END" sourceRef="TASK-SUBMIT" targetRef="END"/>
+  </process>
+</definitions>

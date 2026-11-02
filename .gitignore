@@ -12,7 +12,13 @@
 *.tsbuildinfo
 /impact-report.json
 /impact-report.md
+/agent-context-*.json
+/change-plan-*.md
 *.exe
 *.test
 *.out
 .env*
+
+# Python tools
+__pycache__/
+*.py[cod]

@@ -1,0 +1,79 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "label_provenance": "single-source-review",
+  "methods": [
+    "bm25",
+    "semantic",
+    "fusion",
+    "hybrid"
+  ],
+  "scenarios": [
+    {
+      "id": "normalized-staff-add-task",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-normalized-staff",
+      "old_bpmn_path": "experiments/simple-erp/current-staff/add-task/before.bpmn",
+      "old_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "new_bpmn_path": "experiments/simple-erp/current-staff/add-task/after.bpmn",
+      "new_bpmn_sha256": "1a1f010e4e76cfe87a8637ce051dc443faaee30c7bc9863bab815ddd2aaeb331",
+      "ground_truth_path": "experiments/simple-erp/current-staff/add-task/reference.json",
+      "ground_truth_sha256": "df960f051b5fa52bcc34962e656948db201a91441f6c34618c848571eaf8f7bf",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "normalized-staff-add-xor",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-normalized-staff",
+      "old_bpmn_path": "experiments/simple-erp/current-staff/add-xor/before.bpmn",
+      "old_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "new_bpmn_path": "experiments/simple-erp/current-staff/add-xor/after.bpmn",
+      "new_bpmn_sha256": "4bc6a9fae63cd499048ce5a887b0449340271be5826bf0ab6104623f6a357706",
+      "ground_truth_path": "experiments/simple-erp/current-staff/add-xor/reference.json",
+      "ground_truth_sha256": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "normalized-staff-add-and",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-normalized-staff",
+      "old_bpmn_path": "experiments/simple-erp/current-staff/add-and/before.bpmn",
+      "old_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "new_bpmn_path": "experiments/simple-erp/current-staff/add-and/after.bpmn",
+      "new_bpmn_sha256": "53ea1c88277cc00a1b884714ae954a03d55e6e3ce19fe5aa431035265d7ff1be",
+      "ground_truth_path": "experiments/simple-erp/current-staff/add-and/reference.json",
+      "ground_truth_sha256": "99da03728f7d0a682b32a45d4d9f83062e2acedcc3ec83ef8588c38c36b8122c",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "normalized-staff-combined",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-normalized-staff",
+      "old_bpmn_path": "experiments/simple-erp/current-staff/combined/before.bpmn",
+      "old_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "new_bpmn_path": "experiments/simple-erp/current-staff/combined/after.bpmn",
+      "new_bpmn_sha256": "47e5163cec1e5af037441677dd9242ae04e4801f344d226312699bd556691fce",
+      "ground_truth_path": "experiments/simple-erp/current-staff/combined/reference.json",
+      "ground_truth_sha256": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "normalized-staff-unchanged-control",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-normalized-staff",
+      "old_bpmn_path": "experiments/simple-erp/current-staff/unchanged-control/before.bpmn",
+      "old_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "new_bpmn_path": "experiments/simple-erp/current-staff/unchanged-control/after.bpmn",
+      "new_bpmn_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "ground_truth_path": "experiments/simple-erp/current-staff/unchanged-control/reference.json",
+      "ground_truth_sha256": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+      "truth_scope": "complete"
+    }
+  ]
+}

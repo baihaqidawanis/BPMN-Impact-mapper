@@ -1,0 +1,14 @@
+{
+    "version":  "1",
+    "scenario_id":  "staff-inventory-cancel-reason-min10",
+    "description":  "Cancellation requires a trimmed reason of at least ten Unicode code points; other actions unchanged.",
+    "baseline_sha256":  "6b4d5cfec3a18bc35772be7c0b3c3ec710acfbdbb202ddd4eada3195226d05af",
+    "operations":  [
+                       {
+                           "kind":  "set_attribute",
+                           "element_id":  "role_staff_l3_adj_cancel_input",
+                           "attribute":  "name",
+                           "value":  "Isi alasan pembatalan adjustment minimal 10 karakter setelah trim"
+                       }
+                   ]
+}

@@ -32,6 +32,9 @@ func TestProductionHybridUsesContextBM25WithoutLegacyWeights(t *testing.T) {
 	if _, ok := combined.Left.(retrieval.ContextBM25); !ok || combined.PreserveLeftActions {
 		t.Fatalf("production Hybrid uses legacy weighted ranking or action promotion: %#v", combined)
 	}
+	if !combined.Right.(semantic.Strategy).IncludeProcessContext {
+		t.Fatal("production semantic branch lost explicit process context")
+	}
 }
 
 func TestPublicMethodsUseFileLevelTopKWithoutChangingFusionBranches(t *testing.T) {

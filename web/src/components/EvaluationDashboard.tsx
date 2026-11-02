@@ -58,9 +58,9 @@ export function EvaluationDashboard({ reports }: { reports: Report[] }) {
 
   const ready = reconciliation && reconciliation.disagreements.every((_, i) => Boolean(decisions[i]));
   return <details className={styles.panel} data-testid="evaluation-dashboard">
-    <summary>Evaluation dashboard <span>Reconcile reviewers and measure mapping results</span></summary>
+    <summary>Evaluation dashboard <span>Compare mapping results with the expected files</span></summary>
     <div className={styles.body}>
-      <p>Evaluate the {reports.length} stored report(s) currently selected. Upload two independently prepared annotations for this repository snapshot and BPMN scenario. Files are processed by the local evaluation API and are not saved on the server.</p>
+      <p>Check the {reports.length} selected report(s) against reference lists of expected files. This workflow currently needs two separately prepared reviewer JSON files for the same repository and BPMN case. Compare their answers, resolve any differences, then calculate the metrics. These files stay out of mapping and are not saved on the server.</p>
       <div className={styles.uploads}>
         <label>Reviewer A JSON<input type="file" accept=".json,application/json" disabled={busy} onChange={e => void load(e.target.files?.[0], "a")} /><small>{a?.reviewer_id}</small></label>
         <label>Reviewer B JSON<input type="file" accept=".json,application/json" disabled={busy} onChange={e => void load(e.target.files?.[0], "b")} /><small>{b?.reviewer_id}</small></label>
@@ -95,20 +95,30 @@ export function EvaluationDashboard({ reports }: { reports: Report[] }) {
 }
 
 function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
-  const rows: [string, (m: EvaluationResult["metrics"]) => number][] = [
+  const rows: [string, (m: EvaluationResult["metrics"]) => number | undefined][] = [
+    ["MAP — positive changes", m => m.positive_ranking?.map],
+    ["MRR — positive changes", m => m.positive_ranking?.mrr],
+    ["R-precision — positive changes", m => m.positive_ranking?.r_precision],
+    ["Precision@5 — positive changes", m => m.positive_ranking?.precision_at_5],
+    ["Precision@10 — positive changes", m => m.positive_ranking?.precision_at_10],
+    ["Recall@5 — positive changes", m => m.positive_ranking?.recall_at_5],
+    ["Recall@10 — positive changes", m => m.positive_ranking?.recall_at_10],
     ["Recall@1", m => m.recall.at_1], ["Recall@3", m => m.recall.at_3], ["Recall@5", m => m.recall.at_5],
     ["Precision@1", m => m.precision.at_1], ["Precision@3", m => m.precision.at_3], ["Precision@5", m => m.precision.at_5],
     ["MRR", m => m.mrr], ["MAP", m => m.map], ["File precision", m => m.file_precision], ["File recall", m => m.file_recall], ["File F1", m => m.file_f1],
     ["Module accuracy*", m => m.module_accuracy], ["Layer accuracy*", m => m.layer_accuracy], ["Action accuracy on retrieved files", m => m.required_action_accuracy], ["Action macro-F1", m => m.required_action_macro_f1],
-    ["Unresolved rate", m => m.unresolved_rate], ["False discovery proportion", m => m.false_positive_rate],
+    ["Abstention / unresolved rate", m => m.unresolved_rate], ["False discovery proportion", m => m.false_positive_rate],
   ];
   return <section data-testid="evaluation-results">
     <h3>Evaluation results</h3>
-    <p>All {bundle.ground_truth.cases.length} changes evaluated at file level. Values range from 0 to 1. No repository code was executed.</p>
+    <p>All {bundle.ground_truth.cases.length} changes evaluated at file level against the supplied reference. The reference may be provisional.</p>
+    <p>Positive-change MAP measures where all reference files appear. R-precision checks the top R candidates, where R is the number of reference files. Fixed-k precision divides by k. Empty-reference cases are scored separately as abstentions. Older reports show n/a for unavailable metrics. Unqualified ranking rows below retain the legacy aggregate over all labeled changes.</p>
     <div className={styles.tableWrap}><table><thead><tr><th>Metric</th>{bundle.results.map(r => <th key={r.analysis_id}>{r.method}</th>)}</tr></thead>
-      <tbody>{rows.map(([name, value]) => <tr key={name}><th>{name}</th>{bundle.results.map(r => <td key={r.analysis_id}>{value(r.metrics).toFixed(4)}</td>)}</tr>)}</tbody>
+      <tbody>{rows.map(([name, value]) => <tr key={name}><th>{name}</th>{bundle.results.map(r => <td key={r.analysis_id}>{value(r.metrics)?.toFixed(4) ?? "n/a"}</td>)}</tr>)}
+        <tr><th>Correct negative controls</th>{bundle.results.map(r => <td key={r.analysis_id}>{r.metrics.negative_controls ? `${r.metrics.correct_abstentions}/${r.metrics.negative_controls} (${r.metrics.negative_control_accuracy.toFixed(4)})` : "n/a"}</td>)}</tr>
+      </tbody>
     </table></div>
-    <p>*Legacy module/layer metrics count unspecified expected metadata as matching. Action macro-F1 counts a missed relevant file as UNRESOLVED and averages only actions present in ground truth. False discovery proportion is FP/(TP+FP); true-negative-based FPR is unavailable. Latency is not measured by this dashboard. These results describe the selected scenario only.</p>
+    <p>*Legacy module/layer metrics count unspecified expected metadata as matching. Action macro-F1 counts a missed relevant file as UNRESOLVED and averages only actions present in ground truth. Abstention can be correct on a negative control, so read its separate count. False discovery proportion is FP/(TP+FP); true-negative-based FPR is unavailable. Latency is not measured by this dashboard. These results describe the selected scenario only.</p>
     {bundle.results.map(result => <details className={styles.confusion} key={`actions-${result.analysis_id}`}>
       <summary>{result.method} action confusion matrix</summary>
       <p>Rows are expected actions; columns are predicted actions.</p>
@@ -122,13 +132,14 @@ function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
       {bundle.results.map(result => <details key={result.analysis_id}>
         <summary>{result.method} <span>{result.changes.length} changes</span></summary>
         <div className={styles.tableWrap}><table>
-          <thead><tr><th>Change</th><th>Expected files</th><th>Ranked predictions</th><th>RR</th><th>AP</th><th>Status</th></tr></thead>
+          <thead><tr><th>Change</th><th>Expected files</th><th>Ranked predictions</th><th>RR</th><th>AP</th><th>R-precision</th><th>Status</th></tr></thead>
           <tbody>{result.changes.map(change => <tr key={`${change.change_type}:${change.element_id}`}>
             <th><span className={styles.changeType}>{change.change_type.replaceAll("_", " ")}</span><code>{change.element_id}</code></th>
             <td>{fileList(change.expected_files, "No expected file")}</td>
             <td>{fileList(change.predicted_files, "No candidate")}</td>
             <td>{change.reciprocal_rank.toFixed(4)}</td>
             <td>{change.average_precision.toFixed(4)}</td>
+            <td>{change.r_precision?.toFixed(4) ?? "n/a"}</td>
             <td><span className={change.unresolved ? styles.unresolved : styles.resolved}>{change.unresolved ? "Unresolved" : "Ranked"}</span></td>
           </tr>)}</tbody>
         </table></div>

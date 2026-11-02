@@ -1,0 +1,24 @@
+.panel { margin-bottom: 24px; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.panel header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 18px; }
+.label { color: var(--muted); font-size: 12px; }
+.experiments { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+.variant { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
+.panel h3 { margin: 7px 0; font-size: 20px; letter-spacing: -.025em; }
+.panel p { color: var(--muted); font-size: 13px; line-height: 1.65; }
+.panel header p { margin: 0; }
+.panel a { padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 7px; color: var(--ink); font-size: 12px; text-decoration: none; }
+.panel a:hover { border-color: var(--blue); color: var(--blue); }
+.tableWrap { max-width: 100%; overflow: auto; margin: 20px 0; }
+.panel table { width: 100%; min-width: 730px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.panel th, .panel td { padding: 13px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.panel th:first-child { text-align: left; }
+.panel thead th { color: var(--muted); font-size: 12px; font-weight: 500; }
+.hybrid { background: var(--blue-soft); }
+.hybrid th { color: var(--blue); }
+.panel .note { font-size: 12px; }
+.panel details { padding-top: 15px; border-top: 1px solid var(--line); }
+.panel summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+.panel dl { display: grid; gap: 14px; margin: 18px 0; }
+.panel dt { font-size: 13px; font-weight: 600; }
+.panel dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+@media (max-width: 600px) { .panel { padding: 18px; } }

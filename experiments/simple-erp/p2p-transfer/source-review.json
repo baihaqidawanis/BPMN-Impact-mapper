@@ -1,0 +1,21 @@
+{
+  "requirement": "At PR submit, recheck all linked products active and every estimated price strictly positive. Collect both results; any failure leaves DRAFT and does not commit submission. Retain actor/version/state guards.",
+  "reference_status": "provisional single-AI source review; new P2P case withheld from initial inventory context development, not independent ground truth",
+  "policy_lock": "multi-hop4 depth=4 visited=128 anchors=2/direction, no changes after this fixture is scored",
+  "source_hashes": {
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03"
+  },
+  "baseline_source": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn",
+  "baseline_sha256": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+  "reasoning": [
+    "CreateRequest checks product active only at create; it allows UnitPrice zero.",
+    "TransitionRequest submit currently checks DRAFT/version and updates state; new line/master validation belongs in existing store transaction.",
+    "Existing submit handler and UI request carry version and show existing response errors; no new field/route/form requirement.",
+    "Extend existing P2P integration scenarios to exercise inactive products, zero price, both failures, valid submit and retained guards. Test filenames are provisional existing-change targets; no new source files invented.",
+    "Both results may be collected sequentially within transaction; AND does not mandate goroutines.",
+    "No migration or source modification; flow changes excluded from node scope, not labelled negative."
+  ]
+}

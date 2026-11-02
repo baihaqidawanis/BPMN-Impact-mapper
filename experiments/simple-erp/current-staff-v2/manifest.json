@@ -1,0 +1,79 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "label_provenance": "single-source-review",
+  "methods": [
+    "bm25",
+    "semantic",
+    "fusion",
+    "hybrid"
+  ],
+  "scenarios": [
+    {
+      "id": "current-staff-v2-add-task",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-current-staff-v2",
+      "old_bpmn_path": "experiments/simple-erp/current-staff-v2/add-task/before.bpmn",
+      "old_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "new_bpmn_path": "experiments/simple-erp/current-staff-v2/add-task/after.bpmn",
+      "new_bpmn_sha256": "ebc3999183ef5bab27a87e0ca26d7e1208a21ce57475072fbe8ef0fbefe0400d",
+      "ground_truth_path": "experiments/simple-erp/current-staff-v2/add-task/reference.json",
+      "ground_truth_sha256": "df960f051b5fa52bcc34962e656948db201a91441f6c34618c848571eaf8f7bf",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "current-staff-v2-add-xor",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-current-staff-v2",
+      "old_bpmn_path": "experiments/simple-erp/current-staff-v2/add-xor/before.bpmn",
+      "old_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "new_bpmn_path": "experiments/simple-erp/current-staff-v2/add-xor/after.bpmn",
+      "new_bpmn_sha256": "f837fef487d9a94222ad6d038252cfdf146140feb52002f385b4c3cdbe658cdb",
+      "ground_truth_path": "experiments/simple-erp/current-staff-v2/add-xor/reference.json",
+      "ground_truth_sha256": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "current-staff-v2-add-and",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-current-staff-v2",
+      "old_bpmn_path": "experiments/simple-erp/current-staff-v2/add-and/before.bpmn",
+      "old_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "new_bpmn_path": "experiments/simple-erp/current-staff-v2/add-and/after.bpmn",
+      "new_bpmn_sha256": "f3022ddb224de9cf5a3ec52d74d094c7e07848d9e73f86b7ed13e751cda8b3a6",
+      "ground_truth_path": "experiments/simple-erp/current-staff-v2/add-and/reference.json",
+      "ground_truth_sha256": "99da03728f7d0a682b32a45d4d9f83062e2acedcc3ec83ef8588c38c36b8122c",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "current-staff-v2-combined",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-current-staff-v2",
+      "old_bpmn_path": "experiments/simple-erp/current-staff-v2/combined/before.bpmn",
+      "old_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "new_bpmn_path": "experiments/simple-erp/current-staff-v2/combined/after.bpmn",
+      "new_bpmn_sha256": "a5594a55042f62c7badb3d8e2fc11fad7488bda8f638d0f80290c1a18172c301",
+      "ground_truth_path": "experiments/simple-erp/current-staff-v2/combined/reference.json",
+      "ground_truth_sha256": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "current-staff-v2-unchanged-control",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "local-current-staff-v2",
+      "old_bpmn_path": "experiments/simple-erp/current-staff-v2/unchanged-control/before.bpmn",
+      "old_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "new_bpmn_path": "experiments/simple-erp/current-staff-v2/unchanged-control/after.bpmn",
+      "new_bpmn_sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "ground_truth_path": "experiments/simple-erp/current-staff-v2/unchanged-control/reference.json",
+      "ground_truth_sha256": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+      "truth_scope": "complete"
+    }
+  ]
+}

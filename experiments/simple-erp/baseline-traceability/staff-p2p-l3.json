@@ -1,0 +1,2541 @@
+{
+  "schema_version": "1",
+  "purpose": "research-only baseline traceability; excluded from inference",
+  "review_status": "provisional single AI source review; no independent review or runtime proof",
+  "repository": {
+    "name": "Simple-ERP",
+    "git_head": "c9344971a573d5c44d9d4e58f23657eda4d18a86",
+    "working_tree_dirty": true
+  },
+  "scope": {
+    "role": "Staff",
+    "module": "P2P",
+    "level": 3,
+    "processes": 10,
+    "activities": 50
+  },
+  "limitations": [
+    "Existing implementation relationships do not imply required code changes.",
+    "No test coverage completeness or function-level mapping accuracy measured.",
+    "Other roles/modules, gateway branch semantics and shared domain/schema dependencies are not exhaustively mapped.",
+    "Function bounds in this research script use declaration text, not a claimed TypeScript AST adapter."
+  ],
+  "file_sha256": {
+    "backend/internal/finance/adapter/http/handler.go": "05a5d8e35eb1fdab74afbda263df8db03d9a96febc8f78e9c3617beaea8e9af4",
+    "backend/internal/finance/adapter/postgres/store.go": "b23d1c4093f0b52336e0b370677b1668463f211d7b1bbd337107ad408d1d955c",
+    "backend/internal/finance/application/service.go": "cf2b716d4ffd256c6fd90ab367a289d802f255148df1bd68f7c9416f981ea784",
+    "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67",
+    "backend/test/integration/finance_test.go": "4b5691329c854a12c3b9fc81ea55dd67084f2f33319d69d0b131805dd5d0ab98",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "frontend/features/finance/finance-workspace.tsx": "566d7ba0abcb5bb3429399f7e159fbba1b07ac8e1a34d5ab1edce236a133bb7c",
+    "frontend/features/purchasing/goods-receipt-panel.tsx": "74db5c6e72f8453f59f80298b336fcc56e424d0e678f90c6d1914c9b48b5a240",
+    "frontend/features/purchasing/purchase-order-panel.tsx": "c34482b062d81ff06690183b42f54c29bacfe29991f40a1b56fa241cfd8c97dc",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03"
+  },
+  "processes": [
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn",
+      "process_id": "Process_role_staff_l3_ap_invoice",
+      "name": "Catat invoice supplier - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_ap_invoice_input",
+          "name": "Isi invoice supplier dan referensi PO",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 136,
+                  "excerpt": "async function createInvoice(event: FormEvent) {",
+                  "match": "function createInvoice("
+                },
+                {
+                  "line": 150,
+                  "excerpt": "await command(\"/supplier-invoices\", { purchaseOrderId: source, supplierInvoiceNumber: externalNumber, invoiceDate: today, dueDate: today, currency: \"IDR\", replacesInvoiceId: replacement?.id || \"\", lines });",
+                  "match": "command(\"/supplier-invoices\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_invoice_check",
+          "name": "PO RECEIVED; metadata/lines valid; jika pengganti, invoice terakhir harus VOID dan ID-nya dirujuk",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierInvoice",
+              "role": "VALIDATION",
+              "function_start_line": 86,
+              "function_end_line": 137,
+              "evidence": [
+                {
+                  "line": 87,
+                  "excerpt": "if len(input.Lines) == 0 || input.SupplierInvoiceNumber == \"\" || input.InvoiceDate == \"\" || input.DueDate == \"\" || input.Currency == \"\" {",
+                  "match": "len(input.Lines) == 0"
+                },
+                {
+                  "line": 96,
+                  "excerpt": "if err = tx.QueryRow(ctx, `SELECT supplier_id,status FROM purchase_orders WHERE id=$1 FOR UPDATE`, input.PurchaseOrderID).Scan(&supplierID, &status); err != nil || status != \"RECEIVED\" {",
+                  "match": "status != \"RECEIVED\""
+                },
+                {
+                  "line": 103,
+                  "excerpt": "if !replacementValid {",
+                  "match": "!replacementValid"
+                },
+                {
+                  "line": 113,
+                  "excerpt": "if line.Quantity <= 0 || line.UnitPrice < 0 {",
+                  "match": "line.Quantity <= 0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_invoice_effect0",
+          "name": "Simpan invoice MATCH_PENDING dan line invoice",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierInvoice",
+              "role": "PERSISTENCE",
+              "function_start_line": 86,
+              "function_end_line": 137,
+              "evidence": [
+                {
+                  "line": 118,
+                  "excerpt": "_, err = tx.Exec(ctx, `INSERT INTO supplier_invoices(id,document_no,supplier_invoice_number,purchase_order_id,supplier_id,replaces_invoice_id,status,invoice_date,due_date,currency,total,outstanding,created_by)",
+                  "match": "INSERT INTO supplier_invoices"
+                },
+                {
+                  "line": 119,
+                  "excerpt": "VALUES($1,$2,$3,$4,$5,NULLIF($6,'')::uuid,'MATCH_PENDING',$7,$8,$9,$10,$10,$11)`, id, no, input.SupplierInvoiceNumber, input.PurchaseOrderID, supplierID, input.ReplacesInvoiceID, input.InvoiceDate, input.DueDate, input.Currency, total, actor)",
+                  "match": "'MATCH_PENDING'"
+                },
+                {
+                  "line": 124,
+                  "excerpt": "_, err = tx.Exec(ctx, `INSERT INTO supplier_invoice_lines(supplier_invoice_id,purchase_order_line_id,quantity,unit_price,line_total) VALUES($1,$2,$3,$4,$5)`, id, line.ReferenceID, line.Quantity, line.UnitPrice, line.Quantity*line.UnitPrice)",
+                  "match": "INSERT INTO supplier_invoice_lines"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_invoice_effect1",
+          "name": "Audit PUR-INV-001; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierInvoice",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 86,
+              "function_end_line": 137,
+              "evidence": [
+                {
+                  "line": 129,
+                  "excerpt": "if err = audit(ctx, tx, actor, \"RECORD_SUPPLIER_INVOICE\", \"PUR-INV-001\", \"SUPPLIER_INVOICE\", id, \"\", \"MATCH_PENDING\", \"\", request); err != nil {",
+                  "match": "\"PUR-INV-001\""
+                },
+                {
+                  "line": 132,
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_invoice_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.createSupplierInvoice",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 115,
+              "function_end_line": 125,
+              "evidence": [
+                {
+                  "line": 124,
+                  "excerpt": "result(w, document, err, 201)",
+                  "match": "result(w, document, err,"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "excerpt": "if err != nil {",
+                  "match": "if err != nil"
+                },
+                {
+                  "line": 86,
+                  "excerpt": "respond(w, status, document)",
+                  "match": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "excerpt": "w.WriteHeader(status)",
+                  "match": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.createSupplierInvoice",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 115,
+          "function_end_line": 125,
+          "evidence": [
+            {
+              "line": 123,
+              "excerpt": "document, err := h.Service.CreateSupplierInvoice(r.Context(), input, actor(r), requestID(r))",
+              "match": "h.Service.CreateSupplierInvoice("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.CreateSupplierInvoice",
+          "role": "DELEGATION",
+          "function_start_line": 80,
+          "function_end_line": 82,
+          "evidence": [
+            {
+              "line": 81,
+              "excerpt": "return s.store.CreateSupplierInvoice(c, in, actor, request)",
+              "match": "s.store.CreateSupplierInvoice("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/postgres/store.go",
+          "function": "supplierReplacementValid",
+          "role": "VALIDATION_HELPER",
+          "function_start_line": 54,
+          "function_end_line": 65,
+          "evidence": [
+            {
+              "line": 58,
+              "excerpt": "return validateReplacement(\"\", \"\", requestedID, false), nil",
+              "match": "return validateReplacement("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/postgres/store.go",
+          "function": "validateReplacement",
+          "role": "REPLACEMENT_RULE",
+          "function_start_line": 47,
+          "function_end_line": 53,
+          "evidence": [
+            {
+              "line": 47,
+              "excerpt": "func validateReplacement(latestID, latestStatus, requestedID string, hasPriorInvoice bool) bool {",
+              "match": "latestStatus"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 159,
+              "excerpt": "invoice, e := finance.CreateSupplierInvoice(ctx, financeapp.SupplierInvoiceInput{",
+              "match": "CreateSupplierInvoice("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_ap_invoice_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_invoice_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_invoice_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_invoice_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn",
+      "process_id": "Process_role_staff_l3_ap_payment",
+      "name": "Catat pembayaran supplier - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_ap_payment_input",
+          "name": "UI: bayar satu invoice; isi nominal",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 157,
+                  "excerpt": "async function createPayment(event: FormEvent) {",
+                  "match": "function createPayment("
+                },
+                {
+                  "line": 160,
+                  "excerpt": "const created = await command(prefix, { partyId: party, paymentDate: today, method: \"BANK_TRANSFER\", currency: \"IDR\", amount: Number(amount), allocations: [{ invoiceId: invoice, amount: Number(amount) }] });",
+                  "match": "allocations: [{ invoiceId: invoice"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_payment_check",
+          "name": "Party aktif; alokasi unik sesuai amount; metadata terisi; constraint DB",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierPayment",
+              "role": "VALIDATION",
+              "function_start_line": 305,
+              "function_end_line": 345,
+              "evidence": [
+                {
+                  "line": 306,
+                  "excerpt": "total, err := allocationTotal(input.Allocations)",
+                  "match": "allocationTotal("
+                },
+                {
+                  "line": 308,
+                  "excerpt": "if err != nil || amountErr != nil || amount != total || input.Method == \"\" || input.Currency == \"\" || input.PaymentDate == \"\" {",
+                  "match": "amount != total"
+                },
+                {
+                  "line": 317,
+                  "excerpt": "err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM suppliers WHERE id=$1 AND active)`, input.PartyID).Scan(&active)",
+                  "match": "FROM suppliers"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_payment_effect0",
+          "name": "Simpan payment DRAFT dan alokasi invoice",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierPayment",
+              "role": "PERSISTENCE",
+              "function_start_line": 305,
+              "function_end_line": 345,
+              "evidence": [
+                {
+                  "line": 326,
+                  "excerpt": "if _, err = tx.Exec(ctx, `INSERT INTO supplier_payments(id,document_no,supplier_id,status,payment_date,method,reference,currency,amount,created_by)",
+                  "match": "INSERT INTO supplier_payments"
+                },
+                {
+                  "line": 327,
+                  "excerpt": "VALUES($1,$2,$3,'DRAFT',$4,$5,NULLIF($6,''),$7,$8,$9)`, id, no, input.PartyID, input.PaymentDate, input.Method, input.Reference, input.Currency, input.Amount, actor); err != nil {",
+                  "match": "'DRAFT'"
+                },
+                {
+                  "line": 331,
+                  "excerpt": "tag, execErr := tx.Exec(ctx, `INSERT INTO supplier_payment_allocations(payment_id,invoice_id,amount)",
+                  "match": "INSERT INTO supplier_payment_allocations"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_payment_effect1",
+          "name": "Audit PUR-PAY-001; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.CreateSupplierPayment",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 305,
+              "function_end_line": 345,
+              "evidence": [
+                {
+                  "line": 337,
+                  "excerpt": "if err = audit(ctx, tx, actor, \"CREATE_SUPPLIER_PAYMENT\", \"PUR-PAY-001\", \"SUPPLIER_PAYMENT\", id, \"\", \"DRAFT\", \"\", request); err != nil {",
+                  "match": "\"PUR-PAY-001\""
+                },
+                {
+                  "line": 340,
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_payment_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.createSupplierPayment",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 165,
+              "function_end_line": 175,
+              "evidence": [
+                {
+                  "line": 174,
+                  "excerpt": "result(w, document, err, 201)",
+                  "match": "result(w, document, err,"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "excerpt": "if err != nil {",
+                  "match": "if err != nil"
+                },
+                {
+                  "line": 86,
+                  "excerpt": "respond(w, status, document)",
+                  "match": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "excerpt": "w.WriteHeader(status)",
+                  "match": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.createSupplierPayment",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 165,
+          "function_end_line": 175,
+          "evidence": [
+            {
+              "line": 173,
+              "excerpt": "document, err := h.Service.CreateSupplierPayment(r.Context(), input, actor(r), requestID(r))",
+              "match": "h.Service.CreateSupplierPayment("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.CreateSupplierPayment",
+          "role": "DELEGATION",
+          "function_start_line": 95,
+          "function_end_line": 97,
+          "evidence": [
+            {
+              "line": 96,
+              "excerpt": "return s.store.CreateSupplierPayment(c, in, actor, request)",
+              "match": "s.store.CreateSupplierPayment("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/postgres/store.go",
+          "function": "allocationTotal",
+          "role": "VALIDATION_HELPER",
+          "function_start_line": 280,
+          "function_end_line": 296,
+          "evidence": [
+            {
+              "line": 280,
+              "excerpt": "func allocationTotal(allocations []application.AllocationInput) (int64, error) {",
+              "match": "allocations"
+            },
+            {
+              "line": 282,
+              "excerpt": "return 0, ErrConflict",
+              "match": "return"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 173,
+              "excerpt": "payment, createErr := finance.CreateSupplierPayment(ctx, financeapp.PaymentInput{",
+              "match": "CreateSupplierPayment("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_ap_payment_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_payment_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_payment_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_payment_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn",
+      "process_id": "Process_role_staff_l3_ap_resolve",
+      "name": "Perbaiki mismatch invoice supplier - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_ap_resolve_input",
+          "name": "Revisi lines invoice exception",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 131,
+                  "excerpt": "async function beginResolve(item: Document) {",
+                  "match": "function beginResolve("
+                },
+                {
+                  "line": 141,
+                  "excerpt": "const resolved = await command(`/supplier-invoices/${resolvingInvoice.id}/resolve-match`, { lines });",
+                  "match": "/resolve-match`"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_resolve_check",
+          "name": "Lock invoice MATCH_EXCEPTION; line qty/harga valid",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.ResolveSupplierInvoice",
+              "role": "VALIDATION",
+              "function_start_line": 213,
+              "function_end_line": 253,
+              "evidence": [
+                {
+                  "line": 214,
+                  "excerpt": "if len(lines) == 0 {",
+                  "match": "len(lines) == 0"
+                },
+                {
+                  "line": 224,
+                  "excerpt": "Scan(&document.ID, &document.DocumentNo, &document.Status, &document.PartyID, &document.SourceID, &document.Currency, &document.Total, &document.Outstanding, &document.Version); err != nil || document.Status != \"MATCH_EXCEPTION\" {",
+                  "match": "document.Status != \"MATCH_EXCEPTION\""
+                },
+                {
+                  "line": 232,
+                  "excerpt": "if line.Quantity <= 0 || line.UnitPrice < 0 {",
+                  "match": "line.Quantity <= 0"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_resolve_effect0",
+          "name": "Ganti lines dan total; outstanding direset ke total",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.ResolveSupplierInvoice",
+              "role": "PERSISTENCE",
+              "function_start_line": 213,
+              "function_end_line": 253,
+              "evidence": [
+                {
+                  "line": 227,
+                  "excerpt": "if _, err = tx.Exec(ctx, `DELETE FROM supplier_invoice_lines WHERE supplier_invoice_id=$1`, id); err != nil {",
+                  "match": "DELETE FROM supplier_invoice_lines"
+                },
+                {
+                  "line": 236,
+                  "excerpt": "if _, err = tx.Exec(ctx, `INSERT INTO supplier_invoice_lines(supplier_invoice_id,purchase_order_line_id,quantity,unit_price,line_total) VALUES($1,$2,$3,$4,$5)`, id, line.ReferenceID, line.Quantity, line.UnitPrice, line.Quantity*line.UnitPrice); err != nil {",
+                  "match": "INSERT INTO supplier_invoice_lines"
+                },
+                {
+                  "line": 240,
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_invoices SET status='MATCH_PENDING',total=$2,outstanding=$2,mismatch_reason=NULL,version=version+1,updated_at=now() WHERE id=$1`, id, total); err != nil {",
+                  "match": "total=$2,outstanding=$2"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_resolve_effect1",
+          "name": "Status MATCH_PENDING; audit PUR-INV-003; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.ResolveSupplierInvoice",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 213,
+              "function_end_line": 253,
+              "evidence": [
+                {
+                  "line": 240,
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_invoices SET status='MATCH_PENDING',total=$2,outstanding=$2,mismatch_reason=NULL,version=version+1,updated_at=now() WHERE id=$1`, id, total); err != nil {",
+                  "match": "status='MATCH_PENDING'"
+                },
+                {
+                  "line": 243,
+                  "excerpt": "if err = audit(ctx, tx, actor, \"RESOLVE_SUPPLIER_MATCH\", \"PUR-INV-003\", \"SUPPLIER_INVOICE\", id, \"MATCH_EXCEPTION\", \"MATCH_PENDING\", \"\", request); err != nil {",
+                  "match": "\"PUR-INV-003\""
+                },
+                {
+                  "line": 246,
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_ap_resolve_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.resolveSupplierInvoice",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 133,
+              "function_end_line": 145,
+              "evidence": [
+                {
+                  "line": 144,
+                  "excerpt": "result(w, document, err, 200)",
+                  "match": "result(w, document, err,"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "excerpt": "if err != nil {",
+                  "match": "if err != nil"
+                },
+                {
+                  "line": 86,
+                  "excerpt": "respond(w, status, document)",
+                  "match": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "excerpt": "w.WriteHeader(status)",
+                  "match": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.resolveSupplierInvoice",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 133,
+          "function_end_line": 145,
+          "evidence": [
+            {
+              "line": 143,
+              "excerpt": "document, err := h.Service.ResolveSupplierInvoice(r.Context(), chi.URLParam(r, \"id\"), input.Lines, actor(r), requestID(r))",
+              "match": "h.Service.ResolveSupplierInvoice("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.ResolveSupplierInvoice",
+          "role": "DELEGATION",
+          "function_start_line": 86,
+          "function_end_line": 88,
+          "evidence": [
+            {
+              "line": 87,
+              "excerpt": "return s.store.ResolveSupplierInvoice(c, id, lines, actor, request)",
+              "match": "s.store.ResolveSupplierInvoice("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/finance_test.go",
+          "function": "TestP2PConsolidatedInvoiceExactMatchPartialPaymentCloseAndVoid",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 20,
+          "function_end_line": 140,
+          "evidence": [
+            {
+              "line": 77,
+              "excerpt": "invoice, err = finance.ResolveSupplierInvoice(ctx, invoice.ID, []financeapp.InvoiceLineInput{{ReferenceID: orderLineID, Quantity: 10, UnitPrice: 100}}, operatorID, \"fin-p2p-10\")",
+              "match": "finance.ResolveSupplierInvoice("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_ap_resolve_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_resolve_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_resolve_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_ap_resolve_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn",
+      "process_id": "Process_role_staff_l3_gr_cancel",
+      "name": "Batalkan Goods Receipt draft - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_gr_cancel_input",
+          "name": "Isi alasan pembatalan GR",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/goods-receipt-panel.tsx",
+              "function": "GoodsReceiptPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 8,
+              "function_end_line": 25,
+              "evidence": [
+                {
+                  "line": 21,
+                  "excerpt": "<form className=\"operation-card\" onSubmit={(event) => { event.preventDefault(); if (canApprove(session?.role)) void run(`/goods-receipts/${receiptId}/post`, { version: Number(version) }, \"Goods receipt berhasil diposting.\"); }}><strong>Kelola Goods Receipt</strong><label>Goods Receipt ID<input value={receiptId} onChang",
+                  "match": "Alasan reverse/cancel"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_cancel_check",
+          "name": "GR DRAFT; alasan tidak kosong",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelReceipt",
+              "role": "VALIDATION",
+              "function_start_line": 545,
+              "function_end_line": 564,
+              "evidence": [
+                {
+                  "line": 546,
+                  "excerpt": "if reason == \"\" {",
+                  "match": "reason == \"\""
+                },
+                {
+                  "line": 555,
+                  "excerpt": "e = tx.QueryRow(ctx, `UPDATE goods_receipts SET status='CANCELLED',reason=$2,version=version+1 WHERE id=$1 AND status='DRAFT' RETURNING id,document_no,status,creator_id,version`, id, reason).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version)",
+                  "match": "status='DRAFT'"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_cancel_effect0",
+          "name": "Ubah GR CANCELLED; naikkan versi",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelReceipt",
+              "role": "PERSISTENCE",
+              "function_start_line": 545,
+              "function_end_line": 564,
+              "evidence": [
+                {
+                  "line": 555,
+                  "excerpt": "e = tx.QueryRow(ctx, `UPDATE goods_receipts SET status='CANCELLED',reason=$2,version=version+1 WHERE id=$1 AND status='DRAFT' RETURNING id,document_no,status,creator_id,version`, id, reason).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version)",
+                  "match": "status='CANCELLED'"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_cancel_effect1",
+          "name": "Audit ACT-PUR-GR-CANCEL; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelReceipt",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 545,
+              "function_end_line": 564,
+              "evidence": [
+                {
+                  "line": 559,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"CANCEL_GR\", \"ACT-PUR-GR-CANCEL\", \"GOODS_RECEIPT\", id, \"DRAFT\", \"CANCELLED\", reason, request); e != nil {",
+                  "match": "\"ACT-PUR-GR-CANCEL\""
+                },
+                {
+                  "line": 562,
+                  "excerpt": "e = tx.Commit(ctx)",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_cancel_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.cancelReceipt",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 158,
+              "function_end_line": 173,
+              "evidence": [
+                {
+                  "line": 169,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 172,
+                  "excerpt": "respond(w, 200, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.cancelReceipt",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 158,
+          "function_end_line": 173,
+          "evidence": [
+            {
+              "line": 167,
+              "excerpt": "v, e := h.Service.CancelReceipt(r.Context(), chi.URLParam(r, \"id\"), in.Reason, principal(r).UserID, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.CancelReceipt("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.CancelReceipt",
+          "role": "DELEGATION",
+          "function_start_line": 91,
+          "function_end_line": 93,
+          "evidence": [
+            {
+              "line": 92,
+              "excerpt": "return s.store.CancelReceipt(c, id, reason, actor, r)",
+              "match": "s.store.CancelReceipt("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_gr_cancel_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_cancel_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_cancel_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_cancel_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn",
+      "process_id": "Process_role_staff_l3_gr_create",
+      "name": "Catat penerimaan barang - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_gr_create_input",
+          "name": "Pilih PO line dan jumlah diterima",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/goods-receipt-panel.tsx",
+              "function": "GoodsReceiptPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 8,
+              "function_end_line": 25,
+              "evidence": [
+                {
+                  "line": 17,
+                  "excerpt": "function create(event: FormEvent) { event.preventDefault(); return run(`/purchase-orders/${purchaseOrderId}/goods-receipts`, { lines: [{ purchaseOrderLineId, productId, quantity: Number(quantity) }] }, \"Goods receipt draft berhasil dibuat.\"); }",
+                  "match": "function create("
+                },
+                {
+                  "line": 20,
+                  "excerpt": "{canCreate(session?.role) && <form className=\"operation-card\" onSubmit={create}><strong>Buat Goods Receipt</strong><label>Issued PO<select value={purchaseOrderId} onChange={(event) => { void selectOrder(event.target.value); }} required><option value=\"\">Pilih purchase order</option>{orders.map((order) => <option key={or",
+                  "match": "PO Line"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_create_check",
+          "name": "PO ISSUED/PARTIALLY_RECEIVED; line milik PO; qty positif",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateReceipt",
+              "role": "VALIDATION",
+              "function_start_line": 259,
+              "function_end_line": 306,
+              "evidence": [
+                {
+                  "line": 270,
+                  "excerpt": "if e != nil || (status != \"ISSUED\" && status != \"PARTIALLY_RECEIVED\") {",
+                  "match": "status != \"ISSUED\""
+                },
+                {
+                  "line": 283,
+                  "excerpt": "if l.Quantity <= 0 {",
+                  "match": "l.Quantity <= 0"
+                },
+                {
+                  "line": 288,
+                  "excerpt": "SELECT 1 FROM purchase_order_lines",
+                  "match": "FROM purchase_order_lines"
+                },
+                {
+                  "line": 291,
+                  "excerpt": "if e != nil || !valid {",
+                  "match": "!valid"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_create_effect0",
+          "name": "Insert Goods Receipt DRAFT dan lines",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateReceipt",
+              "role": "PERSISTENCE",
+              "function_start_line": 259,
+              "function_end_line": 306,
+              "evidence": [
+                {
+                  "line": 278,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO goods_receipts(id,document_no,purchase_order_id,creator_id,status)VALUES($1,$2,$3,$4,'DRAFT')`, id, no, po, actor)",
+                  "match": "INSERT INTO goods_receipts"
+                },
+                {
+                  "line": 294,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO goods_receipt_lines(goods_receipt_id,purchase_order_line_id,product_id,quantity)VALUES($1,$2,$3,$4)`, id, l.PurchaseOrderLineID, l.ProductID, l.Quantity)",
+                  "match": "INSERT INTO goods_receipt_lines"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_create_effect1",
+          "name": "Audit PUR-GR-001; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateReceipt",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 259,
+              "function_end_line": 306,
+              "evidence": [
+                {
+                  "line": 299,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"CREATE_GOODS_RECEIPT\", \"PUR-GR-001\", \"GOODS_RECEIPT\", id, \"\", \"DRAFT\", \"\", request); e != nil {",
+                  "match": "\"PUR-GR-001\""
+                },
+                {
+                  "line": 302,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_gr_create_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.receipt",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 192,
+              "function_end_line": 209,
+              "evidence": [
+                {
+                  "line": 205,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 208,
+                  "excerpt": "respond(w, 201, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.receipt",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 192,
+          "function_end_line": 209,
+          "evidence": [
+            {
+              "line": 203,
+              "excerpt": "v, e := h.Service.CreateReceipt(r.Context(), chi.URLParam(r, \"id\"), in.Lines, principal(r).UserID, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.CreateReceipt("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.CreateReceipt",
+          "role": "DELEGATION",
+          "function_start_line": 76,
+          "function_end_line": 78,
+          "evidence": [
+            {
+              "line": 77,
+              "excerpt": "return s.store.CreateReceipt(ctx, po, l, actor, request)",
+              "match": "s.store.CreateReceipt("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 121,
+              "excerpt": "gr, e := s.CreateReceipt(ctx, po.ID, []purchaseapp.ReceiptLineInput{{PurchaseOrderLineID: lineID, ProductID: productID, Quantity: 4}}, operatorID, \"r7\")",
+              "match": "CreateReceipt("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_gr_create_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_create_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_create_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_gr_create_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn",
+      "process_id": "Process_role_staff_l3_po_convert",
+      "name": "Konversi PR menjadi Purchase Order - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_po_convert_input",
+          "name": "Pilih PR, supplier dan warehouse",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-order-panel.tsx",
+              "function": "PurchaseOrderPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 9,
+              "function_end_line": 26,
+              "evidence": [
+                {
+                  "line": 19,
+                  "excerpt": "function convert(event: FormEvent) { event.preventDefault(); return run(`/purchase-requests/${requestId}/purchase-order`, { supplierId, warehouseId }, \"Purchase order berhasil dibuat.\"); }",
+                  "match": "function convert("
+                },
+                {
+                  "line": 21,
+                  "excerpt": "{canCreate(session?.role) && <form className=\"operation-card\" onSubmit={convert}><strong>Konversi PR menjadi PO</strong><label>Approved PR ID<input value={requestId} onChange={(event) => setRequestId(event.target.value)} required /></label><MasterDataSelect resource=\"suppliers\" label=\"Supplier\" value={supplierId} onCha",
+                  "match": "resource=\"suppliers\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_po_convert_check",
+          "name": "Lock PR APPROVED; supplier dan warehouse aktif",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ConvertToOrder",
+              "role": "VALIDATION",
+              "function_start_line": 200,
+              "function_end_line": 241,
+              "evidence": [
+                {
+                  "line": 208,
+                  "excerpt": "if e != nil || status != \"APPROVED\" {",
+                  "match": "status != \"APPROVED\""
+                },
+                {
+                  "line": 212,
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM suppliers WHERE id=$1 AND active)",
+                  "match": "FROM suppliers"
+                },
+                {
+                  "line": 213,
+                  "excerpt": "AND EXISTS(SELECT 1 FROM warehouses WHERE id=$2 AND active)`, supplier, warehouse).Scan(&active)",
+                  "match": "FROM warehouses"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_po_convert_effect0",
+          "name": "Salin PR lines ke PO DRAFT baru",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ConvertToOrder",
+              "role": "PERSISTENCE",
+              "function_start_line": 200,
+              "function_end_line": 241,
+              "evidence": [
+                {
+                  "line": 222,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_orders(id,document_no,purchase_request_id,supplier_id,warehouse_id,creator_id,status)VALUES($1,$2,$3,$4,$5,$6,'DRAFT')`, po, no, id, supplier, warehouse, actor)",
+                  "match": "INSERT INTO purchase_orders"
+                },
+                {
+                  "line": 226,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_order_lines(purchase_order_id,product_id,quantity,unit_price)SELECT $1,product_id,quantity,estimated_price FROM purchase_request_lines WHERE purchase_request_id=$2`, po, id)",
+                  "match": "INSERT INTO purchase_order_lines"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_po_convert_effect1",
+          "name": "PR menjadi CONVERTED_TO_PO; audit; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ConvertToOrder",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 200,
+              "function_end_line": 241,
+              "evidence": [
+                {
+                  "line": 230,
+                  "excerpt": "_, e = tx.Exec(ctx, `UPDATE purchase_requests SET status='CONVERTED_TO_PO',version=version+1,updated_at=now() WHERE id=$1`, id)",
+                  "match": "status='CONVERTED_TO_PO'"
+                },
+                {
+                  "line": 234,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"CONVERT_TO_PO\", \"PUR-PO-001\", \"PURCHASE_ORDER\", po, \"\", \"DRAFT\", \"\", request); e != nil {",
+                  "match": "\"PUR-PO-001\""
+                },
+                {
+                  "line": 237,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_po_convert_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.prAction",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 103,
+              "function_end_line": 141,
+              "evidence": [
+                {
+                  "line": 137,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 140,
+                  "excerpt": "respond(w, 200, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 122,
+              "excerpt": "v, e = h.Service.ConvertToOrder(r.Context(), chi.URLParam(r, \"id\"), in.SupplierID, in.WarehouseID, p.UserID, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.ConvertToOrder("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.ConvertToOrder",
+          "role": "DELEGATION",
+          "function_start_line": 70,
+          "function_end_line": 72,
+          "evidence": [
+            {
+              "line": 71,
+              "excerpt": "return s.store.ConvertToOrder(ctx, id, supplier, warehouse, actor, request)",
+              "match": "s.store.ConvertToOrder("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 102,
+              "excerpt": "po, e := s.ConvertToOrder(ctx, pr.ID, supplierID, warehouseID, operatorID, \"r5\")",
+              "match": "ConvertToOrder("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_po_convert_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_po_convert_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_po_convert_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_po_convert_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn",
+      "process_id": "Process_role_staff_l3_pr_cancel",
+      "name": "Batalkan PR draft - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_pr_cancel_input",
+          "name": "Cancel PR draft; UI kirim alasan demo",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 38,
+                  "excerpt": "const reason = name === \"reject\" || name === \"cancel\" ? \"Diproses dari demo Mini ERP\" : \"\";",
+                  "match": "const reason ="
+                },
+                {
+                  "line": 55,
+                  "excerpt": "{document.status === \"DRAFT\" && canCreate(session?.role) && <><button onClick={() => action(document, \"submit\")}>Submit</button><button onClick={() => action(document, \"cancel\")}>Cancel</button></>}",
+                  "match": "action(document, \"cancel\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_cancel_check",
+          "name": "PR DRAFT; versi cocok; actor creator atau Super Admin; alasan ada",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "VALIDATION",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 141,
+                  "excerpt": "if d.Version != version {",
+                  "match": "d.Version != version"
+                },
+                {
+                  "line": 179,
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND role='SUPER_ADMIN')`, actor).Scan(&admin)",
+                  "match": "role='SUPER_ADMIN'"
+                },
+                {
+                  "line": 180,
+                  "excerpt": "if e != nil || from != \"DRAFT\" || reason == \"\" || (actor != d.CreatorID && !admin) {",
+                  "match": "from != \"DRAFT\" || reason == \"\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_cancel_effect0",
+          "name": "Ubah PR CANCELLED; naikkan versi",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "PERSISTENCE",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 183,
+                  "excerpt": "d.Status = \"CANCELLED\"",
+                  "match": "d.Status = \"CANCELLED\""
+                },
+                {
+                  "line": 187,
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE purchase_requests SET status=$1,reviewer_id=CASE WHEN $2 IN('approve','reject') THEN $3::uuid ELSE reviewer_id END,reason=NULLIF($4,''),version=version+1,updated_at=now() WHERE id=$5 AND version=$6`, d.Status, action, actor, reason, id, version)",
+                  "match": "UPDATE purchase_requests"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_cancel_effect1",
+          "name": "Audit ACT-PUR-PR-CANCEL; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 177,
+                  "excerpt": "trace = \"ACT-PUR-PR-CANCEL\"",
+                  "match": "\"ACT-PUR-PR-CANCEL\""
+                },
+                {
+                  "line": 191,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"PR_\"+action, trace, \"PURCHASE_REQUEST\", id, from, d.Status, reason, request); e != nil {",
+                  "match": "audit(ctx"
+                },
+                {
+                  "line": 194,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_cancel_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.prAction",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 103,
+              "function_end_line": 141,
+              "evidence": [
+                {
+                  "line": 137,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 140,
+                  "excerpt": "respond(w, 200, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 134,
+              "excerpt": "v, e = h.Service.TransitionRequest(r.Context(), chi.URLParam(r, \"id\"), action, p.UserID, in.Reason, in.Version, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.TransitionRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.TransitionRequest",
+          "role": "DELEGATION",
+          "function_start_line": 67,
+          "function_end_line": 69,
+          "evidence": [
+            {
+              "line": 68,
+              "excerpt": "return s.store.TransitionRequest(ctx, id, action, actor, reason, version, request)",
+              "match": "s.store.TransitionRequest("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_pr_cancel_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_cancel_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_cancel_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_cancel_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn",
+      "process_id": "Process_role_staff_l3_pr_copy",
+      "name": "Salin PR ditolak menjadi draft baru - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_pr_copy_input",
+          "name": "Pilih Copy to Draft",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 57,
+                  "excerpt": "{document.status === \"REJECTED\" && canCreate(session?.role) && <button onClick={() => action(document, \"copy\")}>Copy to Draft</button>}",
+                  "match": "action(document, \"copy\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_copy_check",
+          "name": "PR sumber REJECTED; semua produk masih aktif",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CopyRequest",
+              "role": "VALIDATION",
+              "function_start_line": 476,
+              "function_end_line": 511,
+              "evidence": [
+                {
+                  "line": 484,
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT pr.status,pr.purpose,NOT EXISTS(",
+                  "match": "NOT EXISTS("
+                },
+                {
+                  "line": 488,
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {",
+                  "match": "!mastersActive"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_copy_effect0",
+          "name": "Salin purpose/lines ke PR baru; isi copied_from_id",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CopyRequest",
+              "role": "PERSISTENCE",
+              "function_start_line": 476,
+              "function_end_line": 511,
+              "evidence": [
+                {
+                  "line": 496,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_requests(id,document_no,creator_id,purpose,status,copied_from_id)VALUES($1,$2,$3,$4,'DRAFT',$5)`, newID, no, actor, purpose, id)",
+                  "match": "copied_from_id"
+                },
+                {
+                  "line": 500,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_request_lines(purchase_request_id,product_id,quantity,estimated_price)SELECT $1,product_id,quantity,estimated_price FROM purchase_request_lines WHERE purchase_request_id=$2`, newID, id)",
+                  "match": "INSERT INTO purchase_request_lines"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_copy_effect1",
+          "name": "PR sumber tetap REJECTED; audit; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CopyRequest",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 476,
+              "function_end_line": 511,
+              "evidence": [
+                {
+                  "line": 504,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"COPY_REJECTED_PR\", \"ACT-PUR-PR-COPY\", \"PURCHASE_REQUEST\", newID, \"REJECTED\", \"DRAFT\", \"\", request); e != nil {",
+                  "match": "\"ACT-PUR-PR-COPY\""
+                },
+                {
+                  "line": 507,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_copy_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.prAction",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 103,
+              "function_end_line": 141,
+              "evidence": [
+                {
+                  "line": 137,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 140,
+                  "excerpt": "respond(w, 200, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 128,
+              "excerpt": "v, e = h.Service.CopyRequest(r.Context(), chi.URLParam(r, \"id\"), p.UserID, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.CopyRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.CopyRequest",
+          "role": "DELEGATION",
+          "function_start_line": 85,
+          "function_end_line": 87,
+          "evidence": [
+            {
+              "line": 86,
+              "excerpt": "return s.store.CopyRequest(c, id, actor, r)",
+              "match": "s.store.CopyRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestCopyRejectedDocumentsRequiresActiveMasters",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 326,
+          "function_end_line": 366,
+          "evidence": [
+            {
+              "line": 359,
+              "excerpt": "if _, e = purchasing.CopyRequest(ctx, request.ID, operatorID, \"copy-master-pr-4\"); e == nil {",
+              "match": "purchasing.CopyRequest("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_pr_copy_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_copy_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_copy_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_copy_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn",
+      "process_id": "Process_role_staff_l3_pr_create",
+      "name": "Buat Purchase Request - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_pr_create_input",
+          "name": "Isi tujuan pembelian dan line produk",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 44,
+                  "excerpt": "{canCreate(session?.role) && <form className=\"operation-form\" onSubmit={create}>",
+                  "match": "onSubmit={create}"
+                },
+                {
+                  "line": 45,
+                  "excerpt": "<label>Tujuan pembelian<input value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder=\"Contoh: kebutuhan operasional bulan ini\" required /></label>",
+                  "match": "Tujuan pembelian"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_create_check",
+          "name": "Tujuan terisi; line ada; qty positif; harga nonnegatif; produk aktif",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateRequest",
+              "role": "VALIDATION",
+              "function_start_line": 29,
+              "function_end_line": 69,
+              "evidence": [
+                {
+                  "line": 31,
+                  "excerpt": "if len(lines) == 0 || purpose == \"\" {",
+                  "match": "len(lines) == 0"
+                },
+                {
+                  "line": 49,
+                  "excerpt": "if l.Quantity <= 0 || l.UnitPrice < 0 {",
+                  "match": "l.Quantity <= 0"
+                },
+                {
+                  "line": 53,
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM products WHERE id=$1 AND active)`, l.ProductID).Scan(&active)",
+                  "match": "FROM products"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_create_effect0",
+          "name": "Insert PR DRAFT, creator dan lines",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateRequest",
+              "role": "PERSISTENCE",
+              "function_start_line": 29,
+              "function_end_line": 69,
+              "evidence": [
+                {
+                  "line": 44,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_requests(id,document_no,creator_id,purpose,status)VALUES($1,$2,$3,$4,'DRAFT')`, id, no, actor, purpose)",
+                  "match": "INSERT INTO purchase_requests"
+                },
+                {
+                  "line": 57,
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO purchase_request_lines(purchase_request_id,product_id,quantity,estimated_price)VALUES($1,$2,$3,$4)`, id, l.ProductID, l.Quantity, l.UnitPrice)",
+                  "match": "INSERT INTO purchase_request_lines"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_create_effect1",
+          "name": "Audit PUR-PR-001; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateRequest",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 29,
+              "function_end_line": 69,
+              "evidence": [
+                {
+                  "line": 62,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"CREATE_PURCHASE_REQUEST\", \"PUR-PR-001\", \"PURCHASE_REQUEST\", id, \"\", \"DRAFT\", \"\", request); e != nil {",
+                  "match": "\"PUR-PR-001\""
+                },
+                {
+                  "line": 65,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_create_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.create",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 84,
+              "function_end_line": 102,
+              "evidence": [
+                {
+                  "line": 98,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 101,
+                  "excerpt": "respond(w, 201, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.create",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 84,
+          "function_end_line": 102,
+          "evidence": [
+            {
+              "line": 96,
+              "excerpt": "v, e := h.Service.CreateRequest(r.Context(), principal(r).UserID, in.Purpose, in.Lines, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.CreateRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.CreateRequest",
+          "role": "DELEGATION",
+          "function_start_line": 54,
+          "function_end_line": 56,
+          "evidence": [
+            {
+              "line": 55,
+              "excerpt": "return s.store.CreateRequest(ctx, actor, purpose, l, req)",
+              "match": "s.store.CreateRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 89,
+              "excerpt": "pr, e := s.CreateRequest(ctx, operatorID, \"Partial receipt test\", []purchaseapp.LineInput{{ProductID: productID, Quantity: 10, UnitPrice: 100}}, \"r1\")",
+              "match": "CreateRequest("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_pr_create_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_create_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_create_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_create_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn",
+      "process_id": "Process_role_staff_l3_pr_submit",
+      "name": "Submit Purchase Request - Staff",
+      "activities": [
+        {
+          "task_id": "role_staff_l3_pr_submit_input",
+          "name": "Kirim PR untuk review",
+          "type": "userTask",
+          "actor": "Staff",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "USER_INPUT",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 55,
+                  "excerpt": "{document.status === \"DRAFT\" && canCreate(session?.role) && <><button onClick={() => action(document, \"submit\")}>Submit</button><button onClick={() => action(document, \"cancel\")}>Cancel</button></>}",
+                  "match": "action(document, \"submit\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_submit_check",
+          "name": "Lock PR; status DRAFT dan version cocok",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "VALIDATION",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 137,
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT id,document_no,status,creator_id,version FROM purchase_requests WHERE id=$1 FOR UPDATE`, id).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version)",
+                  "match": "FOR UPDATE"
+                },
+                {
+                  "line": 141,
+                  "excerpt": "if d.Version != version {",
+                  "match": "d.Version != version"
+                },
+                {
+                  "line": 147,
+                  "excerpt": "case \"submit\":",
+                  "match": "case \"submit\":"
+                },
+                {
+                  "line": 148,
+                  "excerpt": "if from != \"DRAFT\" {",
+                  "match": "from != \"DRAFT\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_submit_effect0",
+          "name": "Ubah PR menjadi SUBMITTED; naikkan versi",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "PERSISTENCE",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 151,
+                  "excerpt": "d.Status = \"SUBMITTED\"",
+                  "match": "d.Status = \"SUBMITTED\""
+                },
+                {
+                  "line": 187,
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE purchase_requests SET status=$1,reviewer_id=CASE WHEN $2 IN('approve','reject') THEN $3::uuid ELSE reviewer_id END,reason=NULLIF($4,''),version=version+1,updated_at=now() WHERE id=$5 AND version=$6`, d.Status, action, actor, reason, id, version)",
+                  "match": "UPDATE purchase_requests"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_submit_effect1",
+          "name": "Audit PUR-PR-002; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 145,
+                  "excerpt": "trace := \"PUR-PR-002\"",
+                  "match": "trace := \"PUR-PR-002\""
+                },
+                {
+                  "line": 191,
+                  "excerpt": "if e = audit(ctx, tx, actor, \"PR_\"+action, trace, \"PURCHASE_REQUEST\", id, from, d.Status, reason, request); e != nil {",
+                  "match": "audit(ctx"
+                },
+                {
+                  "line": 194,
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {",
+                  "match": "tx.Commit("
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_staff_l3_pr_submit_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.prAction",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 103,
+              "function_end_line": 141,
+              "evidence": [
+                {
+                  "line": 137,
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})",
+                  "match": "respond(w, 409"
+                },
+                {
+                  "line": 140,
+                  "excerpt": "respond(w, 200, v)",
+                  "match": "respond(w, 20"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "excerpt": "w.WriteHeader(s)",
+                  "match": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)",
+                  "match": "json.NewEncoder(w)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 134,
+              "excerpt": "v, e = h.Service.TransitionRequest(r.Context(), chi.URLParam(r, \"id\"), action, p.UserID, in.Reason, in.Version, middleware.GetReqID(r.Context()))",
+              "match": "h.Service.TransitionRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.TransitionRequest",
+          "role": "DELEGATION",
+          "function_start_line": 67,
+          "function_end_line": 69,
+          "evidence": [
+            {
+              "line": 68,
+              "excerpt": "return s.store.TransitionRequest(ctx, id, action, actor, reason, version, request)",
+              "match": "s.store.TransitionRequest("
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 93,
+              "excerpt": "if _, e = s.TransitionRequest(ctx, pr.ID, \"submit\", operatorID, \"\", pr.Version, \"r2\"); e != nil {",
+              "match": "TransitionRequest("
+            }
+          ]
+        }
+      ],
+      "control_elements": [
+        {
+          "id": "role_staff_l3_pr_submit_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_submit_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_submit_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        },
+        {
+          "id": "role_staff_l3_pr_submit_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "control-flow element; not assigned a standalone file mapping"
+        }
+      ]
+    }
+  ],
+  "snapshot_id": "df5ed08f8e69212904abf9f865a2faee"
+}

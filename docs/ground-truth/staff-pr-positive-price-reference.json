@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "MODIFY_TASK_LABEL",
+      "element_id": "role_staff_l3_pr_create_check",
+      "expected": [
+        {"file": "frontend/features/purchasing/purchase-request-panel.tsx", "module": "frontend", "layer": "frontend", "required_action": "MODIFY"},
+        {"file": "backend/internal/purchasing/adapter/postgres/store.go", "module": "backend", "layer": "adapter", "required_action": "MODIFY"}
+      ]
+    }
+  ]
+}

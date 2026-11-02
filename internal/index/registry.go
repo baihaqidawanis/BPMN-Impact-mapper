@@ -54,6 +54,14 @@ func DefaultRegistry() Registry {
 	return Registry{Adapters: []SourceAdapter{GoAdapter{}}, Extractors: []RelationExtractor{GoCallExtractor{}, HTTPRouteExtractor{}}}
 }
 
+// SourceContextRegistry adds observed constructor wiring and parameterized
+// routes without changing source artifact contents or retrieval tokens.
+func SourceContextRegistry() Registry {
+	r := DefaultRegistry()
+	r.Extractors = []RelationExtractor{GoCallExtractor{}, GoWiringExtractor{}, HTTPRouteExtractor{Parameterized: true}}
+	return r
+}
+
 func (TextAdapter) Name() string                      { return "generic-text" }
 func (TextAdapter) Capabilities() []domain.Capability { return []domain.Capability{domain.TextOnly} }
 func (GoAdapter) Name() string                        { return "go-syntax" }

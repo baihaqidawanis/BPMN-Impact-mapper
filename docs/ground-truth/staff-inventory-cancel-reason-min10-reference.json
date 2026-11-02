@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "MODIFY_TASK_LABEL",
+      "element_id": "role_staff_l3_adj_cancel_input",
+      "expected": [
+        {"file": "frontend/features/inventory/inventory-adjustment-panel.tsx", "module": "frontend", "layer": "frontend", "required_action": "MODIFY"},
+        {"file": "backend/internal/inventory/adapter/postgres/store.go", "module": "backend", "layer": "adapter", "required_action": "MODIFY"},
+        {"file": "backend/test/integration/operations_test.go", "module": "backend", "layer": "test", "required_action": "MODIFY"}
+      ]
+    }
+  ]
+}

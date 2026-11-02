@@ -1,0 +1,16 @@
+{
+  "scenario": "add-or",
+  "requirement": "Before submit, run active-product validation for positive deltas and available-stock validation for negative deltas. Mixed-sign lines activate both branches; wait for all selected checks. Zero-only lines take the default bypass. Failures roll back.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "ed173150c710ab193e2ea1dce83b067384a4385a14ff1f720905a88ebd1bf2fe",
+  "expected_existing_files": [
+    "backend/internal/inventory/adapter/postgres/store.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}

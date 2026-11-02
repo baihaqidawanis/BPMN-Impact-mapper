@@ -1,0 +1,16 @@
+{
+  "scenario": "add-and",
+  "requirement": "Before submit, validate the warehouse and all products against current active master data in independent branches; both must complete successfully. Failure rolls back; no partial submission. No requirement to use goroutines.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "6d0789cb999d76a0e05b1c0eff1026999b943ae3839bcee256e993bc6b1dacea",
+  "expected_existing_files": [
+    "backend/internal/inventory/adapter/postgres/store.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}

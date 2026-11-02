@@ -50,8 +50,8 @@ test("report filters and file view work without rerunning analysis", async ({ pa
   page.on("request", request => { if (request.method() === "POST" && request.url().endsWith("/analyses")) analysisPosts++; });
   await page.route("**/backend/api/v1/analyses", route => route.fulfill({ json: { analyses: [{ analysis_id: report.analysis_id, repository: report.repository, method: report.method, changes: 2, candidates: 4, unresolved: 1 }] } }));
   await page.route(`**/backend/api/v1/analyses/${report.analysis_id}`, route => route.fulfill({ json: report }));
-  await page.goto("/");
-  await page.getByRole("navigation", {name:"Workspace navigation"}).getByRole("button", { name: "Saved analyses", exact: true }).click();
+  await page.goto("/?view=analysis");
+  await page.getByRole("navigation", {name:"Workspace navigation"}).getByRole("button", { name: "History", exact: true }).click();
   await page.getByTestId("analysis-history").locator("summary").click();
   await page.getByRole("button", { name: "Open report", exact: true }).click();
   const results = page.getByTestId("report-view");

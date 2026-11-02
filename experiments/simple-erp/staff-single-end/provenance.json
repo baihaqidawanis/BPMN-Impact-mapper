@@ -1,0 +1,13 @@
+{
+  "baseline_source": "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn",
+  "original_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "before_sha256": "e3a28609f280eafbecb55d89e240c033214f26ee7561d2a33d555db3cb84c6aa",
+  "after_sha256": "016ab748a2442ef2ffd0dffe893b70340179b66d7e6978365662f89c577933cf",
+  "status": "source-reviewed presentation abstraction; not runtime equivalence proof",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184"
+  },
+  "requirement": "Submit requires a reason and rechecks active warehouse and products. Both checks return results before deciding; failure cannot submit. Existing state/actor/version guards remain.",
+  "reference_status": "No scored ground truth for this combined scenario yet. Do not use source_hashes as expected affected files."
+}

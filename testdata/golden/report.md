@@ -7,7 +7,7 @@
 - Revision: `fixture-v1`
 - Changes: 1
 
-Retrieval scores order candidates; they are not probabilities of a required change. Code evidence, meaning match and rank agreement are separate measurements. RRF uses ranking positions, so its score can be high without a direct BPMN ID match. A new task or gateway may not have an ID in source yet; the current code-evidence weights are not recalibrated. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only and adds no separate score.
+Retrieval scores order candidates; they are not probabilities of a required change. BM25, semantic similarity and rank agreement have different scales. TRACE_ID links the changed element; CONTEXT_TRACE_ID links a neighbouring element only.
 
 ## 1. ADD_TASK — TASK-VALIDATE
 

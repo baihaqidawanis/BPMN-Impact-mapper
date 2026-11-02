@@ -43,6 +43,10 @@ type BM25Only struct{ DiversifyFiles bool }
 
 func (BM25Only) Method() domain.AnalysisMethod { return domain.MethodBM25 }
 
+func (BM25Only) MethodMetadata() map[string]string {
+	return map[string]string{"query_version": "element-and-direct-branch-conditions-v2"}
+}
+
 func (strategy BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
 	defaults := DefaultConfig()
 	if config.TopK <= 0 {
@@ -60,6 +64,11 @@ func (strategy BM25Only) Attach(_ context.Context, changes []domain.Change, arti
 		}
 		withoutContext := *change
 		withoutContext.Context = nil
+		// Branch conditions define the changed gateway itself. Keep them even
+		// in the lexical baseline; process and neighbour expansion stay off.
+		if change.Context != nil {
+			withoutContext.Context = &domain.ChangeContext{BranchTerms: change.Context.BranchTerms}
+		}
 		query, _ := queryFor(withoutContext)
 		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
@@ -368,6 +377,8 @@ func queryFor(change domain.Change) ([]string, []string) {
 		raw = append(raw, element.DataRequirements...)
 	}
 	if change.Context != nil {
+		raw = append(raw, change.Context.ProcessName)
+		raw = append(raw, change.Context.BranchTerms...)
 		for _, element := range append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...) {
 			raw = append(raw, element.Name)
 		}

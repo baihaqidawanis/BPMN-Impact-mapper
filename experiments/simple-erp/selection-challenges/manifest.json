@@ -1,0 +1,53 @@
+{
+  "version": "1",
+  "repetitions": 2,
+  "top_k": 10,
+  "label_provenance": "single-source-review",
+  "methods": [
+    "bm25",
+    "semantic",
+    "fusion",
+    "hybrid"
+  ],
+  "scenarios": [
+    {
+      "id": "selection-challenge-remove-check",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "selection-challenge-frozen",
+      "old_bpmn_path": "experiments/simple-erp/selection-challenges/remove-check/before.bpmn",
+      "old_bpmn_sha256": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+      "new_bpmn_path": "experiments/simple-erp/selection-challenges/remove-check/after.bpmn",
+      "new_bpmn_sha256": "af3dff92c989229537fd8cfac5fb478059b6ea8bfb2bf4e33da1c80d0822a0cf",
+      "ground_truth_path": "experiments/simple-erp/selection-challenges/remove-check/reference.json",
+      "ground_truth_sha256": "a4b758fb9faed2a5fff0fcffc5d59a41aaf9f473d5bd6da65fcc803cc28bef36",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "selection-challenge-change-condition",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "selection-challenge-frozen",
+      "old_bpmn_path": "experiments/simple-erp/selection-challenges/change-condition/before.bpmn",
+      "old_bpmn_sha256": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+      "new_bpmn_path": "experiments/simple-erp/selection-challenges/change-condition/after.bpmn",
+      "new_bpmn_sha256": "ae162d139fdd777715ebfad36887c90e34293c3bb322d281c1e2284c0d2866d0",
+      "ground_truth_path": "experiments/simple-erp/selection-challenges/change-condition/reference.json",
+      "ground_truth_sha256": "c0ce34cb69a613f6ee441bd60abe86f8306fcfee3250544a84158fbdab5006f7",
+      "truth_scope": "subset"
+    },
+    {
+      "id": "selection-challenge-unchanged-control",
+      "repository_path": "../Simple-ERP",
+      "repository_name": "Simple-ERP",
+      "revision": "selection-challenge-frozen",
+      "old_bpmn_path": "experiments/simple-erp/selection-challenges/unchanged-control/before.bpmn",
+      "old_bpmn_sha256": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+      "new_bpmn_path": "experiments/simple-erp/selection-challenges/unchanged-control/after.bpmn",
+      "new_bpmn_sha256": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+      "ground_truth_path": "experiments/simple-erp/selection-challenges/unchanged-control/reference.json",
+      "ground_truth_sha256": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+      "truth_scope": "complete"
+    }
+  ]
+}

@@ -6,6 +6,10 @@ import type { AnalysisMethod } from "@/lib/types";
 import styles from "./AnalysisForm.module.css";
 
 interface Props {
+  completedRepository?: { name: string; revision: string };
+  repositoryPath?: string;
+  onRepositoryPath?: (path: string) => void;
+  enableResearch?: boolean;
   loading: boolean;
   onSubmit: (formData: FormData) => Promise<void>;
   baseline: File | null;
@@ -15,13 +19,21 @@ interface Props {
   onOpenEditor: () => void;
 }
 
-export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, onEdited, onOpenEditor }: Props) {
-	const [researchMode, setResearchMode] = useState(false);
+export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, onRepositoryPath, enableResearch = true, loading, onSubmit, baseline, edited, onBaseline, onEdited, onOpenEditor }: Props) {
+	const [researchSelected, setResearchMode] = useState(false);
+  const researchMode = enableResearch && researchSelected;
   const [method, setMethod] = useState<AnalysisMethod>("hybrid");
 	const [compareMethods, setCompareMethods] = useState(false);
-	const [repositoryPath, setRepositoryPath] = useState("");
+	const [localPath, setLocalPath] = useState("");
+  const repositoryPath = sharedPath ?? localPath;
+  function setRepositoryPath(path: string) { setLocalPath(path); onRepositoryPath?.(path); }
 	const [repositoryName, setRepositoryName] = useState("");
 	const [revision, setRevision] = useState("");
+  useEffect(() => {
+    if (!completedRepository) return;
+    setRepositoryName(completedRepository.name);
+    setRevision(completedRepository.revision === "unspecified" ? "" : completedRepository.revision);
+  }, [completedRepository]);
 	const [demoFiles, setDemoFiles] = useState<{ old: File; next: File } | null>(null);
 	const [demoLoading, setDemoLoading] = useState(false);
 	const [demoError, setDemoError] = useState("");
@@ -61,7 +73,7 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 		}
 		if (edited) formData.set("new_bpmn", edited);
 		if (baseline) formData.set("old_bpmn", baseline);
-		const needsSemantic = compareMethods || method !== "bm25";
+		const needsSemantic = (researchMode && compareMethods) || !researchMode || method !== "bm25";
 		if (needsSemantic && !semanticStatus?.available && !(await verifySemanticRuntime())) return;
 		await onSubmit(formData);
   }
@@ -103,14 +115,9 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
   return (
     <aside className={styles.panel}>
       <div className={styles.heading}>
-        <span>01</span>
-        <div><h2>Configure analysis</h2><p>All processing stays on this machine.</p></div>
+
+        <div><h2>Configure analysis</h2><p>Repository and process versions.</p></div>
       </div>
-			<label className={styles.demoChoice}><span>Demo scenario</span><select value={demoScenario} disabled={loading || demoLoading} onChange={event => { setDemoScenario(event.target.value); setDemoFiles(null); }}><option value="comprehensive">Comprehensive changes</option><option value="insert-task">Insert task</option><option value="add-branch">Add gateway branch</option><option value="move-task">Move task</option><option value="remove-branch">Remove gateway branch</option><option value="unresolved">Ambiguous match</option></select></label>
-			<button className={styles.demoButton} type="button" disabled={loading || demoLoading} onClick={() => void loadSyntheticDemo()}>
-				<span aria-hidden="true">▶</span>{demoLoading ? "Loading demo…" : "Load synthetic demo"}
-			</button>
-			{demoError && <p className={styles.demoError}>{demoError}</p>}
       <form onSubmit={(event) => void submit(event)} className={styles.form}>
         <label className={styles.field}>
           <span>Repository path <b>*</b></span>
@@ -120,10 +127,10 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 
         <div className={styles.grid}>
 					<label className={styles.field}><span>Repository name</span><input name="repository_name" value={repositoryName} onChange={(event) => setRepositoryName(event.target.value)} placeholder="Example ERP" /></label>
-					<label className={styles.field}><span>Revision</span><input name="revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="commit or snapshot" /></label>
+					<label className={styles.field}><span>Revision</span><input name="revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="commit or snapshot" /><small>Optional label; does not select a Git revision.</small></label>
         </div>
 
-        <div className={styles.divider}><span>BPMN comparison</span></div>
+        <div className={styles.divider}><span>Process versions</span></div>
         <label className={styles.fileField}>
           <span><b>Baseline BPMN</b><small>Old process specification</small></span>
 					<input key={`old-${baseline?.name}-${baseline?.lastModified}`} name="old_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!baseline} onChange={useManualFiles} />
@@ -133,15 +140,15 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
           <span><b>New BPMN</b><small>Changed process specification</small></span>
 					<input key={`new-${baseline?.name}-${baseline?.lastModified}`} name="new_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!demoFiles && !edited} onChange={useManualFiles} />
         </label>
-				<button className={styles.canvasLink} type="button" disabled={loading || !baseline} onClick={onOpenEditor}>Edit baseline in canvas <span aria-hidden="true">↗</span></button>
+				<button className={styles.canvasLink} type="button" disabled={loading || !baseline} onClick={onOpenEditor}>Compare BPMN in canvas <span aria-hidden="true">&#8594;</span></button>
 				{edited && <p role="status">New BPMN ready: {edited.name}. Run analysis to update results.</p>}
 				{demoFiles && <div className={styles.demoActive}><b>Synthetic demo ready</b><span>Neutral BPMN fixtures will be submitted; no case-study data is used.</span></div>}
 
-				<div className={styles.modeSwitch} role="group" aria-label="Analysis mode">
+				{enableResearch && <div className={styles.modeSwitch} role="group" aria-label="Analysis mode">
 					<button type="button" aria-pressed={!researchMode} onClick={() => { setResearchMode(false); setMethod("hybrid"); setCompareMethods(false); }}>Product</button>
 					<button type="button" aria-pressed={researchMode} onClick={() => setResearchMode(true)}>Research</button>
-				</div>
-				{researchMode ? <p className={styles.modeNote}><b>Research mode</b> exposes baselines and controlled method comparison. It does not change the production recommendation.</p> : <div className={styles.methodSummary}><span>Production method</span><b>BPMN-Context-Aware Hybrid Retrieval</b><small>BM25, semantic retrieval, BPMN context, and source evidence are combined automatically.</small></div>}
+				</div>}
+				{researchMode ? <p className={styles.modeNote}><b>Research mode</b> exposes baselines and controlled method comparison. It does not change the production recommendation.</p> : <div className={styles.methodSummary}><span>Production method</span><b>BPMN-Context-Aware Hybrid Retrieval</b><small>BM25 and semantic rankings, combined with BPMN process context.</small></div>}
 				<input type="hidden" name="method" value={researchMode ? method : "hybrid"} />
 				<div className={styles.grid}>
 					{researchMode && <label className={styles.field}>
@@ -153,29 +160,37 @@ export function AnalysisForm({ loading, onSubmit, baseline, edited, onBaseline, 
 							<option value="semantic">Semantic embedding baseline</option>
 						</select>
 					</label>}
-					<label className={styles.field}><span>Top candidates</span><input name="top_k" type="number" min="1" max="100" defaultValue="5" /><small>Five keeps the review focused.</small></label>
+					<label className={styles.field}><span>Top candidates</span><input name="top_k" type="number" min="1" max="100" defaultValue="10" /><small>Maximum results per change; not a relevance threshold.</small></label>
 				</div>
 				{researchMode && <label className={styles.checkField}>
 					<input name="compare_methods" type="checkbox" checked={compareMethods} onChange={(event) => setCompareMethods(event.target.checked)} />
 					<span><b>Compare mapping methods</b><small>Runs BM25, Semantic, rank fusion, and BPMN-Context-Aware Hybrid Retrieval on the same input.</small></span>
 				</label>}
 
-				{(compareMethods || method !== "bm25") && (
+				{((researchMode && compareMethods) || !researchMode || method !== "bm25") && (
 					<div className={styles.runtimeCheck} data-state={semanticStatus ? (semanticStatus.available ? "ready" : "unavailable") : "unchecked"}>
 						<div>
 							<b>Semantic runtime</b>
-							<small role="status">{semanticChecking ? "Checking the local embedding model…" : semanticStatus?.message ?? "Required by this method; checked locally before analysis."}</small>
+							<small role="status">{semanticChecking ? "Checking the local embedding model..." : semanticStatus?.message ?? "Required by this method; checked locally before analysis."}</small>
 							{semanticStatus?.available && semanticStatus.model && <small>{semanticStatus.model}</small>}
 						</div>
-						<button type="button" disabled={loading || semanticChecking} onClick={() => void verifySemanticRuntime()}>{semanticChecking ? "Checking…" : "Check runtime"}</button>
+						<button type="button" disabled={loading || semanticChecking} onClick={() => void verifySemanticRuntime()}>{semanticChecking ? "Checking..." : "Check runtime"}</button>
 					</div>
 				)}
 
 				<button className={styles.submit} disabled={loading || semanticChecking} type="submit">
-          {loading ? "Analysis in progress…" : "Run impact analysis"}<span aria-hidden="true">→</span>
+          {loading ? "Analysis in progress..." : "Run impact analysis"}<span aria-hidden="true">&#8594;</span>
         </button>
         <p className={styles.note}>The mapper never executes or modifies repository source.</p>
       </form>
+      <div className={styles.demoSection}><p>Try a sample workflow</p>		<div className={styles.demoToolbar}>
+			<label className={styles.demoChoice}><span>Demo scenario</span><select value={demoScenario} disabled={loading || demoLoading} onChange={event => { setDemoScenario(event.target.value); setDemoFiles(null); }}><option value="comprehensive">Comprehensive changes</option><option value="insert-task">Insert task</option><option value="add-branch">Add gateway branch</option><option value="move-task">Move task</option><option value="remove-branch">Remove gateway branch</option><option value="unresolved">Ambiguous match</option></select></label>
+			<button className={styles.demoButton} type="button" disabled={loading || demoLoading} onClick={() => void loadSyntheticDemo()}>
+				<span aria-hidden="true">&#9654;</span>{demoLoading ? "Loading demo..." : "Load synthetic demo"}
+			</button>
+		</div>
+			{demoError && <p className={styles.demoError}>{demoError}</p>}
+</div>
     </aside>
   );
 }

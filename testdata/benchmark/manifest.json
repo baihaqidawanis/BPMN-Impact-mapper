@@ -9,6 +9,7 @@
       "repository_path": "testdata/repository",
       "repository_name": "synthetic-repository",
       "revision": "fixture-v2",
+      "truth_scope": "subset",
       "old_bpmn_path": "testdata/bpmn/old.bpmn",
       "old_bpmn_sha256": "394cd3196f0df5ed8fd09a497cf4b85bb46d9f803f5b307533f9e13bf1a94d15",
       "new_bpmn_path": "testdata/bpmn/new.bpmn",
@@ -26,7 +27,7 @@
       "new_bpmn_path": "testdata/benchmark-vocabulary/bpmn/new.bpmn",
       "new_bpmn_sha256": "5479bad227123e64c99b95ac319ccd57352da66f53b74b559d005aec94668e6f",
       "ground_truth_path": "testdata/benchmark-vocabulary/ground-truth.json",
-      "ground_truth_sha256": "aa403e4033bf23a066eddf98ab6395cfb6d42b472157e7e7e43c00a73e32c6ab"
+      "ground_truth_sha256": "2df0a3d0845b18ea98ceca531dcb581f1a5f079c5fc3a58101d03d57ebc8688e"
     }
   ]
 }

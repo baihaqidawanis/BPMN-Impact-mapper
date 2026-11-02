@@ -9,6 +9,7 @@ export interface EvaluationResult {
   analysis_id: string;
   method: string;
   metrics: {
+	positive_ranking?: { positive_changes: number; map: number; mrr: number; r_precision: number; precision_at_5: number; precision_at_10: number; recall_at_5: number; recall_at_10: number };
     recall: { at_1: number; at_3: number; at_5: number };
     precision: { at_1: number; at_3: number; at_5: number };
     mrr: number; map: number; file_f1: number; file_precision: number; file_recall: number;
@@ -16,6 +17,7 @@ export interface EvaluationResult {
     required_action_classes: { action: string; support: number; precision: number; recall: number; f1: number }[];
     required_action_confusion: { labels: string[]; rows: number[][] };
     unresolved_rate: number; false_positive_rate: number; evaluated_changes: number;
+    negative_controls: number; correct_abstentions: number; negative_control_accuracy: number;
   };
   changes: {
     change_type: string;
@@ -24,6 +26,7 @@ export interface EvaluationResult {
     predicted_files: string[];
     reciprocal_rank: number;
     average_precision: number;
+	r_precision?: number;
     unresolved: boolean;
   }[];
 }

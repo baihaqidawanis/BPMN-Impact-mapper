@@ -27,6 +27,16 @@ func TestCSVIsDeterministicAndSpreadsheetReady(t *testing.T) {
 	}
 }
 
+func TestBenchmarkShowsNegativeControlsSeparately(t *testing.T) {
+	metrics := evaluation.Metrics{NegativeControls: 2, CorrectAbstentions: 1, NegativeControlAccuracy: 0.5, UnresolvedRate: 0.5}
+	report := benchmark.Report{BenchmarkID: "bench", Results: []benchmark.ScenarioMethodResult{{ScenarioID: "control", Method: domain.MethodBM25, Metrics: metrics}}, Aggregates: []benchmark.MethodAggregate{{Method: domain.MethodBM25, Scenarios: 1, Metrics: metrics}}}
+	markdown := string(benchmark.Markdown(report))
+	csvData, err := benchmark.CSV(report)
+	if err != nil || !strings.Contains(markdown, "1/2 (0.5000)") || !bytes.Contains(csvData, []byte("negative_control_accuracy")) {
+		t.Fatalf("negative controls missing from benchmark exports: markdown=%s err=%v", markdown, err)
+	}
+}
+
 func TestTimingComparisonSummarizesMetricsAndVolatileLatency(t *testing.T) {
 	report := benchmark.Report{BenchmarkID: "bench", Aggregates: []benchmark.MethodAggregate{{Method: domain.MethodBM25, Scenarios: 1, Metrics: evaluation.Metrics{Recall: evaluation.AtK{At5: 0.75}, MRR: 0.5, FileF1: 0.6}}}}
 	timing := benchmark.Timing{BenchmarkID: "bench", Runs: []benchmark.TimingEntry{
@@ -115,6 +125,62 @@ func TestRunnerLoadsGroundTruthAfterInferenceAndRejectsDrift(t *testing.T) {
 	}
 }
 
+func TestRunnerRejectsIncompleteGroundTruthAfterInference(t *testing.T) {
+	truth := []byte(`{"version":"1","cases":[]}`)
+	files := &fakeFiles{data: map[string][]byte{"old": []byte("old"), "new": []byte("new"), "truth": truth}}
+	manifest := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5,
+		Methods:   []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion},
+		Scenarios: []benchmark.Scenario{{ID: "one", RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hashOf([]byte("old")), NewBPMNPath: "new", NewBPMNSHA256: hashOf([]byte("new")), GroundTruthPath: "truth", GroundTruthSHA256: hashOf(truth)}},
+	}
+	analyzer := &fakeAnalyzer{events: &files.events, change: true}
+	_, _, err := (benchmark.Runner{Analyzer: analyzer, Files: files, Predictions: renderer{}}).Run(context.Background(), manifest)
+	if err == nil || !strings.Contains(err.Error(), "does not cover") {
+		t.Fatalf("incomplete truth accepted: %v", err)
+	}
+	if len(files.events) < 4 || files.events[len(files.events)-2] != "analyze" || files.events[len(files.events)-1] != "read:truth" {
+		t.Fatalf("ground truth was read before inference: %v", files.events)
+	}
+}
+
+func TestRunnerLabelsSubsetDiagnosticsAndExcludesThemFromAggregates(t *testing.T) {
+	partial := []byte(`{"version":"1","cases":[{"change_type":"ADD_TASK","element_id":"TASK-NEW","expected":[]}]}`)
+	complete := []byte(`{"version":"1","cases":[{"change_type":"ADD_TASK","element_id":"TASK-NEW","expected":[]},{"change_type":"ADD_TASK","element_id":"TASK-SECOND","expected":[]}]}`)
+	files := &fakeFiles{data: map[string][]byte{"old": []byte("old"), "new": []byte("new"), "partial": partial, "complete": complete}}
+	makeScenario := func(id, truthPath string) benchmark.Scenario {
+		return benchmark.Scenario{ID: id, RepositoryPath: "repo", OldBPMNPath: "old", OldBPMNSHA256: hashOf([]byte("old")), NewBPMNPath: "new", NewBPMNSHA256: hashOf([]byte("new")), GroundTruthPath: truthPath, GroundTruthSHA256: hashOf(files.data[truthPath])}
+	}
+	partialScenario := makeScenario("partial", "partial")
+	partialScenario.TruthScope = "subset"
+	manifest := benchmark.Manifest{Version: "1", Repetitions: 2, TopK: 5, LabelProvenance: "fixture-authored",
+		Methods:   []domain.AnalysisMethod{domain.MethodHybrid, domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion},
+		Scenarios: []benchmark.Scenario{partialScenario, makeScenario("complete", "complete")},
+	}
+	analyzer := &fakeAnalyzer{events: &files.events, changeCount: 2}
+	report, _, err := (benchmark.Runner{Analyzer: analyzer, Files: files, Predictions: renderer{}}).Run(context.Background(), manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(report.PartialScenarios) != 1 || report.PartialScenarios[0] != "partial" || len(report.Results) != 8 || report.LabelProvenance != "fixture-authored" {
+		t.Fatalf("partial scenario metadata missing: %#v", report)
+	}
+	for _, aggregate := range report.Aggregates {
+		if aggregate.Scenarios != 1 || aggregate.Metrics.EvaluatedChanges != 2 {
+			t.Fatalf("partial scenario entered method aggregate: %#v", aggregate)
+		}
+	}
+	if !strings.Contains(string(benchmark.Markdown(report)), "excluded from all method aggregates") || !strings.Contains(string(benchmark.Markdown(report)), "Label provenance: `fixture-authored`") {
+		t.Fatal("human report did not warn about partial labels")
+	}
+	csv, err := benchmark.CSV(report)
+	if err != nil || !strings.Contains(string(csv), ",subset,fixture-authored,") || !strings.Contains(string(csv), ",complete-only,fixture-authored,") || !strings.Contains(string(csv), "r_precision") {
+		t.Fatalf("CSV truth scope missing: %s error=%v", csv, err)
+	}
+	manifest.Scenarios = []benchmark.Scenario{partialScenario}
+	if err := manifest.Validate(); err == nil {
+		t.Fatal("subset-only manifest accepted without complete method aggregate")
+	}
+}
+
 type fakeFiles struct {
 	data   map[string][]byte
 	events []string
@@ -127,9 +193,11 @@ func (files *fakeFiles) Read(path string, _ int64) ([]byte, error) {
 func (*fakeFiles) Write(string, []byte) error { return nil }
 
 type fakeAnalyzer struct {
-	events *[]string
-	calls  int
-	drift  bool
+	events      *[]string
+	calls       int
+	drift       bool
+	change      bool
+	changeCount int
 }
 
 func (analyzer *fakeAnalyzer) Analyze(_ context.Context, request app.Request) (domain.Report, error) {
@@ -139,7 +207,14 @@ func (analyzer *fakeAnalyzer) Analyze(_ context.Context, request app.Request) (d
 	if analyzer.drift {
 		id += string(rune('a' + analyzer.calls))
 	}
-	return domain.Report{AnalysisID: id, InputFingerprint: "shared-fingerprint", Method: request.Method, Repository: domain.Repository{Name: "fixture", Revision: "one"}, Changes: []domain.Change{}, Warnings: []domain.Warning{}}, nil
+	changes := []domain.Change{}
+	if analyzer.change || analyzer.changeCount > 0 {
+		changes = append(changes, domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "TASK-NEW", Name: "New task", Type: "userTask"}})
+	}
+	if analyzer.changeCount > 1 {
+		changes = append(changes, domain.Change{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "TASK-SECOND", Name: "Second task", Type: "userTask"}})
+	}
+	return domain.Report{AnalysisID: id, InputFingerprint: "shared-fingerprint", Method: request.Method, Repository: domain.Repository{Name: "fixture", Revision: "one"}, Changes: changes, Warnings: []domain.Warning{}}, nil
 }
 
 type renderer struct{}

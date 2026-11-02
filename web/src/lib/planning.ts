@@ -11,11 +11,17 @@ export interface PlanningCandidate {
   module: string;
   layer: string;
   suggested_action: string;
-  retrieval_score: number;
+  retrieval_score?: number;
+  origin?: "source-caller";
   evidence: PlanningEvidence[];
 }
 
 export interface PlanningChange {
+  before?: { id: string; name?: string; type: string; actor?: string; state?: string; documentation?: string; default_flow?: string };
+  after?: { id: string; name?: string; type: string; actor?: string; state?: string; documentation?: string; default_flow?: string };
+  branch_changes?: { flow_id: string; old_condition?: string; new_condition?: string; old_label?: string; new_label?: string }[];
+  context_truncated?: boolean;
+  context_incomplete?: boolean;
   change_type: string;
   element_id: string;
   element_name?: string;
@@ -24,6 +30,8 @@ export interface PlanningChange {
 }
 
 export interface PlanningContext {
+  warnings?: { code: string; message: string }[];
+  warnings_truncated?: boolean;
   version: string;
   context_id: string;
   analysis_id: string;
@@ -48,7 +56,16 @@ export interface PlanSummary {
   files: number;
 }
 
+export interface FullReviewProgress {
+  source_fingerprint?: string;
+  phase: string; files_total: number; files_reviewed: number;
+  chunks_total: number; chunks_reviewed: number; relevant_files: number; weak_files: number;
+  failed_chunks?: number;
+  batches_total: number; batches_reviewed: number; current_file?: string;
+}
+
 export interface ChangePlan {
+  full_review?: FullReviewProgress;
   plan_id: string;
   analysis_id: string;
   context_id: string;
@@ -64,6 +81,8 @@ export interface ChangePlan {
     action: string;
     summary: string;
     steps: string[];
+    proposed_changes?: string[];
+    acceptance_checks?: string[];
     evidence_ids: string[];
   }>;
   review_issues: string[];

@@ -1,0 +1,16 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_GATEWAY",
+      "element_id": "GW-APPROVAL-LIMIT",
+      "expected": [
+        {"file": "internal/workflow/approval.go", "module": "internal", "layer": "application", "required_action": "MODIFY"},
+        {"file": "tests/approval_test.go", "module": "tests", "layer": "test", "required_action": "MODIFY"}
+      ]
+    },
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-SUBMIT-APPROVE", "expected": []},
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-LIMIT-APPROVE", "expected": []},
+    {"change_type": "MODIFY_SEQUENCE_FLOW", "element_id": "FLOW-LIMIT-END", "expected": []}
+  ]
+}

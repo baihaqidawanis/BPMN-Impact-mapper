@@ -1,0 +1,52 @@
+{
+  "version": "1",
+  "repository_path": "testdata/repository",
+  "repository_name": "synthetic-repository",
+  "revision": "fixture-v1",
+  "top_k": 5,
+  "scenarios": [
+    {
+      "id": "add-task-in-sequence",
+      "old_bpmn_path": "testdata/bpmn/insert-task-old.bpmn",
+      "old_bpmn_sha256": "35176a13a4f81cd13ead09f085b481f2bbb943038deebdd57f6edd7fc33f4369",
+      "new_bpmn_path": "testdata/bpmn/insert-task-new.bpmn",
+      "new_bpmn_sha256": "e4ea49ef37846ca26388fc09509e5b60af1fe523862dc8c7413e5ae5d085f7aa",
+      "expected_input_fingerprint": "912c8a0f215895ec8a1b2843f3b36ca3",
+      "change_type": "ADD_TASK",
+      "element_id": "TASK-REVIEW",
+      "expect_candidates": true
+    },
+    {
+      "id": "remove-task-and-rewire",
+      "old_bpmn_path": "testdata/bpmn/remove-task-old.bpmn",
+      "old_bpmn_sha256": "bc0f98426b91037383fda1e7b601ce3aff3b04c6ef2e209dd3d458c0a618f0a5",
+      "new_bpmn_path": "testdata/bpmn/remove-task-new.bpmn",
+      "new_bpmn_sha256": "3d2fc3533bc2781f283ae8effd14e9ccbdcc139f8023b675d57f067eded3c644",
+      "expected_input_fingerprint": "03d17f5613f0c8976bd3b78843a1a567",
+      "change_type": "REMOVE_TASK",
+      "element_id": "TASK-REVIEW",
+      "expect_candidates": true
+    },
+    {
+      "id": "add-gateway-branch",
+      "old_bpmn_path": "testdata/bpmn/add-branch-old.bpmn",
+      "old_bpmn_sha256": "65951a907afe69bb6192728d5a64994791b4e2863507fdc1a71b6ebd44ac3d57",
+      "new_bpmn_path": "testdata/bpmn/add-branch-new.bpmn",
+      "new_bpmn_sha256": "17afaa78cb0181133c9dc3e0687ba4edd2848be7dc53827f2fda9e89b7a4a151",
+      "expected_input_fingerprint": "ee9e60305b04dbbe282fdfe53b7f643f",
+      "change_type": "ADD_GATEWAY",
+      "element_id": "GW-ROUTE"
+    },
+    {
+      "id": "flow-display-label-negative",
+      "old_bpmn_path": "testdata/bpmn/old.bpmn",
+      "old_bpmn_sha256": "394cd3196f0df5ed8fd09a497cf4b85bb46d9f803f5b307533f9e13bf1a94d15",
+      "new_bpmn_path": "testdata/benchmark-controls/flow-label-only-new.bpmn",
+      "new_bpmn_sha256": "3319b79dcad52222f49f9eefbb96d57732207d1d7d1916fc4597b0de5cfb51d6",
+      "expected_input_fingerprint": "27df05f4ffd6ce1d9fd5cce23f5f75f8",
+      "change_type": "MODIFY_SEQUENCE_FLOW",
+      "element_id": "FLOW-3",
+      "expect_abstention": true
+    }
+  ]
+}

@@ -23,7 +23,7 @@ test("batch retains successful runs, records failures, exports and opens partial
     if(method==="semantic") return route.fulfill({status:503,json:{error:{message:"Local model has insufficient memory."}}});
     return route.fulfill({status:201,json:report("bm25")});
   });
-  await page.goto("/");
+  await page.goto("/?view=analysis");
   await page.getByRole("navigation",{name:"Workspace navigation"}).getByRole("button",{name:"Research",exact:true}).click();
   const batch=page.getByRole("region",{name:"Batch analysis"});
   await batch.getByLabel("Repository path",{exact:true}).fill("testdata/repository");
@@ -50,7 +50,7 @@ test("batch stop prevents queued requests and restores controls", async ({page})
     if(route.request().method()==="GET") return route.fulfill({json:{analyses:[]}});
     posts++; await barrier; await route.abort().catch(()=>{});
   });
-  await page.goto("/");
+  await page.goto("/?view=analysis");
   await page.getByRole("navigation",{name:"Workspace navigation"}).getByRole("button",{name:"Research",exact:true}).click();
   const batch=page.getByRole("region",{name:"Batch analysis"});
   await batch.getByRole("button",{name:"Load 8 synthetic scenarios"}).click();

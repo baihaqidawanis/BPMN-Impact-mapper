@@ -1,6 +1,18 @@
 # BPMN Impact Mapper — Phase 1 Plan
 
 Status: **DONE — Phase 4.0 persisted analysis history verified**
+
+## 2026-10-28 focused retrieval and canvas follow-up
+
+- [DONE] Changed gateway conditions now carry the changed branch text, process name, and immediate neighbors into lexical/semantic queries. Synthetic positive and unrelated negative controls pass; retrieval metadata versions changed. This is query construction, not proof of source dependency.
+- [DONE] One read-only Simple-ERP gateway pilot rerun (`outputs/gateway-check/`, ignored) completed: primary `MODIFY_GATEWAY_CONDITION` changed from zero displayed candidates in the older report to ten, with the provisional reference file at rank 4. This is a diagnostic, not an independently measured accuracy gain; other new top candidates still need review.
+- [DONE] Canvas Before uses a navigation-enabled read-only viewer with independent zoom/fit controls; a Playwright test verifies zoom and reset without editing the baseline.
+- [TODO] Re-run the three frozen staff scenarios after the query change and compare against independently adjudicated labels. Previous reports are not comparable as same-version runs; no precision/recall improvement is claimed yet.
+- [DONE] Production Hybrid now abstains from naming a function when its source span has no unique direct changed-ID match or unique two-word label/name match. File ranking, RRF score, and `VERIFY` action stay unchanged; focused synthetic controls cover direct ID, prefix collision, label match, tie, and unsupported function. Method metadata and analysis identity are versioned.
+- [DONE] Diagnostic reruns under ignored `outputs/gateway-symbol-check/` and `outputs/pr-symbol-check/` retained the inventory file at rank 4 (RRF 0.9262) and purchasing file at rank 8 (RRF 0.8434), while replacing unsupported `Store.PostAdjustment`/`Store.PostReceipt` assertions with file-level candidates. Input fingerprints differ from historical user reports because the Simple-ERP working tree changed; this is not a controlled accuracy comparison.
+- [DONE] The third diagnostic `ADD_TASK` Hybrid rerun initially stopped twice in the local Python embedding worker with Windows access-violation exit `0xc0000005`, then succeeded twice without code/input changes. The two successful canonical JSON files under ignored `outputs/reason-symbol-check/` and `outputs/reason-symbol-check-repeat/` have the same analysis ID and SHA-256. This shows an intermittent local runtime failure, not a deterministic BPMN-input failure. At the successful run, Windows reported roughly 1.8–1.9 GB remaining commit headroom and the Python worker used roughly 0.75 GB working set; those observations do not prove memory exhaustion as the cause. No silent BM25 fallback or ranking change was introduced.
+- [TODO] Reproduce or profile the native worker crash under controlled memory pressure before changing batch size, retry policy, or error classification. On failure, keep an explicit error and do not label a fallback result as Hybrid.
+- [TODO] Validate this conservative function-name policy against independent multilingual/held-out symbol labels. It reduces unsupported function assertions but can omit the correct function when a BPMN role diagram uses generated IDs or different-language labels.
 Last updated: 2026-10-22
 
 ## Source-relation ablation probe (2026-10-22)
@@ -1267,3 +1279,1315 @@ cross-domain candidates and omits a plausible purchase-request UI component
 from Top-20. RRF agreement and its high number are not calibrated confidence.
 No Simple-ERP-specific suppression, external model, or automatic code edit was
 introduced. Repo architecture remains Go-owned analysis with UI as an adapter.
+
+## Staff P2P diagnostic follow-up (2026-10-27)
+
+- [DONE] Prepare three Staff L3 case-study inputs under
+  `experiments/simple-erp/staff-p2p`: inserted task, gateway condition, branch
+  label. CLI probes distinguish these changes; the source baseline hash stays
+  unchanged. Baseline working tree is not frozen for formal evaluation.
+- [DONE] Distinguish a branch-label edit from a changed explicit condition;
+  retain label-as-condition behavior when no expression exists. Regression
+  tests cover both cases.
+- [DONE] Exclude `.generated` and process-model tooling directories under
+  `scripts`, using the same generic naming convention as `docs`. The probe
+  exposed generator/preview contamination; inventory regression covers it.
+- [DONE] Surface sparse semantic support in fusion warnings without changing
+  RRF weights or thresholds. Tests check the warning and tie independence.
+- [DONE] Diagnose false-positive login/README ranking: the old MiniLM probe
+  admitted only two semantic candidates at the configured cutoff, while the
+  explicit process name was discarded. Record paired probes with identical
+  input fingerprints in the Staff case-study diagnostic report.
+- [DONE] Preserve explicit process names through parser and inserted/removed
+  task context; include this bounded anchor in Hybrid semantic queries and in
+  context BM25. Plain Semantic/BM25 baselines remain unchanged. Unit tests
+  cover parser-to-diff propagation and Hybrid-only semantic wiring.
+- [DONE] Support E5 query/passage prefixes for the three known multilingual-E5
+  model IDs. Expose the input profile in method metadata and warn that its
+  cosine threshold needs independent calibration. Default remains MiniLM.
+- [DONE] Add an opt-in six-query bilingual model smoke test; cached MiniLM
+  and E5 both run offline. These authored controls are not an accuracy claim.
+- [DONE] Version analysis identity for explicit-condition diff and process
+  context changes so new reports do not silently reuse older analysis IDs.
+- [TODO] Freeze source and independent labels before choosing a default model
+  or tuning thresholds. Dashboard tests still outrank the PR form in the new
+  Staff probe. The process anchor is a generic context correction, not proof
+  of improved file-level accuracy or of mandatory code changes.
+
+Scope note: E5 support is an optional local embedding profile, not a new LLM
+agent or a model download. No default model, RRF weight, or threshold changed.
+Only insertion/removal patterns currently carry the new process-name context.
+
+Verification: full `go test ./...`, final focused retrieval/diff/semantic/app
+tests, `go vet ./...`, changed-file `gofmt -l`, and
+`git -c core.autocrlf=false diff --check` pass. Both full offline model probes
+completed with matching input fingerprints. The baseline BPMN hash is
+unchanged. A later Playwright run exercised the real web upload/report/save
+path for the inserted Staff task and the two lighter gateway/branch scenarios;
+all three passed. No frontend product code changed.
+
+- [DONE] Normalize effective repository size/file limits before computing the
+  input fingerprint. HTTP omitted limits and CLI explicitly supplied defaults,
+  producing different identities for an equivalent corpus. A focused unit test
+  covers omitted/explicit defaults. The Staff gateway browser/CLI control now
+  has identical analysis ID, fingerprint, JSON, and Markdown. Engine identity
+  bumped to `engine-3.5f-normalized-ingest-identity`.
+
+Final gate after normalization: `go test ./...`, `go vet ./...`, web
+`npm run typecheck`, changed-file `gofmt -l`, and
+`git -c core.autocrlf=false diff --check` passed. The three Staff browser
+scenarios passed; the add-task Hybrid run preceded the identity-only
+normalization, while both BM25 browser controls were rerun afterward.
+
+## Staff source-based impact review (2026-10-27)
+
+- [DONE] Inspect Simple-ERP's PR form, API helper, HTTP handler, application
+  contract, transaction store, request-size middleware, schema, OpenAPI, and
+  direct PR-creation test callers without changing the case-study repository.
+  Record a design-specific provisional review under `docs/ground-truth` so it
+  cannot enter retrieval. The checkout is dirty; this is not blind truth.
+- [DONE] Correct the initial diagnostic interpretation of dashboard E2E: it
+  creates a PR as an audit fixture and would need a PDF fixture. Distinguish
+  test maintenance from dashboard feature logic. The purchase-order form and
+  purchasing route page remain unsupported by this task requirement.
+- [TODO] Obtain a frozen implementation diff or blind adjudication before
+  treating the provisional file list as evaluation ground truth. The budget
+  gateway case also lacks a specified budget value/source.
+- [DONE] Make sequence-flow diff reasons describe actual changes to endpoints,
+  condition, and label. The Staff label-only control now reports one
+  `MODIFY_SEQUENCE_FLOW` with reason `sequence flow label changed`; its noisy
+  VERIFY candidate list remains a retrieval issue. Analysis identity bumped
+  to `engine-3.5g-flow-reasons`; no retrieval weight or cutoff changed.
+- [DONE] Verify this refinement with `go test ./...`, `go vet ./...`,
+  `gofmt -l` for touched Go files, and `git -c core.autocrlf=false diff --check`
+  on 2026-10-27. All passed. Simple-ERP remained at `c934497` with the same
+  232 dirty-status entries and baseline BPMN SHA-256; it was not modified.
+
+## Sequence-flow label eligibility refinement (2026-10-27)
+
+- [DONE] Add one method-independent direct-reference gate for a label-only
+  sequence-flow edit with unchanged endpoints and a retained explicit
+  condition. Contextual words alone cannot qualify a candidate; exact flow
+  ID or sufficiently specific old/new label text can. No direct reference
+  means unresolved, **not** automatic `NO_ACTION`. Configuration mapping is
+  exempt because its explicit mapping is separate evidence. This differs from
+  unrestricted lexical/semantic retrieval only for this narrow case; no BM25,
+  semantic, or RRF weight changed. Engine identity is
+  `engine-3.5h-flow-label-eligibility`.
+- [DONE] Add synthetic tests for no reference, exact label, exact flow ID,
+  deceptive ID prefix, changed condition, label-as-condition, endpoint edit,
+  and all four public retrieval methods. Focused Go tests passed. The
+  Simple-ERP label-only control remains an exposed diagnostic, not training
+  data or research ground truth.
+- [DONE] Rerun the read-only Staff label control with the same input fingerprint
+  `f6095e7ad63be127073ee7be96cec810`: BM25 changed from five VERIFY
+  candidates to zero with one explicit unresolved reason; Hybrid also returned
+  zero/one. Add-document still produced one ADD_TASK with five top-K candidates;
+  the budget-condition case still produced five flow candidates and an
+  unresolved gateway-condition record at top-K 5. `go test ./...`,
+  `go vet ./...`, changed-file `gofmt -l`, and
+  `git -c core.autocrlf=false diff --check` passed. This is regression/control
+  evidence, not a measured accuracy gain. Simple-ERP remained read-only at
+  `c934497`, 232 dirty-status entries, and the same baseline BPMN SHA-256.
+- [TODO] Evaluate the gate's missed true impacts and false positives on a
+  frozen, independently labeled multi-repository benchmark before treating it
+  as a calibrated precision improvement.
+
+## Frozen synthetic control pack (2026-10-28)
+
+- [DONE] Freeze a four-scenario matrix for task insertion, task removal with
+  rewire, gateway-branch addition, and label-only negative control. Each BPMN
+  input is SHA-256 locked; each scenario pins the same method-independent
+  repository/BPMN fingerprint across BM25, Semantic, Fusion, and Hybrid.
+  `TestFrozenSyntheticScenarioMatrixAcrossMethods` passed all 16 method-case
+  combinations twice. The constant test embedder checks orchestration only,
+  not semantic accuracy.
+- [DONE] Add a separate executable four-method, two-repetition negative-control
+  benchmark with fixture-authored empty expected impacts. It returned one
+  correct abstention out of one negative case per method, with identical
+  fingerprint and byte-reproducible predictions. The output is a synthetic
+  regression result, not Simple-ERP Precision/Recall.
+- [DONE] Separate correct negative-control abstentions from the existing
+  unresolved/abstention rate in evaluation JSON, Markdown, benchmark JSON,
+  Markdown, CSV, and the web evaluation table. Retain the existing
+  unresolved-rate definition for compatibility; show negative-control
+  accuracy as n/a when no labeled negative case exists. Focused
+  evaluation/benchmark tests and web TypeScript check passed.
+- [TODO] Obtain independent file-level truth for task/gateway scenarios before
+  publishing accuracy metrics; the matrix currently checks taxonomy,
+  determinism, and candidate presence only. The Simple-ERP source review is
+  still provisional and must not enter retrieval.
+
+Verification for this pack: `go test ./...`, `go vet ./...` with the
+repository-local Go cache, changed-file `gofmt -l`, web `npm run typecheck`,
+and `git -c core.autocrlf=false diff --check` passed. Simple-ERP remained at
+`c934497` with 232 existing status entries and the same Staff PR-create BPMN
+SHA-256; it was not modified. No commit or push was made.
+
+## Single-review Simple-ERP diagnostic (2026-10-28)
+
+- [DONE] Inspect current dirty Simple-ERP Staff source and BPMN read-only,
+  recording a positive stock-delta rule and a negative PR flow-label case
+  before opening this run's candidate rankings. Save complete case references
+  outside the indexed repository with source evidence and explicit assumptions.
+- [DONE] Freeze the two BPMN pairs, source input fingerprints, and
+  reference hashes in a provisional two-scenario manifest. Mark its label
+  provenance in benchmark outputs so single-review figures cannot be mistaken
+  for independently adjudicated ground truth.
+- [DONE] Run four methods twice on the frozen inputs, inspect errors, verify
+  reproducibility, and report only diagnostic findings. No method weights are
+  to be tuned from these labels.
+
+The source-only review is in `docs/ground-truth/staff-source-review-2026-10-28.md`
+with two separate truth JSON files; the benchmark manifest is
+`experiments/simple-erp/staff-source-review-2026-10-28-manifest.json`. The
+read-only study checkout was HEAD `c9344971a573d5c44d9d4e58f23657eda4d18a86`
+plus 232 existing dirty entries. The manifest locks BPMN and truth SHA-256,
+both input fingerprints, and `label_provenance: "single-source-review"`.
+Benchmark ID `52224287eddd2285159b504cb07c5110` completed all eight
+scenario-method cells with two byte-identical repetitions each. For the
+inventory gateway's two provisionally required files, Hybrid ranked them 4
+and 1; Semantic/Fusion 5 and 6; BM25 missed both on the gateway change. All
+methods generated unwanted supporting-flow candidates but abstained for the
+label-only negative control. The older source reference names only the store,
+whereas this review also names the existing integration test; the disagreement
+is retained for later adjudication. See the versioned diagnostic report in
+`experiments/simple-erp/`. These observations are not independent TA ground
+truth or a basis to recalibrate ranking weights.
+
+Verification: `go test -p 1 ./...` passed after the provenance adapter change.
+No Simple-ERP or POC TA file was modified.
+
+## Synthetic positive evaluation controls (2026-10-28)
+
+- [DONE] Author two independent synthetic change scenarios (task
+  insertion and gateway branch) with source-owned expected file edits before
+  inspecting candidate rankings. Keep expected labels outside indexed repos.
+- [DONE] Freeze BPMN hashes and method-independent input fingerprints in a
+  four-method benchmark manifest; include a negative control.
+- [DONE] Run two repetitions per method, record deterministic metrics and
+  latency separately, and document that fixture-authored truth is a functional
+  control rather than independent Simple-ERP research evidence.
+
+The new `testdata/benchmark-impact/manifest.json` covers one added user task,
+one added exclusive gateway, and a display-label negative control. Its truth
+was written from the fixture's intended source edits before candidate ranks
+were inspected and is outside the indexed repository. All four methods ran
+twice; the deterministic benchmark ID is
+`a4b2c567147ed8ae70e778c8770cd54d`. Independent runs before and after the
+coverage gate had identical `benchmark-report.json` SHA-256
+`2d5c15b04ff8889248d7cfe7649cfaad7b037296eaf19ca01d73221c5a9035b9`.
+On the principal task change, BM25 placed the two authored files at ranks 4
+and 2; Semantic/Fusion/Hybrid at 3 and 2. For the principal gateway change,
+all methods placed the approval function at rank 1; only Hybrid included the
+approval test, at rank 6. None of the methods classified the authored MODIFY
+actions correctly. Supporting flow changes include negative expected sets,
+and the gateway generated extra flow candidates. Do not turn these fixture
+observations into tuned weights or Simple-ERP accuracy claims.
+
+The new batch coverage gate exposed two incomplete older fixture truths.
+`synthetic-request-change` labels only 2/12 changes, so its manifest now
+declares `truth_scope: "subset"`; subset metrics remain visible per scenario
+but are excluded from method aggregates. The vocabulary fixture's three
+task-insertion support flows now have explicit empty expected sets and an
+updated truth hash. An undeclared partial truth fails closed. The default
+remains complete coverage, and at least one complete scenario is mandatory.
+
+Verification: `go test -p 1 ./...`, focused uncached benchmark/evaluation
+tests, `go vet ./...`, changed-Go `gofmt -l`, and
+`git -c core.safecrlf=false diff --check` passed. Benchmark outputs remain
+ignored under `outputs/`. No Simple-ERP or POC TA source was changed.
+
+## Planning provider contract hardening (2026-10-28)
+
+- [DONE] Reject malformed/null/trailing completion content and model
+  responses explicitly stopped by an output limit before planning validation.
+- [DONE] Enforce no redirects even for injected HTTP clients; validate
+  endpoint URL components and bound the complete serialized request payload.
+- [DONE] Exercise failure paths with loopback HTTP mocks, run Go verification,
+  and document the provider boundary. Production remains on NoLLMProvider.
+
+Evidence: `internal/llm/openai_compatible_safety_test.go` covers malformed and
+incomplete responses, redirect isolation, endpoint validation, cancellation,
+serialized request limits, response limits, and error-body non-disclosure.
+`go test ./...` passed (CLI suite 120.793 seconds); `go vet ./...`, changed-Go
+`gofmt -l`, and `git -c core.safecrlf=false diff --check` passed. HTTP contract
+tests use loopback mocks. This does not establish real-model planning quality
+or improve retrieval accuracy; endpoint activation and Qwen evaluation remain
+pending. No ranking weights, case-study source, or Git remotes were changed.
+
+## Staff P2P total-confirmation pre-inference reference (2026-10-28)
+
+- [DONE] Create a separate Staff L3 BPMN with one new user review/confirmation
+  task after PR line input. It is UI-only and does not introduce attachment,
+  backend validation, schema, or API changes. Preserve the original Staff
+  baseline as read-only.
+- [DONE] Write a source-derived existing-file reference JSON and rationale
+  **before** running mapper inference for this scenario. Label the PR form and
+  two existing E2E creation flows; assign no independent file label to the
+  insertion's connecting sequence-flow edits. Hash the reference and BPMN.
+- [DONE] Parse the new BPMN and verify the expected one `ADD_TASK` and two
+  `MODIFY_SEQUENCE_FLOW` diff keys using only `testdata/repository` for a
+  smoke run; no Simple-ERP candidate ranking was inspected. XML flow endpoints
+  and DI elements are present. `git diff --check` passed.
+- [DONE] The user ran the frozen v1 input in the web UI and supplied Hybrid
+  report `31d5eab5168544c9a75ae2fd1f8ffd3d`. Read-only comparison with the
+  prewritten reference found expected files at ranks 1, 2, and 6; the two
+  supporting flow records had no candidates.
+- [TODO] Freeze the entire dirty source working tree and obtain independent
+  implementation/reviewer adjudication before claiming formal TA accuracy.
+
+Follow-up after the user's first Hybrid report: the source-derived reference
+matched three existing files at ranks 1, 2, and 6 (Recall@5 = 2/3; file
+precision at 20 = 3/20), but the BPMN task documentation explicitly stated
+backend/API/database non-impacts. Preserve that exposed v1 input and report;
+do not use them as a blind accuracy claim. A v2 BPMN removes the architectural
+hint while retaining the same user task and graph. Because the v1 ranking and
+reference are already known, v2 is diagnostic, not a new held-out benchmark.
+
+- [DONE] Run read-only v2 BM25 and Hybrid diagnostics against the same
+  Simple-ERP corpus (198 indexed files, input fingerprint
+  `a9dd4895d4e5d8617767d78eab614b52`). Hybrid's top ranks were unchanged:
+  the two E2E files ranked 1 and 2 and the PR form ranked 6. The architectural
+  sentence was not the cause of that ranking in this case. BM25 alone placed
+  the E2E files at 16 and 18 and missed the PR form within 20. These are
+  exposed diagnostic observations, not unbiased accuracy estimates.
+- [DONE] Correct the web's misleading static "Five keeps the review focused"
+  helper and use a 10-candidate default review cap so an important candidate
+  just below five is not silently hidden. The existing Code/Tests/Docs view
+  filters remain available; the exported ranking and RRF formula are
+  unchanged. This improves visibility, **not** measured retrieval accuracy.
+- [TODO] Do not add a test penalty, user-task frontend boost, or RRF weight
+  from this one exposed scenario. Both top-ranked tests are genuine impacts
+  under the source-derived reference. Collect independently adjudicated
+  scenarios across different change types before calibrating ranking.
+
+Verification for this follow-up: v2 XML parsed, the analyzer returned the
+expected one task and two supporting flow edits, targeted Go package tests,
+web `npm run typecheck`, and `git -c core.autocrlf=false diff --check` passed.
+Simple-ERP remained read-only at `c934497` with 232 pre-existing status
+entries and the unchanged old Staff BPMN SHA-256.
+
+## Gateway retrieval and duplicate-flow correction (2026-10-28)
+
+- [DONE] Preserve direct gateway branch conditions and labels in plain BM25,
+  while keeping process/neighbour expansion exclusive to contextual retrieval.
+  Include added and removed branches; do not introduce case-specific terms.
+- [DONE] Group same-endpoint condition edits with their gateway change, retain
+  atomic JSON records and independently map direct source references. Keep
+  rewiring, added/removed flows and display-only edits independent.
+- [DONE] Run regression tests and frozen synthetic/Staff diagnostics; keep
+  existing labels, weights and prior outputs unchanged. Document both misses
+  and improvements. No additional retrieval method or LLM activation planned.
+
+Evidence so far: new `gateway_grouping_test.go`, `gateway_query_test.go`,
+application direct-reference tests and existing public-method tests pass.
+`go test -p 1 ./...`, `go vet ./...`, web `npm run typecheck`, and formatting
+checks pass. An intermediate condition-only query dropped a useful branch
+label and degraded Semantic; restore both label and expression as retrieval
+input while keeping expression precedence for change detection. The failed
+diagnostic is preserved under `outputs/staff-gateway-fix-2026-10-28/`.
+
+Final evidence (closed 2026-10-29): Staff benchmark
+`e9e6a54b78a74174efec3530afd436ea` has eight reproducible scenario-method
+results over two repetitions. Synthetic benchmark
+`73ff0e055d61de0e1c45795bb49c0bb0` has twelve reproducible results over two
+repetitions, with unchanged primary expected-file ranks versus the previous
+synthetic run. BM25's Staff gateway reference files move from absent to ranks
+3/4; production Hybrid stays at 4/1. Fusion has mixed rank changes. Keep this
+as exposed development evidence, not formal accuracy validation. Full details:
+`experiments/simple-erp/GATEWAY-RETRIEVAL-FIX-2026-10-28.md`.
+
+Follow-up browser verification: report-results and report-explanation
+Playwright suites passed 8/8 (35.4 seconds), including fixture report filtering
+and desktop/mobile file views. Sandbox process spawning initially failed with
+EPERM; the identical local test command passed with process permission.
+
+## Consolidated existing Staff experiments (2026-10-29)
+
+### Follow-up file-ranking experiment
+
+### Positive-case evaluation and passage audit (2026-10-29)
+
+### Pre-presentation query audit and new Staff reference
+
+### UI readability pass
+
+### Saved benchmark summary in Research
+
+### Development-only Research workspace
+
+- [IN PROGRESS] Keep Research available during R&D with a build-time flag to
+  hide the workspace and experimental method controls at launch. Normal
+  mapping stays on Hybrid. This is UI configuration, not authentication.
+- [TODO] Verify enabled/disabled modes and input preservation; document how
+  to restart/rebuild and the distinction from an admin permission boundary.
+
+- [DONE] Publish a dated, read-only snapshot of the completed Staff
+  evaluation in Research, with metric definitions and a downloadable JSON.
+  Identify source/references and distinguish it from current-repository or
+  live benchmark results. Do not connect reference data to mapping inference.
+- [DONE] Validate the snapshot against saved evaluation artifacts, check
+  TypeScript, browser display/download/mobile overflow and no inference calls.
+
+Evidence: published JSON cross-checked against all four methods' saved positive
+evaluation reports; TypeScript and four Playwright batch/benchmark tests pass.
+Screenshot review confirms the dated table, scope, definitions and download.
+The test changes the current repo and verifies the snapshot stays identified
+as Simple-ERP, downloads matching JSON and triggers no analysis POST. This is
+a saved result viewer, not a live benchmark runner or universal accuracy score.
+
+Research copy clarification: explain the one-pass scenario queue separately
+from accuracy evaluation, state that the current web evaluation needs two
+reviewer-reference JSONs, and describe expected files in plain language.
+Accessible control labels and API contracts are preserved; the CLI benchmark
+results are not claimed to be automatically imported by the web.
+
+- [DONE] Simplify workspace copy and panel hierarchy, enlarge report
+  text, balance configuration/results width, and improve keyboard/mobile
+  readability without changing analysis inputs, ranking or canonical output.
+- [DONE] Compare desktop/mobile screenshots and run existing mapping, report,
+  evaluation and canvas regression checks appropriate to the changed surfaces.
+
+Evidence: desktop/mobile report screenshots inspected; report grouping/filter
+suite 3/3, isolated canvas draft/export/mapping 1/1, isolated evaluation UI
+1/1, TypeScript and diff checks pass. Text hierarchy, panel widths, file upload
+layout, filename wrapping, focus and reduced-motion styles were improved.
+The combined 16-test run was interrupted after browser resource failures and
+embedding OSError 1455 (Windows paging file too small). Targeted suites passed
+without full-model inference. Do not claim the entire suite or live semantic
+runtime passed in this resource-constrained session. No ranking/source changes.
+
+- [DONE] Inspect current PR price query and saved ranking, document
+  findings/hypotheses without modifying retrieval or demo inputs.
+- [DONE] Prepare a new Staff cancellation-reason requirement with source-only
+  reference before mapper inference; retain matching BPMN-DI and validate XML,
+  mutation and expected diff. Leave this new case unscored for a future test.
+
+Evidence: `experiments/simple-erp/QUERY-AUDIT-2026-10-29.md` records null
+context for the price-label change, retained old/new rule text, lexical
+language differences and saved branch ranks. Query reconstruction is labeled
+static, not a captured runtime trace. No method or production input changed.
+The fresh cancellation case has a three-file source-only reference prepared
+before inference, frozen input/source hashes, and inherited DI. The mapper's
+Go parser/diff confirmed exactly one label modification and a userTask; XML
+checks confirmed identical DI and an exact baseline copy. No mapping was run
+for this new case. Original Simple-ERP/POC TA remain read-only. This audit does
+not constitute independent adjudication or browser rendering proof.
+
+- [DONE] Add explicitly scoped positive-case MAP/MRR/R-precision and
+  P/R@5/10, preserve legacy atomic-change metrics and empty-case abstention.
+  Surface definitions and undefined values in reports/web; version evaluation IDs.
+- [DONE] Audit missed code passages, test a query-independent bounded passage
+  variant, retain it only if unchanged-reference ranking improves without recall
+  regression. Record unsuccessful experiments too; no label/weight changes.
+
+Evidence: `positive_ranking` in JSON/Markdown/benchmark CSV and Research UI;
+hand-calculated R-precision/AP tests, negative-only undefined tests and
+positive-count-weighted aggregation test pass. Evaluation IDs are versioned.
+Five Staff cases completed twice with fingerprint/hash checks; the adjacent
+sampler failed its gate (MAP .7389 -> .7327, P@5 .45 -> .40, R@5 .875 ->
+.7917). Production wiring was restored to three passages; optional sampler
+is default-off and retained for explicit experiments. Full Go tests and vet,
+TypeScript, browser suite 8/8 plus R-precision test 1/1 pass. Final synthetic
+benchmark `f2df7a31a5e8bbfc9718482d73054dd7` verifies restored production with
+the new evaluator. See `ADJACENT-PASSAGES-2026-10-29.md` for results and limits.
+
+- [DONE] Test file-level RRF inputs: deduplicate files before assigning
+  branch ranks and combine file agreement without asserting function agreement.
+  Keep atomic flow eligibility unchanged; record policy metadata. Compare
+  unchanged Staff labels and synthetic controls before adopting this variant.
+
+Adopted for production Hybrid after five unchanged Staff cases, two runs each:
+P@5 0.40 -> 0.45, R@5 0.7917 -> 0.8750, MRR 0.7083 -> 0.8333, R@10 remains
+1.0. Synthetic benchmark `e623fcc6194446583075003112afec83` reproduced all
+12 scenario/method results; Hybrid expected-file ranks and the negative
+control are unchanged. Full Go tests, vet, gofmt and diff checks passed.
+No reference labels, weights or case-study source changed. See
+`experiments/simple-erp/FILE-FUSION-2026-10-29.md` for the file-granularity
+reasoning and the fixed-denominator precision ceiling.
+
+- [DONE] Assemble the existing positive-price, submit-reason task,
+  total-confirmation task, inventory gateway-condition and label-control pairs
+  with their existing source-derived references. Freeze current input hashes;
+  do not change labels based on predictions.
+- [DONE] Run four methods, two repetitions and top ten on the same inputs;
+  report primary-change metrics separately from atomic-flow macro metrics.
+- [DONE] Record misses and false positives, scope limitations and next fixes.
+  These exposed cases remain development diagnostics, not held-out validation.
+
+Manifest: `experiments/simple-erp/staff-consolidated-2026-10-29-manifest.json`.
+The initial full batch exceeded the CLI's default ten-minute total deadline;
+preserve partial outputs and rerun unchanged inputs in a new output directory
+with `--timeout 1h`. The post-inference `summarize-staff.ps1` grouping and
+positive-change metrics were cross-checked against the prior frozen
+gateway/control run (Hybrid Recall@5=1, MRR=1, one correct control abstention).
+
+Completed benchmark `13a8e66389b53ac0b329e8f26fdddbe1`: 20 reproducible
+scenario-method cells / 40 analyses. Primary positive-case Hybrid Recall@5
+0.7917, Recall@10 1.0 and Precision@10 0.25. All four independent label-only
+controls abstained; all 20 supporting-flow/method records had zero candidates.
+Preserve the late PR form/store candidates and other methods' misses in the
+diagnostic CSV; do not adjust reference labels. Results and next query/passage
+audit are in `experiments/simple-erp/STAFF-CONSOLIDATED-2026-10-29.md`.
+The original ten-minute timeout is documented as an execution-budget deviation;
+the complete rerun uses identical inputs and an explicit one-hour CLI budget.
+
+## Bounded presentation clarification: recorded BPMN context
+
+- [DONE] Add a collapsible report section showing recorded process name,
+  predecessor/successor labels, branch terms and related flow IDs, with explicit
+  missing-context fallback. These are not a reconstructed exact query or scores.
+- [DONE] Document XOR/AND/OR validation backlog in
+  `experiments/simple-erp/PANDUAN-EMPAT-SKENARIO.md`; no new scenario or ranking
+  change is claimed.
+- [DONE] TypeScript typecheck and scoped `git diff --check` passed.
+- [TODO] Browser visual verification of the context disclosure.
+
+Scope: UI/documentation only; Simple-ERP remains unchanged. Query generation,
+ranking and saved benchmark results are not changed by this clarification.
+
+## Bounded inventory error audit
+
+- [DONE] Inspect saved inventory report against the unchanged provisional
+  reference; record expected-file positions and candidate-level error clues in
+  `experiments/simple-erp/INVENTORY-ERROR-AUDIT.md`.
+- [TODO] Test generic event-label context ablation with identical ranking/model
+  settings. The audit alone does not justify changing defaults or references.
+
+No inference, case-study mutation or ranking change was performed for this audit.
+
+### Opt-in lexical context ablation
+
+- [DONE] Add internal `ContextBM25.OmitStartEndLabels` with explicit metadata;
+  it only omits neighbour start/end labels from a copied query context.
+- [DONE] Tests verify default behaviour, preserved gateway text, unchanged
+  recorded context, nil context, and retained changed-event meaning.
+- [DONE] Retrieval/wiring/fusion tests, scoped vet, gofmt and diff check pass.
+- [TODO] Evaluate on the fixed multi-case inputs before any default activation.
+
+The option is not wired to CLI/web; production ranking is unchanged. Future
+experiment wiring must include this setting in analysis/configuration identity.
+
+## Context ablation and structural Staff scenarios
+
+- [DONE] Add isolated offline study command and resolver variants with distinct
+  configuration identities; production uses the existing resolver/defaults.
+- [DONE] Run full/no-context/no-start-end/both-top10 on five frozen cases, twice:
+  20 cells, 40 byte-reproducible predictions, common per-case fingerprints.
+- [DONE] Validate prediction/evaluation hashes and aggregate four positive cases.
+  Full MAP=.7389, R@10=1; no-start-end unchanged; both-top10 R@10=.7917,
+  MAP=.6472. Retain production defaults. Broad no-context also removes changed
+  branch terms; document that attribution limitation in CONTEXT-STUDY.md.
+- [DONE] Build seven before/after pairs under structural-staff with complete DI,
+  independent provisional union-file references and inspected source hashes.
+  Include a business-change gateway removal and a separate notation-only control.
+- [DONE] Go parser/diff/DI checks pass for all seven pairs. Six browser cases
+  pass together, and the seventh added case passes separately for before/after
+  element/edge import. No inference on these new cases yet.
+- [DONE] Full `go test -timeout 90s ./...`, full `go vet ./...`, frontend
+  typecheck and whitespace check pass. Six report-explanation logic tests pass.
+- [TODO] Convert new union references to an explicitly scoped evaluation contract
+  before scoring; verify role/AND/OR behaviour beyond XML/diff/import checks.
+
+Simple-ERP and POC TA remain read-only (232 and 6 pre-existing status entries).
+Saved benchmark table is unchanged. No Qwen, commit or push in this work.
+
+## Staff modelling convention and combined gateways
+
+- [DONE] Add a separate deterministic BPMN checker: structural warnings
+  versus optional research conventions (one start/end per nonempty scope,
+  meaningful activity after a join). Never reject valid BPMN for conventions.
+- [DONE] Audit Staff read-only; prepare one source-reviewed single-end example
+  in Mapper, without overwriting frozen experiment pairs or ERP files.
+- [DONE] Test a combined XOR + AND + new-task change, including diagram coverage.
+- [DONE] Verify checker, regression tests and documentation. No token simulation,
+  automatic semantic rewrite, production ranking or benchmark-score changes.
+
+Evidence: `experiments/simple-erp/staff-single-end/README.md` and audit JSON.
+32 Staff BPMNs parse; 23 SINGLE_END and 5 ACTIVITY_AFTER_JOIN convention findings,
+zero SINGLE_START findings. One normalized inventory baseline and compound mutation
+pass the checker. Tests assert all four new gateways and five new tasks, rejection
+paths not reaching successful state mutation, deterministic diff and empty self-diff.
+Full Go tests and vet pass; CLI hash/error additions pass subsequent scoped tests
+and vet; frontend typecheck and one browser import test (both diagrams) pass.
+Initial browser launch hit sandbox EPERM; approved local browser rerun passed.
+Whitespace checks pass. Case-study status counts remain 232 (ERP) and 6 (POC).
+
+- [TODO] Review remaining Staff convention findings against their own abstraction
+  level before normalization; no placeholder activity or mass rewrite.
+- [TODO] Prepare independent scoped references and run retrieval evaluation for
+  the compound case. Current checks prove parsing/diff/import, not mapping accuracy.
+
+The convention checker is CLI-only. Original and frozen benchmark files remain
+unchanged; new example files live exclusively in Mapper. No commit or push.
+
+## Canonical Staff BPMN normalization (explicit user request)
+
+The user now requests all Staff BPMNs fixed. This authorizes replacing only the
+canonical Staff BPMN documents in Simple-ERP, superseding read-only for these
+documents only. ERP application code, other roles and frozen Mapper experiments
+remain untouched. Prepare reviewed files/backups inside Mapper before applying.
+
+- [DONE] Normalize 28 of 32 Staff diagrams, preserving original decisions,
+  conditions, roles, calledElement links and terminal outcomes.
+- [DONE] Validate all 32 with convention checker and browser import; inspect
+  representative diagrams, retain original layout except final merge/activity.
+- [DONE] Apply verified replacements with original-hash checks and local backups;
+  verify deployed hashes and document exact scope and experiment-baseline caveat.
+
+Evidence: `docs/STAFF-BPMN-NORMALIZATION.md`; prepared and applied checks both
+report 32 parsed / zero findings. Final browser run 32/32 passes; typecheck passes.
+Preservation verifier covers business-node attributes, conditions, actors,
+QName namespace bindings, original-node layout, complete DI and exit isolation.
+28 canonical files replaced after approved out-of-workspace write; 32 applied
+hashes match reviewed content. 91 outside-scope hashes remain unchanged.
+Backup/manifest live under ignored `outputs/staff-normalization-2026-10-29-final`.
+
+Two original baseline byte copies were preserved under frozen-staff-baselines,
+and two experiment manifests plus the four-scenario guide now use those paths.
+This necessary compatibility change preserves original input hashes/references;
+no evaluation scores were recalculated. ERP generators were not changed or run;
+their older catalogue can overwrite these canonical document edits if regenerated.
+
+## Workspace cleanup and normalized Staff experiment continuation
+
+- [DONE] Archive loose user uploads/images/reports and root binaries with
+  a hash manifest; preserve all data, caches, source and frozen results.
+- [DONE] Fix Staff document generator using an isolated copy and apply only
+  reviewed generator support files to ERP; application source stays untouched.
+- [DONE] Build new single-end Staff cases and source-derived provisional labels
+  before prediction, then run four-method evaluation with explicit case scope.
+- [DONE] Add one main README entry and experiment guide; verify changed paths,
+  generator output, tests and artifact provenance. No commit/push or LLM activation.
+
+Evidence: ten root files archived with post-move SHA checks; source/data/caches
+preserved. Root has README, PLAN, Go/Git files and two primary research documents.
+Generator isolated build creates 32 convention-clean Staff XML and matching SVG;
+counts match manifest, normalizer is byte-idempotent. Two reviewed script files
+applied to ERP; canonical BPMNs not regenerated. Ninety out-of-scope hashes and
+all 32 Staff canonical hashes still match the previous state.
+
+New current-staff package: four positive pairs and unchanged control, all ten
+diagrams convention-clean and browser import tests 10/10 pass. Full Go tests,
+vet, frontend typecheck and whitespace checks pass. Run b1142fe45846f7f21e3d279d420df29b:
+20 method/case cells, 40 analyses, byte-reproducible. Four selected-anchor Hybrid
+P@5 .55, R@5 1, MAP .8472; Fusion MAP .9028. These are partial source-reviewed
+diagnostics, not full-scenario or held-out accuracy; complete controls excluded
+from positive means. No scoring settings/references changed after inference.
+Initial preflight hash mismatch was Windows text-newline output, corrected to
+UTF-8 byte writing before inference. Final run complete in a fresh output folder.
+
+Entry: README -> experiments/simple-erp/current-staff/README.md and RESULTS.md.
+Outstanding full union/primary-change labelling remains explicit; no claim that
+every change in the compound scenario has independently validated ground truth.
+
+## Supervisor and Super Admin convention (explicit user request)
+
+- [DONE] Prepare read-only review and backups for 31 Supervisor and
+  49 Super Admin BPMNs; preserve actor lanes, outcomes, guards and calledElement.
+- [DONE] Check parser/convention, preservation properties and browser import.
+- [DONE] Extend document generator to both roles and validate isolated outputs.
+- [DONE] Replace only verified canonical BPMNs and generator support; verify
+  hashes and document next baseline traceability work. No source application edits.
+
+Evidence: `docs/ROLE-BPMN-NORMALIZATION.md`. 29 Supervisor and 49 Super Admin
+canonical documents replaced after hash checks/backups and 80/80 browser tests.
+All 112 canonical role BPMNs now parse with zero convention/structure/review
+findings. Role-specific result actors checked for all 78 new result activities;
+preservation verifier passes on 31+49 applied files. 120 backend Go/Staff hashes
+unchanged. Scoped Go tests and both repository whitespace checks pass. Isolated
+generator creates 112 convention-clean, byte-idempotent XML outputs and parseable
+SVG previews. Two generator scripts applied with original-byte preconditions.
+No app source changes, score updates, new baseline mappings, commit or push.
+
+## Baseline traceability: Staff P2P L3
+
+- [DONE] Review ten normalized Staff P2P L3 processes against source only;
+  map every activity with file/function/line evidence and distinguish context.
+- [DONE] Freeze BPMN/source hashes and repository identity; build canonical JSON
+  and render Markdown from that same object. Keep reference outside inference.
+- [DONE] Verify complete activity coverage, evidence, hashes, deterministic
+  regeneration and Markdown consistency; document static/provisional limits.
+
+Evidence: `experiments/simple-erp/baseline-traceability/README.md` and generated
+JSON/Markdown. Snapshot df5ed08f8e69212904abf9f865a2faee: ten processes / fifty
+unique activities, 94 links / 169 source excerpts, 22 BPMN/source/test hashes.
+Direct activity links separated from supporting API/service/helper/test context.
+Eight related test links are static only; no ERP test or application executed.
+Independent exact-line/hash/coverage checks and repeated deterministic --verify
+pass. Markdown is rendered from the parsed canonical JSON object. Whitespace
+check passes. No production ranking, UI, source ERP, commit or push changes.
+Reference remains provisional single-AI source review, outside inference; no
+automatic required-change ground truth or full gateway/branch coverage claimed.
+
+## Pilot screenshot capability audit and pre-Qwen hardening
+
+- [DONE] Audit screenshot features against actual parser/diff tests;
+  distinguish syntactic support, semantic diff and measured file retrieval.
+- [DONE] Surface partial-support diagnostics for unmodelled BPMN semantics in
+  canonical reports; do not silently imply a complete analysis for these inputs.
+- [DONE] Add synthetic coverage for cycles and collaboration/advanced features,
+  verify diagnostics end to end and retain established ranking defaults.
+- [DONE] Verify current baseline snapshot and document capability matrix, frozen
+  notation decision and remaining full-reference/held-out evaluation work.
+
+Evidence: `docs/BPMN-CAPABILITY-MATRIX.md`. Advanced-feature warnings now reach
+canonical JSON/Markdown, CLI checker and web, with conditional policy identity.
+Unmodelled multi-instance edits may still have zero detected changes but now
+report explicit limitations; no invented impact change or complete-support claim.
+Cyclic XOR condition JSON text edit, compensation flag, multi-pool/message flow,
+call references and event feature diagnostics covered by synthetic tests.
+Full Go test/vet passed before final compensation flag; scoped tests/vet pass
+after it. Frontend typecheck and browser partial-result test pass; first browser
+attempt failed due to ambiguous status selector, then fixed selector and passed.
+Screenshot visually inspected. Baseline traceability --verify and whitespace
+checks pass. No ranking weights, model, labels, benchmark scores or ERP files changed.
+
+Remaining pre-Qwen work stays open: label all primary compound changes and
+evaluate additional unseen business scenarios. The capability audit does not
+replace independent reference validation or prove token execution semantics.
+
+## Compound case: all changed primary nodes
+
+- [DONE] Expand provisional source-derived labels to all seven new
+  task/gateway nodes, with explicit rationale and source/BPMN hash binding.
+- [DONE] Evaluate unchanged saved predictions against frozen expanded labels;
+  enforce all-node coverage and report union file metrics without double counting.
+- [DONE] Test scope/deduplication, document exposed retrospective status and
+  weaknesses. Preserve historical single-anchor references and ranking settings.
+
+Evidence: `current-staff/combined/NODE-EVALUATION.md`, new node-reference JSON
+and rationale; seven node labels cover fifteen node/file pairs, three unique files.
+Eleven flow changes are excluded, never labelled negative. Offline node-eval CLI
+verifies source/BPMN/reference hashes, original manifest and four saved prediction
+hashes/analysis IDs/fingerprints before evaluation. No new inference. Two evaluator
+runs produce eight identical artifacts. Scope/deduplication test rejects incomplete
+node labels and excludes flow-only candidates. Full Go tests, vet and diff check
+pass; CLI positive-reference guard added afterward and scoped checks pass.
+
+Hybrid per-node P@5 .3714, R@5 .8571, MAP .6468. Top-5-per-node file union returns
+13 files / 3 expected, precision .2308 and recall 1. Semantic MAP .6603 exceeds
+Hybrid here. Hybrid store rank 7 at MasterChecksJoin and CombineValidation exposes
+a context weakness; no thresholds, labels or ranking policies adjusted to fit it.
+Status remains retrospective exposed development analysis, not independent ground
+truth or complete atomic BPMN coverage. Historical single-anchor results retained.
+
+## Opt-in bounded baseline context experiment
+
+- [DONE] For added-node clusters, find nearest existing task labels within
+  four directed hops, same process/subprocess, visited-set/caps; record paths.
+- [DONE] Use anchors in experimental Hybrid queries only; preserve immediate
+  neighbours, source evidence, defaults, and distinct configuration identity.
+- [DONE] Verify cycles/scope/bounds/determinism and compare full vs enriched on
+  compound, AND, single-task and unchanged cases using frozen labels/repeats.
+- [DONE] Audit results and keep production unchanged unless evidence supports
+  adoption. No threshold fitting, model switch or label edits after inference.
+
+Evidence: `experiments/simple-erp/BASELINE-CONTEXT-STUDY.md`. 8 cells / 16 analyses
+reproduce prediction/evaluation bytes. All four Full predictions match historical
+Hybrid exactly. Same input fingerprint/corpus/taxonomy, distinct option identity;
+labels and flow paths validated. AND R@5 .8333 -> .9167 / MAP .5879 -> .8155;
+compound R@5 .8571 -> .9286 / MAP .6468 -> .7664. Store ranks at join 7 -> 1,
+aggregation 7 -> 2 (AND) / 3 (compound). One-task/control unchanged.
+
+Not adopted: expected test file at CheckWarehouse drops 5 -> 7 in both cases,
+and only exposed related development scenarios are available. Default remains
+one-hop query behaviour; no hidden score/reference tuning. Anchors are query-only
+labels with auditable direction/hops/paths; no invented source dependency or ID
+contribution. Named-task/gateway controls are opt-in with zero production hops.
+
+Initial parallel full Go test hit compiler OOM during embedding; stopped only
+that test session, waited for study completion and reran sequentially with
+GOMAXPROCS=2/GOFLAGS=-p=1. Full Go tests pass; scoped tests passed before study.
+Final vet/whitespace/baseline snapshot verification are recorded below.
+
+Final `go vet -p 1 ./...`, `git diff --check`, and baseline traceability
+`--verify` pass. No frontend/source ERP edits or publication in this experiment.
+
+## P2P transfer check and candidate-selection diagnostic
+
+- [DONE] Freeze new PR-submit clustered checks, source-derived labels and
+  complete DI before inference; lock multi-hop4, no tuning on this new case.
+- [DONE] Compare full/multi-hop4 twice on P2P and unchanged control.
+- [DONE] Implement immutable agreement-based selection as an offline option;
+  calibrate only on prior development cases, preserving their top-10 recall.
+- [DONE] Evaluate the frozen selection on new P2P; report abstentions, deferred
+  files, recall loss and actual selected-file precision. Do not call RRF confidence.
+- [DONE] Verify tests/hashes/reproducibility, document adoption or rejection;
+  keep production unchanged unless the evidence justifies a concrete policy.
+
+Evidence: `experiments/simple-erp/p2p-transfer/README.md`; 8 P2P/control analyses
+reproduce. R@5 .9167 -> 1, MAP .9127 -> .9444. Development-only calibration
+rejects filtering for full; multi-hop4 both-ranks<=20 preserves 30 development
+hits with 140 -> 99 node/file pairs. Locked-policy P2P transfer preserves 12/12
+hits with 60 -> 51 pairs (actual precision .2 -> .2353, no abstained nodes).
+Candidate counts vary 7-10; raw/deferred candidates and original actions remain.
+Two validation runs/policy bytes verified; provisional labels, not independent
+ground truth. All Go tests/vet, TypeScript, four browser imports and BPMN checks
+pass. Production context and web selection unchanged; wider validation remains
+TODO before adoption. No Qwen, case-study writes, commit or push.
+
+## Frozen selection challenges: removal and condition changes
+
+- [DONE] Freeze Copy PR source-derived removal/condition pairs and labels
+  before inference; disclose baseline task refinement and provisional truth.
+- [DONE] Run full/multi-hop4 twice and apply existing frozen selection policy;
+  report misses, lost hits, actual denominator and unchanged control.
+- [DONE] Audit false-positive evidence against source without relabelling to fit
+  predictions. Implement general retrieval fixes only if justified by evidence.
+- [DONE] Verify artifacts/tests/diagram imports and decide whether selection is
+  safe to expose in the web. No source ERP execution/modification or LLM calls.
+
+Evidence: `experiments/simple-erp/selection-challenges/README.md`; 12 reproducible
+analyses. Removal R@5=1/MAP=.7; condition R@5=.6667/MAP=.5 with required frontend
+outside top10. Context variants identical as no added cluster exists. Frozen
+selection changes 30 -> 27 node/file pairs, keeps 6/7 expected pairs, actual
+precision .2 -> .2222; no selection-caused misses. Policy and validation repeats
+identical. Auditor distinguishes raw misses, filter loss and provisional extras;
+three unit tests reject inconsistent partitions and exercise abstention/loss.
+Six fixture checker/browser tests pass; five relevant Go package tests pass.
+Five reviewed source hashes and original ERP BPMN remain unchanged.
+
+No production retrieval fix adopted: evidence does not establish a general safe
+filter; docs/schema/similar workflows can be relevant but not mandatory code
+changes. Frontend copy guard is in an encoded tail passage, not an indexing gap.
+Keep web/default unchanged. TODO: diagnose cross-layer rank loss before further
+retrieval experiments; independent labels remain unavailable.
+
+Wider-pool diagnostic: required frontend appears rank17 (BM25 15 / semantic25)
+with exact Copy button guard evidence. Original top10 prefix/source coverage/
+change context match; diagnostic revision label differs and input fingerprint
+is therefore not treated as identical. Both-ranks<=20 would defer this valid
+file on a larger pool. No top50 result substitutes the frozen top10 metrics.
+Binding JSON records both report hashes and the limitation. Reject web rollout.
+
+Local resource incident: initial browser startup exited 3221225725; retry after
+embedding completed passed 6/6. A concurrent Go repeat process failed allocation;
+rerunning after browser exit passed and both validation runs match. No OS memory
+settings or unrelated user processes changed. Further checks run sequentially.
+
+## Gateway-condition query focus experiment
+
+- [DONE] Compute per-flow lexical old/new condition differences from
+  parsed graphs, only behind an offline option. Retain original full context.
+- [DONE] Query gateway label plus changed condition words; fallback to full
+  context for operator-only/reordered expressions with no lexical difference.
+- [DONE] Compare frozen Copy PR challenges twice without label edits; gate wider
+  accuracy runs on improvement. Keep RRF/model/index/defaults unchanged.
+- [DONE] Verify immutability/default identity, scope/operator fallback, tests,
+  reproducibility and adoption decision before touching production wiring.
+
+Condition-focus initial result rejects adoption: removal MAP .7 -> .85 but
+condition-extension MAP .5 -> .3333; required frontend remains outside top10.
+All 12 analyses reproduce; full baseline bytes match the previous challenge
+study. Do not cherry-pick the improved node or activate this query in production.
+
+## Generic text-window index experiment
+
+- [DONE] Add opt-in generic text windows (full file + max eight contiguous
+  windows, minimum 1200 runes); no AST claims, named functions or source rules.
+- [DONE] Evaluate full vs generic-windows on frozen challenges twice; existing
+  queries/model/RRF/top10 unchanged. Track corpus/index identity change explicitly.
+- [DONE] Review adoption gate before expanding accuracy runs. Target challenge
+  fails to improve; reject rollout and preserve defaults. Wider runs deferred.
+
+Condition-focus broader accuracy runs cancelled because the prerequisite
+challenge already regresses; no benefit to claiming a passing rollout gate.
+Generic-window broader accuracy runs likewise not justified by regressed R@5.
+Core/default regression remains covered by repeated full baseline byte checks
+and full Go gates below. Code-only scope control is completed below.
+
+First generic-window case regresses test-file ranks 5 -> 7, while documentation
+windows occupy more leading positions. Before seeing the condition-extension
+result, define a code-only scope control: JavaScript/TypeScript/Java/Python/C#
+text windows, existing AST Go and document/schema/config adapters unchanged.
+Unknown languages retain generic fallback, never an AST claim. This addresses
+index granularity rather than adding file/layer ranking weights. Test on the
+same frozen condition/control first; adopt nothing if coverage still fails.
+
+Final full test exposed an unrelated test-boundary defect: CLI benchmark unit
+test loaded real Python/MiniLM and failed MemoryError. Add a typed analyzer
+injection boundary for that CLI command; default unit benchmark exercises real
+orchestration with explicitly marked constant test vectors. Preserve a separate
+opt-in real-model integration test; never treat fake-vector metrics as quality
+evidence. The 32 actual study analyses above use real local MiniLM unchanged.
+
+Closed evidence: 12 condition-focus + 12 generic-window + 8 code-window analyses
+reproduce prediction/evaluation bytes. Code-only window result equals full
+R@5=.6667/MAP=.5; required frontend still absent top10. Eight full baseline
+cells byte-match historical reports; source/BPMN/reference hashes unchanged.
+All three experimental variants rejected for production. No new public method,
+weights, top-k, source-study changes or Qwen integration.
+
+Final `go test -p 1 -timeout 120s ./...`, `go vet -p 1 ./...`, gofmt and
+`git diff --check` pass after fixing the CLI unit/integration dependency split.
+New tests cover query immutability/default identity, operator/boolean/structural
+fallback, Unicode/window coverage/bounds, language scope and route evidence.
+No UI edits or browser rerun needed this step. Real-model opt-in integration
+test remains resource-dependent; its initial MemoryError is recorded, not
+reported as a passing real-model benchmark. No commit/push.
+
+Next research task: investigate precise source-call/route evidence for missing
+frontend callers, especially dynamic URL patterns, with frozen evaluation and
+conservative ambiguity handling. No graph database or additional ranking weights
+approved/adopted by this experiment.
+
+## Report refresh recovery and current research results
+
+- [DONE] Restore the selected saved analysis from its URL after refresh;
+  fetch canonical server data, cancel stale restoration, never rerun inference.
+- [DONE] Publish the frozen Oct30 study metrics separately from Oct29 four-method
+  snapshot; bind source hashes and label them exposed provisional experiments.
+- [DONE] Test refresh/no-POST, missing report, restore/open race and Research data;
+  verify frontend types/browser behavior and document persistence boundaries.
+
+Evidence: typed frontend check and five Playwright browser tests pass. New
+BM25 fixture report is created through UI, reopened after reload by GET and
+matches backend canonical JSON; zero inference POST after reload. Missing ID
+has recovery guidance; slow old restore cannot replace a newly opened report.
+Desktop restored-report and mobile research screenshots inspected. URL stores
+only selected ID; BPMN uploads/drafts/comparison tabs/reviewer inputs remain
+session-only as documented. Backend persistence was already present, unchanged.
+
+Research Oct30 snapshot publishes seven per-case rows from 32 real study runs
+with source hashes and no adopted variants, separately from the Oct29 four-method
+table. Publisher verifies artifact repeats, input hashes and evaluation metrics.
+Download/mobile containment tests pass; new user analyses do not auto-calculate
+precision/recall without supplied references. No ERP edits, backend behavior
+changes, dependency downloads, commit or push. Whitespace/type checks pass.
+
+## Pre-model source-caller context and handoff
+
+- [DONE] Recognize bounded JS/TS URL templates against unique Go route
+  patterns, with explicit pattern-relation provenance and ambiguity abstention.
+- [DONE] Trace unique two-word function-name seeds through at most three reverse
+  static call/route edges to production clients. No ranking or action promotion.
+- [DONE] Store at most three related source files per primary change, retain
+  relative path/line evidence and safe snippets; render JSON/Markdown/web.
+- [DONE] Include related evidence in bounded planning whitelist with no invented
+  retrieval score; retain disabled provider/no network and evidence validation.
+- [DONE] Verify synthetic ambiguity/negative cases, frozen ERP case/repeats and
+  unchanged ranked order/scores; finish Go/frontend gates and readiness report.
+
+Scope: source association is not proof of a required change. No rank-boost
+heuristic, new public retrieval method, graph DB, model injection or ERP writes.
+
+Evidence: `docs/PRE-LLM-READINESS.md`; final production case/control ran twice
+with real local MiniLM. Prediction/evaluation/context bytes reproduce. Ranked
+impacts equal historical baseline exactly; the previously missing frontend now
+enters the planning whitelist via three source edges, constructor binding and
+actual REJECTED button guard. All three provisional reference files are in the
+package; this is context coverage, not 100% retrieval accuracy. Source hashes
+remain unchanged. Initial source study predates directed branch v4; kept separate.
+
+Planning receives explicit before/after fields and old/new branch conditions,
+bounded warnings and truncation flags. Reviewer approval cannot override partial
+or incomplete analysis. Offline `planning-context` export is deterministic and
+refuses overwrite. Markdown now recognizes current context-BM25 versions rather
+than printing obsolete weight wording. No model was injected or source modified.
+
+All Go tests (including architecture boundaries), vet, frontend types and diff
+check pass. Three refresh/history browser cases pass; the new real-API source
+connection/planning browser test passes after fixing test-path assertions.
+Application enrichment depends on an injected resolver; outer source adapters
+are wired at the composition root. No commit/push or new dependencies.
+## Baseline traceability: three modules and three roles (2026-10-30)
+
+Scope: extend the source-reviewed Staff P2P reference to P2P, Inventory and
+Master Data/Configuration for Staff, Supervisor and Super Admin. Simple-ERP is
+read-only. Detailed activity mappings target all 72 current L3 processes; L0-L2
+are indexed separately as decomposition/navigation references, not fabricated
+direct code mappings. Existing Staff P2P snapshot remains intact.
+
+- [DONE] Inspect current BPMNs, backend operations, frontend controls and
+  role guards; record direct links separately from supporting call chains.
+- [DONE] Publish nine JSON/Markdown views, source/BPMN hashes and a coverage index.
+- [DONE] Verify complete L3 activity coverage, evidence anchors, determinism,
+  drift detection and existing Staff P2P reference compatibility.
+
+References are provisional static source review, not executed proof of 1:1
+behavior, scenario required-change labels or prediction inputs. Any unsupported
+activity/control semantics must remain explicit rather than being guessed.
+No retrieval method, application behavior, model runtime or public UI changes.
+
+Evidence: `experiments/simple-erp/baseline-traceability/all-roles/README.md`;
+20 artifacts cover 72 L3 processes / 354 activities across all nine cells, plus
+40 hierarchy diagrams. SHA-256 binds 112 BPMNs and 34 source/test files. All
+nine integrity tests pass (including function bounds, ambiguous functions,
+symlink/path escape, dense JSX excerpts, corruption detection and JSON/render
+determinism). Rebuild `--verify` passes for both the new package and the original
+Staff P2P reference. No ERP tests/source executed or modified. L0-L2 navigation
+remains explicitly distinct from direct code mappings; no scope deviation.
+## Research freeze before model integration (2026-10-30)
+
+- [DONE] Bind current ERP text files, Mapper policy, BPMNs and labels to hashes.
+- [DONE] Register exposed cases as development/regression; independent test set
+  remains empty until new requirements are prepared before inference.
+- [DONE] Audit scenario labels from requirements/source, without predictions.
+- [DONE] Verify repeatability, drift rejection and integrity tests.
+
+Research tooling only; no ERP edits/execution, model calls, label retuning or
+new accuracy claims. Freeze is a binding, not an archive/runtime environment.
+
+Evidence: `experiments/simple-erp/research-freeze/README.md` and `freeze.json`.
+Ten cases across current-staff, p2p-transfer and selection-challenges retain
+their original label sets and subset scopes. Per-file requirement rationale,
+source evidence and reusable contracts are recorded without reading reports.
+320 eligible Git-listed ERP text files and 168 Mapper/review policy files are
+hash-bound; snapshot inventory is explicitly not production ingestion coverage.
+Five new integrity tests pass; two full freeze verifications reproduce the
+same ID. All nine baseline traceability tests and baseline snapshot verification
+also pass. Independent tests remain absent, not relabelled from exposed cases.
+No changes to public methods, UI, source ERP, model runtime or historical results.
+## Multi-agent backend scaffold (2026-10-30)
+
+- [DONE] Add analyst/planner/reviewer contracts, tool-driven turns and
+  bounded revision transitions alongside the existing planning orchestrator.
+- [DONE] Add read-only tools over the approved ingestion/index snapshot; source
+  discoveries must have real file/function/evidence before entering the bundle.
+- [DONE] Persist resumable sessions, identities, budgets and structured events.
+- [DONE] Verify with scripted models: discovery, revision, cancellation/resume,
+  fabricated evidence, policy/source drift and filesystem persistence.
+
+No network, new dependency/framework, ERP execution/edit, shell tool or public
+UI/API activation. Existing disabled-provider behavior stays intact. Eino can
+later adapt the model port; a framework is not required for these contracts.
+Research freeze remains historical: this development changes policy code and
+must be recorded as drift rather than silently regenerating its frozen hashes.
+
+Evidence: docs/MULTI-AGENT-BACKEND.md; targeted planning/agenttools/filestore and
+architecture tests pass, including real disk restart and source-tool discovery
+with a scripted model. No HTTP/UI activation; live lab tests are recorded below.
+All application package tests and vet pass via ./cmd/... ./internal/.... Root
+./... discovery hits an inaccessible old temporary directory under outputs;
+this environmental limitation is not reported as a passing root command.
+## Ollama lab adapter (2026-10-30)
+
+- [DONE] Add opt-in loopback Ollama AgentModel adapter with model-digest
+  binding, cloud-model rejection, bounded JSON actions and cancellation.
+- [DONE] Add CLI runner over existing planning context and read-only repo tools,
+  checkpoint/resume and canonical plan export; production web remains disabled.
+- [DONE] Verify protocol/safety with httptest and existing scripted agent tests.
+- [DONE] Finish all-three-role synthetic live smoke after user restored tunnel.
+  Earlier failures preserved. Schema binds exact evidence IDs, current candidate
+  counts and valid revision targets; role instructions align action constraints.
+
+Authorized endpoint: user-established localhost:11435 tunnel to lab Ollama.
+Selected model qwen3.5:9b-q8_0. First live input must be synthetic, not ERP
+source or evaluation labels. No model download, server changes or cloud calls.
+
+Evidence: docs/OLLAMA-LAB.md; failed live attempts retained under
+outputs/lab-agent-smoke-*. Native adapter uses schema-constrained JSON actions,
+not Ollama native function calling. No ERP input sent during live tests. Normal
+server/web still uses disabled provider. New context-export limits are optional
+and preserve existing defaults. No new accuracy claim or historical freeze edits.
+Verification: all application tests and vet pass via ./cmd/... ./internal/...
+with live lab tests disabled by default. Latest adapter changes also pass the
+targeted llm/planning/CLI tests and vet. Live NEEDS_REVIEW run: 10 turns, 2 tools,
+2 revisions, 37.07s. Latest COMPLETE smoke: 3 roles/turns, 8.26s; artifacts at
+outputs/lab-agent-smoke-20261030T120107. Real CLI exports same canonical plan,
+and completed-session replay keeps turn count unchanged. No claim of plan quality:
+the final draft is still mostly verification prose, not a sufficiently detailed
+change plan. Further planning-quality work and ERP validation precede web wiring.
+## Web Qwen integration (2026-10-30)
+
+- [DONE] Add opt-in asynchronous agent jobs, polling, resume and model
+  readiness API. One worker, server-owned lifecycle, canonical saved plans.
+- [DONE] Add Planning UI for selecting one BPMN change and repository scope,
+  showing decisions, progress, review issues, per-file plans and downloads.
+- [DONE] Verify API/worker cancellation, persistence, disabled mode and browser
+  behavior; run a synthetic live path if the tunnel remains available.
+
+Scope decision: Qwen reviews one explicitly selected change per session, with a
+small evidence subset plus read-only source tools. Never imply the whole report
+was reviewed. Initial Hybrid ranking remains immutable. No silent source sending
+during mapping: user starts review explicitly. No credentials/model URL in browser.
+No schema/database/framework additions or ERP writes. Model network errors leave
+checkpoint/retry visible; repeated requests cannot launch concurrent workers.
+
+Evidence: docs/OLLAMA-LAB.md. Real Qwen HTTP synthetic run at
+outputs/lab-web-smoke-20261030T122959 passed, final NEEDS_REVIEW after 11 turns,
+2 tools, 2 revisions (40.85s). Browser Qwen polling/refresh and existing offline
+snapshot/demo tests passed. Worker tests cover concurrent-job rejection,
+request cancellation, resume, restart and completed-session no-replay. Windows
+checkpoint replacement permission errors are retried within one second without
+deleting/truncating the previous checkpoint. At this checkpoint no ERP model
+experiment had been performed.
+
+## ERP Qwen planner repair (2026-10-30)
+
+- [DONE] Reproduce the inventory planner validation failure: duplicate evidence
+  IDs despite schema uniqueItems. Deduplicate identical adapter references while
+  preserving unknown-ID rejection and strict engine validation.
+- [DONE] Expose the actual validation issue in session feedback.
+- [DONE] Add bounded, immutable read_source windows for generic source, long-line
+  query matching and paging. Support qualified Go methods in source tools.
+- [DONE] Require candidate source inspection through the Ollama protocol within
+  existing budgets, and clarify the proposed-change planning contract.
+- [DONE] Verify targeted regressions and application package tests/vet. Replay
+  the real selected inventory change without sending evaluation labels.
+- [TODO] Independently assess the generated draft and subsequent scenario runs;
+  NEEDS_REVIEW is not an accuracy or plan-quality pass.
+
+Evidence and limitations: docs/QWEN-SOURCE-REVIEW-FIX.md. No case-study source
+changes, dependencies, cloud model calls, source execution or ranking changes.
+
+## Offline agent readiness (2026-11-01)
+
+- [DONE] Separate role-specific prompts and retain source observations
+  across revisions to prevent contradictory actions and repeated reads.
+- [DONE] Require proposed changes and acceptance checks in agent plans; allow
+  one bounded output-contract repair without accepting invented evidence.
+- [DONE] Exercise the real Ollama adapter, source tools, persistence and plan
+  export against an offline HTTP model double, including failure paths.
+- [DONE] Surface the structured plan in the existing Planning view and publish
+  one readiness command/report. Live model quality remains a separate gate.
+
+Scope: prepare the integration without requiring a lab connection, new source
+scenarios, dependencies, source edits or model-specific ERP rules. Offline
+protocol success cannot prove that Qwen will produce a correct plan.
+
+Evidence: docs/AGENT-INTEGRATION-READINESS.md; seven local HTTP contract cases,
+role/revision/repair tests, full application-package tests/vet, frontend typecheck
+and Qwen browser refresh/export test passed. Script verification produced
+outputs/agent-readiness/result.json with passed=true. No live lab calls made.
+
+## Uploaded Qwen plan review (2026-11-02)
+
+- [DONE] Audit the uploaded inventory plan against read-only source.
+- [DONE] Replace boilerplate-only initial source windows with bounded
+  requirement-focused source inspection, including compressed frontend lines.
+- [DONE] Verify offline and document the plan's remaining semantic errors.
+
+Do not rewrite the uploaded model output or tune retrieval scores to this case.
+No lab connection, ERP writes or new research scenario is required.
+
+Evidence: docs/QWEN-PLAN-REVIEW-2026-11-02.md. Application package tests/vet,
+deterministic span/path tests and offline HTTP agent pipeline pass. Read-only
+source inspection confirms both existing reason input and action payload now
+fit the bounded evidence package. Actual Qwen plan-quality retest is pending VPN.
+
+## Independent agent search and single-case evaluation (2026-11-02)
+
+- [DONE] Audit stored session lookup history: zero repository searches, eight
+  seed-file reads. Do not describe this historical run as exhaustive repo review.
+- [DONE] Require a repository search in the Ollama analyst contract before final
+  decisions; add distinct-file paging and keep bounded discovery rules visible.
+- [DONE] Evaluate the selected ADD_TASK against the provisional hidden reference
+  after inference. Both Hybrid top 3 and Qwen's unchanged three-file set score
+  P=1/R=1; no equal-budget improvement is demonstrated.
+- [DONE] Verify offline source paging and actual HTTP agent search/inspect flow.
+- [TODO] Run a fresh lab session and compare independent discoveries, file
+  decisions and plan quality. Do not feed this evaluation back into inference.
+
+Evidence: docs/QWEN-CASE-EVALUATION-2026-11-02.md and
+outputs/agent-case-evaluation/result.json. No lab inference or ERP source edits.
+
+## Full repository review (2026-11-02)
+
+- [DONE] Add an explicit full mode with deterministic, overlapping source
+  chunks covering every ingestion-approved file, not only retrieval candidates.
+- [DONE] Persist per-chunk decisions and scan progress; resume against the same
+  source/model/change identity without re-sending completed chunks.
+- [DONE] Plan/review all non-rejected files in bounded batches and aggregate the
+  canonical plan; never silently truncate the finding list to top-k.
+- [DONE] Add API/UI mode selection and eligible-file/chunk coverage, with offline
+  tests for complete scanning, interruption, resume and source changes.
+
+Scope: one selected BPMN change per full review. Excluded files remain excluded;
+100% coverage means valid model decisions for every eligible source chunk, not
+100% correctness. No global job deadline by default in full mode; per-call bounds
+and server cancellation remain. Lab inference is not required for development.
+
+Evidence: docs/FULL-REPOSITORY-REVIEW.md. Application-package Go tests/vet,
+typecheck, actual-adapter offline full/resume API tests and Chrome Planning test
+passed. Snapshot-only audit of Simple-ERP: 198 eligible files, 276 chunks, zero
+inference calls. Full lab run and accuracy/plan-quality comparison remain pending
+VPN. Checkpoints bind source/model/context; full scan is not an accuracy claim.
+
+## Workspace UX refinement (2026-11-02)
+
+- [DONE] Keep compact top navigation and integrate Mapping/Planning as
+  stages of one analysis workspace. Preserve Canvas width and existing sessions.
+- [DONE] Make the desktop input panel sticky with its own bounded scroll.
+- [DONE] Carry repository paths to Planning and restore them per analysis in
+  private browser storage, without adding absolute paths to reports or URLs.
+- [DONE] Collapse technical context, refine spacing/type hierarchy, verify real
+  desktop/mobile UI and mapping-to-plan flow offline. No model/retrieval changes.
+
+Design reference consulted: tasteskill.dev (audit, brief-driven direction and
+browser review). No skill or dependency installation; SF/system font stack and
+existing CSS Modules remain. A research link may stay feature-flagged; Planning
+is no longer a separate destination requiring re-entry of shared input.
+
+Evidence: docs/WORKSPACE-UX-2026-11-02.md; eight Chrome regression tests passed
+(2.2 minutes), including desktop sticky panel, auto-path and refresh, mobile
+Canvas, evidence downloads, saved report recovery and caller context. Typecheck
+and diff check pass. Existing source edits/worktree state preserved; no lab call,
+dependency installation, method changes or case-study writes.
+
+## Encoding and Canvas clarity (2026-11-02)
+
+- [DONE] Repair static mojibake in UI text and add an encoding guard.
+- [DONE] Separate Before/After into spaced diagram cards while preserving
+  zoom/pan, markers, baseline immutability and expanded editor behavior.
+- [DONE] Clarify Research batch experiments versus multi-process BPMN import.
+  Keep production analysis at one before/after pair; bulk bundle UI is a proposal.
+
+Verification: UI encoding guard and TypeScript passed. Targeted Chrome suite
+(editor.spec.ts, batch.spec.ts, workspace-flow.spec.ts) passed; last-run status
+is passed with no failed tests. The Canvas screenshot confirms two spaced cards.
+No retrieval, scoring, BPMN input or case-study source was changed in this task.
+
+## Local BPMN library (2026-11-02)
+
+- [DONE] Audit canonical role BPMN read-only against the requested single
+  start/end and no direct gateway-to-gateway/end conventions. These are local
+  research conventions, not universal BPMN validity rules. Record exact findings.
+- [DONE] Persist uploaded BPMN and repository/process/role/level/version
+  metadata in the backend data directory, through a store port and file adapter.
+- [DONE] Library UI: filter, inspect checks, download, and explicitly load a saved
+  diagram as baseline or changed version, preserving original XML.
+- [DONE] Offline persistence/API/browser verification and documentation.
+
+Scope: one versioned diagram per entry; no auto-import of case-study files, no
+source changes, no LLM calls, no automatic cross-level propagation. Relationships
+and bulk multi-process analysis remain follow-up work.
+
+Evidence: docs/BPMN-LIBRARY.md and docs/ROLE-BPMN-AUDIT-2026-11-02.md.
+112 role diagrams audited; all hashes unchanged on repeat read. The stricter
+gateway-to-gateway prohibition has 158 findings in 87 diagrams, so the old
+normalization pass is explicitly qualified. No case-study normalization done.
+Go application tests/vet passed; library API/store tests passed; Chrome library
+persistence/Canvas/mobile and existing workspace flow passed. Initial browser
+fixture had no diagram coordinates; switched to the existing DI-enabled fixture
+and exposed a missing-layout warning rather than modifying XML automatically.
+Typecheck, UTF-8 guard and diff checks pass. No lab inference or download.
+
+## Reviewed canonical BPMN gateway cleanup (2026-11-02)
+
+User explicitly authorizes BPMN document changes in Simple-ERP; application source
+remains read-only. Prepare all edits/backups inside Mapper before bounded apply.
+- [DONE] Prepare removal of redundant XOR result merges where the existing result
+  activity can receive alternative incoming flows; preserve conditions/actors.
+- [DONE] Prepare Staff AP: expose inspection of existing finance result/status
+  before the end; no new mutation, approval or API request.
+- [DONE] Verify graph equivalence modulo removed merges and the explicit AP
+  observation, XML/DI integrity, idempotence and browser import.
+- [DONE] Apply only reviewed canonical BPMNs after hash preflight; verify code
+  hashes unchanged and publish correction to the earlier audit classification.
+
+Prepared results: 87 changes, 86 redundant XOR result merges removed and one
+Staff AP UI observation task added. Strict audit: 112/112, zero findings. Chrome
+import/shape/edge tests: 112 passed (3.4m). Graph equivalence verifier passed
+for all diagrams; no source or canonical BPMN changed. 179 source hashes and
+ERP git status unchanged. Automatic approval review rejected canonical apply
+because the previous read-only boundary and this specific 87-file merge-removal
+strategy need explicit user approval. Do not retry/bypass before clarification.
+Backups/prepared files and manifest: outputs/gateway-activity-2026-11-02/.
+
+Canonical apply subsequently approved explicitly by the user and completed.
+All 112 canonical hashes match prepared versions; 87 BPMNs changed. Re-audit of
+actual Simple-ERP role files: zero strict convention findings. All 179 captured
+source hashes unchanged. Earlier BLOCKED note is historical and resolved.
+Post-apply audit: docs/ROLE-BPMN-POST-CLEANUP-2026-11-02.json.
+
+## Library hierarchy navigation (2026-11-02)
+
+- [DONE] Explicit activity-to-diagram links, bound to immutable library
+  version IDs; same repository and increasing level, validated activity IDs.
+- [DONE] Read-only diagram viewer, activity selection, detail navigation and
+  breadcrumb return; explicit use-as-baseline reuses existing workspace flow.
+- [DONE] Persistence/API/browser checks and documentation. No BPMN XML/source
+  mutations, no Qwen calls, no automatic inference of hierarchy links.
+Bulk decision: keep analysis one before/after pair. Bulk library imports are a
+follow-up, distinct from cross-process analysis; not implemented in this task.
+
+Evidence: Go API validation/persistence/relink/unlink tests and existing library
+store/architecture tests pass; vet passes. Browser hierarchy test passes (11s):
+activity click, zoom, saved relation, read-only child, breadcrumb, refresh
+persistence, mobile width and unlink. Existing library/Canvas regression passes.
+Typecheck and encoding guard pass. Initial browser test exposed ambiguous label
+association; replaced the wrapped detail selector label with explicit htmlFor.
+No case-study, retrieval method, Qwen or XML mutations in this increment.
+Guide: docs/BPMN-LIBRARY.md. Bulk imports and bulk analysis are not implemented.
+
+Viewer resize follow-up: ResizeObserver refits after width changes and hidden-tab
+return. Browser check now asserts the selected activity fits inside the mobile
+viewer, in addition to checking page overflow.
+
+## Application navigation and result UX (2026-11-02)
+
+- [DONE] Responsive sidebar/topbar and Overview using actual saved data;
+  no fabricated recency/accuracy metrics. Preserve report URL restoration.
+- [DONE] Integrate Canvas under Analysis; retain input/draft/session state across
+  navigation and carry repository to Planning. Explicit new-analysis action.
+- [DONE] Refine result hierarchy and density; retain all evidence, scoring and
+  independent-change grouping. No retrieval or research-method changes.
+- [DONE] Desktop/mobile browser verification, keyboard navigation, downloads,
+  saved report recovery and library links. No lab calls or case-study writes.
+
+UI evidence: docs/WORKSPACE-REDESIGN-2026-11-02.md. Initial targeted suite passed
+11/12; duplicate Canvas button naming was corrected. Follow-up passed all seven
+Overview/Canvas/workspace tests, including desktop collapse and mobile X/Escape.
+Library, hierarchy and three saved-report restoration tests passed in the initial
+suite. Mock Qwen recovery test passed without duplicate inference start. Final
+Overview visual run passed after icon/menu fixes and hiding the Next dev indicator.
+Typecheck, UTF-8 guard and diff checks pass. No real lab calls, dependency install
+or analysis-method changes. Existing unrelated worktree changes preserved.
+
+## Library/History findability (2026-11-02)
+
+- [DONE] Library filters for repository, role and level alongside free text;
+  clear filters and exact visible counts, preserving all saved versions/links.
+- [DONE] History full-page list, text/method filters, refresh and clear empty/error
+  states; no fabricated timestamps or changes to saved reports.
+- [DONE] Targeted browser and TypeScript/encoding/whitespace verification.
+No retrieval, persistence schema, LLM calls or case-study writes.
+
+Evidence: combined filter/reset/empty/refresh-error/mobile browser case and
+three saved-report restoration cases passed. Library save/refresh/Canvas case
+passed after the filter count was changed to an aria-live announcement instead
+of sharing the storage-notice status role. Typecheck, encoding and diff checks
+passed. No backend/schema changes, source edits, dependency install or lab call.
+
+## Final visual tone pass
+
+[DONE] CSS-only readability/interaction polish: 14px body base with 1.5 line
+height, white topbar, restrained hover/focus states, consistent metadata and
+larger mobile navigation targets. Original SF/system font and palette preserved.
+No function, schema or score change. Overview/analysis/mobile browser test passes
+(8.5s), mobile screenshot inspected; TypeScript, encoding and diff checks pass.
+
+## Pre-Qwen handoff completion (2026-11-02)
+
+- [DONE] Rebase five Staff Inventory scenario pairs onto the actual current
+  canonical BPMN. Fix stale result_merge targets and direct XOR-to-AND link.
+  Preserve historical pairs/reports; keep provisional references frozen before
+  inference and clearly separate from production inputs.
+- [DONE] Extract UI analysis/comparison use case into a dependency-injected
+  module; keep API, browser private storage and React rendering as adapters.
+- [DONE] Snapshot/hash/source/convention/DI checks, repeatable BM25 smoke runs,
+  relevant architecture/unit/browser checks and one clear handoff guide.
+No new retrieval method, no lab inference, no source-code changes to Simple-ERP.
+Full semantic/Qwen quality validation remains for the user's connected run.
+
+Evidence: current-staff-v2 snapshot and verifier pass for 10 BPMNs; all five pairs
+and provisional references rebuild byte-identically. BM25 ran twice per case,
+identical JSON, expected primary anchor and evidence-bearing matches; unchanged
+control has zero edits/candidates. 10 logic tests and 12 browser tests pass
+(all diagrams, workspace auto-path/refresh, Qwen mocked checkpoint recovery).
+Architecture/parser/diff tests pass. No semantic/Qwen real-model accuracy claim.
+Read docs/PRE-QWEN-HANDOFF.md for the single current test entry point. Source
+review is provisional, not independent ground truth. ERP files not modified.
+The default tempfile scratch ACL failed under Windows sandbox; ordinary ignored
+outputs/pre-qwen-ready/rebuilt was used for the reproducibility check instead.
+
+## Workspace visual redesign
+
+- [DONE] Charcoal navigation, softer neutral surfaces, clearer typography and form hierarchy.
+- [DONE] Verify desktop/mobile navigation, analysis, restored reports and Planning handoff in Chrome.
+Scope: frontend presentation only; preserve retrieval, saved data and model opt-in.
+
+Evidence: eight Chrome tests passed (overview, workspace handoff, filters, five editor cases); desktop screenshots inspected. TypeScript and encoding checks passed. No real lab inference run in this UI pass.

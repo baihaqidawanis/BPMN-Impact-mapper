@@ -10,7 +10,9 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/configmapping"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/fusion"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/index"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/mapping"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/relationprobe"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/retrieval"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 )
@@ -23,7 +25,8 @@ func NewAnalyzer() app.Analyzer {
 // root while allowing the server to share one configured embedder with its
 // capability check.
 func NewAnalyzerWithSemanticEmbedder(embedder semantic.Embedder) app.Analyzer {
-	return app.Analyzer{Resolver: strategyResolver{semanticEmbedder: embedder}}
+	registry := index.SourceContextRegistry()
+	return app.Analyzer{Resolver: strategyResolver{semanticEmbedder: embedder}, Indexers: &registry, IncludeSourceCallers: true, SourceCallers: relationprobe.CallerFiles}
 }
 
 type strategyResolver struct{ semanticEmbedder semantic.Embedder }
@@ -35,10 +38,13 @@ func (resolver strategyResolver) Resolve(method domain.AnalysisMethod, configPat
 		if err != nil {
 			return nil, nil, err
 		}
+		semanticStrategy.IncludeProcessContext = true
 		return fusion.Strategy{
 			MethodName: domain.MethodHybrid, Left: retrieval.ContextBM25{}, Right: semanticStrategy,
 			PreserveLeftActions: false,
 			DiversifyFiles:      true,
+			ConservativeSymbols: true,
+			FileLevelFusion:     true,
 		}, fusionIdentity(domain.MethodHybrid, identity), nil
 	case domain.MethodBM25:
 		return retrieval.BM25Only{DiversifyFiles: true}, nil, nil

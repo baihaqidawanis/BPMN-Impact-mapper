@@ -1,0 +1,147 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_role_staff_l3_adj_submit" targetNamespace="https://simple-erp.local/bpm-haqi/role-staff-l3-adj-submit" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_staff_l3_adj_submit" name="Submit stock adjustment - Staff" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+ Pelaksana request: Staff; guard backend tetap berlaku.
+backend/internal/inventory/adapter/postgres/store.go :: TransitionAdjustment</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_staff_l3_adj_submit">
+      <bpmn:lane id="Lane_role_staff_l3_adj_submit_0" name="Staff">
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_staff_l3_adj_submit_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_effect0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_failed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_adj_submit_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ValidationFailure</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_staff_l3_adj_submit_start" name="Kebutuhan aksi">
+      <bpmn:outgoing>role_staff_l3_adj_submit_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_staff_l3_adj_submit_input" name="Kirim adjustment untuk review">
+      <bpmn:documentation>Aktor alternatif pada lane, bukan dua persetujuan.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_adj_submit_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_submit_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_staff_l3_adj_submit_check" name="Lock adjustment DRAFT; versi cocok">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. </bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_adj_submit_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_submit_Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_adj_submit_effect0" name="Ubah adjustment SUBMITTED">
+      <bpmn:incoming>role_staff_l3_adj_submit_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_submit_Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_adj_submit_effect1" name="Audit INV-ADJ-002; commit">
+      <bpmn:incoming>role_staff_l3_adj_submit_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_adj_submit_Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="role_staff_l3_adj_submit_Flow_0" sourceRef="role_staff_l3_adj_submit_start" targetRef="role_staff_l3_adj_submit_input" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_submit_Flow_1" sourceRef="role_staff_l3_adj_submit_input" targetRef="role_staff_l3_adj_submit_check" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_submit_Flow_2" sourceRef="role_staff_l3_adj_submit_check" targetRef="role_staff_l3_adj_submit_effect0" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_submit_Flow_4" sourceRef="role_staff_l3_adj_submit_effect0" targetRef="role_staff_l3_adj_submit_effect1" />
+    <bpmn:sequenceFlow id="role_staff_l3_adj_submit_Flow_5" sourceRef="role_staff_l3_adj_submit_effect1" targetRef="role_staff_l3_adj_submit_done" />
+    <bpmn:endEvent id="role_staff_l3_adj_submit_failed" name="Ditolak / gagal; tidak commit">
+      <bpmn:incoming>ValidationFailureFlow</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="role_staff_l3_adj_submit_done" name="Aksi selesai; hasil diterima">
+      <bpmn:incoming>role_staff_l3_adj_submit_Flow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:boundaryEvent id="ValidationFailure" name="Validation failed" attachedToRef="role_staff_l3_adj_submit_check" cancelActivity="true">
+      <bpmn:errorEventDefinition id="ValidationFailureDefinition" />
+      <bpmn:outgoing>ValidationFailureFlow</bpmn:outgoing>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="ValidationFailureFlow" sourceRef="ValidationFailure" targetRef="role_staff_l3_adj_submit_failed" />
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_staff_l3_adj_submit">
+    <bpmn:participant id="Pool_role_staff_l3_adj_submit" name="Simple ERP" processRef="Process_role_staff_l3_adj_submit" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="StructuralDiagram">
+    <bpmndi:BPMNPlane id="StructuralPlane" bpmnElement="Collab_role_staff_l3_adj_submit">
+      <bpmndi:BPMNShape id="Pool_role_staff_l3_adj_submit_di" bpmnElement="Pool_role_staff_l3_adj_submit" isHorizontal="true">
+        <dc:Bounds x="20" y="40" width="1680" height="940" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_adj_submit_0_di" bpmnElement="Lane_role_staff_l3_adj_submit_0" isHorizontal="true">
+        <dc:Bounds x="50" y="40" width="1650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_adj_submit_1_di" bpmnElement="Lane_role_staff_l3_adj_submit_1" isHorizontal="true">
+        <dc:Bounds x="50" y="510" width="1650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_start_di" bpmnElement="role_staff_l3_adj_submit_start">
+        <dc:Bounds x="170" y="110" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="120" y="162" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_input_di" bpmnElement="role_staff_l3_adj_submit_input">
+        <dc:Bounds x="420" y="110" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_check_di" bpmnElement="role_staff_l3_adj_submit_check">
+        <dc:Bounds x="670" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_effect0_di" bpmnElement="role_staff_l3_adj_submit_effect0">
+        <dc:Bounds x="920" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_effect1_di" bpmnElement="role_staff_l3_adj_submit_effect1">
+        <dc:Bounds x="1170" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_failed_di" bpmnElement="role_staff_l3_adj_submit_failed">
+        <dc:Bounds x="920" y="725" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="870" y="777" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_adj_submit_done_di" bpmnElement="role_staff_l3_adj_submit_done">
+        <dc:Bounds x="1420" y="580" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1370" y="632" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ValidationFailure_di" bpmnElement="ValidationFailure">
+        <dc:Bounds x="793" y="644" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="743" y="696" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_0_di" bpmnElement="role_staff_l3_adj_submit_Flow_0">
+        <di:waypoint x="212" y="131.0" />
+        <di:waypoint x="316.0" y="131.0" />
+        <di:waypoint x="316.0" y="152.5" />
+        <di:waypoint x="420" y="152.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_1_di" bpmnElement="role_staff_l3_adj_submit_Flow_1">
+        <di:waypoint x="595" y="152.5" />
+        <di:waypoint x="632.5" y="152.5" />
+        <di:waypoint x="632.5" y="622.5" />
+        <di:waypoint x="670" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_2_di" bpmnElement="role_staff_l3_adj_submit_Flow_2">
+        <di:waypoint x="845" y="622.5" />
+        <di:waypoint x="882.5" y="622.5" />
+        <di:waypoint x="882.5" y="622.5" />
+        <di:waypoint x="920" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_4_di" bpmnElement="role_staff_l3_adj_submit_Flow_4">
+        <di:waypoint x="1095" y="622.5" />
+        <di:waypoint x="1132.5" y="622.5" />
+        <di:waypoint x="1132.5" y="622.5" />
+        <di:waypoint x="1170" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_5_di" bpmnElement="role_staff_l3_adj_submit_Flow_5">
+        <di:waypoint x="1345" y="622.5" />
+        <di:waypoint x="1382.5" y="622.5" />
+        <di:waypoint x="1382.5" y="601.0" />
+        <di:waypoint x="1420" y="601.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ValidationFailureFlow_di" bpmnElement="ValidationFailureFlow">
+        <di:waypoint x="835" y="665.0" />
+        <di:waypoint x="877.5" y="665.0" />
+        <di:waypoint x="877.5" y="746.0" />
+        <di:waypoint x="920" y="746.0" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

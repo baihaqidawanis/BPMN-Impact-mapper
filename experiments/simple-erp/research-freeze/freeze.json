@@ -1,0 +1,1497 @@
+{
+  "version": "1",
+  "purpose": "research-only; excluded from inference/model assessment input",
+  "repository": {
+    "name": "Simple-ERP",
+    "head": "c9344971a573d5c44d9d4e58f23657eda4d18a86",
+    "textual_worktree_sha256": {
+      ".github/workflows/verify.yml": "3f1d7f4454f2bdb6ae999aa4c1251f14f1e7739d5517f6d10ff3034590177519",
+      "README.md": "8e803a98b8148422224181d2b48972716fd6a78df4be4e96624ebe3c545b8685",
+      "api/openapi.yaml": "06db4373dbae94b975cb4ccbe0a68c770126f80c3b25f052eb92b3d9a507b165",
+      "backend/cmd/api/main.go": "e4116d945eaa0081e4576d7ea6b4c8fbfcae4e520b8cd9f638e31f58b8642a1b",
+      "backend/cmd/bootstrap-admin/main.go": "523a2705e6bbde28a29ef140bca4cbd0b58a90c1f3ce21c80fa52b282de1f87b",
+      "backend/cmd/migrate/main.go": "b3d9320d4f03ecf1033fc5cd31853d65e7d52b6a65cd4793d5d62cb8165fb4ad",
+      "backend/go.mod": "ebfcf84e1e2468238f02f7b63208da5d01428fa4a1d009df23f1e8c5e3d0536c",
+      "backend/go.sum": "eb03de8d436b6ee5129fd147c59960c35b4a8b7b3e38678773310666d8425c0a",
+      "backend/internal/auth/adapter/http/handler.go": "7dcbecca3aa7df2cb43c3e289a089519ebd5df23091735df804f265f66b4b307",
+      "backend/internal/auth/adapter/http/handler_test.go": "e2b9c689284bf1a76075d826b5b848dac6fb0f127cc58677ee6dd4bc75b4d157",
+      "backend/internal/auth/adapter/http/lifecycle.go": "7fca8c74877db61ef992bfe3bb076d1df0df9d15de8cb66e389332ce8ce310ad",
+      "backend/internal/auth/adapter/http/middleware.go": "b78d649c116183f72bd2021dfb28c0764b74a4646a64d32c66fa325f8140be72",
+      "backend/internal/auth/adapter/http/middleware_test.go": "a045917993cf00f3d93d69c8d47ec1d9f6d8eb39e68ef93211aacf0405623a81",
+      "backend/internal/auth/adapter/http/session.go": "95942d647d9a05634bb75906a694c41b0e690af20f9bac66fcaf7be9cf72fe7c",
+      "backend/internal/auth/adapter/http/users.go": "68f97b774e67c4ca27ca9efcb8a51dedf41a459880826b296cb398c85ef7f224",
+      "backend/internal/auth/adapter/postgres/authenticator.go": "6a4846c1c669409b13e7bf6a33167b7801cbb85b33f4977df84d52eab08c46f6",
+      "backend/internal/auth/adapter/postgres/bootstrap.go": "20768f50805be76edafe03a7a07e5b5ab54cc827409352da8372b08361f2d106",
+      "backend/internal/auth/adapter/postgres/lifecycle.go": "ac2ff7fe7d86d50749b5e74612396b1e5eab674c2a02313da35495685a5f93eb",
+      "backend/internal/auth/adapter/postgres/lifecycle_test.go": "eeb3240edb4943e73768bc1ed655a1b93c4a324a016ee276bde0406d4328b8c6",
+      "backend/internal/auth/adapter/postgres/login.go": "1aecff7649e437540032793ba24e1d6af42dc1d90e44f1fc5b888b6aaf025c2e",
+      "backend/internal/auth/adapter/postgres/session.go": "fc1080087ec35b893d33faa5155a1d08885b279a7b497c3a7f99387d77d4e4c0",
+      "backend/internal/auth/adapter/postgres/users.go": "6fe83fd0916bdafa9299a55071b536f1769b8e02739b05c4bba872d904ac4d82",
+      "backend/internal/auth/application/bootstrap.go": "94f406fe12432901bd210c9c2a788bd92b9c90ce08dd61c1f57ea0a8ccc78612",
+      "backend/internal/auth/application/bootstrap_test.go": "742d337742df0f32d45480a001e77aef216fe59e96c479213d7e10eec40c5820",
+      "backend/internal/auth/application/lifecycle.go": "70ddc5457734e93b879301f97d1d7082a939e8ce64ce0a6f7ec918e16ac56f15",
+      "backend/internal/auth/application/lifecycle_test.go": "74ae951fab43946885a4e28758de419405095a7b3625f5bbf45abb0bdddfa4d9",
+      "backend/internal/auth/application/login.go": "88e19aaf4cb2cebdc46d9e6e3c8f0d51fb3907dd1dee3035c304d80e258e27d8",
+      "backend/internal/auth/application/principal.go": "74ebca17bbfee2833c8aa81180058e6bb3bd251e9995c739cd7c529dd8fa0222",
+      "backend/internal/auth/application/session.go": "78171f9c03f00a20987f9987b772bd0c014e1277e046c8bd0a86724036e2353e",
+      "backend/internal/auth/application/session_test.go": "5eaf33be678a4df4da2c87dbd95c91849287c5a0f9dafe3dd7b8cc36c1fc1b79",
+      "backend/internal/auth/application/users.go": "b5234b87a4ed777dc52dd43a183194ed9e20b910821250ceb10f38361bc67f27",
+      "backend/internal/auth/domain/action_token.go": "0db5b9daa0bffb7b77586e136598cdc93094ca4f5cdd5290bafaa4c30a74abd2",
+      "backend/internal/auth/domain/action_token_test.go": "9b391396476a421b486241c6a3eab9c9dc3548c75ab37cc5e438437b0bb37d55",
+      "backend/internal/auth/domain/errors.go": "ac8a98e900e1667131701f28505fa0051214395135102fe7026113c253403bfb",
+      "backend/internal/auth/domain/password.go": "1a67aa6c7f719b9686846d739673839d08ca801c0a6927dc765e2391d212024f",
+      "backend/internal/auth/domain/password_test.go": "23378ece8c0f917263633ec3d5b33abd523ad5befb710d20f81526bd62fdf80a",
+      "backend/internal/auth/domain/role.go": "79a9076fa8f88e01656b0069e47b64368b07c97392edb32b285e46eb077d8158",
+      "backend/internal/auth/domain/session.go": "d75f0984915ea39c910391d9f2211bc7e19311b7b2cc5cf7771e964602eb25e0",
+      "backend/internal/auth/domain/session_test.go": "04e0ce8eab2bed185e9ee5039b75d3e77e7350f175c35084d7cecb24bda39400",
+      "backend/internal/auth/domain/user.go": "28916c504f8aa6b8557618acf44f9758086054eea8312861475b296ee004c976",
+      "backend/internal/auth/domain/user_test.go": "e1597bf2b7bed9c0ce96934eb0868e40f004c2e0f5e0a39d777cf56223e06c66",
+      "backend/internal/finance/adapter/http/handler.go": "05a5d8e35eb1fdab74afbda263df8db03d9a96febc8f78e9c3617beaea8e9af4",
+      "backend/internal/finance/adapter/http/handler_test.go": "aa33decf38bfb43ca07d6fe96662b4c3461ebb54339216164560f417c10e9712",
+      "backend/internal/finance/adapter/postgres/store.go": "b23d1c4093f0b52336e0b370677b1668463f211d7b1bbd337107ad408d1d955c",
+      "backend/internal/finance/adapter/postgres/store_test.go": "af9e86d3f665d8a35053505267b4cd01c729434c92d097796e49dd809e87d832",
+      "backend/internal/finance/application/service.go": "cf2b716d4ffd256c6fd90ab367a289d802f255148df1bd68f7c9416f981ea784",
+      "backend/internal/finance/domain/finance.go": "b40dd43b9d58d6ed677d621826dfa45ad8cb91f08102002ae850c0a3485eac65",
+      "backend/internal/finance/domain/finance_test.go": "c0d24a34ce663ea7c9d0186e50f82ee062f1891b0a044ea2a41eeeae88b83b51",
+      "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+      "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+      "backend/internal/inventory/application/service.go": "fb9d72bf4e7d68f4bbd750822ae019055ad79121aa21dbcdae2b9448f6cd7783",
+      "backend/internal/inventory/domain/adjustment.go": "e49d17db472b7462a44320026eb72d4238dd34415020da4969a7a649e2cafc90",
+      "backend/internal/inventory/domain/adjustment_test.go": "bc26a411ff141712c1092533a8a8e3284b1bd4aadd181b706f61f19d7c7c0e10",
+      "backend/internal/inventory/domain/stock.go": "2528e7e13fbde5f6ad0391ba3c59b1058728f08a6a71762e13339307883ac62e",
+      "backend/internal/inventory/domain/stock_test.go": "03e447f782595b91f8f69f7651089e55941131b2b1e8356a59e0ba22482ffddf",
+      "backend/internal/masterdata/adapter/http/handler.go": "e0be36ba5f99f2d0cc876309da1a9e2df13b4d77138d5bceaa1a3aa1bc92d01b",
+      "backend/internal/masterdata/adapter/http/settings.go": "f9f72651cdef8c4430228cad626c820d64406eaabf0956b789db8a571f8b8260",
+      "backend/internal/masterdata/adapter/postgres/settings.go": "8523bc3b3e3a361123b9989d39e35279fa04e4e6b438d6c964965cf1ef826b9c",
+      "backend/internal/masterdata/adapter/postgres/store.go": "d838d63024920cd1801df70d90fbeedb7cc6c81f8a2fcb84fac183fe2e616fc9",
+      "backend/internal/masterdata/application/service.go": "ae7d07d8012fb06077d83c4b41757fd3ae15cc73636c1c9e106a5bfabcec2a27",
+      "backend/internal/masterdata/application/settings.go": "dd94e9a4af20b9fd8c76ae0f5abec0f70b193eb305e5b8d0dce234df5afc5220",
+      "backend/internal/masterdata/domain/entity.go": "4fdccaf6781a739612d4d7a31d3f2c61bd198c1d6c941dde91a130f3cb004458",
+      "backend/internal/masterdata/domain/entity_test.go": "0a3249a53b94840a91569613e81b79371c2cacf381c1bc72ad1845fce38b5643",
+      "backend/internal/masterdata/domain/settings.go": "d37acf53cb91e9e509b1b689b6bcf84b681f51221fdd453d801d999b41f12833",
+      "backend/internal/masterdata/domain/settings_test.go": "7c56b9ffb6508b23349c5e073ecab0605f309ce2f4cf995b5f51add5ccb24ab1",
+      "backend/internal/platform/authorization/super_admin.go": "091da1a53710e1f693872185753cff04ff1b45b6334c5c83acff631bbb21ed41",
+      "backend/internal/platform/config/config.go": "abba28673a93e9529c0496bc7e469cfd7631654219460b35231a1095cc55867d",
+      "backend/internal/platform/config/config_test.go": "516b9a17170f083b6d3e94a59ec68d611738206a78006ec75174be8953ef7b84",
+      "backend/internal/platform/httpserver/router.go": "ddd191eb9846653200602416b95db627e6b6c9f89a753b6fa8d8a3d65181a2da",
+      "backend/internal/platform/httpserver/router_test.go": "347f93ae075e69f4ddb18dbf2b6c49e9519f2a1f7091fd06b26ea8cbca0ed7ea",
+      "backend/internal/platform/idempotency/middleware.go": "39546e6785472756958b660138fae61ad52f384468d9e7ae881674c929b05c67",
+      "backend/internal/platform/idempotency/middleware_test.go": "e6f24031647d7e4bd5e98a54eea12260b9e0bb65f3613747a5a8167cb4063aec",
+      "backend/internal/platform/idempotency/postgres.go": "b26e04fbd3a6eed40d6dcac0a9dfc9cf395f15c03fb281dfb9404cd3331a51c2",
+      "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+      "backend/internal/purchasing/adapter/http/handler_test.go": "61e01aec62aa573fccc4baaaa378ba945e0f284ac4e88d59db902d6b3b4c99e4",
+      "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+      "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67",
+      "backend/internal/purchasing/domain/purchase_request.go": "4e33b7ab72574459d2d7d9d6932387b612247bd3726e2e4db0371df16523e036",
+      "backend/internal/purchasing/domain/purchase_request_test.go": "9c353dfb11417975bd579d740730c8f4e76f5a43c35eb497078b0dd903c4fa51",
+      "backend/internal/reporting/adapter/http/handler.go": "688135d09c7bb98b89cfb792fde91f3d3383ee367c8b0a761a545eceeb74a0a7",
+      "backend/internal/reporting/adapter/postgres/store.go": "c2efb61d1d4f38cbb3e9eb26c47d92f3115148d879da5375491bd6a9f61facd3",
+      "backend/internal/reporting/application/service.go": "e98af35d97b37a40ddbe9683f83a1180322861b13657e6db91b9b26312c47624",
+      "backend/internal/sales/adapter/http/handler.go": "beae2365a129e0ac9d21cb65983b756e23f2c9476dc8fe75c903e8f72c9f5c05",
+      "backend/internal/sales/adapter/postgres/store.go": "cd2625b386f9f315baa854878832f2b731a2122d84e35d533d5bcc34d90bda67",
+      "backend/internal/sales/application/service.go": "9b9ca9da22a158724af7ff98f3904bd967936cf644c065b167da38948c2da916",
+      "backend/internal/sales/domain/sales_order.go": "c8b8a8f17d63937a612ad428fef458af4954bb1651ef82ab1219582f928ce693",
+      "backend/internal/sales/domain/sales_order_test.go": "1757a49cfb4812451355796b19e02bfc316541202983fe8a02a8adc1a49c11e6",
+      "backend/migrations/000001_identity.down.sql": "8facb460e106b38ae14efe92fe3a9672bc314fbd157d4430f9f363bc328fdc55",
+      "backend/migrations/000001_identity.up.sql": "79934f606ed3d4dca6849e1f459ed82afd0cba929d5d3f66ed5346e2df00cebc",
+      "backend/migrations/000002_masterdata.down.sql": "99d5ca0cd5055deec9164abcb0486acf04c83a832cd67a24c1a380e40adb6739",
+      "backend/migrations/000002_masterdata.up.sql": "bb236b6d19b16ea4210a4f93cd90eb8e0bdfd4ed9c852d3434c1660a525a9b71",
+      "backend/migrations/000003_settings.down.sql": "d5e9c3c72e44a3c89b155f8af7e341786eef3e60515d7dcb3b728850d9084f40",
+      "backend/migrations/000003_settings.up.sql": "6708102e3205ca7180ccfc139690f75726a9b8160ccc1cb2577ec392e9d2c98a",
+      "backend/migrations/000004_auth_token_sharing.down.sql": "41e37bd9e5e42758441cfd10d5ca5802b61cf5280ab07cc05bdc20a32616b880",
+      "backend/migrations/000004_auth_token_sharing.up.sql": "ca4ec647f2e2e6e48282260567b0ee93fe8a83a7acc2ab254e414e44c0f8432c",
+      "backend/migrations/000005_operations.down.sql": "2c15965d74396ee3bd19087365c7e34e6b48e6ae256d8a1542704a85a8c74960",
+      "backend/migrations/000005_operations.up.sql": "cf6ffb45600dcee577898994e370ed8a1a3d3a6d8921007a0d2fb418832f5e32",
+      "backend/migrations/000006_finance.down.sql": "b390f15ba5372ec570171e44d98349a7a3880b7468a9137d435053d00cc064e0",
+      "backend/migrations/000006_finance.up.sql": "0bf92a89d28c2702d025d3df5dea84940de3ae8bf8b0b9c1d24c5c10625cf2d6",
+      "backend/migrations/000007_reporting_indexes.down.sql": "4004e8aaadcce24745682307c80afbb8b39713942f1dbd6aa7ce908e73f9d91f",
+      "backend/migrations/000007_reporting_indexes.up.sql": "ab1da18690c0e7a847a7055922558a1d9cadc8ceaccac40d2525bdf7d6085139",
+      "backend/migrations/000008_baseline_integrity.down.sql": "b2f60f179fdab80c39a7ab28ea6820389dd75d90ec7797072ee3ec721d66e449",
+      "backend/migrations/000008_baseline_integrity.up.sql": "df2d075a0f22f0c41580e78a044c3d0b83a97cc5785d62e58ff2c5c4129aa6e9",
+      "backend/migrations/000009_purchase_request_purpose.down.sql": "adb159a0c63c9eee1d174b0cb476ac2fc658875e91aca255a2bc9bdd081de5c3",
+      "backend/migrations/000009_purchase_request_purpose.up.sql": "904649280e5a8d3f499a9f6e56bbd48c34c0a21f394d7bd9dc35ee434486d177",
+      "backend/migrations/000010_three_roles.down.sql": "424013108a8218c16b28db9428fb717bf945626a2123bcaa454b26debfd07106",
+      "backend/migrations/000010_three_roles.up.sql": "3b5e442f12c397cb70b149755e7971dfdce2b69c123ae521b29f7d516f4b1f2c",
+      "backend/migrations/000011_purchase_order_replacement.down.sql": "a3df0bdbac25fd4560ba7a320a207d9de817d98d0cc530fbd7f8bf8a0bbca159",
+      "backend/migrations/000011_purchase_order_replacement.up.sql": "1ae7aff26522c4d8de79554a2dba49df66094f90d18a2eb6a6fb8493b0d010b4",
+      "backend/migrations/000012_sales_invoice_review.down.sql": "1435dcd1c1af7bfe0368cf05c3a3fcabc2815c429d35da81c532d192e8dd1088",
+      "backend/migrations/000012_sales_invoice_review.up.sql": "e9334fb1bd98bf454ac4b2dad5924258f255d48dac1ef4be889247d859314301",
+      "backend/test/integration/bootstrap_test.go": "f9c5f4d38da0ac0a48e1e46b1917c898ae90a19b19e9529bed0bf0010b8e2d8c",
+      "backend/test/integration/finance_test.go": "4b5691329c854a12c3b9fc81ea55dd67084f2f33319d69d0b131805dd5d0ab98",
+      "backend/test/integration/migration_contract_test.go": "a96b5507b89fe63e7fd9d3594cf3ed1adcb22b20966dca3837af8b0846ea496b",
+      "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+      "backend/test/integration/readiness_regression_test.go": "1ec91429e9ec2c5f58fcb9f04cd0f9dd4fc8778df8f2fd6575017442f0f2dc68",
+      "backend/test/integration/reporting_test.go": "be99d581ae766916aba80ea3573e474b282bc0cd53ea2a1ef5e840378364eb68",
+      "compose.yaml": "a0250abf02f26c7dc89fbaef778ef6edb7e5db158deebeb51f7e7b3ac7c1449e",
+      "docs/API-CONTRACT.md": "ff345fba44361c5d8bcc50a2b40695cd6e6c22358117474ecd6f499558aeafa5",
+      "docs/BUSINESS-RULES.md": "d714c497bae14234003e061d3d932500244e0dbe000b6a31c0f77323a5e5b9ca",
+      "docs/ERD.md": "3f40544aab340f40d0c3214563fa33cefe1111a0ce767ee9acf2763c093cfecf",
+      "docs/PHASE-1-DESIGN.md": "6ac8efcb63fd4c07641db5d39facd28d0535979ad922aa96b2124e7dc14a0239",
+      "docs/PROCESS-MAPPING.md": "01e98b1af94cc2e74b1f36fcf5fb84473e9cf8742a39e228bb092860d9cb9bd6",
+      "docs/RBAC-AUDIT.md": "a908f55bd54208b1ee221362e4d53489017b15223b9e029c5c52908ad2e689c6",
+      "docs/STATE-MACHINES.md": "95cd1b8d16d20f258e7aca5223a391ddf01e06bf8771e21677d7bd5ee8528c4e",
+      "docs/bpm-haqi/README.md": "b1ed03277a1c92fda3971e0fee6756cf976ed66454de3afb991577b811d2a899",
+      "docs/bpm-haqi/roles/staff/inventory/level-1/role-staff-l1-inventory.bpmn": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+      "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn": "079b9f005afe3e6aab55b7c788330ae0bd9a87d702b0a510489473166abb6d4c",
+      "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-correction.bpmn": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+      "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+      "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-sources.bpmn": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn": "1aead6115c0c7fe82e9abd3863b895b61bf1f534a989f15410d6409aa2796966",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-create.bpmn": "5c6c5aeebeff196ca00e2457b1adf08461290eb9f8560fa05d7baacc3c52e5c7",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-post.bpmn": "ac677a4401b21e5ebc15293ee743817500897f53141b5be758f99a9f6f0a30ed",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-delivery-post.bpmn": "14b1a2b7a882866374840960418f9b294841ab4293d661ff41e31170d60328a7",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn": "78cb3d88f5adc46832b105efee83f8377351f9c1d72708088247f465b51625e7",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-balances.bpmn": "2cc2cfd5bc5f233f9f12595346f8207f7dc1185e3d2a9c010bd0ee17aef8aa4a",
+      "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-movements.bpmn": "a58db3762897909ad74a4be402c901d438f93971f9d3860467e7efac839bf38d",
+      "docs/bpm-haqi/roles/staff/level-0/role-staff-l0.bpmn": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+      "docs/bpm-haqi/roles/staff/master-data/role-staff-l1-master.bpmn": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+      "docs/bpm-haqi/roles/staff/master-data/role-staff-l2-master.bpmn": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+      "docs/bpm-haqi/roles/staff/master-data/role-staff-l3-master-list.bpmn": "171557b86a9773fa0fee6d4212698f34ac3aab9a3dfb3bd7b3e2e82a44401572",
+      "docs/bpm-haqi/roles/staff/p2p/level-1/role-staff-l1-p2p.bpmn": "9a945fb31c80e51c908c9fd13e4912b6172b75b30eb59f66e166f3f6a6d98eea",
+      "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-ap.bpmn": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+      "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-correction.bpmn": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+      "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-po-gr.bpmn": "a5ba00ee8ba3b60131f1a61aad7859b0a06231cb4b9d6c932b05be5a33caccc7",
+      "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-pr.bpmn": "8a10565947a4f67d2b797f44a471d741366a7899fe627e291a886c99a139ea9d",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+      "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn": "01c398e15b88d4ec5d106eff27d049ab3a525d600c71afbd15ecbd778844a148",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn": "4aebd70c6abba119a059e343a626c07787b796d487b535dda4529d427982b8f0",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn": "c96bf8d2c9a3d65931c39862dca60ca5d14dfd87267fbd511afaf91381b7e4f5",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn": "a8a8a2c8a39b4930c8dd92a3482a7bb698c32359a85dff987f73ebead1d2135c",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn": "d407f0923dafaac4acf22a3a240ea685b87a45606f6fab7d20ecad06b8c0aef3",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn": "68540c68b20e4c0a2d7de29b6da9af520eebd305e324994499adb9c35c4cc5a4",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn": "bd3053a6f69459cc3d94b1c08c512749ef8726cd21a58dede8961c817022b577",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn": "eb600e95c6de03fe245ec4b3547a619ab67ae4f4a7bf054b72995a7c6371db2a",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn": "0ae2fd5fc34ad15a99ae17839723ffd482244a4770b97faf482a498dea6076f1",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn": "8437aab61408c43131224bdb4fbc753e7e795472dec3b5288819b49c5a595add",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn": "eecfac822aae8f672f0331a038f6b55f07370eea59e190781fe866723fe86276",
+      "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn": "038e6df589d12fdfa8441cb543eff9c6387d2d2059e83b6cac491226d1265bdf",
+      "docs/bpm-haqi/roles/super-admin/level-0/role-super-admin-l0.bpmn": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn": "028d68d2d92c0d9e0aa796cdca4fabbfd582864199bf27b5c8914a808d7e3e7c",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn": "4f80c3bb29148c9c1d6838b795564ff2d03f6e4e897804e40e3b4de2b4092c1f",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn": "3ed34b48b2babc189faf0f7fe48a72d25d1cd3c9be3ba9747cfba5b52779c320",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn": "a8f3d5a07a491bd3d98361f12cb0d33bd642d576013bd7fcbe319e2958fd65d1",
+      "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn": "0578f9e19cb240a29875a787193ffc23a3e7f66999cb4653e1ca970ce5d72443",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn": "728678cd61a2f63414fe007394988fdde897e6745f0f0db3fc731d310fc34173",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn": "e54d18e356b62b5ea9f44ea454fdb4a884cef3fad6ebb68cd544c4c3884704d8",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn": "e7ddbbc542c5507c9926160c9b9cff827f94549a7f602be4b962002dbe116b44",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn": "c2348574c3fbf3b16f18cf0168abb1024fa5c0e85c854ca1825147eb52c90909",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn": "43ea014d63f90e462a2dd9df6c4955d8973e7c1d9109903f02fbfff887a1b339",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn": "3c4b94c80423329bdadb5b81a079e7fb0a90e252c254430cb47678bd51b9ee78",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn": "f28a13f7a9237111981efacb27022a2d181e545e81b0645d9335c34a46c41a1e",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn": "5ff01680be0e624ef430fac32f3321d225132626b8c0a60b7178fd287c9f2fcf",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn": "8de75b74168cbbe706afba0b718b569f6db10d75cad87ad1f672c31d44baa5d8",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn": "a96e6815a38a0f04b68e15a3fb0ea1f3bbb3c86584638c115c175ffae71aca02",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn": "47c4a180e3f2485a2d70be56717ef25f64a85537f6eda54c49f65f318cfce3f0",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn": "35893308e574e79e1a86b465d24e1a63be0186c1564561d36ace9118e561c681",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn": "0e7c68f2fd95a09a4aa2fa5d75979c8e4a4579c8080d148988d7273eb836d2fe",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn": "433841646daea14b8c54f0aa4eada081ee3917ffa349488968c19b60c06d6617",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn": "7caf08d98976257dc1b4bd852c846e232236475fd0f6ac789d16495ff0c8444a",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn": "f8a995ea61885f0d236cb858b7ec740f5ad76cb0eece21d63546d895f6ea91a4",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn": "095fee3e07d51ac1e21c135de0686cd9c06c51f2bf030d8b22436e764f70ce27",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn": "f214a0c836410ec2c5f2ad80bb9b7fb2bb86ac8c43d0e1c85a138d0f3c2f0171",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn": "d67e026b4018ae05bc597375fb7895d1d86a27482acbd6670dbd73f081ae9c9d",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn": "551e807848f02150371eca6b1b4666e94f37c8b3b07dcb3ad3ef8ceaeb63e4ce",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn": "0eb241b9c0a35cacd3f9ab7c53ab7c675788d77fd22301cacf97b1176495e410",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn": "8a5de1a161993813fe69902bde3086e25ce0e847a8d66659c5fd0cd600f775ec",
+      "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn": "4c94fa74ea5f1d4fcc4481336111d19e7b25929ceeea245d5ca797d6e3d4ca2c",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn": "fb89bd0d5d8ba8ee9ead75341e777ca19417fb6e58287fb7d09422bec42e99de",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn": "bfd98f23a4ebf1011c66a2f0b86c5437795b1d94fe62d82ed19265c98d5e7efb",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn": "5aaf8e76909cc2ee70c1506e30f9677097b69f84c74c9c1f94ac558f041bb848",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn": "c433a35484e67902e761f6c3ffd6e86521bfeb1cee39c1410e0a636ba8c0b14d",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn": "c84bdfded4af5009122c7932a78ddd67b0206c4974948f8a2b1b0502d9285358",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn": "13bddb1286d5d8a64337283cc77880a2d53b2b3253ec04d2fe5d51c8f4294b2a",
+      "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn": "ec8e12b0c146ef074b0736a394d758aef5ed74288724fd52dddf2d635b39bbd5",
+      "docs/bpm-haqi/roles/supervisor/level-0/role-supervisor-l0.bpmn": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+      "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+      "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+      "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn": "e05788ae156f2d75e9e4dfa7b3edd14cbd820fedc1d3886e0aa5f65443d76ce3",
+      "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn": "6889b5fad4d741b43cb16bd685ddb6d460944c3495f84a2204e965cf80c36e78",
+      "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn": "88e5d3fe6c1bf11b07ffd1c12cffcc5bfb59ba602d782f051ccdac2aef16377c",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn": "49b7212be2ee63ea055c92c03ea393a0205aa2caecd98a740ca8121f628b2e97",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn": "0127196e8c103e7085a5ad94186be8c4cb1e9b3b80b7ec3bf39a4f6a2ef2d0d3",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn": "6e8e4350e7a641f6b9a82e6cf399f20cfbc16458e801533d884e85f5eb4eecbe",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn": "db5a55033a864aede3d388506c9ab7cf6727f37c2433117398b020d607503f18",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn": "d4bfd5fd66a50c732e52fe32de5c0dff783594201939d1e9239621a6e47d6894",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn": "6181a04150e5626b8e23db00c71a65b34a53ab2e61286d25027a6a9ba114323c",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn": "0adad4153fd78601141820b23d93394a281aebdd9709675eec53f59969dbfba5",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn": "167dabeeb195fdfcdbe566f61fa51552c95ced4bc4a13de0b180930dc9572443",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn": "a2ff12fbb9b3621dbb30eaf42fffad1f3a39fa4dec85dab0b092fa066dfe53c4",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn": "8f3c7627ade95008115397cd5166e7c554d654cc9f59e6d6155d709e931ca624",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn": "208fdbc2145ca30f35cd2497dd9076a3241a4515201a218486c4173af4948a0f",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn": "c48fc6b83ebe2c92b947edd946faa31f169c98c58557fa1be1258b5684fc6a07",
+      "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn": "50b3751ce79c82d88a9ff6652ed7344d3f47d7b247a7235914bfdd9bd1622f2d",
+      "docs/bpmn/README.md": "4771e141735ed54ebc75bc01512a771d48ad904799c87f19ab6d3f7ad6dbd162",
+      "docs/bpmn/l0-enterprise-landscape.bpmn": "140c2678d033d91b7c8706998db486a10327d861c7aa9a198541d3a63b561d1a",
+      "docs/bpmn/l1-core-processes.bpmn": "3beb59e25effdd9df9de2d48168f9c14860cdc3771907b657119571081333bed",
+      "docs/bpmn/l2-access-lifecycle.bpmn": "dae271a32cae2ac43a96ff73db155b69169e2b266c38071600f13bedd6fd5a0b",
+      "docs/bpmn/l2-inventory-adjustment.bpmn": "a3c75956eb00665e31f3218ff0af6c043dcf3e0bf17e716d90979a17607a6cf3",
+      "docs/bpmn/l2-order-to-cash.bpmn": "c167e190542e25e93d51fb9302e0d77b1624d1acd4da00cb78f89b5763489a80",
+      "docs/bpmn/l2-procure-to-pay.bpmn": "197923f690359cd92c37360487b462645b68b4b643bf67321051ce9a52304e86",
+      "frontend/app/activate/page.tsx": "2e1b8661bd15c0c9ddf4959aac6fa19e3875cebadc50751731388115c41d8da4",
+      "frontend/app/apple-theme.css": "648c5c3a0f8b94b5f9ac29960d1c856e332edea3628b8aaa5a8df1d8a4cc5a49",
+      "frontend/app/finance/page.tsx": "d8a5c96184efa6808d267a4010c0a10844d408b4b90e437f2eca4afcbd73eefe",
+      "frontend/app/globals.css": "4066d6ad1699ce03e5047cc219b4afada48169187d9c4de63970848e4c0d695c",
+      "frontend/app/inventory/[section]/page.tsx": "8465ca29cf619102db0695aaa92e20dd8e94ff61fd2dd0ac57d69c82bcd1eac3",
+      "frontend/app/inventory/page.tsx": "54d6078e60c7cd25133161665cadd256db4aafaa5838d4c0db584fb071f17e8f",
+      "frontend/app/layout.tsx": "e1b7e530ecf5bb3b21fc63c4f6d97dcb8052a8bc46ed5e2079b60d5b59d6ea2b",
+      "frontend/app/login/page.tsx": "217eb2424bff860757ca85a723882ff8deaaa4ced6cca0996b69f32e8969a090",
+      "frontend/app/master-data/page.tsx": "0cd4341ea945dd3431aa09d67d0708ff16a2273a13d25af4c81fabb580d67928",
+      "frontend/app/navigation.css": "e735384751d7c3ad3b02f5bf01fde3404c6cae7857ae9a34ba9b7f094bb92d05",
+      "frontend/app/operations.css": "78ba0a77e05d5146576c7510d10f51b75f04b26412d243d0ccfe0732b2355636",
+      "frontend/app/page.tsx": "7e77b0e92a9f89298c5c13e41712dd53b7bb69c2ab4a1686c8d47448df5f9106",
+      "frontend/app/purchasing/[section]/page.tsx": "e7f1516872cc43f4ec89aa366302a7634222a4ec27e020aa0980f901054ca8b2",
+      "frontend/app/purchasing/page.tsx": "d9b67699984a1d215ebbb544267c038b14ce25dffd0296db5a710464121d193c",
+      "frontend/app/reset-password/page.tsx": "3b01536992301eb4b43c519df2de76c8519d0880494f73be2b95210ddcd3826e",
+      "frontend/app/sales/[section]/page.tsx": "1813ac9a49cebb7fad76770db7d93dbb35c54957904c931e67c4845429403c78",
+      "frontend/app/sales/page.tsx": "67251c8e4ce5c7b837f33508862c1b08cf60963f708ffa17520fe0304aac618d",
+      "frontend/app/settings/page.tsx": "e773c8003bf1d1cfcdeec7be2d36fa14c7c0b76709f317541e459f296e3a733f",
+      "frontend/app/users/page.tsx": "82798a51c65ed25e174946192f5d74a2432718da80d8dcc2cd3f90f33cfbbc7a",
+      "frontend/components.json": "62c804ece835703a1342c7d72a70422ef805dd4cfd5e7c12e08f458e1ca112ee",
+      "frontend/components/app-shell.tsx": "5e4d1957c4b26832f08d69aa114253142e0d976150e420200b9a1a8b36896ffc",
+      "frontend/components/module-page.tsx": "4679cedd1bfa53641758562b5734953b7958533a03b9f0e664acb2c9a525877c",
+      "frontend/components/ui/button.tsx": "55be3f1fd5106d11995184feb35358594ec4da9f5199d1c0072ee493a77fc006",
+      "frontend/e2e/access-lifecycle.spec.ts": "1ee06bd61a0f912eace69aba6c570c20013cb598b6daf097e7a043c3095c95a6",
+      "frontend/e2e/app-shell.spec.ts": "d38b4515bd259186291409389282eadf5558390a7aa15e520cf4046ce271713c",
+      "frontend/e2e/dashboard.spec.ts": "7407a4bae83047665d122a6147d1a14bd62fe5d4deba1195fa2b73ce81dd4dac",
+      "frontend/e2e/finance.spec.ts": "ff57430b3d589aff5d28f1ac24a96d1cb1bfa6ddaec34681d4434a77b001e98c",
+      "frontend/e2e/operations.spec.ts": "268d39d02ca596950fb479fbca22d29147e5ebc9a6b80a491cda3ad03d52ee2c",
+      "frontend/eslint.config.mjs": "5ea93261f882efec5c871b137481caac9c100281c1c3116e566dcbac26f03db9",
+      "frontend/features/auth/login-form.tsx": "84f914611844afce3a342b67878fb0682894ac9de384f674ba638a6d7fa23a65",
+      "frontend/features/auth/session-context.tsx": "2b4958d28cb54ae88e5fac5bed68929ff7fc64d549560942ca70d5bfd06c37b9",
+      "frontend/features/auth/token-password-form.tsx": "16e624be00a198f9850a9dc40d2f8cfb4a4f4761a1b3dcfb4e05d60a408ed58c",
+      "frontend/features/dashboard/dashboard-workspace.tsx": "9bea4ebab569fecdb5591d5df0f31097619d616c5afe4393fb11e475fb04ab70",
+      "frontend/features/finance/finance-workspace.tsx": "566d7ba0abcb5bb3429399f7e159fbba1b07ac8e1a34d5ab1edce236a133bb7c",
+      "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+      "frontend/features/inventory/inventory-workspace.tsx": "c8c579fa066fc19c2c5b762dc34dabc3c1bc7b22aa43aff5ba07c7cde21fd947",
+      "frontend/features/master-data/master-data-panel.tsx": "c1e8f90ece61b702373993a8aae746ba6aa4b87a98c1c53566e00e60c5a90cb6",
+      "frontend/features/master-data/master-data-select.tsx": "8e5eed4fa203c164d3f633fc5daed0c2a5d5a58479ddb4ef663d3d1b0d391fa5",
+      "frontend/features/operations/types.ts": "5abf4160e85492d6a3a0ce9b6efbf7ec3e0c995f05b6d05eb4aec78d3a922e72",
+      "frontend/features/purchasing/goods-receipt-panel.tsx": "74db5c6e72f8453f59f80298b336fcc56e424d0e678f90c6d1914c9b48b5a240",
+      "frontend/features/purchasing/purchase-order-panel.tsx": "c34482b062d81ff06690183b42f54c29bacfe29991f40a1b56fa241cfd8c97dc",
+      "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03",
+      "frontend/features/purchasing/purchasing-workspace.tsx": "960a589652b19a7c3190c6f7fba7cf730a24803c64cc1fa2001777df7bdba4c0",
+      "frontend/features/sales/delivery-panel.tsx": "bd72027cbc595d059d6766ad119a3214405a477c60c90222dd0746c263399756",
+      "frontend/features/sales/sales-order-panel.tsx": "d6d6940247f34669ad0a6be2aa28d52190638f879ed0b5c28b943861a621b620",
+      "frontend/features/sales/sales-workspace.tsx": "1c257407cc3d25f2b9f9341ddc4f7c2c58b5f6fdb24c1fc0aae7478a3af0446d",
+      "frontend/features/settings/settings-form.tsx": "d03add2dbce9c31db23ac87c752699cb19409cd31ab5bf1b7a829d703d78b577",
+      "frontend/features/users/users-panel.tsx": "f9f631f1451fab7df9c6d4b5dc2266a5bc6a881c5e76a1922b000a41d1b376e2",
+      "frontend/lib/api.ts": "782a8a445e8e15291ffb39b48eadc84b4de9b906848f1a85734e39f1d63cda8a",
+      "frontend/lib/cn.ts": "15b6765260b76e4f8a8c83b6ca43b5c427bfd4ab3ec0e042dcf040bafdf25281",
+      "frontend/next-env.d.ts": "1b59d4c6b83807db275d43f3cf2cc8e9323f465fab764eea091cc5becd5bad37",
+      "frontend/next.config.ts": "b49d970873cf049e7b0499b6c096c05c1abfbaae7f0bd3990f0a1533fb2470c8",
+      "frontend/package-lock.json": "c4b1a7016f8b7a1fec5fca85c62843d74931ab1f8131f572e02523d98d09474b",
+      "frontend/package.json": "45d5d32f370fe8e3999655f6a86e6dcfab1e4fc58a104b5392f4328457cf3f35",
+      "frontend/playwright.config.ts": "7eb40591f798ba29e669618932621e91602e77d47575ab0eb3b6cfed8528b7de",
+      "frontend/postcss.config.mjs": "7b299d3d3b16699ddda397c0b2373b3af4f25f8fc9ccc9b3d9e64ef083bc1c21",
+      "frontend/proxy.ts": "293bbb06c59961882d6b9a697e4d98425bafc68c0f0246012a091abd63cd0b5c",
+      "frontend/tests/app-shell.test.tsx": "d6b615f6f0b4849e37448fa410f51e65d88dcfe8c56992fa40f2c46563ca332f",
+      "frontend/tests/dashboard-workspace.test.tsx": "28d4f3d99e8e9399dcd4f0cb9e9406bc6c5f306255c041cb0582298605d5e4d0",
+      "frontend/tests/finance-workspace.test.tsx": "342610f9b0e374c49ccf7a08b9bc0c57f5d74914127a516ddd4d159dcd45a4f1",
+      "frontend/tests/login-branding.test.tsx": "f28af2f348c14f34f326a6a40bde228c4ebaa49c94b2105b02d0e575d67e35a8",
+      "frontend/tests/login-form.test.tsx": "83fcbcc2364f7ea63537a59a829ccc6dd72a77852578658b44e3ab64c66946b4",
+      "frontend/tests/master-data-panel.test.tsx": "e0b578a978f901637698670facd236bab55964cee18df887d4d3de8dcbe66d4b",
+      "frontend/tests/operations-workspaces.test.tsx": "bafcc5046ce8debb3ba237b18e6ed83ebdb16b3d9938a35db7e7fb85b4653d94",
+      "frontend/tests/proxy.test.ts": "e1909137517200b2fda0c60e0d07dc2a5c25845192b8454d45771e197506708c",
+      "frontend/tests/setup.ts": "60aa525f7ffa6bfd3045d22710d4eeef3a5ff2074ecc3dbcef99374badebad17",
+      "frontend/tsconfig.json": "16d252857e2938990fccffd4dd59207f4d000c43ec760007a0eb6a9bf2fce754",
+      "frontend/vitest.config.ts": "5efcf7ca507146459066dd21a26c7dab32ac9bfcda847558aa94819165617522",
+      "scripts/bpm-haqi/build.py": "09560fb8ca6f8bb4295f29f0f85048d14108312e0f7bbc241614cee570aaba09",
+      "scripts/bpm-haqi/catalog.py": "4e23b795acb23584822721931737cf61e2d4f47254ebd4cffa8f4aa5c96ee104",
+      "scripts/bpm-haqi/layouts.py": "38bd6d82a2b1a9a430e7cac1e7a7ae11827cb66fccc3f6912e40fd9abb4dcc0a",
+      "scripts/bpm-haqi/render.cjs": "d6d76e9ab0cb41c3fef18e4057aa1ffa32e71f8724adc611c1a42c3e5416c380",
+      "scripts/bpm-haqi/schema/README.md": "1c780ce77cae604e4f237500d9ea5132dd136fb134827b6747bd638204e07051",
+      "scripts/bpm-haqi/staff_convention.py": "5ce95aa20a9b4778fec0ad073e97ba31d3901d04623bd58a627888dec5463b5d",
+      "scripts/bpm-haqi/validate.py": "fc8221bece621f5eee4bcb7e9a649f2fc69ac7d73b0370b2e04fae5751c972da"
+    }
+  },
+  "snapshot_scope": "Git-listed text allowlist, not production inventory/archive; excludes secrets/dependencies/generated/binary/symlink/oversized files.",
+  "mapper_policy_sha256": {
+    "cmd/bpmn-check/main.go": "ccf1fb08a9a0dc5fd7da6a5baf68883d9157ca509bf10addc8be0956fd7f50ae",
+    "cmd/bpmn-check/main_test.go": "c1124282cae3be919ccc55886064c3dd72c4b55b11feb68afef30e31fbe13f78",
+    "cmd/bpmn-impact-context-study/main.go": "443e3f01c44cd01ba0b7bb0767832b164aec53ab02b58c4be6edec973a66cced",
+    "cmd/bpmn-impact-mapper/main.go": "0f55a319395095d7e3536cde80ca73d61480e699625720e5caa2daafabf503e4",
+    "cmd/bpmn-impact-mapper/main_test.go": "1bcbf34a98a0525b199032ef9a652265dce19bf7f75b3bc2960533fe5fc6f884",
+    "cmd/bpmn-impact-mapper/planning_context.go": "f69c36ac9f858c24eed793358bd63328025f72c36fe99a19df214fce9988bc8f",
+    "cmd/bpmn-impact-mapper/planning_context_test.go": "a6bb8ca5096629d71a5979d279b0452dbc1727cf957370eeb9a1812da5dbf0b4",
+    "cmd/bpmn-impact-mapper/relation_probe.go": "6b77f6dbc21885041e128f7162cfbaf61d8cb48c4a03cc1ffbda4ee8a795d8d4",
+    "cmd/bpmn-impact-mapper-server/main.go": "b09c5ec4d8e848900e1da9adcc9f64c82ece7699b9d88d7ae28d1437f83b486a",
+    "cmd/bpmn-impact-node-eval/main.go": "b6a15386ff9a064e0319715869944c047c758aa5431a9c6a900b7430038709b8",
+    "cmd/bpmn-impact-selection-study/main.go": "61750d134f6340b02d0c3efde58582eec5cd5269f59a1d20e14bff89a97e3dda",
+    "cmd/bpmn-impact-selection-study/main_test.go": "cc6f144204c89e22eee8d4d6a30f0d3774bec71d975273c6b884a7d2f561f627",
+    "experiments/simple-erp/build_baseline_traceability.py": "00885c01f0815a748beeab709e07c7c0121301382f5eb1549644f2c830b76089",
+    "experiments/simple-erp/build_role_traceability.py": "0ad62999724d991c03dbd6aed781816421159c3a7eaeaebd39cddf98f7247382",
+    "experiments/simple-erp/research_freeze.py": "5ba1cb1bad7f3052ba1f0c532120d9a661d6c9197d17abeeedc089cc6a616ac2",
+    "experiments/simple-erp/role_traceability_specs.py": "33bd1d9f9dd19589b4801ff174fb12e8fe91562b212ac436250ef50a5403b862",
+    "go.mod": "b3057c76b736ecb693b5f5bed617e374aa922c540d836714fcc80adaa473296d",
+    "internal/api/analysis_error.go": "13db706340b7184e362e28185485e657769ea91e63ade4d7de5eaad051b44ad3",
+    "internal/api/analysis_error_test.go": "7f4eec0523f4b4a28772097e6c3ce178f21f19dd844e46ae65a4e05227d27f12",
+    "internal/api/evaluation.go": "0e58ffe6d87a8f1e39f4bb3f7eec011cacb3d203f0a512c8c87e90bb2ae9bfd8",
+    "internal/api/evaluation_test.go": "3a108aa3ee45e7ca6be881fec65f485e9a7b6a370a32f9bae53cbdb07cb684cf",
+    "internal/api/handler.go": "be7dd6308da54fab1085e01cf01eef9b8c0fba3bb6ab8f570e0c5053823f082f",
+    "internal/api/handler_test.go": "aef2f91192a228ba8e3fa107f5b75303bd1359ed881f8fc33d6f6febe0bdbcf1",
+    "internal/api/reviewpack.go": "cfc7922cf1c26b38ae93645759c6c7dba6c918f1e720cb5a73d1611fc2e6d4eb",
+    "internal/api/reviewpack_test.go": "9037bb82dc2492a4fd4d717d0ac913b4f3c76d1b80322117c5b2dc56c6c56814",
+    "internal/app/analysis_changes.go": "191cfaac2b718af90f964bd39853b578227f1f78b53cf29b882104838f662d06",
+    "internal/app/analysis_changes_test.go": "adced5e29a56c4ad5faa86bc8efa42a2512d2abbb2a5654a5aea43f5a8c0353e",
+    "internal/app/analyzer.go": "70bc7be387a5ed012c630153de2bc38de291590d1c40545ce6dab7dc2b7b7a6e",
+    "internal/app/analyzer_test.go": "cc9f00e1d3458ed5e3a60ed07c6604000bc282d688dbfce721c5ef38848ad33b",
+    "internal/app/baseline_context_test.go": "b969f2fa52b3969d8a8855671543783aeb6efc8a2a9a471719d22eff104b2c5f",
+    "internal/app/bpmn_capabilities_test.go": "ef4fc81b0827fed626aadb8f89c1687e6876a1d19aa5eae069ce6f4a74bf1da0",
+    "internal/app/condition_focus_test.go": "822f79d94e828ea2d5f03639ff5ff41d1f95611acf80c907007dae19108d18c9",
+    "internal/app/scenario_matrix_test.go": "f04b98ccddc034e1ada8d371e8599b11cad24e537c871fcc9c416994a625b456",
+    "internal/app/source_callers_test.go": "1eb8988f46ecf2cceffec09df82e2ada49d66d441a4778e0b75deb887d8630e9",
+    "internal/architecture/dependencies_test.go": "030cc96701c65f7e7a4bf381c86ade9dc19f0b10f9f5c6486bd98c47946bf8c4",
+    "internal/benchmark/benchmark.go": "ec9aa0471d293a15c444383f26c0c537009c9ccae044dca2dcaee3fdb8a8ad43",
+    "internal/benchmark/benchmark_test.go": "11e565d6d40263b3aee1ac264e05f27dbd66163973f1e8fd034201d303ddaff7",
+    "internal/benchmark/positive_ranking_test.go": "c0913ea11e2c2594bd42f846c5f7033bfe8c38eb3705ff1f6367cdce6342f505",
+    "internal/benchmark/report.go": "92ef3da47eb9c3c4c4168f635162bfc154cd80f0e9c969dee78f52a46d2502a7",
+    "internal/bpmn/capabilities.go": "8369b6579f89b8f5a720786a30c703ccf692750acf0a3d890bad8ec467c5abe3",
+    "internal/bpmn/capabilities_test.go": "5eb6392839b60777e3a438bf1b1faec78cffd5c1821815d32eb00e46a16fc7ed",
+    "internal/bpmn/check.go": "d9a7850efad2c79726f16a03bc06c59bc0b189d85c01873403cdc93039c16f64",
+    "internal/bpmn/check_test.go": "8a0f3132f54acd3c28cfdfa56186ee95455bc6ef8d5db736e042389614fa039a",
+    "internal/bpmn/parser.go": "5f9c236517c3c2b5f4eda485de728426639698dafdc4eeb73736a62e10e2880b",
+    "internal/bpmn/parser_test.go": "02433788035e0531591e94c4364c705e6da81b7c1e5920f63a34067f86762993",
+    "internal/configmapping/config.go": "dca9aa77a32cc480bf5fef040b6b4c45552d550e59b1b4494a25749e209e01bf",
+    "internal/configmapping/config_test.go": "216063944c996e1b4e10c15d07850540558f15955aad9eafdc9671edcf54ec7d",
+    "internal/diff/baseline_context.go": "6b1261799b6183fb53b2c1f89b1e0c3af5543a34593aa8bdc1f31c1c9cce79d0",
+    "internal/diff/baseline_context_test.go": "4ebb430614e6fff84b8e4c99f23b278c33c14c24ac7e6b24d1899994790fafad",
+    "internal/diff/branch_transition_test.go": "1591f500cf649fe57c2c2003170f3194780fefa11b32a35a54f5a2c225aa9935",
+    "internal/diff/catalog_test.go": "5486421f7367a7348b67ea5e8a175cf94d10ac8231f8ed433c21d83418b672e5",
+    "internal/diff/combined_gateway_test.go": "09786272ab4eb3283eee6647f7c31ecb85484774ffce202018b8b30e18bd9ef9",
+    "internal/diff/condition_delta.go": "b64ac572844ff4a20bc9fa9e730745923a04e42f9895a3e8ce695d43e5a46656",
+    "internal/diff/condition_delta_test.go": "10d1639cbf1f54059c11fb0a7839c3a5a5cbb3d25acb70af7d7d5a354fbfe03a",
+    "internal/diff/cycle_capabilities_test.go": "9e9956c498b3d2724f64c79829d74b564ae3923589f5a56a4b4e07b78277a8fc",
+    "internal/diff/diff.go": "0cd6f397b6b2ed55a1c7dfef97dcfe6d8d15df36c8a8b49f780366acc904da50",
+    "internal/diff/diff_test.go": "efef83abae3c1a0acd17c73c23fbefb51c9a5d0d170d266444bc511d8536cb75",
+    "internal/diff/gateway_grouping_test.go": "36f907686ff69e05c972108c745ca6437aa13a61cebbd7f27688959c641c3532",
+    "internal/diff/structural_staff_test.go": "6c316e0afbff0adf5c07a3d8341493951b9fad52a887ef9c0ae62bf521b35af9",
+    "internal/domain/changes.go": "2ed4fb38782d7b94bdc96e1c53067592eeedf433a4057da442b742df52cc6982",
+    "internal/domain/changes_test.go": "b991ffbf2174a937ccbc6d316d65b8130b481a772296369af2ea9ec98c4f690a",
+    "internal/domain/model.go": "aa3efd02bf925b6e210b4ec352bdf73f03e6e8108dfa7d4abe3d594de9858c98",
+    "internal/domain/source.go": "e9694902233f49607b33bb2f1a35437167492debe9b2e837a5f315488253793b",
+    "internal/evaluation/coverage.go": "71d5482fd73b48496d0a3e0b5c0e53cb22dc6b733b3633847743c906e734761c",
+    "internal/evaluation/evaluation.go": "2e3c79d6ed293df83b73824ef83dc824d9b435dcfce53f8a8b315bafff62013a",
+    "internal/evaluation/evaluation_test.go": "a6b1b28ed3434972f7e665dabc954b6d56bb0a3b57822ee99844007f9a5dbc8b",
+    "internal/evaluation/io.go": "703b179581d003e8d63a7d6b4a917285e770c82e1afa37ee2dd11839b7337cba",
+    "internal/evaluation/node_scope.go": "7151263f193c948efa49d98e26c2228f28a0b1243cce3e4c82c7c404ce50d943",
+    "internal/evaluation/node_scope_test.go": "7fb025ccc6477c966ded9ce691e205d17101275ac7e1d0260cfd511a42d6e40e",
+    "internal/evaluation/positive_ranking_test.go": "b6c287415ed52e52c5a714cc31cacdff83e42523ab4ae51d8f2db137ca6d2d27",
+    "internal/experiment/benchmark.go": "848a3fcef984a295d35d6821a11687d158e380388ab323cf239490c34e0027af",
+    "internal/experiment/mutation.go": "b9686a5bd91479afbff088ff1b3145f1fb0522ef174a54d4becdd4a36602699d",
+    "internal/experiment/reconcile.go": "79d2b0aa0a061264aa509704319ca9f29cb4d990fcdc6c8396adf9c46b0bf8c6",
+    "internal/experiment/reviewpack.go": "eeb0cb77eff4070024fc841dd3eb88a5b65b46b133ef78c22715161a3adacc32",
+    "internal/experiment/runner.go": "cc20e2b6fde12335d6c7aefa50152d73d8f31d2a7f7e810c2722f7a6a48f1eff",
+    "internal/experiment/runner_test.go": "ffefe308e0827caee70a62f5fb9a811f782cf6be252182b182849eba102e5c29",
+    "internal/filestore/plan_store.go": "d3d6ecbbedc5bb7cb82a4901710211d388de0c26b1f65c6b4d92f1ca1808cb4e",
+    "internal/filestore/plan_store_test.go": "b4e5d5a2462f3ca6b69e5d48af5bd3ef560978ee76dd02e10280b67963a97b79",
+    "internal/filestore/report_store.go": "a4bb24b150c270521e60a8b159fe292109d964d79f4f95bee37363468acc2f13",
+    "internal/filestore/report_store_test.go": "75cadc0290206945589ca5d2d07549129fa5c0d15a5d32d6a6ec5fd61ced0def",
+    "internal/fusion/file_ranking.go": "a224d012200b768d12fb01d118e8594979bd89d5e47ed7b678ca14e1ab842e1c",
+    "internal/fusion/file_ranking_test.go": "513a2606fa799f9a43db09de63a5d3c9d59d743f7bccdd779ffd584c485e9262",
+    "internal/fusion/strategy.go": "70b71e9a1f450d64247335081821c92d77f404c7a8aa72f74b2b4a08912ec10b",
+    "internal/fusion/strategy_test.go": "a899300d20b89110d3e8f6a3c2e45a92ab048906d550a91d722e4521dd434d9f",
+    "internal/fusion/symbol_scope.go": "e6af4740f9ae998e63093c6a0d317a56d152962596bf868be2e42b5b1f102abe",
+    "internal/index/calls.go": "1ab754eb25b239ed5495e726c1541e9369b6902c9c5de8f5b8b6fa53e0399b3e",
+    "internal/index/calls_test.go": "746ceac74a39634eeea234c46e7fd742294d7f5930ccece19524a3a93547cc62",
+    "internal/index/constructor_calls.go": "3980c60f487caabe537902cb1f971e4b80c6391fb56b9bb5087c69979bc88f7d",
+    "internal/index/constructor_calls_test.go": "d9699ecd819ce5f5dc638cbb01b561b1df4ffdaf666a7bb47ce139eec0f19c88",
+    "internal/index/http_patterns.go": "adc0470a34e29b2a22942c8ec7c7890e1e1dbb02a645d5953dc099094ad9670a",
+    "internal/index/http_patterns_test.go": "21145bf91fe0c7e01a157e09ba59b3265068eef83d16842c18382ee8b9d0a4a0",
+    "internal/index/http_routes.go": "92cd0d43ee748b2c41abcd8cd97a1ea5343ed526803ab7067f0a6f19c4613079",
+    "internal/index/http_routes_test.go": "d0609f0569c9a4ecf38656004faeb026952d2cb8cdd44ed14a15c9df55597f72",
+    "internal/index/index.go": "db4a4256b6b96032ab97216131580567407e355560d567c232caec712459f1f4",
+    "internal/index/index_test.go": "2fb1c797f7e136f2741d2c9275647cb6018982b304c552eff8c00cc95b697d39",
+    "internal/index/registry.go": "df169b753a62fd92d87c0f538258dec227a52e11bf2a9f84e3689ba35f84e3d6",
+    "internal/index/registry_test.go": "18ab4b22b64802e687d2aa608fd66b0382de45632dc8391b3a57110c428319dd",
+    "internal/index/text_windows.go": "10d9041b7ed0430779d2e2bea444fb9291da22e4b2d7677e58eb3bd77641089c",
+    "internal/index/text_windows_test.go": "bf02bb21e8b290b30071cd933e682d75691c757babb7b0ddccacec2d34f23578",
+    "internal/ingest/inventory.go": "0b871079667284eaa4bade90afe7c810a83a9cb17d7079a2e13c2cf7978d55bc",
+    "internal/ingest/inventory_test.go": "6c5f874a663725137e643aba7484ab153378fbc096cdd6e4009016051033fc99",
+    "internal/llm/openai_compatible.go": "1a47752e6ea18f05c2d56fb8e39cbaaf6ff7bbf42b9f19bfb7935e3773255fe8",
+    "internal/llm/openai_compatible_safety_test.go": "bc4ce52d9ee6f8f46b2d55043e1bf9796398de5bf7c60cd6d3f724a31597c826",
+    "internal/llm/openai_compatible_test.go": "51de37d891c431f3acb4d460939a1604f22f2d29595a9d4bd88ff24f31cf2937",
+    "internal/llm/provider.go": "21bbf4a96d88bc20e169903b2242d5fe85ca911a2691c5eef56d8777944e4592",
+    "internal/llm/provider_test.go": "95c3b31c39e5690784f25c0080fe5dbf550a47ae6f30c35331c9f123133e757b",
+    "internal/mapping/strategy.go": "23084e7eabf44c9c2d78029c0cefbc6f98e1ea6f011531401256fa655426a0a2",
+    "internal/planning/bundle.go": "5078a0d53852d582a0bf81c158a60e12980c162b2dd533313b7a1892e7a6ea40",
+    "internal/planning/model.go": "380f2a81b32a37b5470247b26285a55a59e9d6b8cb2949fd6c8086e806423542",
+    "internal/planning/orchestrator.go": "06932f9e4ec09fff12afda1b7c368e6bad03278164b4592f74483db9a7d2e654",
+    "internal/planning/orchestrator_test.go": "d63d939f384a4d3db2e5efb250a8763b4380fb8312fe5238c7144af04a1d030e",
+    "internal/planning/related_test.go": "45b6f33954381e8fa0517ccba6cfafeae87a1ca1eecca19a8c783ba6a7d9b701",
+    "internal/planning/render.go": "e3c373d9b0548adf8df42bed538c2d956b2334d4f66dbe3278aff97d63dbbc63",
+    "internal/planstore/store.go": "01958506a1fcc52d821a53fb5de826db4363136eb9d6c16f78a30a1d1ff47265",
+    "internal/relationprobe/callers.go": "f2e60914edb2e66bd63216f3e92eeff8a79aabd670871b2b401b6c3c6f53be7f",
+    "internal/relationprobe/callers_test.go": "0bb30e2e786aefdc5d036a7d9e9aa053b13894752c8bdabd2ef88777fad196d0",
+    "internal/relationprobe/probe.go": "ee281efa2e4c4bf9c3fb0731cc21ca15f347e1d870eba035fd3fd5c5f0b56baf",
+    "internal/relationprobe/probe_test.go": "a286efdadb5fe786a0cb76400a75f233b2d37d02feda379ebc4a1eef704d88d8",
+    "internal/relationprobe/proposal.go": "299caebb6d66d8f837349a03933935ee386589ded4f98eef6c93b4815dafeb3d",
+    "internal/report/report.go": "eceff5e6f37f987cc2cf50f78f63ff1ba9f1c5939fc4863b554a1f6025e23872",
+    "internal/report/report_test.go": "2bccb3a82eaff30b5486d1ea0b1d054bd91fe5a5038e0ba86feabe97d1bc7780",
+    "internal/reportstore/store.go": "124a190bbc57cebb66d6022307c072854be01acf71f407d963782a171286f7eb",
+    "internal/retrieval/baseline_context_test.go": "2542f9a423488598752519e3d6d6c29f7f439dd7f6897f1747138a01b13394f2",
+    "internal/retrieval/bm25.go": "0e8982089e68da3ef1882427fcb254e2a9a98b222ded01050dfc2008b382cc09",
+    "internal/retrieval/bm25_test.go": "e64c01f34117bcc17904116f5a74de708dcd7aca14504e1c84183978eaa8501d",
+    "internal/retrieval/context_bm25.go": "ce4cbb99e0bb155f12a46a7f35221fba3b1f0f0a2b47442729055516ca4adbec",
+    "internal/retrieval/context_bm25_test.go": "2d6fa3c445b25eeceb2751789b3f15d9347511e76d84ac4cfca98642c10d6a0c",
+    "internal/retrieval/context_trace_test.go": "e2a79275eb301f8501cbd6a150a5cc82c96fedec36d472fc0393272fa355a968",
+    "internal/retrieval/gateway_query_test.go": "1282eef21d25459263ee4ff668b7d1fc43b4faabe8736c05626e562800275b77",
+    "internal/retrieval/http_route_propagation.go": "2e4836e160454813d0522a0bb230a1b63c58d84159c5918e281b9952b9319c5f",
+    "internal/retrieval/http_route_propagation_test.go": "c95885d9b913ed724ef8d78dd688c383e6ae9c6972e4b3fef47d20a6ce44b306",
+    "internal/retrieval/propagation.go": "dec1e1a9638b490f09b3ad3b909535945659fcac35ec7e922b11f62fbc9e44a0",
+    "internal/retrieval/propagation_test.go": "e0c5454296c31928a856fc7d84961e1a421391b510215797b6c5356a9128ac06",
+    "internal/retrieval/query_focus_test.go": "1aa739acc1db7613d15da56f0d51e573a3b2d9b82ddb2f496ad2a317d8e4c454",
+    "internal/retrieval/retrieval.go": "0d1b0f0713e7e29ac27d94ce08b6263eb85ffedb896d0cbc5034cfd44ec50a7e",
+    "internal/retrieval/retrieval_test.go": "94ae100c608d14e760ed6892ecac588b7c4db89c0d0d7641cb7df6fc8a665ecd",
+    "internal/retrieval/structured.go": "23baeb50f352b610217163a7977f8e1c739efc07eba4be7556a4f86ad9c7d69d",
+    "internal/retrieval/structured_test.go": "09709bf4fd6171406251526e19dc927d64f7c1e158bea241cd5ece918f9bc4ae",
+    "internal/review/adjudicate.go": "d4a905fdbcf918358b532c22695e550d6a932407c0934eef57b97fafff5795c6",
+    "internal/review/adjudicate_test.go": "b2672c931c7529c71171f42d204b339c48a5706519d132d18ef416c43a4f9905",
+    "internal/review/reconcile.go": "8ac98fdc0bd087422d6d3f8edd9b1747c52ef31f6141f9303bcda58630597d50",
+    "internal/review/reconcile_test.go": "6e77cd4f7ce22f0ec42ff33fa63914aa400cdf4c22afbffbfe5f35f98fb9ec77",
+    "internal/review/report.go": "b431396b119943f283874cd6b42e045ad945059ef2651a485c6eacd38bbd932d",
+    "internal/reviewpack/reviewpack.go": "e71fa3b7bb0bb064c5a3e38e97cd689406a92eb7bce097f45ddf4d03adb6d82e",
+    "internal/reviewpack/reviewpack_test.go": "a67697aabe8625906d6e0e89128b3212784d5c15d8c60b2fe3d44d68a294d9e0",
+    "internal/scenario/mutation.go": "6e9f2dcd783a149a69eed6dbe7e735a2301165d94e3c6e84f7bb8787ea676b8c",
+    "internal/scenario/mutation_test.go": "ec605405b0f609d6c6072d8e6758c74ccb6f2b031d2337cc2e19cd7be7864351",
+    "internal/selection/selection.go": "5f04fff30c7e815b25bfaa71e397587e51c582d613a45921d582e322ecc55c37",
+    "internal/selection/selection_test.go": "603d015388287db82964031f70e957d46201c158c1abdbb5125dab4b1ef8e2ad",
+    "internal/semantic/adjacent_passages_test.go": "5390e5f06c74e0ff80ed05dba080057db768e4fa00a5bad7983db0684e3c051b",
+    "internal/semantic/baseline_context_test.go": "810b218bf4abe8d420735682ba54dbddbb596f69443c3d31093667d3bb7f976b",
+    "internal/semantic/embedder.go": "285574ace6dbd250189381dd9cde3d3a351c7e78358dd769fef7cd936bacfdcd",
+    "internal/semantic/embedder_test.go": "38ec440d85b685b5e032a53a5b72f187b2d633110e5e40327baa038115a9ce06",
+    "internal/semantic/errors.go": "c64032ef8320d98dfafb72bb1fcef77af19fb690aa2439c57378766a34d1a586",
+    "internal/semantic/errors_test.go": "72a054e9ad53090923ee9b98b3d1b656cd355fda4bc70c4577fb282c8db341ac",
+    "internal/semantic/multilingual_local_test.go": "86dc1ab5d470289a9eba6361a90cea521e537bb89beb3939da439602cdb23266",
+    "internal/semantic/profile.go": "e6949796493627a60d4206c3fb52f8e701ad564326370a5a68e2120be4f7765a",
+    "internal/semantic/profile_test.go": "82d04f58f401dc5041ccd8a59bdbfd2acb9653c9a2353e0a11b73c232b6c7e55",
+    "internal/semantic/query_test.go": "c9648d0f6061590ded2dbb71861d7e3f11f774a7c77e57af07b74b09505176f0",
+    "internal/semantic/retrieval.go": "df5591cad14583fc9159abc50e2a41c319a8462ec47b1b19e24b7ea5bea1889f",
+    "internal/semantic/retrieval_test.go": "814c05330911c390bbabc4ad902e6bcaf60bc89b7a34c92b09ec0d826fe2797f",
+    "internal/textutil/context_test.go": "5501f52494586d0223eea7b723c5b332448182798b144bf59115aefcd3d756bd",
+    "internal/textutil/text.go": "f48eb5cf55e0284f14f0363cda36d1a37926a72eb7216289f33dc2e6fc422023",
+    "internal/wiring/condition_focus_test.go": "e1162ca873d47640776a1c8ea2b81fc867a8646f4927be7914994868ae68000f",
+    "internal/wiring/context_study.go": "ab79707ed8df1354b39f70e8c710f993fd365af21a2dfc9cf711c5f015c2ddf7",
+    "internal/wiring/context_study_test.go": "8d28edd541613b53809f7d0607719cd9ae9a0293b16af9f685b1e553d40c3644",
+    "internal/wiring/wiring.go": "2adabfdb9e4cade39f88bc2f4ce58d4778ebd07c314b4ed4fa0556317568122a",
+    "internal/wiring/wiring_test.go": "7dd1dbdae464c3e770809bedc9f8b3eaa3a5e1dee59e17836278d18f12b04d6a"
+  },
+  "research_input_sha256": {
+    "experiments/simple-erp/baseline-traceability/all-roles/all-roles.json": "e69efddc98d40122e31a78a55a11b5a0c44cdcd339bfcf8a3eb4e3cc4aac5be0",
+    "experiments/simple-erp/current-staff/add-and/after.bpmn": "53ea1c88277cc00a1b884714ae954a03d55e6e3ce19fe5aa431035265d7ff1be",
+    "experiments/simple-erp/current-staff/add-and/before.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/add-and/node-reference.json": "ef2a3ab9bbcfaa3473c614dfc15d2196fa6fbf43a83b572bced9d1fb61532996",
+    "experiments/simple-erp/current-staff/add-and/reference.json": "99da03728f7d0a682b32a45d4d9f83062e2acedcc3ec83ef8588c38c36b8122c",
+    "experiments/simple-erp/current-staff/add-and/source-review.json": "260835526346353829db64e6881dee64b03240e9db6fda40d0998c3c08b5251d",
+    "experiments/simple-erp/current-staff/add-task/after.bpmn": "1a1f010e4e76cfe87a8637ce051dc443faaee30c7bc9863bab815ddd2aaeb331",
+    "experiments/simple-erp/current-staff/add-task/before.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/add-task/reference.json": "df960f051b5fa52bcc34962e656948db201a91441f6c34618c848571eaf8f7bf",
+    "experiments/simple-erp/current-staff/add-task/source-review.json": "9018bc3d209e6fbea9f8ca23f5abdb07f025a6356cba4a3ff1cf09c1f254fcb3",
+    "experiments/simple-erp/current-staff/add-xor/after.bpmn": "4bc6a9fae63cd499048ce5a887b0449340271be5826bf0ab6104623f6a357706",
+    "experiments/simple-erp/current-staff/add-xor/before.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/add-xor/reference.json": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+    "experiments/simple-erp/current-staff/add-xor/source-review.json": "9018bc3d209e6fbea9f8ca23f5abdb07f025a6356cba4a3ff1cf09c1f254fcb3",
+    "experiments/simple-erp/current-staff/combined/after.bpmn": "47e5163cec1e5af037441677dd9242ae04e4801f344d226312699bd556691fce",
+    "experiments/simple-erp/current-staff/combined/before.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/combined/node-reference-review.json": "f8d86b14272f9c2597bbfc4132f905b403e7175fbc404a280b4c6f798465d93d",
+    "experiments/simple-erp/current-staff/combined/node-reference.json": "c0048f6fb542637fb679e6f6b76de92d25d08e4a4e77edfb922021b31d825f18",
+    "experiments/simple-erp/current-staff/combined/reference.json": "4b9a5c0022be4bb79d15d545021d0754bd35750317e9d3ad908f4527d3797671",
+    "experiments/simple-erp/current-staff/combined/source-review.json": "a3f4e79604be7984036578b690c84eb92ef4ffd1d0ef07955eb17a1cc54e0684",
+    "experiments/simple-erp/current-staff/manifest.json": "ef438fac7ae1581416b0e87bc0a6c4fd48decb708b0e620ab3a6138f4bfa29b3",
+    "experiments/simple-erp/current-staff/unchanged-control/after.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/unchanged-control/before.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "experiments/simple-erp/current-staff/unchanged-control/reference.json": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+    "experiments/simple-erp/current-staff/unchanged-control/source-review.json": "2bb8b73c9e3056e193aa6f2c742ec733b955e0774d61add0c664517f66bb36e1",
+    "experiments/simple-erp/p2p-transfer/checks/after.bpmn": "fe2a9c4411fe906daaecad64baea0ce7c32202379a5fef5dd09f8f6f05fe7923",
+    "experiments/simple-erp/p2p-transfer/checks/before.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "experiments/simple-erp/p2p-transfer/checks/reference.json": "7e7f9bd19155d699469cddd05d99c0ddd37793ab2ac4743862712c2c0a1eef78",
+    "experiments/simple-erp/p2p-transfer/manifest.json": "db5c529f1113ef7bb0c41d6226138b9f3275487388ff28a2c4c215545c06ab44",
+    "experiments/simple-erp/p2p-transfer/source-review.json": "0da68da5a93bf1cefb020ecf2e8b2450460361a73a1b20a70a9f4ed899295993",
+    "experiments/simple-erp/p2p-transfer/unchanged-control/after.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "experiments/simple-erp/p2p-transfer/unchanged-control/before.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "experiments/simple-erp/p2p-transfer/unchanged-control/reference.json": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231",
+    "experiments/simple-erp/selection-challenges/change-condition/after.bpmn": "ae162d139fdd777715ebfad36887c90e34293c3bb322d281c1e2284c0d2866d0",
+    "experiments/simple-erp/selection-challenges/change-condition/before.bpmn": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+    "experiments/simple-erp/selection-challenges/change-condition/reference.json": "c0ce34cb69a613f6ee441bd60abe86f8306fcfee3250544a84158fbdab5006f7",
+    "experiments/simple-erp/selection-challenges/manifest.json": "03c7253f4782abf8b1b1a46381d61e861c080c860c55dc4a8ff84988b968b427",
+    "experiments/simple-erp/selection-challenges/remove-check/after.bpmn": "af3dff92c989229537fd8cfac5fb478059b6ea8bfb2bf4e33da1c80d0822a0cf",
+    "experiments/simple-erp/selection-challenges/remove-check/before.bpmn": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+    "experiments/simple-erp/selection-challenges/remove-check/reference.json": "a4b758fb9faed2a5fff0fcffc5d59a41aaf9f473d5bd6da65fcc803cc28bef36",
+    "experiments/simple-erp/selection-challenges/source-review.json": "fd0bb903c05f9631d17720ea050994812d01566dcdd4f44013f9ceb2d8fd05e0",
+    "experiments/simple-erp/selection-challenges/unchanged-control/after.bpmn": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+    "experiments/simple-erp/selection-challenges/unchanged-control/before.bpmn": "8e57e0a591f8b9e634a94868adfbe935b4aaf927f142aa7c0f53a54871876fa2",
+    "experiments/simple-erp/selection-challenges/unchanged-control/reference.json": "9daa296cb0ea8606a10769a2113e74448e6f760df22f868daa6115be65513231"
+  },
+  "reviewed_source_sha256": {
+    "backend/cmd/api/main.go": "e4116d945eaa0081e4576d7ea6b4c8fbfcae4e520b8cd9f638e31f58b8642a1b",
+    "backend/internal/auth/domain/role.go": "79a9076fa8f88e01656b0069e47b64368b07c97392edb32b285e46eb077d8158",
+    "backend/internal/finance/adapter/http/handler.go": "05a5d8e35eb1fdab74afbda263df8db03d9a96febc8f78e9c3617beaea8e9af4",
+    "backend/internal/finance/adapter/postgres/store.go": "b23d1c4093f0b52336e0b370677b1668463f211d7b1bbd337107ad408d1d955c",
+    "backend/internal/finance/application/service.go": "cf2b716d4ffd256c6fd90ab367a289d802f255148df1bd68f7c9416f981ea784",
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/internal/inventory/application/service.go": "fb9d72bf4e7d68f4bbd750822ae019055ad79121aa21dbcdae2b9448f6cd7783",
+    "backend/internal/masterdata/adapter/http/handler.go": "e0be36ba5f99f2d0cc876309da1a9e2df13b4d77138d5bceaa1a3aa1bc92d01b",
+    "backend/internal/masterdata/adapter/http/settings.go": "f9f72651cdef8c4430228cad626c820d64406eaabf0956b789db8a571f8b8260",
+    "backend/internal/masterdata/adapter/postgres/settings.go": "8523bc3b3e3a361123b9989d39e35279fa04e4e6b438d6c964965cf1ef826b9c",
+    "backend/internal/masterdata/adapter/postgres/store.go": "d838d63024920cd1801df70d90fbeedb7cc6c81f8a2fcb84fac183fe2e616fc9",
+    "backend/internal/masterdata/application/service.go": "ae7d07d8012fb06077d83c4b41757fd3ae15cc73636c1c9e106a5bfabcec2a27",
+    "backend/internal/masterdata/application/settings.go": "dd94e9a4af20b9fd8c76ae0f5abec0f70b193eb305e5b8d0dce234df5afc5220",
+    "backend/internal/masterdata/domain/entity.go": "4fdccaf6781a739612d4d7a31d3f2c61bd198c1d6c941dde91a130f3cb004458",
+    "backend/internal/masterdata/domain/settings.go": "d37acf53cb91e9e509b1b689b6bcf84b681f51221fdd453d801d999b41f12833",
+    "backend/internal/platform/authorization/super_admin.go": "091da1a53710e1f693872185753cff04ff1b45b6334c5c83acff631bbb21ed41",
+    "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67",
+    "backend/internal/purchasing/domain/purchase_request.go": "4e33b7ab72574459d2d7d9d6932387b612247bd3726e2e4db0371df16523e036",
+    "backend/internal/sales/adapter/http/handler.go": "beae2365a129e0ac9d21cb65983b756e23f2c9476dc8fe75c903e8f72c9f5c05",
+    "backend/internal/sales/adapter/postgres/store.go": "cd2625b386f9f315baa854878832f2b731a2122d84e35d533d5bcc34d90bda67",
+    "backend/internal/sales/application/service.go": "9b9ca9da22a158724af7ff98f3904bd967936cf644c065b167da38948c2da916",
+    "backend/test/integration/finance_test.go": "4b5691329c854a12c3b9fc81ea55dd67084f2f33319d69d0b131805dd5d0ab98",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "docs/bpm-haqi/roles/staff/inventory/level-1/role-staff-l1-inventory.bpmn": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn": "079b9f005afe3e6aab55b7c788330ae0bd9a87d702b0a510489473166abb6d4c",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-correction.bpmn": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-sources.bpmn": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn": "1aead6115c0c7fe82e9abd3863b895b61bf1f534a989f15410d6409aa2796966",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-create.bpmn": "5c6c5aeebeff196ca00e2457b1adf08461290eb9f8560fa05d7baacc3c52e5c7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-post.bpmn": "ac677a4401b21e5ebc15293ee743817500897f53141b5be758f99a9f6f0a30ed",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-delivery-post.bpmn": "14b1a2b7a882866374840960418f9b294841ab4293d661ff41e31170d60328a7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn": "78cb3d88f5adc46832b105efee83f8377351f9c1d72708088247f465b51625e7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-balances.bpmn": "2cc2cfd5bc5f233f9f12595346f8207f7dc1185e3d2a9c010bd0ee17aef8aa4a",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-movements.bpmn": "a58db3762897909ad74a4be402c901d438f93971f9d3860467e7efac839bf38d",
+    "docs/bpm-haqi/roles/staff/level-0/role-staff-l0.bpmn": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l1-master.bpmn": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l2-master.bpmn": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l3-master-list.bpmn": "171557b86a9773fa0fee6d4212698f34ac3aab9a3dfb3bd7b3e2e82a44401572",
+    "docs/bpm-haqi/roles/staff/p2p/level-1/role-staff-l1-p2p.bpmn": "9a945fb31c80e51c908c9fd13e4912b6172b75b30eb59f66e166f3f6a6d98eea",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-ap.bpmn": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-correction.bpmn": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-po-gr.bpmn": "a5ba00ee8ba3b60131f1a61aad7859b0a06231cb4b9d6c932b05be5a33caccc7",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-pr.bpmn": "8a10565947a4f67d2b797f44a471d741366a7899fe627e291a886c99a139ea9d",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn": "01c398e15b88d4ec5d106eff27d049ab3a525d600c71afbd15ecbd778844a148",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn": "4aebd70c6abba119a059e343a626c07787b796d487b535dda4529d427982b8f0",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn": "c96bf8d2c9a3d65931c39862dca60ca5d14dfd87267fbd511afaf91381b7e4f5",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn": "a8a8a2c8a39b4930c8dd92a3482a7bb698c32359a85dff987f73ebead1d2135c",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn": "d407f0923dafaac4acf22a3a240ea685b87a45606f6fab7d20ecad06b8c0aef3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn": "68540c68b20e4c0a2d7de29b6da9af520eebd305e324994499adb9c35c4cc5a4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn": "bd3053a6f69459cc3d94b1c08c512749ef8726cd21a58dede8961c817022b577",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn": "eb600e95c6de03fe245ec4b3547a619ab67ae4f4a7bf054b72995a7c6371db2a",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn": "0ae2fd5fc34ad15a99ae17839723ffd482244a4770b97faf482a498dea6076f1",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn": "8437aab61408c43131224bdb4fbc753e7e795472dec3b5288819b49c5a595add",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn": "eecfac822aae8f672f0331a038f6b55f07370eea59e190781fe866723fe86276",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn": "038e6df589d12fdfa8441cb543eff9c6387d2d2059e83b6cac491226d1265bdf",
+    "docs/bpm-haqi/roles/super-admin/level-0/role-super-admin-l0.bpmn": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn": "028d68d2d92c0d9e0aa796cdca4fabbfd582864199bf27b5c8914a808d7e3e7c",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn": "4f80c3bb29148c9c1d6838b795564ff2d03f6e4e897804e40e3b4de2b4092c1f",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn": "3ed34b48b2babc189faf0f7fe48a72d25d1cd3c9be3ba9747cfba5b52779c320",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn": "a8f3d5a07a491bd3d98361f12cb0d33bd642d576013bd7fcbe319e2958fd65d1",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn": "0578f9e19cb240a29875a787193ffc23a3e7f66999cb4653e1ca970ce5d72443",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn": "728678cd61a2f63414fe007394988fdde897e6745f0f0db3fc731d310fc34173",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn": "e54d18e356b62b5ea9f44ea454fdb4a884cef3fad6ebb68cd544c4c3884704d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn": "e7ddbbc542c5507c9926160c9b9cff827f94549a7f602be4b962002dbe116b44",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn": "c2348574c3fbf3b16f18cf0168abb1024fa5c0e85c854ca1825147eb52c90909",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn": "43ea014d63f90e462a2dd9df6c4955d8973e7c1d9109903f02fbfff887a1b339",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn": "3c4b94c80423329bdadb5b81a079e7fb0a90e252c254430cb47678bd51b9ee78",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn": "f28a13f7a9237111981efacb27022a2d181e545e81b0645d9335c34a46c41a1e",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn": "5ff01680be0e624ef430fac32f3321d225132626b8c0a60b7178fd287c9f2fcf",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn": "8de75b74168cbbe706afba0b718b569f6db10d75cad87ad1f672c31d44baa5d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn": "a96e6815a38a0f04b68e15a3fb0ea1f3bbb3c86584638c115c175ffae71aca02",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn": "47c4a180e3f2485a2d70be56717ef25f64a85537f6eda54c49f65f318cfce3f0",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn": "35893308e574e79e1a86b465d24e1a63be0186c1564561d36ace9118e561c681",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn": "0e7c68f2fd95a09a4aa2fa5d75979c8e4a4579c8080d148988d7273eb836d2fe",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn": "433841646daea14b8c54f0aa4eada081ee3917ffa349488968c19b60c06d6617",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn": "7caf08d98976257dc1b4bd852c846e232236475fd0f6ac789d16495ff0c8444a",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn": "f8a995ea61885f0d236cb858b7ec740f5ad76cb0eece21d63546d895f6ea91a4",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn": "095fee3e07d51ac1e21c135de0686cd9c06c51f2bf030d8b22436e764f70ce27",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn": "f214a0c836410ec2c5f2ad80bb9b7fb2bb86ac8c43d0e1c85a138d0f3c2f0171",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn": "d67e026b4018ae05bc597375fb7895d1d86a27482acbd6670dbd73f081ae9c9d",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn": "551e807848f02150371eca6b1b4666e94f37c8b3b07dcb3ad3ef8ceaeb63e4ce",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn": "0eb241b9c0a35cacd3f9ab7c53ab7c675788d77fd22301cacf97b1176495e410",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn": "8a5de1a161993813fe69902bde3086e25ce0e847a8d66659c5fd0cd600f775ec",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn": "4c94fa74ea5f1d4fcc4481336111d19e7b25929ceeea245d5ca797d6e3d4ca2c",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn": "fb89bd0d5d8ba8ee9ead75341e777ca19417fb6e58287fb7d09422bec42e99de",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn": "bfd98f23a4ebf1011c66a2f0b86c5437795b1d94fe62d82ed19265c98d5e7efb",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn": "5aaf8e76909cc2ee70c1506e30f9677097b69f84c74c9c1f94ac558f041bb848",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn": "c433a35484e67902e761f6c3ffd6e86521bfeb1cee39c1410e0a636ba8c0b14d",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn": "c84bdfded4af5009122c7932a78ddd67b0206c4974948f8a2b1b0502d9285358",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn": "13bddb1286d5d8a64337283cc77880a2d53b2b3253ec04d2fe5d51c8f4294b2a",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn": "ec8e12b0c146ef074b0736a394d758aef5ed74288724fd52dddf2d635b39bbd5",
+    "docs/bpm-haqi/roles/supervisor/level-0/role-supervisor-l0.bpmn": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn": "e05788ae156f2d75e9e4dfa7b3edd14cbd820fedc1d3886e0aa5f65443d76ce3",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn": "6889b5fad4d741b43cb16bd685ddb6d460944c3495f84a2204e965cf80c36e78",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn": "88e5d3fe6c1bf11b07ffd1c12cffcc5bfb59ba602d782f051ccdac2aef16377c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn": "49b7212be2ee63ea055c92c03ea393a0205aa2caecd98a740ca8121f628b2e97",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn": "0127196e8c103e7085a5ad94186be8c4cb1e9b3b80b7ec3bf39a4f6a2ef2d0d3",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn": "6e8e4350e7a641f6b9a82e6cf399f20cfbc16458e801533d884e85f5eb4eecbe",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn": "db5a55033a864aede3d388506c9ab7cf6727f37c2433117398b020d607503f18",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn": "d4bfd5fd66a50c732e52fe32de5c0dff783594201939d1e9239621a6e47d6894",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn": "6181a04150e5626b8e23db00c71a65b34a53ab2e61286d25027a6a9ba114323c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn": "0adad4153fd78601141820b23d93394a281aebdd9709675eec53f59969dbfba5",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn": "167dabeeb195fdfcdbe566f61fa51552c95ced4bc4a13de0b180930dc9572443",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn": "a2ff12fbb9b3621dbb30eaf42fffad1f3a39fa4dec85dab0b092fa066dfe53c4",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn": "8f3c7627ade95008115397cd5166e7c554d654cc9f59e6d6155d709e931ca624",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn": "208fdbc2145ca30f35cd2497dd9076a3241a4515201a218486c4173af4948a0f",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn": "c48fc6b83ebe2c92b947edd946faa31f169c98c58557fa1be1258b5684fc6a07",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn": "50b3751ce79c82d88a9ff6652ed7344d3f47d7b247a7235914bfdd9bd1622f2d",
+    "frontend/features/finance/finance-workspace.tsx": "566d7ba0abcb5bb3429399f7e159fbba1b07ac8e1a34d5ab1edce236a133bb7c",
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "frontend/features/inventory/inventory-workspace.tsx": "c8c579fa066fc19c2c5b762dc34dabc3c1bc7b22aa43aff5ba07c7cde21fd947",
+    "frontend/features/master-data/master-data-panel.tsx": "c1e8f90ece61b702373993a8aae746ba6aa4b87a98c1c53566e00e60c5a90cb6",
+    "frontend/features/purchasing/goods-receipt-panel.tsx": "74db5c6e72f8453f59f80298b336fcc56e424d0e678f90c6d1914c9b48b5a240",
+    "frontend/features/purchasing/purchase-order-panel.tsx": "c34482b062d81ff06690183b42f54c29bacfe29991f40a1b56fa241cfd8c97dc",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03",
+    "frontend/features/sales/delivery-panel.tsx": "bd72027cbc595d059d6766ad119a3214405a477c60c90222dd0746c263399756",
+    "frontend/features/settings/settings-form.tsx": "d03add2dbce9c31db23ac87c752699cb19409cd31ab5bf1b7a829d703d78b577"
+  },
+  "experiment": {
+    "methods": [
+      "bm25",
+      "semantic",
+      "fusion",
+      "hybrid"
+    ],
+    "top_k": 10,
+    "repetitions": 2,
+    "semantic_model": "all-MiniLM-L6-v2",
+    "runtime_status": "Not executed here. Future runs must record actual model hash, package versions and analysis fingerprint.",
+    "metrics": [
+      "Precision@5",
+      "Precision@10",
+      "Recall@5",
+      "Recall@10",
+      "MAP",
+      "MRR",
+      "R-precision"
+    ],
+    "evaluation_rule": "Per labelled change, preserving subset scope; related files are not ranked hits. Future LLM selection P/R/F1 evaluated separately."
+  },
+  "splits": {
+    "development_regression": [
+      "normalized-staff-add-task",
+      "normalized-staff-add-xor",
+      "normalized-staff-add-and",
+      "normalized-staff-combined",
+      "normalized-staff-unchanged-control",
+      "p2p-transfer-checks",
+      "p2p-transfer-unchanged-control",
+      "selection-challenge-remove-check",
+      "selection-challenge-change-condition",
+      "selection-challenge-unchanged-control"
+    ],
+    "independent_test": [],
+    "reason": "All existing cases exposed; no fabricated held-out set.",
+    "future_protocol": [
+      "Freeze method and requirements before first inference.",
+      "Use new requirements; group by baseline process and requirement family, including controls; never split near-duplicate mutations across development/test.",
+      "Prepare source-based labels without candidates; record reviewer provenance.",
+      "Do not tune on independent test results; retire exposed/tuned cases to development.",
+      "Report per-case/per-family results and controls separately; unlabeled nodes are not negatives."
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "normalized-staff-add-task",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "inventory-submit-validation",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Require nonempty adjustment submit reason. Reject failures without changing state; preserve version/access guards.",
+      "before": "experiments/simple-erp/current-staff/add-task/before.bpmn",
+      "after": "experiments/simple-erp/current-staff/add-task/after.bpmn",
+      "reference": "experiments/simple-erp/current-staff/add-task/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "ADD_TASK",
+          "element_id": "ReasonReview"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "reason": "Add submit-time validation in the existing transaction before status mutation; create-time checks alone are insufficient.",
+          "evidence": [
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.TransitionAdjustment",
+              "role": "CURRENT_SUBMIT",
+              "function_start_line": 120,
+              "function_end_line": 195,
+              "evidence": [
+                {
+                  "line": 134,
+                  "match": "case \"submit\":",
+                  "excerpt": "case \"submit\":"
+                },
+                {
+                  "line": 135,
+                  "match": "from != \"DRAFT\"",
+                  "excerpt": "if from != \"DRAFT\" {"
+                },
+                {
+                  "line": 138,
+                  "match": "d.Status = \"SUBMITTED\"",
+                  "excerpt": "d.Status = \"SUBMITTED\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend existing integration test for new failures, success and preserved invariants.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 274,
+              "function_end_line": 325,
+              "evidence": [
+                {
+                  "line": 283,
+                  "match": ".Transition(",
+                  "excerpt": "adjustment, err = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-recovery-submit\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "reason": "Existing reason input sends empty reason on submit; require and send it for submit.",
+          "evidence": [
+            {
+              "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+              "function": "InventoryAdjustmentPanel",
+              "role": "CURRENT_REASON_PAYLOAD",
+              "function_start_line": 9,
+              "function_end_line": 23,
+              "evidence": [
+                {
+                  "line": 16,
+                  "match": "const actionReason =",
+                  "excerpt": "function action(name: string) { const actionReason = name === \"reject\" || name === \"cancel\" || name === \"reverse\" ? reason : \"\"; return run(`/inventory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                },
+                {
+                  "line": 16,
+                  "match": "reason: actionReason",
+                  "excerpt": "...ory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "Existing endpoint, request/response and schema suffice; no migration.",
+        "AND requires both checks to finish before mutation; no goroutine requirement."
+      ]
+    },
+    {
+      "id": "normalized-staff-add-xor",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "inventory-submit-validation",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Require nonempty adjustment submit reason. Reject failures without changing state; preserve version/access guards.",
+      "before": "experiments/simple-erp/current-staff/add-xor/before.bpmn",
+      "after": "experiments/simple-erp/current-staff/add-xor/after.bpmn",
+      "reference": "experiments/simple-erp/current-staff/add-xor/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "ReasonDecision"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "reason": "Add submit-time validation in the existing transaction before status mutation; create-time checks alone are insufficient.",
+          "evidence": [
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.TransitionAdjustment",
+              "role": "CURRENT_SUBMIT",
+              "function_start_line": 120,
+              "function_end_line": 195,
+              "evidence": [
+                {
+                  "line": 134,
+                  "match": "case \"submit\":",
+                  "excerpt": "case \"submit\":"
+                },
+                {
+                  "line": 135,
+                  "match": "from != \"DRAFT\"",
+                  "excerpt": "if from != \"DRAFT\" {"
+                },
+                {
+                  "line": 138,
+                  "match": "d.Status = \"SUBMITTED\"",
+                  "excerpt": "d.Status = \"SUBMITTED\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend existing integration test for new failures, success and preserved invariants.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 274,
+              "function_end_line": 325,
+              "evidence": [
+                {
+                  "line": 283,
+                  "match": ".Transition(",
+                  "excerpt": "adjustment, err = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-recovery-submit\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "reason": "Existing reason input sends empty reason on submit; require and send it for submit.",
+          "evidence": [
+            {
+              "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+              "function": "InventoryAdjustmentPanel",
+              "role": "CURRENT_REASON_PAYLOAD",
+              "function_start_line": 9,
+              "function_end_line": 23,
+              "evidence": [
+                {
+                  "line": 16,
+                  "match": "const actionReason =",
+                  "excerpt": "function action(name: string) { const actionReason = name === \"reject\" || name === \"cancel\" || name === \"reverse\" ? reason : \"\"; return run(`/inventory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                },
+                {
+                  "line": 16,
+                  "match": "reason: actionReason",
+                  "excerpt": "...ory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "Existing endpoint, request/response and schema suffice; no migration.",
+        "AND requires both checks to finish before mutation; no goroutine requirement."
+      ]
+    },
+    {
+      "id": "normalized-staff-add-and",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "inventory-submit-validation",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "At submit recheck active warehouse AND all products. Reject failures without changing state; preserve version/access guards.",
+      "before": "experiments/simple-erp/current-staff/add-and/before.bpmn",
+      "after": "experiments/simple-erp/current-staff/add-and/after.bpmn",
+      "reference": "experiments/simple-erp/current-staff/add-and/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "MasterChecksSplit"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "reason": "Add submit-time validation in the existing transaction before status mutation; create-time checks alone are insufficient.",
+          "evidence": [
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.TransitionAdjustment",
+              "role": "CURRENT_SUBMIT",
+              "function_start_line": 120,
+              "function_end_line": 195,
+              "evidence": [
+                {
+                  "line": 134,
+                  "match": "case \"submit\":",
+                  "excerpt": "case \"submit\":"
+                },
+                {
+                  "line": 135,
+                  "match": "from != \"DRAFT\"",
+                  "excerpt": "if from != \"DRAFT\" {"
+                },
+                {
+                  "line": 138,
+                  "match": "d.Status = \"SUBMITTED\"",
+                  "excerpt": "d.Status = \"SUBMITTED\""
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.CreateAdjustment",
+              "role": "CREATE_TIME_CHECKS",
+              "function_start_line": 76,
+              "function_end_line": 119,
+              "evidence": [
+                {
+                  "line": 86,
+                  "match": "FROM warehouses",
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM warehouses WHERE id=$1 AND active)`, warehouse).Scan(&active)"
+                },
+                {
+                  "line": 103,
+                  "match": "FROM products",
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM products WHERE id=$1 AND active)`, l.ProductID).Scan(&active)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend existing integration test for new failures, success and preserved invariants.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 274,
+              "function_end_line": 325,
+              "evidence": [
+                {
+                  "line": 283,
+                  "match": ".Transition(",
+                  "excerpt": "adjustment, err = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-recovery-submit\")"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "Existing endpoint, request/response and schema suffice; no migration.",
+        "AND requires both checks to finish before mutation; no goroutine requirement.",
+        "No new input; existing frontend/handler reuse version and error response."
+      ]
+    },
+    {
+      "id": "normalized-staff-combined",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "inventory-submit-validation",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Require nonempty adjustment submit reason. At submit recheck active warehouse AND all products. Reject failures without changing state; preserve version/access guards.",
+      "before": "experiments/simple-erp/current-staff/combined/before.bpmn",
+      "after": "experiments/simple-erp/current-staff/combined/after.bpmn",
+      "reference": "experiments/simple-erp/current-staff/combined/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "ReasonDecision"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "reason": "Add submit-time validation in the existing transaction before status mutation; create-time checks alone are insufficient.",
+          "evidence": [
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.TransitionAdjustment",
+              "role": "CURRENT_SUBMIT",
+              "function_start_line": 120,
+              "function_end_line": 195,
+              "evidence": [
+                {
+                  "line": 134,
+                  "match": "case \"submit\":",
+                  "excerpt": "case \"submit\":"
+                },
+                {
+                  "line": 135,
+                  "match": "from != \"DRAFT\"",
+                  "excerpt": "if from != \"DRAFT\" {"
+                },
+                {
+                  "line": 138,
+                  "match": "d.Status = \"SUBMITTED\"",
+                  "excerpt": "d.Status = \"SUBMITTED\""
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/inventory/adapter/postgres/store.go",
+              "function": "Store.CreateAdjustment",
+              "role": "CREATE_TIME_CHECKS",
+              "function_start_line": 76,
+              "function_end_line": 119,
+              "evidence": [
+                {
+                  "line": 86,
+                  "match": "FROM warehouses",
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM warehouses WHERE id=$1 AND active)`, warehouse).Scan(&active)"
+                },
+                {
+                  "line": 103,
+                  "match": "FROM products",
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM products WHERE id=$1 AND active)`, l.ProductID).Scan(&active)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend existing integration test for new failures, success and preserved invariants.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 274,
+              "function_end_line": 325,
+              "evidence": [
+                {
+                  "line": 283,
+                  "match": ".Transition(",
+                  "excerpt": "adjustment, err = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-recovery-submit\")"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "reason": "Existing reason input sends empty reason on submit; require and send it for submit.",
+          "evidence": [
+            {
+              "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+              "function": "InventoryAdjustmentPanel",
+              "role": "CURRENT_REASON_PAYLOAD",
+              "function_start_line": 9,
+              "function_end_line": 23,
+              "evidence": [
+                {
+                  "line": 16,
+                  "match": "const actionReason =",
+                  "excerpt": "function action(name: string) { const actionReason = name === \"reject\" || name === \"cancel\" || name === \"reverse\" ? reason : \"\"; return run(`/inventory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                },
+                {
+                  "line": 16,
+                  "match": "reason: actionReason",
+                  "excerpt": "...ory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "Existing endpoint, request/response and schema suffice; no migration.",
+        "AND requires both checks to finish before mutation; no goroutine requirement."
+      ]
+    },
+    {
+      "id": "normalized-staff-unchanged-control",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "unchanged-control",
+      "truth_scope": "complete",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Identical BPMN control.",
+      "before": "experiments/simple-erp/current-staff/unchanged-control/before.bpmn",
+      "after": "experiments/simple-erp/current-staff/unchanged-control/after.bpmn",
+      "reference": "experiments/simple-erp/current-staff/unchanged-control/reference.json",
+      "labelled_changes": [],
+      "required_change_files": [],
+      "unchanged_contracts": [
+        "No requirement change."
+      ]
+    },
+    {
+      "id": "p2p-transfer-checks",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "pr-submit-master-price-validation",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "At PR submit recheck all products active AND estimated prices strictly positive. Reject failures without changing state; preserve version/access guards.",
+      "before": "experiments/simple-erp/p2p-transfer/checks/before.bpmn",
+      "after": "experiments/simple-erp/p2p-transfer/checks/after.bpmn",
+      "reference": "experiments/simple-erp/p2p-transfer/checks/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "SubmitChecksSplit"
+        },
+        {
+          "change_type": "ADD_TASK",
+          "element_id": "CheckActiveProducts"
+        },
+        {
+          "change_type": "ADD_TASK",
+          "element_id": "CheckEstimatedPrices"
+        },
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "SubmitChecksJoin"
+        },
+        {
+          "change_type": "ADD_TASK",
+          "element_id": "CombineSubmitChecks"
+        },
+        {
+          "change_type": "ADD_GATEWAY",
+          "element_id": "SubmitEligibility"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "reason": "Add submit-time validation in the existing transaction before status mutation; create-time checks alone are insufficient.",
+          "evidence": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "CURRENT_SUBMIT",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 147,
+                  "match": "case \"submit\":",
+                  "excerpt": "case \"submit\":"
+                },
+                {
+                  "line": 148,
+                  "match": "from != \"DRAFT\"",
+                  "excerpt": "if from != \"DRAFT\" {"
+                },
+                {
+                  "line": 151,
+                  "match": "d.Status = \"SUBMITTED\"",
+                  "excerpt": "d.Status = \"SUBMITTED\""
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CreateRequest",
+              "role": "CREATE_TIME_CHECKS",
+              "function_start_line": 29,
+              "function_end_line": 69,
+              "evidence": [
+                {
+                  "line": 53,
+                  "match": "FROM products",
+                  "excerpt": "e = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM products WHERE id=$1 AND active)`, l.ProductID).Scan(&active)"
+                },
+                {
+                  "line": 49,
+                  "match": "l.UnitPrice < 0",
+                  "excerpt": "if l.Quantity <= 0 || l.UnitPrice < 0 {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend existing integration test for new failures, success and preserved invariants.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 84,
+              "function_end_line": 194,
+              "evidence": [
+                {
+                  "line": 93,
+                  "match": ".TransitionRequest(",
+                  "excerpt": "if _, e = s.TransitionRequest(ctx, pr.ID, \"submit\", operatorID, \"\", pr.Version, \"r2\"); e != nil {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "Existing endpoint, request/response and schema suffice; no migration.",
+        "AND requires both checks to finish before mutation; no goroutine requirement.",
+        "No new input; existing frontend/handler reuse version and error response."
+      ]
+    },
+    {
+      "id": "p2p-transfer-unchanged-control",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "unchanged-control",
+      "truth_scope": "complete",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Identical BPMN control.",
+      "before": "experiments/simple-erp/p2p-transfer/unchanged-control/before.bpmn",
+      "after": "experiments/simple-erp/p2p-transfer/unchanged-control/after.bpmn",
+      "reference": "experiments/simple-erp/p2p-transfer/unchanged-control/reference.json",
+      "labelled_changes": [],
+      "required_change_files": [],
+      "unchanged_contracts": [
+        "No requirement change."
+      ]
+    },
+    {
+      "id": "selection-challenge-remove-check",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "pr-copy-eligibility",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Allow copying REJECTED PR with inactive products; retain status guard and source state.",
+      "before": "experiments/simple-erp/selection-challenges/remove-check/before.bpmn",
+      "after": "experiments/simple-erp/selection-challenges/remove-check/after.bpmn",
+      "reference": "experiments/simple-erp/selection-challenges/remove-check/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "REMOVE_TASK",
+          "element_id": "CheckCopyProducts"
+        },
+        {
+          "change_type": "MODIFY_GATEWAY_CONDITION",
+          "element_id": "role_staff_l3_pr_copy_valid"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "reason": "Remove active-product guard only; shared function remains.",
+          "evidence": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CopyRequest",
+              "role": "CURRENT_GUARD",
+              "function_start_line": 476,
+              "function_end_line": 511,
+              "evidence": [
+                {
+                  "line": 488,
+                  "match": "status != \"REJECTED\"",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                },
+                {
+                  "line": 488,
+                  "match": "!mastersActive",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                },
+                {
+                  "line": 488,
+                  "match": "\"REJECTED\"",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend Copy PR tests; preserve unchanged sales assertions and retained guards.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestCopyRejectedDocumentsRequiresActiveMasters",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 326,
+              "function_end_line": 366,
+              "evidence": [
+                {
+                  "line": 359,
+                  "match": "purchasing.CopyRequest(",
+                  "excerpt": "if _, e = purchasing.CopyRequest(ctx, request.ID, operatorID, \"copy-master-pr-4\"); e == nil {"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "No new route, request field, database column or role permission.",
+        "Existing application delegation/domain Copy do not implement the changed guard.",
+        "Copy remains visible for REJECTED; no frontend change required."
+      ]
+    },
+    {
+      "id": "selection-challenge-change-condition",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "pr-copy-eligibility",
+      "truth_scope": "subset",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Allow REJECTED or CANCELLED PR copy; preserve active products and source state.",
+      "before": "experiments/simple-erp/selection-challenges/change-condition/before.bpmn",
+      "after": "experiments/simple-erp/selection-challenges/change-condition/after.bpmn",
+      "reference": "experiments/simple-erp/selection-challenges/change-condition/reference.json",
+      "labelled_changes": [
+        {
+          "change_type": "MODIFY_GATEWAY_CONDITION",
+          "element_id": "role_staff_l3_pr_copy_valid"
+        }
+      ],
+      "required_change_files": [
+        {
+          "file": "backend/internal/purchasing/adapter/postgres/store.go",
+          "reason": "Extend status eligibility and audit origin.",
+          "evidence": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CopyRequest",
+              "role": "CURRENT_GUARD",
+              "function_start_line": 476,
+              "function_end_line": 511,
+              "evidence": [
+                {
+                  "line": 488,
+                  "match": "status != \"REJECTED\"",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                },
+                {
+                  "line": 488,
+                  "match": "!mastersActive",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                },
+                {
+                  "line": 488,
+                  "match": "\"REJECTED\"",
+                  "excerpt": "if e != nil || status != \"REJECTED\" || !mastersActive {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "reason": "Extend Copy PR tests; preserve unchanged sales assertions and retained guards.",
+          "evidence": [
+            {
+              "file": "backend/test/integration/operations_test.go",
+              "function": "TestCopyRejectedDocumentsRequiresActiveMasters",
+              "role": "RELATED_TEST_NOT_EXECUTED",
+              "function_start_line": 326,
+              "function_end_line": 366,
+              "evidence": [
+                {
+                  "line": 359,
+                  "match": "purchasing.CopyRequest(",
+                  "excerpt": "if _, e = purchasing.CopyRequest(ctx, request.ID, operatorID, \"copy-master-pr-4\"); e == nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+          "reason": "Expose existing Copy action for CANCELLED too.",
+          "evidence": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "UI_GUARD",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 57,
+                  "match": "document.status === \"REJECTED\"",
+                  "excerpt": "{document.status === \"REJECTED\" && canCreate(session?.role) && <button onClick={() => action(document, \"copy\")}>Copy to Draft</button>}"
+                },
+                {
+                  "line": 57,
+                  "match": "action(document, \"copy\")",
+                  "excerpt": "... === \"REJECTED\" && canCreate(session?.role) && <button onClick={() => action(document, \"copy\")}>Copy to Draft</button>}"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "unchanged_contracts": [
+        "No new route, request field, database column or role permission.",
+        "Existing application delegation/domain Copy do not implement the changed guard."
+      ]
+    },
+    {
+      "id": "selection-challenge-unchanged-control",
+      "split": "development-regression",
+      "prior_exposure": true,
+      "requirement_family": "unchanged-control",
+      "truth_scope": "complete",
+      "reference_status": "provisional single AI source review; no implemented after",
+      "requirement": "Identical BPMN control.",
+      "before": "experiments/simple-erp/selection-challenges/unchanged-control/before.bpmn",
+      "after": "experiments/simple-erp/selection-challenges/unchanged-control/after.bpmn",
+      "reference": "experiments/simple-erp/selection-challenges/unchanged-control/reference.json",
+      "labelled_changes": [],
+      "required_change_files": [],
+      "unchanged_contracts": [
+        "No requirement change."
+      ]
+    }
+  ],
+  "freeze_id": "c584ecd0dcbf523272863d69249d2fd3"
+}

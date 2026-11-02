@@ -32,6 +32,9 @@ func (store PlanStore) Save(ctx context.Context, value planning.ChangePlan) erro
 	if err != nil {
 		return fmt.Errorf("render plan JSON: %w", err)
 	}
+	if len(jsonData) > 16<<20 {
+		return errors.New("plan exceeds the 16 MiB export limit; no truncated plan was saved")
+	}
 	directory, err := store.planDirectory(value.PlanID)
 	if err != nil {
 		return err

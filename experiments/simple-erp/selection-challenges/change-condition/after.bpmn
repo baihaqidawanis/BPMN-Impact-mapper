@@ -1,0 +1,208 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_role_staff_l3_pr_copy" targetNamespace="https://simple-erp.local/bpm-haqi/role-staff-l3-pr-copy" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_staff_l3_pr_copy" name="Salin PR ditolak menjadi draft baru - Staff" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+ Perspektif Staff; definisi operasi bersumber dari L3 P2P bersama.
+backend/internal/purchasing/adapter/postgres/store.go :: CopyRequest</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_staff_l3_pr_copy">
+      <bpmn:lane id="Lane_role_staff_l3_pr_copy_0" name="Staff">
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_staff_l3_pr_copy_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_effect0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_result_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_result_activity</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_copy_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CheckCopyProducts</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_staff_l3_pr_copy_start" name="Purchase request copy requested">
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_staff_l3_pr_copy_input" name="Select Copy purchase request to Draft">
+      <bpmn:documentation>Request ini dijalankan oleh Staff; guard backend tetap berlaku.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_copy_check" name="Read source purchase request status under lock">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. </bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>ReadThenCheckCopyProducts</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="role_staff_l3_pr_copy_valid" name="Purchase request copy checks passed?" gatewayDirection="Diverging">
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="role_staff_l3_pr_copy_effect0" name="Copy purchase request purpose and lines into a new DRAFT with copied_from_id">
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_copy_effect1" name="Keep source purchase request unchanged; audit copy and commit">
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="role_staff_l3_pr_copy_done" name="Purchase request copy response delivered">
+      <bpmn:incoming>role_staff_l3_pr_copy_result_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_0" sourceRef="role_staff_l3_pr_copy_start" targetRef="role_staff_l3_pr_copy_input" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_1" sourceRef="role_staff_l3_pr_copy_input" targetRef="role_staff_l3_pr_copy_check" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_2" sourceRef="CheckCopyProducts" targetRef="role_staff_l3_pr_copy_valid" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_3" sourceRef="role_staff_l3_pr_copy_valid" targetRef="role_staff_l3_pr_copy_effect0" name="source purchase request status in [REJECTED, CANCELLED] and all linked products active">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">source purchase request status in [REJECTED, CANCELLED] and all linked products active</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_4" sourceRef="role_staff_l3_pr_copy_effect0" targetRef="role_staff_l3_pr_copy_effect1" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_5" sourceRef="role_staff_l3_pr_copy_effect1" targetRef="role_staff_l3_pr_copy_result_merge" name="Aksi selesai; hasil diterima" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_Flow_6" sourceRef="role_staff_l3_pr_copy_valid" targetRef="role_staff_l3_pr_copy_result_merge" name="not (source purchase request status in [REJECTED, CANCELLED] and all linked products active)">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">not (source purchase request status in [REJECTED, CANCELLED] and all linked products active)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="role_staff_l3_pr_copy_result_merge" name="Merge alternative purchase request copy outcomes" gatewayDirection="Converging">
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_5</bpmn:incoming>
+      <bpmn:incoming>role_staff_l3_pr_copy_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_result_to_activity</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="role_staff_l3_pr_copy_result_activity" name="Send purchase request copy success or failure response">
+      <bpmn:documentation>Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_copy_result_to_activity</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_copy_result_to_end</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_result_to_activity" sourceRef="role_staff_l3_pr_copy_result_merge" targetRef="role_staff_l3_pr_copy_result_activity" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_copy_result_to_end" sourceRef="role_staff_l3_pr_copy_result_activity" targetRef="role_staff_l3_pr_copy_done" />
+    <bpmn:serviceTask id="CheckCopyProducts" name="Check all source purchase request products are active">
+      <bpmn:outgoing>role_staff_l3_pr_copy_Flow_2</bpmn:outgoing>
+      <bpmn:incoming>ReadThenCheckCopyProducts</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="ReadThenCheckCopyProducts" sourceRef="role_staff_l3_pr_copy_check" targetRef="CheckCopyProducts" />
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_staff_l3_pr_copy">
+    <bpmn:participant id="Pool_role_staff_l3_pr_copy" name="Simple ERP" processRef="Process_role_staff_l3_pr_copy" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="StructuralDiagram">
+    <bpmndi:BPMNPlane id="StructuralPlane" bpmnElement="Collab_role_staff_l3_pr_copy">
+      <bpmndi:BPMNShape id="Pool_role_staff_l3_pr_copy_di" bpmnElement="Pool_role_staff_l3_pr_copy" isHorizontal="true">
+        <dc:Bounds x="20" y="40" width="2680" height="940" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_copy_0_di" bpmnElement="Lane_role_staff_l3_pr_copy_0" isHorizontal="true">
+        <dc:Bounds x="50" y="40" width="2650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_copy_1_di" bpmnElement="Lane_role_staff_l3_pr_copy_1" isHorizontal="true">
+        <dc:Bounds x="50" y="510" width="2650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_start_di" bpmnElement="role_staff_l3_pr_copy_start">
+        <dc:Bounds x="170" y="110" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="120" y="162" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_input_di" bpmnElement="role_staff_l3_pr_copy_input">
+        <dc:Bounds x="420" y="110" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_check_di" bpmnElement="role_staff_l3_pr_copy_check">
+        <dc:Bounds x="670" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_valid_di" bpmnElement="role_staff_l3_pr_copy_valid">
+        <dc:Bounds x="1170" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1120" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_effect0_di" bpmnElement="role_staff_l3_pr_copy_effect0">
+        <dc:Bounds x="1420" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_effect1_di" bpmnElement="role_staff_l3_pr_copy_effect1">
+        <dc:Bounds x="1670" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_done_di" bpmnElement="role_staff_l3_pr_copy_done">
+        <dc:Bounds x="2420" y="580" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2370" y="632" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_result_merge_di" bpmnElement="role_staff_l3_pr_copy_result_merge">
+        <dc:Bounds x="1920" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1870" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_copy_result_activity_di" bpmnElement="role_staff_l3_pr_copy_result_activity">
+        <dc:Bounds x="2170" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CheckCopyProducts_di" bpmnElement="CheckCopyProducts">
+        <dc:Bounds x="920" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_0_di" bpmnElement="role_staff_l3_pr_copy_Flow_0">
+        <di:waypoint x="212" y="131.0" />
+        <di:waypoint x="316.0" y="131.0" />
+        <di:waypoint x="316.0" y="152.5" />
+        <di:waypoint x="420" y="152.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_1_di" bpmnElement="role_staff_l3_pr_copy_Flow_1">
+        <di:waypoint x="595" y="152.5" />
+        <di:waypoint x="632.5" y="152.5" />
+        <di:waypoint x="632.5" y="622.5" />
+        <di:waypoint x="670" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_2_di" bpmnElement="role_staff_l3_pr_copy_Flow_2">
+        <di:waypoint x="1095" y="622.5" />
+        <di:waypoint x="1132.5" y="622.5" />
+        <di:waypoint x="1132.5" y="607.5" />
+        <di:waypoint x="1170" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_3_di" bpmnElement="role_staff_l3_pr_copy_Flow_3">
+        <di:waypoint x="1225" y="607.5" />
+        <di:waypoint x="1322.5" y="607.5" />
+        <di:waypoint x="1322.5" y="622.5" />
+        <di:waypoint x="1420" y="622.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1322.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_4_di" bpmnElement="role_staff_l3_pr_copy_Flow_4">
+        <di:waypoint x="1595" y="622.5" />
+        <di:waypoint x="1632.5" y="622.5" />
+        <di:waypoint x="1632.5" y="622.5" />
+        <di:waypoint x="1670" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_5_di" bpmnElement="role_staff_l3_pr_copy_Flow_5">
+        <di:waypoint x="1845" y="622.5" />
+        <di:waypoint x="1882.5" y="622.5" />
+        <di:waypoint x="1882.5" y="607.5" />
+        <di:waypoint x="1920" y="607.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1882.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_Flow_6_di" bpmnElement="role_staff_l3_pr_copy_Flow_6">
+        <di:waypoint x="1225" y="607.5" />
+        <di:waypoint x="1572.5" y="607.5" />
+        <di:waypoint x="1572.5" y="607.5" />
+        <di:waypoint x="1920" y="607.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1572.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_result_to_activity_di" bpmnElement="role_staff_l3_pr_copy_result_to_activity">
+        <di:waypoint x="1975" y="607.5" />
+        <di:waypoint x="2072.5" y="607.5" />
+        <di:waypoint x="2072.5" y="622.5" />
+        <di:waypoint x="2170" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_copy_result_to_end_di" bpmnElement="role_staff_l3_pr_copy_result_to_end">
+        <di:waypoint x="2345" y="622.5" />
+        <di:waypoint x="2382.5" y="622.5" />
+        <di:waypoint x="2382.5" y="601.0" />
+        <di:waypoint x="2420" y="601.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ReadThenCheckCopyProducts_di" bpmnElement="ReadThenCheckCopyProducts">
+        <di:waypoint x="845" y="622.5" />
+        <di:waypoint x="882.5" y="622.5" />
+        <di:waypoint x="882.5" y="622.5" />
+        <di:waypoint x="920" y="622.5" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

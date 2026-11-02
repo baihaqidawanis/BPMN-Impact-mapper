@@ -9,6 +9,17 @@ export function hasFusion(impact: Impact): boolean {
   return !!impact.score_breakdown.rrf || fusionFields(impact) !== null;
 }
 
+export function fusionCalculation(impact: Impact): string | null {
+  const fields = fusionFields(impact);
+  if (!fields) return null;
+  const k = Number(fields.k);
+  if (!Number.isInteger(k) || k < 1) return null;
+  const term = (value: string | undefined): string | null => value === "absent" ? "0" : /^[1-9]\d*$/.test(value ?? "") ? `1/(${k}+${value})` : null;
+  const left = term(fields.left_rank), right = term(fields.right_rank);
+  if (left === null || right === null) return null;
+  return `RRF = (${left} + ${right}) / (2/(${k}+1)). Each search contributes equally. A missing candidate contributes 0; rank 1 in both searches gives 1. The displayed result is rounded. This is ranking agreement, not accuracy.`;
+}
+
 // A semantic-only or propagated candidate has no direct evidence score to explain.
 export function usesCodeEvidence(impact: Impact, method: AnalysisMethod): boolean {
   return method === "hybrid" && impact.score_breakdown.evidence_score !== undefined;

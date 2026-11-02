@@ -14,8 +14,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/agentjobs"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/agenttools"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/api"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/filestore"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/ingest"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/llm"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
@@ -35,6 +38,9 @@ func run(arguments []string) error {
 	analysisTimeout := flags.Duration("analysis-timeout", 10*time.Minute, "maximum duration for one HTTP analysis")
 	maxRequestBytes := flags.Int64("max-request-bytes", 20<<20, "maximum multipart request bytes")
 	maxBPMNBytes := flags.Int64("max-bpmn-bytes", 8<<20, "maximum bytes per uploaded BPMN file")
+	agentModel := flags.String("agent-model", "", "opt-in local Ollama model for Planning")
+	agentURL := flags.String("agent-url", "http://127.0.0.1:11435", "local Ollama tunnel URL")
+	agentContext := flags.Int("agent-context", 32768, "agent context tokens (maximum 32768; only used with --agent-model)")
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -52,11 +58,29 @@ func run(arguments []string) error {
 		return fmt.Errorf("create data directory: %w", err)
 	}
 	embedder := semantic.NewPythonEmbedderFromEnvironment()
+	base, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	var agents *agentjobs.Service
+	if *agentModel != "" {
+		model, err := llm.NewOllamaAgent(llm.OllamaAgentConfig{BaseURL: *agentURL, Model: *agentModel, ContextSize: *agentContext})
+		if err != nil {
+			return err
+		}
+		agents = &agentjobs.Service{Model: model, Sessions: filestore.AgentSessionStore{Root: filepath.Join(root, "agent-sessions")}, Plans: filestore.PlanStore{Root: filepath.Join(root, "plans")}, Base: base, Source: func(ctx context.Context, repo string) (agentjobs.Snapshot, error) {
+			if err := agenttools.CheckOutputBoundary(repo, root); err != nil {
+				return nil, err
+			}
+			return agenttools.New(ctx, repo, ingest.Options{})
+		}}
+		agents.LogError = func(err error) { log.Printf("agent session error: %v", err) }
+	}
 	var semanticProbe struct {
 		sync.Mutex
 		ready bool
 	}
 	handler := api.Handler{
+		Library:        filestore.BPMNLibrary{Root: filepath.Join(root, "bpmn-library")},
+		Agents:         agents,
 		Analyzer:       wiring.NewAnalyzerWithSemanticEmbedder(embedder),
 		Store:          filestore.ReportStore{Root: filepath.Join(root, "analyses")},
 		Planner:        planning.Orchestrator{Provider: llm.NoLLMProvider{}},
@@ -86,8 +110,6 @@ func run(arguments []string) error {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	base, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 	shutdownComplete := make(chan struct{})
 	go func() {
 		<-base.Done()
@@ -95,6 +117,11 @@ func run(arguments []string) error {
 		defer cancel()
 		if err := server.Shutdown(shutdownContext); err != nil {
 			log.Printf("graceful shutdown: %v", err)
+		}
+		if agents != nil {
+			if err := agents.Wait(shutdownContext); err != nil {
+				log.Printf("agent shutdown: %v", err)
+			}
 		}
 		close(shutdownComplete)
 	}()

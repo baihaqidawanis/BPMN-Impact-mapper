@@ -1,0 +1,363 @@
+﻿[
+  {
+    "file": "inventory/level-1/role-staff-l1-inventory.bpmn",
+    "sha256": "d77b17158820ca18cd693116dfe786b92457d0c901a9294fd78f5426fc0e24e1",
+    "findings": [
+      {
+        "code": "ACTIVITY_AFTER_JOIN",
+        "category": "convention",
+        "element_id": "role_staff_l1_inventory_merge",
+        "scope": "Process_role_staff_l1_inventory",
+        "message": "Research convention: flow role_staff_l1_inventory_Flow_10 should lead to a meaningful activity. Do not invent an activity solely to satisfy this rule."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-2/role-staff-l2-inv-adjustment.bpmn",
+    "sha256": "6da49c08cee84a26241f3f18007a659f08a4c70f870b24218163156739cd34f9",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l2_inv_adjustment",
+        "message": "Research convention expects one end event in this scope; found 6. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-2/role-staff-l2-inv-correction.bpmn",
+    "sha256": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+    "findings": []
+  },
+  {
+    "file": "inventory/level-2/role-staff-l2-inv-monitor.bpmn",
+    "sha256": "e6a713478153a1305739fc14f24501599cabf11acbcef01b3a4061cb925ca83c",
+    "findings": [
+      {
+        "code": "ACTIVITY_AFTER_JOIN",
+        "category": "convention",
+        "element_id": "role_staff_l2_inv_monitor_merge",
+        "scope": "Process_role_staff_l2_inv_monitor",
+        "message": "Research convention: flow role_staff_l2_inv_monitor_Flow_8 should lead to a meaningful activity. Do not invent an activity solely to satisfy this rule."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-2/role-staff-l2-inv-sources.bpmn",
+    "sha256": "3672a7bac36ef580455e53c9dfde882a82c2ba1b8e430584fcb915274690d07d",
+    "findings": [
+      {
+        "code": "ACTIVITY_AFTER_JOIN",
+        "category": "convention",
+        "element_id": "role_staff_l2_inv_sources_merge",
+        "scope": "Process_role_staff_l2_inv_sources",
+        "message": "Research convention: flow role_staff_l2_inv_sources_Flow_6 should lead to a meaningful activity. Do not invent an activity solely to satisfy this rule."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-adj-cancel.bpmn",
+    "sha256": "6b4d5cfec3a18bc35772be7c0b3c3ec710acfbdbb202ddd4eada3195226d05af",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_adj_cancel",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-adj-create.bpmn",
+    "sha256": "86dd08fabbfc4d748f2ecbb23742d1ec265d6eff6ce90aa59668897c264968d4",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_adj_create",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-adj-post.bpmn",
+    "sha256": "9f8e63c72547906ebbbd25c0681146f6a834b4d6d449811c249a286893251ca7",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_adj_post",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-adj-submit.bpmn",
+    "sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_adj_submit",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-delivery-post.bpmn",
+    "sha256": "8ef7eb384f6a9fd409b3abf82ecbcc90ef2053db07f10b78b731f05927138039",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_delivery_post",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-inv-adjustments.bpmn",
+    "sha256": "a20d21404b229b6750a3d7ff27dfd17bc6ddfea8a9d93844a49c29b87b4c24af",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_inv_adjustments",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-inv-balances.bpmn",
+    "sha256": "6b889d72630a7d95d216bc999a6fdfcf0e0ee996e5d439ebf9b27f116aec5db7",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_inv_balances",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "inventory/level-3/role-staff-l3-inv-movements.bpmn",
+    "sha256": "52f0ed25e453113b6a3f1486ff610de8f8e1c3e407fc26117797d50b0dac6c4b",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_inv_movements",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "level-0/role-staff-l0.bpmn",
+    "sha256": "7cc7851c8efb23c5a410df8f617839197b04ae3ef211dad9fca243342c62d00c",
+    "findings": [
+      {
+        "code": "ACTIVITY_AFTER_JOIN",
+        "category": "convention",
+        "element_id": "role_staff_l0_merge",
+        "scope": "Process_role_staff_l0",
+        "message": "Research convention: flow role_staff_l0_Flow_16 should lead to a meaningful activity. Do not invent an activity solely to satisfy this rule."
+      }
+    ]
+  },
+  {
+    "file": "master-data/role-staff-l1-master.bpmn",
+    "sha256": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+    "findings": []
+  },
+  {
+    "file": "master-data/role-staff-l2-master.bpmn",
+    "sha256": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+    "findings": []
+  },
+  {
+    "file": "master-data/role-staff-l3-master-list.bpmn",
+    "sha256": "981058f16e1f7aedc0b29137acd3143c0c55077fa80c4bfe2f266074f915ce06",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_master_list",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-1/role-staff-l1-p2p.bpmn",
+    "sha256": "ade90046695ba2c319f1fb1f2d619a567b4cd4bee157c2aaba754bf31423859e",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l1_p2p",
+        "message": "Research convention expects one end event in this scope; found 5. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-2/role-staff-l2-ap.bpmn",
+    "sha256": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+    "findings": []
+  },
+  {
+    "file": "p2p/level-2/role-staff-l2-correction.bpmn",
+    "sha256": "405e04138ae0bd5df63d8c92bef4c6989006fd25eb3b7aedc0a4d4efe84e8210",
+    "findings": [
+      {
+        "code": "ACTIVITY_AFTER_JOIN",
+        "category": "convention",
+        "element_id": "role_staff_l2_correction_merge",
+        "scope": "Process_role_staff_l2_correction",
+        "message": "Research convention: flow role_staff_l2_correction_Flow_12 should lead to a meaningful activity. Do not invent an activity solely to satisfy this rule."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-2/role-staff-l2-po-gr.bpmn",
+    "sha256": "efb8a0a0a20e2aa31c12596fd11ba18411177f6f97c77e72bd10fae51d671c63",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l2_po_gr",
+        "message": "Research convention expects one end event in this scope; found 5. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-2/role-staff-l2-pr.bpmn",
+    "sha256": "ad1762936c422ec2ca25187b442e5030eadf4f43e10ee6630237bacb75a53b7e",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l2_pr",
+        "message": "Research convention expects one end event in this scope; found 5. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-ap-invoice.bpmn",
+    "sha256": "396ead37000b5314a6c462efdaae87f824890f4e0b10f538bcabe5afd6bfb58d",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_ap_invoice",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-ap-payment.bpmn",
+    "sha256": "e661dfd3fe397d404879b3dbc7431de4a7bc65e3f8f5e2fa3aaabfc07495104f",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_ap_payment",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-ap-resolve.bpmn",
+    "sha256": "f2d6673733401564fd18177b7cbfcda4237df26ee7fae3c195ffde9b8af08a46",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_ap_resolve",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-gr-cancel.bpmn",
+    "sha256": "030d362a0492a1cd504cc8778eb01d6f66780dc4a50252c3f11b7a5fc93b6dee",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_gr_cancel",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-gr-create.bpmn",
+    "sha256": "40d54ac8a412d243e41f049b73c0dc37d0ff577eb8a5c39f6cf321138172f96d",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_gr_create",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-po-convert.bpmn",
+    "sha256": "e9a8f0699f4dbafff1e55d93e182b4869e72f51d8a1a711eaf0f71dff2efa595",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_po_convert",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-pr-cancel.bpmn",
+    "sha256": "a757a9e4789196b879769c54b52406c7b6e53de95c11e3dfffb69f8ea7b74140",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_pr_cancel",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-pr-copy.bpmn",
+    "sha256": "f2c85e2f01cf36dd9f93e72e7af372299ee8b3e6e179e966d4fdb2e0de3c94c2",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_pr_copy",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-pr-create.bpmn",
+    "sha256": "93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_pr_create",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  },
+  {
+    "file": "p2p/level-3/role-staff-l3-pr-submit.bpmn",
+    "sha256": "9619f819119741b1ef196b0520d23b94d3e2a549330e16fdc7b0a38b82444efa",
+    "findings": [
+      {
+        "code": "SINGLE_END",
+        "category": "convention",
+        "scope": "Process_role_staff_l3_pr_submit",
+        "message": "Research convention expects one end event in this scope; found 2. Multiple or implicit ends can be valid BPMN."
+      }
+    ]
+  }
+]

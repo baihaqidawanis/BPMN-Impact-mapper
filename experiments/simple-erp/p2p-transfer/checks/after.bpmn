@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_role_staff_l3_pr_submit" targetNamespace="https://simple-erp.local/bpm-haqi/role-staff-l3-pr-submit" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_staff_l3_pr_submit" name="Submit Purchase Request - Staff" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+Tidak ada pemeriksaan actor==creator untuk submit. Perspektif Staff; definisi operasi bersumber dari L3 P2P bersama.
+backend/internal/purchasing/adapter/postgres/store.go :: TransitionRequest</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_staff_l3_pr_submit">
+      <bpmn:lane id="Lane_role_staff_l3_pr_submit_0" name="Staff">
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_staff_l3_pr_submit_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_effect0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_result_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_result_activity</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SubmitChecksSplit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CheckActiveProducts</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CheckEstimatedPrices</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SubmitChecksJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CombineSubmitChecks</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SubmitEligibility</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_staff_l3_pr_submit_start" name="Kebutuhan aksi">
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_staff_l3_pr_submit_input" name="Kirim PR untuk review">
+      <bpmn:documentation>Request ini dijalankan oleh Staff; guard backend tetap berlaku.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_check" name="Lock PR; status DRAFT dan version cocok">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. Tidak ada pemeriksaan actor==creator untuk submit.</bpmn:documentation>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_2</bpmn:outgoing>
+      <bpmn:incoming>SubmitChecksPassed</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="role_staff_l3_pr_submit_valid" name="Syarat terpenuhi?" gatewayDirection="Diverging">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_effect0" name="Ubah PR menjadi SUBMITTED; naikkan versi">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_effect1" name="Audit PUR-PR-002; commit">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="role_staff_l3_pr_submit_done" name="Respons dikirim">
+      <bpmn:incoming>role_staff_l3_pr_submit_result_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_0" sourceRef="role_staff_l3_pr_submit_start" targetRef="role_staff_l3_pr_submit_input" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_1" sourceRef="role_staff_l3_pr_submit_input" targetRef="SubmitChecksSplit" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_2" sourceRef="role_staff_l3_pr_submit_check" targetRef="role_staff_l3_pr_submit_valid" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_3" sourceRef="role_staff_l3_pr_submit_valid" targetRef="role_staff_l3_pr_submit_effect0" name="Ya">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Ya</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_4" sourceRef="role_staff_l3_pr_submit_effect0" targetRef="role_staff_l3_pr_submit_effect1" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_5" sourceRef="role_staff_l3_pr_submit_effect1" targetRef="role_staff_l3_pr_submit_result_merge" name="Aksi selesai; hasil diterima" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_6" sourceRef="role_staff_l3_pr_submit_valid" targetRef="role_staff_l3_pr_submit_result_merge" name="Tidak; Ditolak / gagal; tidak commit">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Tidak</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="role_staff_l3_pr_submit_result_merge" name="Gabungkan hasil alternatif" gatewayDirection="Converging">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_5</bpmn:incoming>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_result_to_activity</bpmn:outgoing>
+      <bpmn:incoming>SubmitChecksFailed</bpmn:incoming>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="role_staff_l3_pr_submit_result_activity" name="Kirim respons hasil aksi (sukses atau gagal)">
+      <bpmn:documentation>Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_result_to_activity</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_result_to_end</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_result_to_activity" sourceRef="role_staff_l3_pr_submit_result_merge" targetRef="role_staff_l3_pr_submit_result_activity" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_result_to_end" sourceRef="role_staff_l3_pr_submit_result_activity" targetRef="role_staff_l3_pr_submit_done" />
+    <bpmn:parallelGateway id="SubmitChecksSplit" name="Run both purchase request submission checks" gatewayDirection="Diverging">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>CheckActiveProductsStart</bpmn:outgoing>
+      <bpmn:outgoing>CheckEstimatedPricesStart</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="CheckActiveProducts" name="Recheck all purchase request products are active">
+      <bpmn:incoming>CheckActiveProductsStart</bpmn:incoming>
+      <bpmn:outgoing>CheckActiveProductsDone</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="CheckEstimatedPrices" name="Check every purchase request estimated price is positive">
+      <bpmn:incoming>CheckEstimatedPricesStart</bpmn:incoming>
+      <bpmn:outgoing>CheckEstimatedPricesDone</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="SubmitChecksJoin" name="Collect both purchase request validation results" gatewayDirection="Converging">
+      <bpmn:incoming>CheckActiveProductsDone</bpmn:incoming>
+      <bpmn:incoming>CheckEstimatedPricesDone</bpmn:incoming>
+      <bpmn:outgoing>CombineChecks</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="CombineSubmitChecks" name="Aggregate purchase request product and price checks without changing state">
+      <bpmn:incoming>CombineChecks</bpmn:incoming>
+      <bpmn:outgoing>ChooseOutcome</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="SubmitEligibility" name="Both purchase request checks passed?" gatewayDirection="Diverging" default="SubmitChecksFailed">
+      <bpmn:incoming>ChooseOutcome</bpmn:incoming>
+      <bpmn:outgoing>SubmitChecksPassed</bpmn:outgoing>
+      <bpmn:outgoing>SubmitChecksFailed</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="CheckActiveProductsStart" sourceRef="SubmitChecksSplit" targetRef="CheckActiveProducts" />
+    <bpmn:sequenceFlow id="CheckActiveProductsDone" sourceRef="CheckActiveProducts" targetRef="SubmitChecksJoin" />
+    <bpmn:sequenceFlow id="CheckEstimatedPricesStart" sourceRef="SubmitChecksSplit" targetRef="CheckEstimatedPrices" />
+    <bpmn:sequenceFlow id="CheckEstimatedPricesDone" sourceRef="CheckEstimatedPrices" targetRef="SubmitChecksJoin" />
+    <bpmn:sequenceFlow id="CombineChecks" sourceRef="SubmitChecksJoin" targetRef="CombineSubmitChecks" />
+    <bpmn:sequenceFlow id="ChooseOutcome" sourceRef="CombineSubmitChecks" targetRef="SubmitEligibility" />
+    <bpmn:sequenceFlow id="SubmitChecksPassed" sourceRef="SubmitEligibility" targetRef="role_staff_l3_pr_submit_check" name="all products active and all estimated prices &gt; 0">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">all products active and all estimated prices &gt; 0</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SubmitChecksFailed" sourceRef="SubmitEligibility" targetRef="role_staff_l3_pr_submit_result_merge" name="Inactive product or non-positive estimated price: reject without submit" />
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_staff_l3_pr_submit">
+    <bpmn:participant id="Pool_role_staff_l3_pr_submit" name="Simple ERP" processRef="Process_role_staff_l3_pr_submit" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="StructuralDiagram">
+    <bpmndi:BPMNPlane id="StructuralPlane" bpmnElement="Collab_role_staff_l3_pr_submit">
+      <bpmndi:BPMNShape id="Pool_role_staff_l3_pr_submit_di" bpmnElement="Pool_role_staff_l3_pr_submit" isHorizontal="true">
+        <dc:Bounds x="20" y="40" width="3680" height="940" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_submit_0_di" bpmnElement="Lane_role_staff_l3_pr_submit_0" isHorizontal="true">
+        <dc:Bounds x="50" y="40" width="3650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_submit_1_di" bpmnElement="Lane_role_staff_l3_pr_submit_1" isHorizontal="true">
+        <dc:Bounds x="50" y="510" width="3650" height="470" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_start_di" bpmnElement="role_staff_l3_pr_submit_start">
+        <dc:Bounds x="170" y="110" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="120" y="162" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_input_di" bpmnElement="role_staff_l3_pr_submit_input">
+        <dc:Bounds x="420" y="110" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_check_di" bpmnElement="role_staff_l3_pr_submit_check">
+        <dc:Bounds x="1920" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_valid_di" bpmnElement="role_staff_l3_pr_submit_valid">
+        <dc:Bounds x="2170" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2120" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_effect0_di" bpmnElement="role_staff_l3_pr_submit_effect0">
+        <dc:Bounds x="2420" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_effect1_di" bpmnElement="role_staff_l3_pr_submit_effect1">
+        <dc:Bounds x="2670" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_done_di" bpmnElement="role_staff_l3_pr_submit_done">
+        <dc:Bounds x="3420" y="580" width="42" height="42" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3370" y="632" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_result_merge_di" bpmnElement="role_staff_l3_pr_submit_result_merge">
+        <dc:Bounds x="2920" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2870" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_result_activity_di" bpmnElement="role_staff_l3_pr_submit_result_activity">
+        <dc:Bounds x="3170" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubmitChecksSplit_di" bpmnElement="SubmitChecksSplit">
+        <dc:Bounds x="670" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="620" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CheckActiveProducts_di" bpmnElement="CheckActiveProducts">
+        <dc:Bounds x="920" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CheckEstimatedPrices_di" bpmnElement="CheckEstimatedPrices">
+        <dc:Bounds x="920" y="725" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubmitChecksJoin_di" bpmnElement="SubmitChecksJoin">
+        <dc:Bounds x="1170" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1120" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CombineSubmitChecks_di" bpmnElement="CombineSubmitChecks">
+        <dc:Bounds x="1420" y="580" width="175" height="85" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubmitEligibility_di" bpmnElement="SubmitEligibility">
+        <dc:Bounds x="1670" y="580" width="55" height="55" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1620" y="645" width="155" height="60" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_0_di" bpmnElement="role_staff_l3_pr_submit_Flow_0">
+        <di:waypoint x="212" y="131.0" />
+        <di:waypoint x="316.0" y="131.0" />
+        <di:waypoint x="316.0" y="152.5" />
+        <di:waypoint x="420" y="152.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_1_di" bpmnElement="role_staff_l3_pr_submit_Flow_1">
+        <di:waypoint x="595" y="152.5" />
+        <di:waypoint x="632.5" y="152.5" />
+        <di:waypoint x="632.5" y="607.5" />
+        <di:waypoint x="670" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_2_di" bpmnElement="role_staff_l3_pr_submit_Flow_2">
+        <di:waypoint x="2095" y="622.5" />
+        <di:waypoint x="2132.5" y="622.5" />
+        <di:waypoint x="2132.5" y="607.5" />
+        <di:waypoint x="2170" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_3_di" bpmnElement="role_staff_l3_pr_submit_Flow_3">
+        <di:waypoint x="2225" y="607.5" />
+        <di:waypoint x="2322.5" y="607.5" />
+        <di:waypoint x="2322.5" y="622.5" />
+        <di:waypoint x="2420" y="622.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2322.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_4_di" bpmnElement="role_staff_l3_pr_submit_Flow_4">
+        <di:waypoint x="2595" y="622.5" />
+        <di:waypoint x="2632.5" y="622.5" />
+        <di:waypoint x="2632.5" y="622.5" />
+        <di:waypoint x="2670" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_5_di" bpmnElement="role_staff_l3_pr_submit_Flow_5">
+        <di:waypoint x="2845" y="622.5" />
+        <di:waypoint x="2882.5" y="622.5" />
+        <di:waypoint x="2882.5" y="607.5" />
+        <di:waypoint x="2920" y="607.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2882.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_6_di" bpmnElement="role_staff_l3_pr_submit_Flow_6">
+        <di:waypoint x="2225" y="607.5" />
+        <di:waypoint x="2572.5" y="607.5" />
+        <di:waypoint x="2572.5" y="607.5" />
+        <di:waypoint x="2920" y="607.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2572.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_result_to_activity_di" bpmnElement="role_staff_l3_pr_submit_result_to_activity">
+        <di:waypoint x="2975" y="607.5" />
+        <di:waypoint x="3072.5" y="607.5" />
+        <di:waypoint x="3072.5" y="622.5" />
+        <di:waypoint x="3170" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_result_to_end_di" bpmnElement="role_staff_l3_pr_submit_result_to_end">
+        <di:waypoint x="3345" y="622.5" />
+        <di:waypoint x="3382.5" y="622.5" />
+        <di:waypoint x="3382.5" y="601.0" />
+        <di:waypoint x="3420" y="601.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CheckActiveProductsStart_di" bpmnElement="CheckActiveProductsStart">
+        <di:waypoint x="725" y="607.5" />
+        <di:waypoint x="822.5" y="607.5" />
+        <di:waypoint x="822.5" y="622.5" />
+        <di:waypoint x="920" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CheckActiveProductsDone_di" bpmnElement="CheckActiveProductsDone">
+        <di:waypoint x="1095" y="622.5" />
+        <di:waypoint x="1132.5" y="622.5" />
+        <di:waypoint x="1132.5" y="607.5" />
+        <di:waypoint x="1170" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CheckEstimatedPricesStart_di" bpmnElement="CheckEstimatedPricesStart">
+        <di:waypoint x="725" y="607.5" />
+        <di:waypoint x="822.5" y="607.5" />
+        <di:waypoint x="822.5" y="767.5" />
+        <di:waypoint x="920" y="767.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CheckEstimatedPricesDone_di" bpmnElement="CheckEstimatedPricesDone">
+        <di:waypoint x="1095" y="767.5" />
+        <di:waypoint x="1132.5" y="767.5" />
+        <di:waypoint x="1132.5" y="607.5" />
+        <di:waypoint x="1170" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CombineChecks_di" bpmnElement="CombineChecks">
+        <di:waypoint x="1225" y="607.5" />
+        <di:waypoint x="1322.5" y="607.5" />
+        <di:waypoint x="1322.5" y="622.5" />
+        <di:waypoint x="1420" y="622.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ChooseOutcome_di" bpmnElement="ChooseOutcome">
+        <di:waypoint x="1595" y="622.5" />
+        <di:waypoint x="1632.5" y="622.5" />
+        <di:waypoint x="1632.5" y="607.5" />
+        <di:waypoint x="1670" y="607.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SubmitChecksPassed_di" bpmnElement="SubmitChecksPassed">
+        <di:waypoint x="1725" y="607.5" />
+        <di:waypoint x="1822.5" y="607.5" />
+        <di:waypoint x="1822.5" y="622.5" />
+        <di:waypoint x="1920" y="622.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1822.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SubmitChecksFailed_di" bpmnElement="SubmitChecksFailed">
+        <di:waypoint x="1725" y="607.5" />
+        <di:waypoint x="2322.5" y="607.5" />
+        <di:waypoint x="2322.5" y="607.5" />
+        <di:waypoint x="2920" y="607.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2322.5" y="567.5" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

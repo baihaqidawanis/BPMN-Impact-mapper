@@ -41,7 +41,8 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 	decoder := xml.NewDecoder(io.LimitReader(bytes.NewReader(data), limits.MaxBytes+1))
 	decoder.Strict = true
 	graph := &domain.Graph{
-		Elements: map[string]*domain.Element{}, Flows: map[string]*domain.Flow{},
+		ProcessNames: map[string]string{},
+		Elements:     map[string]*domain.Element{}, Flows: map[string]*domain.Flow{},
 		Incoming: map[string][]string{}, Outgoing: map[string][]string{}, Warnings: []string{},
 	}
 	lanes := map[string]string{}
@@ -52,6 +53,7 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 	var subprocessStack []string
 	depth, elementCount, processCount := 0, 0, 0
 	seenDefinitions := false
+	participantCount := 0
 
 	for {
 		token, err := decoder.Token()
@@ -74,12 +76,23 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 				return nil, fmt.Errorf("BPMN XML element limit exceeds %d", limits.MaxElements)
 			}
 			local := value.Name.Local
+			owner := ""
+			if current := topElement(elementStack); current != nil {
+				owner = current.ID
+			}
+			if warning := capabilityWarning(value, owner); warning != "" {
+				graph.Warnings = append(graph.Warnings, warning)
+			}
+			if local == "participant" {
+				participantCount++
+			}
 			switch local {
 			case "definitions":
 				seenDefinitions = true
 			case "process":
 				processCount++
 				currentProcess = attr(value, "id")
+				graph.ProcessNames[currentProcess] = attr(value, "name")
 			case "lane":
 				currentLane = attr(value, "name")
 			case "flowNodeRef":
@@ -183,6 +196,10 @@ func Parse(data []byte, limits Limits) (*domain.Graph, error) {
 	if !seenDefinitions || processCount == 0 {
 		return nil, errors.New("BPMN definitions with at least one process are required")
 	}
+	if processCount > 1 || participantCount > 1 {
+		graph.Warnings = append(graph.Warnings, "Multiple processes/participants are read as scoped elements; collaboration execution and cross-pool communication are not validated. Diff may omit communication changes.")
+	}
+	graph.Warnings = textutil.UniqueSorted(graph.Warnings)
 	for id, actor := range lanes {
 		if element := graph.Elements[id]; element != nil {
 			element.Actor = actor

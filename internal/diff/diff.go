@@ -40,6 +40,7 @@ func Compare(oldGraph, newGraph *domain.Graph) []domain.Change {
 	changes = append(changes, compareFlows(oldGraph, newGraph)...)
 	annotateChangeContexts(oldGraph, newGraph, changes)
 	markInsertTaskFlowDetails(oldGraph, newGraph, changes)
+	markGatewayConditionFlowDetails(oldGraph, newGraph, changes)
 	sort.SliceStable(changes, func(i, j int) bool {
 		ki, kj := changeKey(changes[i]), changeKey(changes[j])
 		return ki < kj
@@ -92,6 +93,49 @@ func plainFlow(flow *domain.Flow) bool {
 	return flow != nil && strings.TrimSpace(flow.Name) == "" && strings.TrimSpace(flow.Condition) == ""
 }
 
+// A condition edit on an existing, unchanged edge is the same rule change
+// reported at its gateway. Preserve the atomic diff without retrieving twice.
+// Rewiring and added/removed edges remain independent topology changes.
+func markGatewayConditionFlowDetails(oldGraph, newGraph *domain.Graph, changes []domain.Change) {
+	gateways := map[string]bool{}
+	for _, change := range changes {
+		if change.ChangeType == domain.ModifyGatewayCondition && change.OldElement != nil && change.NewElement != nil && change.OldElement.ID == change.NewElement.ID {
+			gateways[change.NewElement.ID] = true
+		}
+	}
+	for index := range changes {
+		change := &changes[index]
+		if change.ChangeType != domain.ModifySequenceFlow || change.OldElement == nil || change.NewElement == nil || change.PartOf != "" {
+			continue
+		}
+		old, next := oldGraph.Flows[change.OldElement.ID], newGraph.Flows[change.NewElement.ID]
+		if old != nil && next != nil && old.SourceRef == next.SourceRef && old.TargetRef == next.TargetRef && gateways[next.SourceRef] && branchCondition(old) != branchCondition(next) {
+			change.PartOf = next.SourceRef
+			change.Context = nil
+		}
+	}
+}
+
+func branchCondition(flow *domain.Flow) string {
+	if flow == nil {
+		return ""
+	}
+	if condition := strings.TrimSpace(flow.Condition); condition != "" {
+		return condition
+	}
+	return strings.TrimSpace(flow.Name)
+}
+
+func branchTerms(graph *domain.Graph, flowIDs []string) []string {
+	terms := []string{}
+	for _, id := range flowIDs {
+		if flow := graph.Flows[id]; flow != nil {
+			terms = append(terms, flow.Name, flow.Condition)
+		}
+	}
+	return sortedUnique(terms)
+}
+
 func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.Change) {
 	moved := movedTaskContexts(oldGraph, newGraph)
 	for index := range changes {
@@ -112,6 +156,10 @@ func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.C
 		case domain.RemoveGateway:
 			if change.OldElement != nil {
 				change.Context = removedGatewayBranchContext(oldGraph, newGraph, change.OldElement.ID)
+			}
+		case domain.ModifyGatewayCondition:
+			if change.NewElement != nil {
+				change.Context = modifiedGatewayBranchContext(oldGraph, newGraph, change.NewElement.ID)
 			}
 		case domain.ModifySequenceFlow:
 			change.Context = movedFlowContext(change, moved)
@@ -183,6 +231,7 @@ func insertionContext(oldGraph, newGraph *domain.Graph, id string) *domain.Chang
 	}
 	return &domain.ChangeContext{
 		Pattern: domain.PatternInsertTask, Predecessors: predecessors, Successors: successors,
+		ProcessName:    newGraph.ProcessNames[newGraph.Elements[id].ProcessID],
 		RelatedFlowIDs: sortedUnique(append(append(incomingFlows, outgoingFlows...), bridged...)),
 	}
 }
@@ -202,6 +251,7 @@ func removalContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeC
 	}
 	return &domain.ChangeContext{
 		Pattern: domain.PatternRemoveTaskWithRewire, Predecessors: predecessors, Successors: successors,
+		ProcessName:    oldGraph.ProcessNames[oldGraph.Elements[id].ProcessID],
 		RelatedFlowIDs: sortedUnique(append(append(incomingFlows, outgoingFlows...), bridged...)),
 	}
 }
@@ -214,7 +264,55 @@ func gatewayBranchContext(graph *domain.Graph, id string) *domain.ChangeContext 
 	}
 	return &domain.ChangeContext{
 		Pattern: domain.PatternAddGatewayBranch, Predecessors: predecessors, Successors: successors,
+		BranchTerms:    branchTerms(graph, outgoingFlows),
 		RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...)),
+	}
+}
+
+func modifiedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeContext {
+	predecessors, incomingFlows := neighbors(newGraph, id, true)
+	successors, outgoingFlows := neighbors(newGraph, id, false)
+	terms := []string{}
+	changedFlows := []string{}
+	transitions := []domain.BranchChange{}
+	_, oldOutgoingFlows := neighbors(oldGraph, id, false)
+	for _, flowID := range sortedUnique(append(oldOutgoingFlows, outgoingFlows...)) {
+		oldFlow, newFlow := oldGraph.Flows[flowID], newGraph.Flows[flowID]
+		if oldFlow != nil && oldFlow.SourceRef != id {
+			oldFlow = nil
+		}
+		if newFlow != nil && newFlow.SourceRef != id {
+			newFlow = nil
+		}
+		if oldFlow != nil && newFlow != nil && branchCondition(oldFlow) == branchCondition(newFlow) {
+			continue
+		}
+		changedFlows = append(changedFlows, flowID)
+		transition := domain.BranchChange{FlowID: flowID}
+		if oldFlow != nil {
+			transition.OldCondition = oldFlow.Condition
+			transition.OldLabel = oldFlow.Name
+			transition.OldTarget = oldFlow.TargetRef
+		}
+		if newFlow != nil {
+			transition.NewCondition = newFlow.Condition
+			transition.NewLabel = newFlow.Name
+			transition.NewTarget = newFlow.TargetRef
+		}
+		transitions = append(transitions, transition)
+		// Labels often explain expressions in business language. Keep both
+		// for retrieval; only branchCondition decides semantic equivalence.
+		for _, flow := range []*domain.Flow{oldFlow, newFlow} {
+			if flow != nil {
+				terms = append(terms, flow.Name, flow.Condition)
+			}
+		}
+	}
+	return &domain.ChangeContext{
+		Pattern: domain.PatternModifyGatewayBranch, ProcessName: newGraph.ProcessNames[newGraph.Elements[id].ProcessID],
+		Predecessors: predecessors, Successors: successors, BranchTerms: sortedUnique(terms),
+		BranchChanges:  transitions,
+		RelatedFlowIDs: sortedUnique(append(incomingFlows, changedFlows...)),
 	}
 }
 
@@ -234,7 +332,7 @@ func removedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *d
 	if !preservedNeighbor {
 		return nil
 	}
-	return &domain.ChangeContext{Pattern: domain.PatternRemoveGatewayBranch, Predecessors: predecessors, Successors: successors, RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...))}
+	return &domain.ChangeContext{Pattern: domain.PatternRemoveGatewayBranch, Predecessors: predecessors, Successors: successors, BranchTerms: branchTerms(oldGraph, outgoingFlows), RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...))}
 }
 
 func sameScope(elements ...*domain.Element) bool {
@@ -448,9 +546,29 @@ func compareFlows(oldGraph, newGraph *domain.Graph) []domain.Change {
 		if newFlow != nil {
 			newElement = flowElement(newFlow)
 		}
-		changes = append(changes, domain.Change{ChangeType: domain.ModifySequenceFlow, OldElement: oldElement, NewElement: newElement, Impacts: []domain.Impact{}, UnresolvedImpact: []string{}, Reason: "sequence flow added, removed, or modified"})
+		changes = append(changes, domain.Change{ChangeType: domain.ModifySequenceFlow, OldElement: oldElement, NewElement: newElement, Impacts: []domain.Impact{}, UnresolvedImpact: []string{}, Reason: sequenceFlowReason(oldFlow, newFlow)})
 	}
 	return changes
+}
+
+func sequenceFlowReason(oldFlow, newFlow *domain.Flow) string {
+	if oldFlow == nil {
+		return "sequence flow added"
+	}
+	if newFlow == nil {
+		return "sequence flow removed"
+	}
+	parts := make([]string, 0, 3)
+	if oldFlow.SourceRef != newFlow.SourceRef || oldFlow.TargetRef != newFlow.TargetRef {
+		parts = append(parts, "endpoints")
+	}
+	if oldFlow.Condition != newFlow.Condition {
+		parts = append(parts, "condition")
+	}
+	if oldFlow.Name != newFlow.Name {
+		parts = append(parts, "label")
+	}
+	return "sequence flow " + strings.Join(parts, ", ") + " changed"
 }
 
 func flowElement(flow *domain.Flow) *domain.Element {
@@ -491,7 +609,14 @@ func outgoingConditions(graph *domain.Graph, id string) string {
 	var conditions []string
 	for _, flowID := range graph.Outgoing[id] {
 		if flow := graph.Flows[flowID]; flow != nil {
-			conditions = append(conditions, flow.ID+":"+flow.Name+":"+flow.Condition)
+			// A label is only a condition surrogate when the flow has no
+			// explicit condition. Renaming an annotated branch does not
+			// change its executable or documented condition expression.
+			condition := strings.TrimSpace(flow.Condition)
+			if condition == "" {
+				condition = strings.TrimSpace(flow.Name)
+			}
+			conditions = append(conditions, flow.ID+":"+condition)
 		}
 	}
 	sort.Strings(conditions)

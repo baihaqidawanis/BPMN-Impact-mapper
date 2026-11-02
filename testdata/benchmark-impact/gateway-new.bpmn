@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_GatewayControl_New">
+  <process id="Process_Approval" isExecutable="false">
+    <startEvent id="START" name="Need identified"/>
+    <userTask id="TASK-ENTER" name="Enter request amount"/>
+    <serviceTask id="TASK-SUBMIT" name="Submit request"/>
+    <exclusiveGateway id="GW-APPROVAL-LIMIT" name="Amount exceeds supervisor limit?" gatewayDirection="Diverging" default="FLOW-LIMIT-END"/>
+    <userTask id="TASK-APPROVE" name="Approve request"/>
+    <endEvent id="END" name="Request completed"/>
+    <sequenceFlow id="FLOW-START-ENTER" sourceRef="START" targetRef="TASK-ENTER"/>
+    <sequenceFlow id="FLOW-ENTER-SUBMIT" sourceRef="TASK-ENTER" targetRef="TASK-SUBMIT"/>
+    <sequenceFlow id="FLOW-SUBMIT-APPROVE" sourceRef="TASK-SUBMIT" targetRef="GW-APPROVAL-LIMIT"/>
+    <sequenceFlow id="FLOW-LIMIT-APPROVE" name="above limit" sourceRef="GW-APPROVAL-LIMIT" targetRef="TASK-APPROVE"><conditionExpression>${amount &gt; supervisorLimit}</conditionExpression></sequenceFlow>
+    <sequenceFlow id="FLOW-LIMIT-END" name="within limit" sourceRef="GW-APPROVAL-LIMIT" targetRef="END"/>
+    <sequenceFlow id="FLOW-APPROVE-END" sourceRef="TASK-APPROVE" targetRef="END"/>
+  </process>
+</definitions>

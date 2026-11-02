@@ -15,6 +15,9 @@ export interface ElementRef {
 }
 
 export interface ChangeContext {
+	branch_changes?: { flow_id: string; old_condition?: string; new_condition?: string; old_label?: string; new_label?: string }[];
+	process_name?: string;
+	branch_terms?: string[];
 	pattern: "INSERT_TASK" | "REMOVE_TASK_WITH_REWIRE" | "ADD_GATEWAY_BRANCH" | string;
 	predecessors?: ElementRef[];
 	successors?: ElementRef[];
@@ -53,6 +56,7 @@ export interface Impact {
 }
 
 export interface Change {
+	 related_files?: { file: string; module: string; layer: string; seed_file: string; seed_function: string; hops: number; ranked_position?: number; evidence: Evidence[] }[];
   change_type: string;
   old_element: ElementRef | null;
   new_element: ElementRef | null;

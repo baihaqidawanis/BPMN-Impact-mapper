@@ -9,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/llm"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 )
@@ -65,6 +66,63 @@ func TestOpenAICompatibleProviderUsesBoundedTypedContract(t *testing.T) {
 	}
 	if provider.Identity().Provider != "openai-compatible" || provider.Identity().PromptVersion != "planning-v1" {
 		t.Fatalf("identity=%#v", provider.Identity())
+	}
+}
+
+func TestOpenAICompatibleProviderOrchestratesAgainstLocalMock(t *testing.T) {
+	const evidenceID = "CH01-C01-E01"
+	for _, inventedFile := range []bool{false, true} {
+		t.Run(map[bool]string{false: "grounded", true: "invented-file"}[inventedFile], func(t *testing.T) {
+			responses := []string{
+				`{"decisions":[{"change_type":"ADD_TASK","element_id":"TASK-1","file":"internal/request.go","verdict":"RELEVANT","rationale":"The cited request handler is relevant.","evidence_ids":["CH01-C01-E01"]}]}`,
+				`{"plans":[{"change_type":"ADD_TASK","element_id":"TASK-1","file":"internal/request.go","module":"internal","layer":"application","action":"VERIFY","summary":"Check request validation behavior.","steps":["Inspect the cited handler."],"evidence_ids":["CH01-C01-E01"]}]}`,
+				`{"approved":true,"issues":[],"revised":[]}`,
+			}
+			if inventedFile {
+				responses[1] = strings.Replace(responses[1], "internal/request.go", "invented/file.go", 1)
+			}
+			calls := 0
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				if request.URL.Path != "/v1/chat/completions" {
+					t.Errorf("unexpected endpoint %q", request.URL.Path)
+				}
+				if calls >= len(responses) {
+					t.Error("unexpected extra model call")
+					writer.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				content := responses[calls]
+				calls++
+				_ = json.NewEncoder(writer).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": content}}}})
+			}))
+			defer server.Close()
+			provider, err := llm.NewOpenAICompatibleProvider(llm.OpenAICompatibleConfig{BaseURL: server.URL + "/v1", Model: "mock-model", PromptVersion: "planning-v1", Client: server.Client()})
+			if err != nil {
+				t.Fatal(err)
+			}
+			report := domain.Report{
+				AnalysisID: "analysis-1", InputFingerprint: "fingerprint-1",
+				Repository: domain.Repository{Name: "fixture", Revision: "rev-1"},
+				Changes: []domain.Change{{
+					ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "TASK-1", Name: "Validate request", Type: "userTask"},
+					Impacts: []domain.Impact{{File: "internal/request.go", Module: "internal", Layer: "application", RequiredAction: domain.ActionVerify,
+						Evidence: []domain.Evidence{{Type: "LABEL_TOKEN", Location: "internal/request.go:1", Excerpt: "validate request"}}}},
+				}},
+			}
+			plan, err := (planning.Orchestrator{Provider: provider}).Run(context.Background(), report)
+			if bundle := planning.BuildEvidenceBundle(report, planning.DefaultLimits()); bundle.Changes[0].Candidates[0].Evidence[0].ID != evidenceID {
+				t.Fatal("mock evidence ID drifted from the production bundle")
+			}
+			if inventedFile {
+				if err == nil || !strings.Contains(err.Error(), "unknown") || calls != 2 {
+					t.Fatalf("invented target accepted: plan=%#v err=%v calls=%d", plan, err, calls)
+				}
+				return
+			}
+			if err != nil || plan.Status != planning.StatusComplete || len(plan.Plans) != 1 || calls != 3 {
+				t.Fatalf("plan=%#v err=%v calls=%d", plan, err, calls)
+			}
+		})
 	}
 }
 

@@ -1,0 +1,54 @@
+import { test, expect } from "@playwright/test";
+import { readFile } from "node:fs/promises";
+
+test("saved benchmark is dated, downloadable and independent of current mapping", async ({ page }) => {
+  let analysisPosts = 0;
+  page.on("request", r => { if (r.method() === "POST" && r.url().endsWith("/analyses")) analysisPosts++; });
+  await page.goto("/?view=analysis");
+  await page.locator('input[name="repo_path"]').fill("another-repository");
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Saved benchmark results" });
+  await expect(panel.getByRole("heading", { name: "Benchmark results", exact: true })).toBeVisible();
+  await expect(panel).toContainText("Simple-ERP / Staff");
+  await expect(panel).toContainText("2026-10-29");
+  const hybrid = panel.getByRole("row").filter({ has: page.getByRole("rowheader", { name: "Hybrid", exact: true }) });
+  await expect(hybrid).toContainText("45.0%");
+  await expect(hybrid).toContainText("87.5%");
+  await expect(hybrid).toContainText("0.739");
+  await expect(panel).toContainText("They do not change when you select another repository");
+  await panel.getByText("How to read the scores", { exact: true }).click();
+  await expect(panel).toContainText("not an independently verified accuracy claim");
+  const downloadEvent = page.waitForEvent("download");
+  await panel.getByRole("link", { name: "Download results JSON" }).click();
+  const download = await downloadEvent;
+  const saved = JSON.parse(await readFile((await download.path())!, "utf8"));
+  expect(saved.positive_scenarios).toBe(4);
+  expect(saved.results).toHaveLength(4);
+  expect(saved.reference_status).toBe("provisional-source-review");
+  expect(analysisPosts).toBe(0);
+  await page.screenshot({ path: test.info().outputPath("benchmark-desktop.png"), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("benchmark-mobile.png"), fullPage: true });
+});
+
+test("latest experimental metrics stay separate from the four-method benchmark", async ({ page }) => {
+  await page.goto("/?view=analysis");
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
+  await page.getByText("Latest retrieval experiments · 2026-10-30", { exact: true }).click();
+  const panel = page.getByRole("region", { name: "Recent retrieval experiments", exact: true });
+  await expect(panel).toContainText("32 repeated analysis runs");
+  await expect(panel.getByRole("row")).toHaveCount(8);
+  const condition = panel.getByRole("row").filter({ hasText: "Allow copying cancelled PR" }).filter({ hasText: "Condition words" });
+  await expect(condition).toContainText("66.7%");
+  await expect(condition).toContainText("0.333");
+  await expect(panel).toContainText("No experimental variant was adopted");
+  const downloaded = page.waitForEvent("download");
+  await panel.getByRole("link", { name: "Download experiment results JSON" }).click();
+  const payload = JSON.parse(await readFile((await (await downloaded).path())!, "utf8"));
+  expect(payload.analysis_runs).toBe(32);
+  expect(payload.adopted_variants).toEqual([]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("recent-experiments-mobile.png"), fullPage: true });
+});

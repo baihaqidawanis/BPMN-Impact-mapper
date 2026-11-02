@@ -1,0 +1,3653 @@
+{
+  "schema_version": "2",
+  "purpose": "research-only baseline traceability; excluded from inference and model assessment input",
+  "review_status": "provisional single AI static source review",
+  "repository": {
+    "name": "Simple-ERP",
+    "git_head": "c9344971a573d5c44d9d4e58f23657eda4d18a86",
+    "working_tree_dirty": true
+  },
+  "limitations": [
+    "Single AI static source review; no independent review or runtime/role-session verification.",
+    "Existing task-to-code relationships are not required-change labels or an exhaustive dependency graph.",
+    "Gateway branches are preserved as BPMN control references; not all conditions have independent source mappings.",
+    "Function ranges use declaration text, not AST; TypeScript component ranges may include nested functions.",
+    "Related test source was inspected, not executed; absence of a link does not establish absence of tests.",
+    "L0-L2 are navigation/decomposition references, not invented direct task-to-code mappings.",
+    "BPMN labels and source evidence remain in their original language; no diagram/source is rewritten."
+  ],
+  "file_sha256": {
+    "backend/cmd/api/main.go": "e4116d945eaa0081e4576d7ea6b4c8fbfcae4e520b8cd9f638e31f58b8642a1b",
+    "backend/internal/auth/domain/role.go": "79a9076fa8f88e01656b0069e47b64368b07c97392edb32b285e46eb077d8158",
+    "backend/internal/finance/adapter/http/handler.go": "05a5d8e35eb1fdab74afbda263df8db03d9a96febc8f78e9c3617beaea8e9af4",
+    "backend/internal/finance/adapter/postgres/store.go": "b23d1c4093f0b52336e0b370677b1668463f211d7b1bbd337107ad408d1d955c",
+    "backend/internal/finance/application/service.go": "cf2b716d4ffd256c6fd90ab367a289d802f255148df1bd68f7c9416f981ea784",
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/internal/inventory/application/service.go": "fb9d72bf4e7d68f4bbd750822ae019055ad79121aa21dbcdae2b9448f6cd7783",
+    "backend/internal/masterdata/adapter/http/handler.go": "e0be36ba5f99f2d0cc876309da1a9e2df13b4d77138d5bceaa1a3aa1bc92d01b",
+    "backend/internal/masterdata/adapter/http/settings.go": "f9f72651cdef8c4430228cad626c820d64406eaabf0956b789db8a571f8b8260",
+    "backend/internal/masterdata/adapter/postgres/settings.go": "8523bc3b3e3a361123b9989d39e35279fa04e4e6b438d6c964965cf1ef826b9c",
+    "backend/internal/masterdata/adapter/postgres/store.go": "d838d63024920cd1801df70d90fbeedb7cc6c81f8a2fcb84fac183fe2e616fc9",
+    "backend/internal/masterdata/application/service.go": "ae7d07d8012fb06077d83c4b41757fd3ae15cc73636c1c9e106a5bfabcec2a27",
+    "backend/internal/masterdata/application/settings.go": "dd94e9a4af20b9fd8c76ae0f5abec0f70b193eb305e5b8d0dce234df5afc5220",
+    "backend/internal/masterdata/domain/entity.go": "4fdccaf6781a739612d4d7a31d3f2c61bd198c1d6c941dde91a130f3cb004458",
+    "backend/internal/masterdata/domain/settings.go": "d37acf53cb91e9e509b1b689b6bcf84b681f51221fdd453d801d999b41f12833",
+    "backend/internal/platform/authorization/super_admin.go": "091da1a53710e1f693872185753cff04ff1b45b6334c5c83acff631bbb21ed41",
+    "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67",
+    "backend/internal/sales/adapter/http/handler.go": "beae2365a129e0ac9d21cb65983b756e23f2c9476dc8fe75c903e8f72c9f5c05",
+    "backend/internal/sales/adapter/postgres/store.go": "cd2625b386f9f315baa854878832f2b731a2122d84e35d533d5bcc34d90bda67",
+    "backend/internal/sales/application/service.go": "9b9ca9da22a158724af7ff98f3904bd967936cf644c065b167da38948c2da916",
+    "backend/test/integration/finance_test.go": "4b5691329c854a12c3b9fc81ea55dd67084f2f33319d69d0b131805dd5d0ab98",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "docs/bpm-haqi/roles/staff/inventory/level-1/role-staff-l1-inventory.bpmn": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn": "079b9f005afe3e6aab55b7c788330ae0bd9a87d702b0a510489473166abb6d4c",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-correction.bpmn": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-sources.bpmn": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn": "1aead6115c0c7fe82e9abd3863b895b61bf1f534a989f15410d6409aa2796966",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-create.bpmn": "5c6c5aeebeff196ca00e2457b1adf08461290eb9f8560fa05d7baacc3c52e5c7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-post.bpmn": "ac677a4401b21e5ebc15293ee743817500897f53141b5be758f99a9f6f0a30ed",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-delivery-post.bpmn": "14b1a2b7a882866374840960418f9b294841ab4293d661ff41e31170d60328a7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn": "78cb3d88f5adc46832b105efee83f8377351f9c1d72708088247f465b51625e7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-balances.bpmn": "2cc2cfd5bc5f233f9f12595346f8207f7dc1185e3d2a9c010bd0ee17aef8aa4a",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-movements.bpmn": "a58db3762897909ad74a4be402c901d438f93971f9d3860467e7efac839bf38d",
+    "docs/bpm-haqi/roles/staff/level-0/role-staff-l0.bpmn": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l1-master.bpmn": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l2-master.bpmn": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l3-master-list.bpmn": "171557b86a9773fa0fee6d4212698f34ac3aab9a3dfb3bd7b3e2e82a44401572",
+    "docs/bpm-haqi/roles/staff/p2p/level-1/role-staff-l1-p2p.bpmn": "9a945fb31c80e51c908c9fd13e4912b6172b75b30eb59f66e166f3f6a6d98eea",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-ap.bpmn": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-correction.bpmn": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-po-gr.bpmn": "a5ba00ee8ba3b60131f1a61aad7859b0a06231cb4b9d6c932b05be5a33caccc7",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-pr.bpmn": "8a10565947a4f67d2b797f44a471d741366a7899fe627e291a886c99a139ea9d",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn": "01c398e15b88d4ec5d106eff27d049ab3a525d600c71afbd15ecbd778844a148",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn": "4aebd70c6abba119a059e343a626c07787b796d487b535dda4529d427982b8f0",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn": "c96bf8d2c9a3d65931c39862dca60ca5d14dfd87267fbd511afaf91381b7e4f5",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn": "a8a8a2c8a39b4930c8dd92a3482a7bb698c32359a85dff987f73ebead1d2135c",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn": "d407f0923dafaac4acf22a3a240ea685b87a45606f6fab7d20ecad06b8c0aef3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn": "68540c68b20e4c0a2d7de29b6da9af520eebd305e324994499adb9c35c4cc5a4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn": "bd3053a6f69459cc3d94b1c08c512749ef8726cd21a58dede8961c817022b577",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn": "eb600e95c6de03fe245ec4b3547a619ab67ae4f4a7bf054b72995a7c6371db2a",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn": "0ae2fd5fc34ad15a99ae17839723ffd482244a4770b97faf482a498dea6076f1",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn": "8437aab61408c43131224bdb4fbc753e7e795472dec3b5288819b49c5a595add",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn": "eecfac822aae8f672f0331a038f6b55f07370eea59e190781fe866723fe86276",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn": "038e6df589d12fdfa8441cb543eff9c6387d2d2059e83b6cac491226d1265bdf",
+    "docs/bpm-haqi/roles/super-admin/level-0/role-super-admin-l0.bpmn": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn": "028d68d2d92c0d9e0aa796cdca4fabbfd582864199bf27b5c8914a808d7e3e7c",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn": "4f80c3bb29148c9c1d6838b795564ff2d03f6e4e897804e40e3b4de2b4092c1f",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn": "3ed34b48b2babc189faf0f7fe48a72d25d1cd3c9be3ba9747cfba5b52779c320",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn": "a8f3d5a07a491bd3d98361f12cb0d33bd642d576013bd7fcbe319e2958fd65d1",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn": "0578f9e19cb240a29875a787193ffc23a3e7f66999cb4653e1ca970ce5d72443",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn": "728678cd61a2f63414fe007394988fdde897e6745f0f0db3fc731d310fc34173",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn": "e54d18e356b62b5ea9f44ea454fdb4a884cef3fad6ebb68cd544c4c3884704d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn": "e7ddbbc542c5507c9926160c9b9cff827f94549a7f602be4b962002dbe116b44",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn": "c2348574c3fbf3b16f18cf0168abb1024fa5c0e85c854ca1825147eb52c90909",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn": "43ea014d63f90e462a2dd9df6c4955d8973e7c1d9109903f02fbfff887a1b339",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn": "3c4b94c80423329bdadb5b81a079e7fb0a90e252c254430cb47678bd51b9ee78",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn": "f28a13f7a9237111981efacb27022a2d181e545e81b0645d9335c34a46c41a1e",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn": "5ff01680be0e624ef430fac32f3321d225132626b8c0a60b7178fd287c9f2fcf",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn": "8de75b74168cbbe706afba0b718b569f6db10d75cad87ad1f672c31d44baa5d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn": "a96e6815a38a0f04b68e15a3fb0ea1f3bbb3c86584638c115c175ffae71aca02",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn": "47c4a180e3f2485a2d70be56717ef25f64a85537f6eda54c49f65f318cfce3f0",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn": "35893308e574e79e1a86b465d24e1a63be0186c1564561d36ace9118e561c681",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn": "0e7c68f2fd95a09a4aa2fa5d75979c8e4a4579c8080d148988d7273eb836d2fe",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn": "433841646daea14b8c54f0aa4eada081ee3917ffa349488968c19b60c06d6617",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn": "7caf08d98976257dc1b4bd852c846e232236475fd0f6ac789d16495ff0c8444a",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn": "f8a995ea61885f0d236cb858b7ec740f5ad76cb0eece21d63546d895f6ea91a4",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn": "095fee3e07d51ac1e21c135de0686cd9c06c51f2bf030d8b22436e764f70ce27",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn": "f214a0c836410ec2c5f2ad80bb9b7fb2bb86ac8c43d0e1c85a138d0f3c2f0171",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn": "d67e026b4018ae05bc597375fb7895d1d86a27482acbd6670dbd73f081ae9c9d",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn": "551e807848f02150371eca6b1b4666e94f37c8b3b07dcb3ad3ef8ceaeb63e4ce",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn": "0eb241b9c0a35cacd3f9ab7c53ab7c675788d77fd22301cacf97b1176495e410",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn": "8a5de1a161993813fe69902bde3086e25ce0e847a8d66659c5fd0cd600f775ec",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn": "4c94fa74ea5f1d4fcc4481336111d19e7b25929ceeea245d5ca797d6e3d4ca2c",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn": "fb89bd0d5d8ba8ee9ead75341e777ca19417fb6e58287fb7d09422bec42e99de",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn": "bfd98f23a4ebf1011c66a2f0b86c5437795b1d94fe62d82ed19265c98d5e7efb",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn": "5aaf8e76909cc2ee70c1506e30f9677097b69f84c74c9c1f94ac558f041bb848",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn": "c433a35484e67902e761f6c3ffd6e86521bfeb1cee39c1410e0a636ba8c0b14d",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn": "c84bdfded4af5009122c7932a78ddd67b0206c4974948f8a2b1b0502d9285358",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn": "13bddb1286d5d8a64337283cc77880a2d53b2b3253ec04d2fe5d51c8f4294b2a",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn": "ec8e12b0c146ef074b0736a394d758aef5ed74288724fd52dddf2d635b39bbd5",
+    "docs/bpm-haqi/roles/supervisor/level-0/role-supervisor-l0.bpmn": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn": "e05788ae156f2d75e9e4dfa7b3edd14cbd820fedc1d3886e0aa5f65443d76ce3",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn": "6889b5fad4d741b43cb16bd685ddb6d460944c3495f84a2204e965cf80c36e78",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn": "88e5d3fe6c1bf11b07ffd1c12cffcc5bfb59ba602d782f051ccdac2aef16377c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn": "49b7212be2ee63ea055c92c03ea393a0205aa2caecd98a740ca8121f628b2e97",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn": "0127196e8c103e7085a5ad94186be8c4cb1e9b3b80b7ec3bf39a4f6a2ef2d0d3",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn": "6e8e4350e7a641f6b9a82e6cf399f20cfbc16458e801533d884e85f5eb4eecbe",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn": "db5a55033a864aede3d388506c9ab7cf6727f37c2433117398b020d607503f18",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn": "d4bfd5fd66a50c732e52fe32de5c0dff783594201939d1e9239621a6e47d6894",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn": "6181a04150e5626b8e23db00c71a65b34a53ab2e61286d25027a6a9ba114323c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn": "0adad4153fd78601141820b23d93394a281aebdd9709675eec53f59969dbfba5",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn": "167dabeeb195fdfcdbe566f61fa51552c95ced4bc4a13de0b180930dc9572443",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn": "a2ff12fbb9b3621dbb30eaf42fffad1f3a39fa4dec85dab0b092fa066dfe53c4",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn": "8f3c7627ade95008115397cd5166e7c554d654cc9f59e6d6155d709e931ca624",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn": "208fdbc2145ca30f35cd2497dd9076a3241a4515201a218486c4173af4948a0f",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn": "c48fc6b83ebe2c92b947edd946faa31f169c98c58557fa1be1258b5684fc6a07",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn": "50b3751ce79c82d88a9ff6652ed7344d3f47d7b247a7235914bfdd9bd1622f2d",
+    "frontend/features/finance/finance-workspace.tsx": "566d7ba0abcb5bb3429399f7e159fbba1b07ac8e1a34d5ab1edce236a133bb7c",
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "frontend/features/inventory/inventory-workspace.tsx": "c8c579fa066fc19c2c5b762dc34dabc3c1bc7b22aa43aff5ba07c7cde21fd947",
+    "frontend/features/master-data/master-data-panel.tsx": "c1e8f90ece61b702373993a8aae746ba6aa4b87a98c1c53566e00e60c5a90cb6",
+    "frontend/features/purchasing/goods-receipt-panel.tsx": "74db5c6e72f8453f59f80298b336fcc56e424d0e678f90c6d1914c9b48b5a240",
+    "frontend/features/purchasing/purchase-order-panel.tsx": "c34482b062d81ff06690183b42f54c29bacfe29991f40a1b56fa241cfd8c97dc",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03",
+    "frontend/features/sales/delivery-panel.tsx": "bd72027cbc595d059d6766ad119a3214405a477c60c90222dd0746c263399756",
+    "frontend/features/settings/settings-form.tsx": "d03add2dbce9c31db23ac87c752699cb19409cd31ab5bf1b7a829d703d78b577"
+  },
+  "snapshot_id": "876d5d30117e798a8733986217f19434",
+  "scope": {
+    "role": "supervisor",
+    "module": "p2p",
+    "level": 3,
+    "processes": 9,
+    "activities": 51
+  },
+  "processes": [
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn",
+      "process_id": "Process_role_supervisor_l3_ap_invoice_void",
+      "name": "Void invoice supplier - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "ap-invoice-void",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_ap_invoice_void_input",
+          "name": "Isi alasan void invoice",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 218,
+                  "match": "`${invoicePrefix}/${item.id}/void`",
+                  "excerpt": "... === \"DRAFT\" && <button disabled={!voidReason} onClick={() => command(`${invoicePrefix}/${item.id}/void`, { reason: voidReason })}>Void</button>}"
+                },
+                {
+                  "line": 218,
+                  "match": "disabled={!voidReason}",
+                  "excerpt": "...wApprove && kind === \"customer\" && item.status === \"DRAFT\" && <button disabled={!voidReason} onClick={() => command(`${invoicePrefix}/${item.id}/void`, { reason: voidReason })}>Void</button>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_invoice_void_check",
+          "name": "Invoice POSTED; tanpa alokasi dari payment POSTED; alasan ada",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Tidak membuat jurnal akuntansi baru; aplikasi tidak memiliki general ledger.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierInvoice",
+              "role": "VALIDATION",
+              "function_start_line": 254,
+              "function_end_line": 279,
+              "evidence": [
+                {
+                  "line": 255,
+                  "match": "reason == \"\"",
+                  "excerpt": "if reason == \"\" {"
+                },
+                {
+                  "line": 265,
+                  "match": "i.status='POSTED'",
+                  "excerpt": "WHERE i.id=$1 AND i.status='POSTED' AND NOT EXISTS(SELECT 1 FROM supplier_payment_allocations a JOIN supplier_payments p ON p.id=a.payment_id WHERE a.invoice_id=i.id AND p.status='POSTED')"
+                },
+                {
+                  "line": 265,
+                  "match": "p.status='POSTED'",
+                  "excerpt": "... supplier_payments p ON p.id=a.payment_id WHERE a.invoice_id=i.id AND p.status='POSTED')"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_invoice_void_effect0",
+          "name": "Tandai invoice VOID; simpan voided_by dan alasan",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierInvoice",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 254,
+              "function_end_line": 279,
+              "evidence": [
+                {
+                  "line": 264,
+                  "match": "status='VOID'",
+                  "excerpt": "err = tx.QueryRow(ctx, `UPDATE supplier_invoices i SET status='VOID',void_reason=$2,voided_by=$3,voided_at=now(),version=version+1,updated_at=now()"
+                },
+                {
+                  "line": 264,
+                  "match": "voided_by=$3",
+                  "excerpt": "...Row(ctx, `UPDATE supplier_invoices i SET status='VOID',void_reason=$2,voided_by=$3,voided_at=now(),version=version+1,updated_at=now()"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_invoice_void_effect1",
+          "name": "Audit void; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierInvoice",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 254,
+              "function_end_line": 279,
+              "evidence": [
+                {
+                  "line": 271,
+                  "match": "\"ACT-FIN-SINV-VOID\"",
+                  "excerpt": "if err = audit(ctx, tx, actor, \"VOID_SUPPLIER_INVOICE\", \"ACT-FIN-SINV-VOID\", \"SUPPLIER_INVOICE\", id, \"POSTED\", \"VOID\", reason, request); err != nil {"
+                },
+                {
+                  "line": 274,
+                  "match": "tx.Commit(",
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_invoice_void_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.voidSupplierInvoice",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 146,
+              "function_end_line": 156,
+              "evidence": [
+                {
+                  "line": 155,
+                  "match": "result(w, document, err,",
+                  "excerpt": "result(w, document, err, 200)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "match": "if err != nil",
+                  "excerpt": "if err != nil {"
+                },
+                {
+                  "line": 86,
+                  "match": "respond(w, status, document)",
+                  "excerpt": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "match": "w.WriteHeader(status)",
+                  "excerpt": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.voidSupplierInvoice",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 146,
+          "function_end_line": 156,
+          "evidence": [
+            {
+              "line": 154,
+              "match": "h.Service.VoidSupplierInvoice(",
+              "excerpt": "document, err := h.Service.VoidSupplierInvoice(r.Context(), chi.URLParam(r, \"id\"), value, actor(r), requestID(r))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.VoidSupplierInvoice",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 89,
+          "function_end_line": 91,
+          "evidence": [
+            {
+              "line": 90,
+              "match": "s.store.VoidSupplierInvoice(",
+              "excerpt": "return s.store.VoidSupplierInvoice(c, id, reason, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.voidSupplierInvoice",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 146,
+          "function_end_line": 156,
+          "evidence": [
+            {
+              "line": 147,
+              "match": "requireApprove(w, r)",
+              "excerpt": "if !requireApprove(w, r) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "requireApprove",
+          "role": "ROLE_CHECK_HELPER",
+          "function_start_line": 59,
+          "function_end_line": 65,
+          "evidence": [
+            {
+              "line": 60,
+              "match": "authdomain.CanApprove(",
+              "excerpt": "if authdomain.CanApprove(role(r)) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/finance_test.go",
+          "function": "TestP2PConsolidatedInvoiceExactMatchPartialPaymentCloseAndVoid",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 20,
+          "function_end_line": 140,
+          "evidence": [
+            {
+              "line": 116,
+              "match": "VoidSupplierInvoice(",
+              "excerpt": "if _, err = finance.VoidSupplierInvoice(ctx, invoice.ID, \"blocked by payment\", adminID, \"fin-p2p-17\"); err == nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_0",
+          "source": "role_supervisor_l3_ap_invoice_void_start",
+          "target": "role_supervisor_l3_ap_invoice_void_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_1",
+          "source": "role_supervisor_l3_ap_invoice_void_input",
+          "target": "role_supervisor_l3_ap_invoice_void_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_2",
+          "source": "role_supervisor_l3_ap_invoice_void_check",
+          "target": "role_supervisor_l3_ap_invoice_void_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_3",
+          "source": "role_supervisor_l3_ap_invoice_void_valid",
+          "target": "role_supervisor_l3_ap_invoice_void_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_4",
+          "source": "role_supervisor_l3_ap_invoice_void_effect0",
+          "target": "role_supervisor_l3_ap_invoice_void_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_5",
+          "source": "role_supervisor_l3_ap_invoice_void_effect1",
+          "target": "role_supervisor_l3_ap_invoice_void_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_Flow_6",
+          "source": "role_supervisor_l3_ap_invoice_void_valid",
+          "target": "role_supervisor_l3_ap_invoice_void_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_result_to_activity",
+          "source": "role_supervisor_l3_ap_invoice_void_result_merge",
+          "target": "role_supervisor_l3_ap_invoice_void_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_invoice_void_result_to_end",
+          "source": "role_supervisor_l3_ap_invoice_void_result_activity",
+          "target": "role_supervisor_l3_ap_invoice_void_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn",
+      "process_id": "Process_role_supervisor_l3_ap_match",
+      "name": "Match invoice supplier - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "ap-match",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_ap_match_input",
+          "name": "Pilih Match",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 215,
+                  "match": "`${invoicePrefix}/${item.id}/match`",
+                  "excerpt": "...Id !== actorId || allowSelfApprove) && <button onClick={() => command(`${invoicePrefix}/${item.id}/match`)}>Match</button>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_match_check",
+          "name": "Lock invoice MATCH_PENDING; Supervisor bukan creator; Super Admin boleh self-match; baca line PO dan invoice",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Kode membandingkan line PO dengan invoice. Bukan query three-way match GR terpisah pada saat match; PO RECEIVED sudah disyaratkan saat create.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.MatchSupplierInvoice",
+              "role": "VALIDATION",
+              "function_start_line": 138,
+              "function_end_line": 212,
+              "evidence": [
+                {
+                  "line": 147,
+                  "match": "\"MATCH_PENDING\"",
+                  "excerpt": "...ing, &document.Version, &creatorID); err != nil || document.Status != \"MATCH_PENDING\" {"
+                },
+                {
+                  "line": 151,
+                  "match": "authorization.CanSelfReview(",
+                  "excerpt": "allowed, roleErr := authorization.CanSelfReview(ctx, tx, actor)"
+                },
+                {
+                  "line": 194,
+                  "match": "domain.ExactMatch(",
+                  "excerpt": "if matchErr := domain.ExactMatch(expected, actual); matchErr != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_match_positive",
+          "name": "Set invoice POSTED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.MatchSupplierInvoice",
+              "role": "BRANCH_OUTCOME",
+              "function_start_line": 138,
+              "function_end_line": 212,
+              "evidence": [
+                {
+                  "line": 192,
+                  "match": "to := \"POSTED\"",
+                  "excerpt": "to := \"POSTED\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_match_negative",
+          "name": "Set invoice MATCH_EXCEPTION",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.MatchSupplierInvoice",
+              "role": "BRANCH_OUTCOME",
+              "function_start_line": 138,
+              "function_end_line": 212,
+              "evidence": [
+                {
+                  "line": 195,
+                  "match": "to = \"MATCH_EXCEPTION\"",
+                  "excerpt": "to = \"MATCH_EXCEPTION\""
+                },
+                {
+                  "line": 194,
+                  "match": "domain.ExactMatch(",
+                  "excerpt": "if matchErr := domain.ExactMatch(expected, actual); matchErr != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_match_effect1",
+          "name": "Simpan mismatch_reason dan versi; audit PUR-INV-002; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.MatchSupplierInvoice",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 138,
+              "function_end_line": 212,
+              "evidence": [
+                {
+                  "line": 198,
+                  "match": "mismatch_reason=NULLIF",
+                  "excerpt": "_, err = tx.Exec(ctx, `UPDATE supplier_invoices SET status=$1,mismatch_reason=NULLIF($2,''),version=version+1,updated_at=now() WHERE id=$3`, to, reason, id)"
+                },
+                {
+                  "line": 202,
+                  "match": "\"PUR-INV-002\"",
+                  "excerpt": "if err = audit(ctx, tx, actor, \"MATCH_SUPPLIER_INVOICE\", \"PUR-INV-002\", \"SUPPLIER_INVOICE\", id, \"MATCH_PENDING\", to, reason, request); err != nil {"
+                },
+                {
+                  "line": 205,
+                  "match": "tx.Commit(",
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_match_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.matchSupplierInvoice",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 126,
+              "function_end_line": 132,
+              "evidence": [
+                {
+                  "line": 131,
+                  "match": "result(w, document, err,",
+                  "excerpt": "result(w, document, err, 200)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "match": "if err != nil",
+                  "excerpt": "if err != nil {"
+                },
+                {
+                  "line": 86,
+                  "match": "respond(w, status, document)",
+                  "excerpt": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "match": "w.WriteHeader(status)",
+                  "excerpt": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.matchSupplierInvoice",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 126,
+          "function_end_line": 132,
+          "evidence": [
+            {
+              "line": 130,
+              "match": "h.Service.MatchSupplierInvoice(",
+              "excerpt": "document, err := h.Service.MatchSupplierInvoice(r.Context(), chi.URLParam(r, \"id\"), actor(r), requestID(r))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.MatchSupplierInvoice",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 83,
+          "function_end_line": 85,
+          "evidence": [
+            {
+              "line": 84,
+              "match": "s.store.MatchSupplierInvoice(",
+              "excerpt": "return s.store.MatchSupplierInvoice(c, id, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.matchSupplierInvoice",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 126,
+          "function_end_line": 132,
+          "evidence": [
+            {
+              "line": 127,
+              "match": "requireApprove(w, r)",
+              "excerpt": "if !requireApprove(w, r) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "requireApprove",
+          "role": "ROLE_CHECK_HELPER",
+          "function_start_line": 59,
+          "function_end_line": 65,
+          "evidence": [
+            {
+              "line": 60,
+              "match": "authdomain.CanApprove(",
+              "excerpt": "if authdomain.CanApprove(role(r)) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/platform/authorization/super_admin.go",
+          "function": "CanSelfReview",
+          "role": "SELF_REVIEW_POLICY",
+          "function_start_line": 10,
+          "function_end_line": 14,
+          "evidence": [
+            {
+              "line": 12,
+              "match": "role='SUPER_ADMIN' AND status='ACTIVE'",
+              "excerpt": "...= tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND role='SUPER_ADMIN' AND status='ACTIVE')`, actor).Scan(&allowed)"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/finance_test.go",
+          "function": "TestP2PConsolidatedInvoiceExactMatchPartialPaymentCloseAndVoid",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 20,
+          "function_end_line": 140,
+          "evidence": [
+            {
+              "line": 69,
+              "match": "MatchSupplierInvoice(",
+              "excerpt": "invoice, err = finance.MatchSupplierInvoice(ctx, invoice.ID, supervisorID, \"fin-p2p-9\")"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_ap_match_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_valid",
+          "type": "exclusiveGateway",
+          "name": "Hasil ExactMatch?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_0",
+          "source": "role_supervisor_l3_ap_match_start",
+          "target": "role_supervisor_l3_ap_match_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_1",
+          "source": "role_supervisor_l3_ap_match_input",
+          "target": "role_supervisor_l3_ap_match_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_2",
+          "source": "role_supervisor_l3_ap_match_check",
+          "target": "role_supervisor_l3_ap_match_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_3",
+          "source": "role_supervisor_l3_ap_match_effect1",
+          "target": "role_supervisor_l3_ap_match_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_4",
+          "source": "role_supervisor_l3_ap_match_valid",
+          "target": "role_supervisor_l3_ap_match_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_5",
+          "source": "role_supervisor_l3_ap_match_valid",
+          "target": "role_supervisor_l3_ap_match_positive",
+          "name": "Cocok",
+          "condition": "Cocok"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_6",
+          "source": "role_supervisor_l3_ap_match_valid",
+          "target": "role_supervisor_l3_ap_match_negative",
+          "name": "Mismatch",
+          "condition": "Mismatch"
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_7",
+          "source": "role_supervisor_l3_ap_match_positive",
+          "target": "role_supervisor_l3_ap_match_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_Flow_8",
+          "source": "role_supervisor_l3_ap_match_negative",
+          "target": "role_supervisor_l3_ap_match_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_result_to_activity",
+          "source": "role_supervisor_l3_ap_match_result_merge",
+          "target": "role_supervisor_l3_ap_match_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_match_result_to_end",
+          "source": "role_supervisor_l3_ap_match_result_activity",
+          "target": "role_supervisor_l3_ap_match_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn",
+      "process_id": "Process_role_supervisor_l3_ap_payment_post",
+      "name": "Posting pembayaran supplier - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "ap-payment-post",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_input",
+          "name": "Pilih Post Payment",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 229,
+                  "match": "`${paymentPrefix}/${item.id}/post`",
+                  "excerpt": "...Id !== actorId || allowSelfApprove) && <button onClick={() => command(`${paymentPrefix}/${item.id}/post`, { version: item.version })}>Post</button>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_check",
+          "name": "Lock payment/invoice; DRAFT dan versi cocok; party/currency/tanggal/outstanding valid; Supervisor bukan creator, Super Admin aktif boleh self-post",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Created_by dibandingkan dengan actor, kecuali Super Admin aktif sebagai bypass.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.PostSupplierPayment",
+              "role": "VALIDATION",
+              "function_start_line": 346,
+              "function_end_line": 450,
+              "evidence": [
+                {
+                  "line": 355,
+                  "match": "\"DRAFT\"",
+                  "excerpt": "....Version, &paymentDate, &creatorID); err != nil || document.Status != \"DRAFT\" || document.Version != version {"
+                },
+                {
+                  "line": 355,
+                  "match": "document.Version != version",
+                  "excerpt": "...paymentDate, &creatorID); err != nil || document.Status != \"DRAFT\" || document.Version != version {"
+                },
+                {
+                  "line": 359,
+                  "match": "authorization.CanSelfReview(",
+                  "excerpt": "allowed, roleErr := authorization.CanSelfReview(ctx, tx, actor)"
+                },
+                {
+                  "line": 388,
+                  "match": "domain.ValidatePayment(",
+                  "excerpt": "if err = domain.ValidatePayment(item.amount, item.amount, document.Currency, item.currency, paymentDate, item.invoiceDate); err != nil || item.amount > item.outstanding {"
+                },
+                {
+                  "line": 388,
+                  "match": "item.amount > item.outstanding",
+                  "excerpt": "...urrency, item.currency, paymentDate, item.invoiceDate); err != nil || item.amount > item.outstanding {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_effect0",
+          "name": "Kurangi outstanding; invoice PARTIALLY_PAID atau PAID",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.PostSupplierPayment",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 346,
+              "function_end_line": 450,
+              "evidence": [
+                {
+                  "line": 408,
+                  "match": "UPDATE supplier_invoices SET outstanding=$2",
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_invoices SET outstanding=$2,status=$3,version=version+1,updated_at=now() WHERE id=$1`, item.invoice, remaining, status); err != nil {"
+                },
+                {
+                  "line": 406,
+                  "match": "status = \"PAID\"",
+                  "excerpt": "status = \"PAID\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_effect1",
+          "name": "Jika semua invoice non-VOID lunas: PO RECEIVED ke CLOSED; PR ke COMPLETED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.PostSupplierPayment",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 346,
+              "function_end_line": 450,
+              "evidence": [
+                {
+                  "line": 420,
+                  "match": "status='CLOSED'",
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE purchase_orders SET status='CLOSED',version=version+1,updated_at=now() WHERE id=$1 AND status='RECEIVED'`, item.source); err != nil {"
+                },
+                {
+                  "line": 427,
+                  "match": "status='COMPLETED'",
+                  "excerpt": "err = tx.QueryRow(ctx, `UPDATE purchase_requests r SET status='COMPLETED',version=r.version+1,updated_at=now() FROM purchase_orders p WHERE p.id=$1 AND r.id=p.purchase_request_id AND r.status='CONVERTED_TO_PO' RETURNING r.id`, item.source).Scan(&requestID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_effect2",
+          "name": "Payment POSTED; audit alokasi/penutupan; commit atomik",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.PostSupplierPayment",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 346,
+              "function_end_line": 450,
+              "evidence": [
+                {
+                  "line": 437,
+                  "match": "UPDATE supplier_payments SET status='POSTED'",
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_payments SET status='POSTED',version=version+1,posted_at=now() WHERE id=$1`, id); err != nil {"
+                },
+                {
+                  "line": 411,
+                  "match": "\"PUR-PAY-002\"",
+                  "excerpt": "if err = audit(ctx, tx, actor, \"APPLY_SUPPLIER_PAYMENT\", \"PUR-PAY-002\", \"SUPPLIER_INVOICE\", item.invoice, item.status, status, \"\", request); err != nil {"
+                },
+                {
+                  "line": 443,
+                  "match": "tx.Commit(",
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_post_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.postSupplierPayment",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 176,
+              "function_end_line": 186,
+              "evidence": [
+                {
+                  "line": 185,
+                  "match": "result(w, document, err,",
+                  "excerpt": "result(w, document, err, 200)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "match": "if err != nil",
+                  "excerpt": "if err != nil {"
+                },
+                {
+                  "line": 86,
+                  "match": "respond(w, status, document)",
+                  "excerpt": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "match": "w.WriteHeader(status)",
+                  "excerpt": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.postSupplierPayment",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 176,
+          "function_end_line": 186,
+          "evidence": [
+            {
+              "line": 184,
+              "match": "h.Service.PostSupplierPayment(",
+              "excerpt": "document, err := h.Service.PostSupplierPayment(r.Context(), chi.URLParam(r, \"id\"), value, actor(r), requestID(r))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.PostSupplierPayment",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 98,
+          "function_end_line": 100,
+          "evidence": [
+            {
+              "line": 99,
+              "match": "s.store.PostSupplierPayment(",
+              "excerpt": "return s.store.PostSupplierPayment(c, id, version, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.postSupplierPayment",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 176,
+          "function_end_line": 186,
+          "evidence": [
+            {
+              "line": 177,
+              "match": "requireApprove(w, r)",
+              "excerpt": "if !requireApprove(w, r) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "requireApprove",
+          "role": "ROLE_CHECK_HELPER",
+          "function_start_line": 59,
+          "function_end_line": 65,
+          "evidence": [
+            {
+              "line": 60,
+              "match": "authdomain.CanApprove(",
+              "excerpt": "if authdomain.CanApprove(role(r)) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/platform/authorization/super_admin.go",
+          "function": "CanSelfReview",
+          "role": "SELF_REVIEW_POLICY",
+          "function_start_line": 10,
+          "function_end_line": 14,
+          "evidence": [
+            {
+              "line": 12,
+              "match": "role='SUPER_ADMIN' AND status='ACTIVE'",
+              "excerpt": "...= tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND role='SUPER_ADMIN' AND status='ACTIVE')`, actor).Scan(&allowed)"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/finance_test.go",
+          "function": "TestP2PConsolidatedInvoiceExactMatchPartialPaymentCloseAndVoid",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 20,
+          "function_end_line": 140,
+          "evidence": [
+            {
+              "line": 97,
+              "match": "PostSupplierPayment(",
+              "excerpt": "if _, err = finance.PostSupplierPayment(ctx, payment1.ID, payment1.Version, supervisorID, \"fin-p2p-13\"); err != nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_ap_payment_post_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_0",
+          "source": "role_supervisor_l3_ap_payment_post_start",
+          "target": "role_supervisor_l3_ap_payment_post_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_1",
+          "source": "role_supervisor_l3_ap_payment_post_input",
+          "target": "role_supervisor_l3_ap_payment_post_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_2",
+          "source": "role_supervisor_l3_ap_payment_post_check",
+          "target": "role_supervisor_l3_ap_payment_post_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_3",
+          "source": "role_supervisor_l3_ap_payment_post_valid",
+          "target": "role_supervisor_l3_ap_payment_post_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_4",
+          "source": "role_supervisor_l3_ap_payment_post_effect0",
+          "target": "role_supervisor_l3_ap_payment_post_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_5",
+          "source": "role_supervisor_l3_ap_payment_post_effect1",
+          "target": "role_supervisor_l3_ap_payment_post_effect2",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_6",
+          "source": "role_supervisor_l3_ap_payment_post_effect2",
+          "target": "role_supervisor_l3_ap_payment_post_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_Flow_7",
+          "source": "role_supervisor_l3_ap_payment_post_valid",
+          "target": "role_supervisor_l3_ap_payment_post_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_result_to_activity",
+          "source": "role_supervisor_l3_ap_payment_post_result_merge",
+          "target": "role_supervisor_l3_ap_payment_post_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_post_result_to_end",
+          "source": "role_supervisor_l3_ap_payment_post_result_activity",
+          "target": "role_supervisor_l3_ap_payment_post_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn",
+      "process_id": "Process_role_supervisor_l3_ap_payment_void",
+      "name": "Void pembayaran supplier - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "ap-payment-void",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_input",
+          "name": "Isi alasan void payment",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/finance/finance-workspace.tsx",
+              "function": "FinancePanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 88,
+              "function_end_line": 235,
+              "evidence": [
+                {
+                  "line": 230,
+                  "match": "`${paymentPrefix}/${item.id}/void`",
+                  "excerpt": "...=== \"POSTED\" && <button disabled={!voidReason} onClick={() => command(`${paymentPrefix}/${item.id}/void`, { reason: voidReason })}>Void</button>}"
+                },
+                {
+                  "line": 218,
+                  "match": "disabled={!voidReason}",
+                  "excerpt": "...wApprove && kind === \"customer\" && item.status === \"DRAFT\" && <button disabled={!voidReason} onClick={() => command(`${invoicePrefix}/${item.id}/void`, { reason: voidReason })}>Void</button>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_check",
+          "name": "Lock payment POSTED dan invoice terkait; alasan ada",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Alokasi historis dipertahankan; efek payment VOID dikecualikan dari hitungan pembayaran aktif.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierPayment",
+              "role": "VALIDATION",
+              "function_start_line": 451,
+              "function_end_line": 530,
+              "evidence": [
+                {
+                  "line": 452,
+                  "match": "reason == \"\"",
+                  "excerpt": "if reason == \"\" {"
+                },
+                {
+                  "line": 462,
+                  "match": "document.Status != \"POSTED\"",
+                  "excerpt": "...ument.Total, &document.Outstanding, &document.Version); err != nil || document.Status != \"POSTED\" {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_effect0",
+          "name": "Kembalikan outstanding; hitung ulang status invoice",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierPayment",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 451,
+              "function_end_line": 530,
+              "evidence": [
+                {
+                  "line": 493,
+                  "match": "UPDATE supplier_invoices SET outstanding=$2",
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_invoices SET outstanding=$2,status=$3,version=version+1,updated_at=now() WHERE id=$1`, item.invoice, outstanding, status); err != nil {"
+                },
+                {
+                  "line": 491,
+                  "match": "status = \"POSTED\"",
+                  "excerpt": "status = \"POSTED\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_effect1",
+          "name": "Jika tidak lunas lagi: PO CLOSED ke RECEIVED; PR COMPLETED ke CONVERTED_TO_PO",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierPayment",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 451,
+              "function_end_line": 530,
+              "evidence": [
+                {
+                  "line": 499,
+                  "match": "status='RECEIVED'",
+                  "excerpt": "poTag, updateErr := tx.Exec(ctx, `UPDATE purchase_orders SET status='RECEIVED',version=version+1,updated_at=now() WHERE id=$1 AND status='CLOSED'`, item.source)"
+                },
+                {
+                  "line": 508,
+                  "match": "status='CONVERTED_TO_PO'",
+                  "excerpt": "err = tx.QueryRow(ctx, `UPDATE purchase_requests r SET status='CONVERTED_TO_PO',version=r.version+1,updated_at=now() FROM purchase_orders p WHERE p.id=$1 AND r.id=p.purchase_request_id AND r.status='COMPLETED' RETURNING r.id`, item.source).Scan(&requestID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_effect2",
+          "name": "Payment VOID; audit reversal alokasi; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/postgres/store.go",
+              "function": "Store.VoidSupplierPayment",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 451,
+              "function_end_line": 530,
+              "evidence": [
+                {
+                  "line": 517,
+                  "match": "UPDATE supplier_payments SET status='VOID'",
+                  "excerpt": "if _, err = tx.Exec(ctx, `UPDATE supplier_payments SET status='VOID',void_reason=$2,voided_by=$3,voided_at=now(),version=version+1 WHERE id=$1`, id, reason, actor); err != nil {"
+                },
+                {
+                  "line": 496,
+                  "match": "\"ACT-FIN-SPAY-VOID\"",
+                  "excerpt": "if err = audit(ctx, tx, actor, \"REVERSE_SUPPLIER_PAYMENT_ALLOCATION\", \"ACT-FIN-SPAY-VOID\", \"SUPPLIER_INVOICE\", item.invoice, item.status, status, reason, request); err != nil {"
+                },
+                {
+                  "line": 523,
+                  "match": "tx.Commit(",
+                  "excerpt": "if err = tx.Commit(ctx); err != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_ap_payment_void_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "Handler.voidSupplierPayment",
+              "role": "RESPONSE_DISPATCH",
+              "function_start_line": 187,
+              "function_end_line": 197,
+              "evidence": [
+                {
+                  "line": 196,
+                  "match": "result(w, document, err,",
+                  "excerpt": "result(w, document, err, 200)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "result",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 81,
+              "function_end_line": 87,
+              "evidence": [
+                {
+                  "line": 82,
+                  "match": "if err != nil",
+                  "excerpt": "if err != nil {"
+                },
+                {
+                  "line": 86,
+                  "match": "respond(w, status, document)",
+                  "excerpt": "respond(w, status, document)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/finance/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 76,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 78,
+                  "match": "w.WriteHeader(status)",
+                  "excerpt": "w.WriteHeader(status)"
+                },
+                {
+                  "line": 79,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(value)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.voidSupplierPayment",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 187,
+          "function_end_line": 197,
+          "evidence": [
+            {
+              "line": 195,
+              "match": "h.Service.VoidSupplierPayment(",
+              "excerpt": "document, err := h.Service.VoidSupplierPayment(r.Context(), chi.URLParam(r, \"id\"), value, actor(r), requestID(r))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/application/service.go",
+          "function": "Service.VoidSupplierPayment",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 101,
+          "function_end_line": 103,
+          "evidence": [
+            {
+              "line": 102,
+              "match": "s.store.VoidSupplierPayment(",
+              "excerpt": "return s.store.VoidSupplierPayment(c, id, reason, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "Handler.voidSupplierPayment",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 187,
+          "function_end_line": 197,
+          "evidence": [
+            {
+              "line": 188,
+              "match": "requireApprove(w, r)",
+              "excerpt": "if !requireApprove(w, r) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/finance/adapter/http/handler.go",
+          "function": "requireApprove",
+          "role": "ROLE_CHECK_HELPER",
+          "function_start_line": 59,
+          "function_end_line": 65,
+          "evidence": [
+            {
+              "line": 60,
+              "match": "authdomain.CanApprove(",
+              "excerpt": "if authdomain.CanApprove(role(r)) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/finance_test.go",
+          "function": "TestP2PConsolidatedInvoiceExactMatchPartialPaymentCloseAndVoid",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 20,
+          "function_end_line": 140,
+          "evidence": [
+            {
+              "line": 110,
+              "match": "VoidSupplierPayment(",
+              "excerpt": "if _, err = finance.VoidSupplierPayment(ctx, payment2.ID, \"incorrect transfer\", adminID, \"fin-p2p-16\"); err != nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_ap_payment_void_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_0",
+          "source": "role_supervisor_l3_ap_payment_void_start",
+          "target": "role_supervisor_l3_ap_payment_void_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_1",
+          "source": "role_supervisor_l3_ap_payment_void_input",
+          "target": "role_supervisor_l3_ap_payment_void_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_2",
+          "source": "role_supervisor_l3_ap_payment_void_check",
+          "target": "role_supervisor_l3_ap_payment_void_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_3",
+          "source": "role_supervisor_l3_ap_payment_void_valid",
+          "target": "role_supervisor_l3_ap_payment_void_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_4",
+          "source": "role_supervisor_l3_ap_payment_void_effect0",
+          "target": "role_supervisor_l3_ap_payment_void_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_5",
+          "source": "role_supervisor_l3_ap_payment_void_effect1",
+          "target": "role_supervisor_l3_ap_payment_void_effect2",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_6",
+          "source": "role_supervisor_l3_ap_payment_void_effect2",
+          "target": "role_supervisor_l3_ap_payment_void_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_Flow_7",
+          "source": "role_supervisor_l3_ap_payment_void_valid",
+          "target": "role_supervisor_l3_ap_payment_void_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_result_to_activity",
+          "source": "role_supervisor_l3_ap_payment_void_result_merge",
+          "target": "role_supervisor_l3_ap_payment_void_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_ap_payment_void_result_to_end",
+          "source": "role_supervisor_l3_ap_payment_void_result_activity",
+          "target": "role_supervisor_l3_ap_payment_void_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn",
+      "process_id": "Process_role_supervisor_l3_gr_post",
+      "name": "Posting penerimaan dan stok masuk - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "gr-post",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_gr_post_input",
+          "name": "Review dan post Goods Receipt",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/goods-receipt-panel.tsx",
+              "function": "GoodsReceiptPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 8,
+              "function_end_line": 25,
+              "evidence": [
+                {
+                  "line": 21,
+                  "match": "/post`",
+                  "excerpt": "... if (canApprove(session?.role)) void run(`/goods-receipts/${receiptId}/post`, { version: Number(version) }, \"Goods receipt berhasil diposting.\"); }}><strong>Kelola Goods Receipt</strong><label>Goods Receipt ID<input value={receiptId} onChange={(event) => setReceiptId(event.target.value)} required /></label><label>Versi..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_post_check",
+          "name": "Lock GR/PO/lines; draft dan versi cocok; Supervisor bukan creator; Super Admin boleh self-post; qty tidak melebihi sisa",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. ",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.PostReceipt",
+              "role": "VALIDATION",
+              "function_start_line": 307,
+              "function_end_line": 397,
+              "evidence": [
+                {
+                  "line": 316,
+                  "match": "d.Status != \"DRAFT\"",
+                  "excerpt": "if e != nil || d.Status != \"DRAFT\" || d.Version != version {"
+                },
+                {
+                  "line": 316,
+                  "match": "d.Version != version",
+                  "excerpt": "if e != nil || d.Status != \"DRAFT\" || d.Version != version {"
+                },
+                {
+                  "line": 320,
+                  "match": "authorization.CanSelfReview(",
+                  "excerpt": "allowed, roleErr := authorization.CanSelfReview(ctx, tx, actor)"
+                },
+                {
+                  "line": 343,
+                  "match": "l.qty > l.remaining",
+                  "excerpt": "if l.qty > l.remaining {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_post_effect0",
+          "name": "Tambahkan saldo dan immutable stock movements",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.PostReceipt",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 307,
+              "function_end_line": 397,
+              "evidence": [
+                {
+                  "line": 359,
+                  "match": "INSERT INTO stock_balances",
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO stock_balances(warehouse_id,product_id,quantity)VALUES($1,$2,$3)ON CONFLICT(warehouse_id,product_id)DO UPDATE SET quantity=stock_balances.quantity+EXCLUDED.quantity,updated_at=now()`, warehouse, l.product, l.qty)"
+                },
+                {
+                  "line": 363,
+                  "match": "INSERT INTO stock_movements",
+                  "excerpt": "_, e = tx.Exec(ctx, `INSERT INTO stock_movements(warehouse_id,product_id,quantity,movement_type,source_type,source_id,source_line_id,created_by)VALUES($1,$2,$3,'GOODS_RECEIPT','GOODS_RECEIPT',$4,$5,$6)`, warehouse, l.product, l.qty, id, l.id, actor)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_post_effect1",
+          "name": "Update GR POSTED; PO PARTIALLY_RECEIVED atau RECEIVED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.PostReceipt",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 307,
+              "function_end_line": 397,
+              "evidence": [
+                {
+                  "line": 384,
+                  "match": "status='POSTED'",
+                  "excerpt": "_, e = tx.Exec(ctx, `UPDATE goods_receipts SET status='POSTED',version=version+1,posted_at=now() WHERE id=$1`, id)"
+                },
+                {
+                  "line": 377,
+                  "match": "UPDATE purchase_orders SET status=$1",
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE purchase_orders SET status=$1,version=version+1,updated_at=now() WHERE id=$2 AND status IN('ISSUED','PARTIALLY_RECEIVED')`, nextPOStatus, po)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_post_effect2",
+          "name": "Audit PUR-GR-002; commit atomik",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.PostReceipt",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 307,
+              "function_end_line": 397,
+              "evidence": [
+                {
+                  "line": 388,
+                  "match": "\"PUR-GR-002\"",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"POST_GOODS_RECEIPT\", \"PUR-GR-002\", \"GOODS_RECEIPT\", id, \"DRAFT\", \"POSTED\", \"\", request); e != nil {"
+                },
+                {
+                  "line": 391,
+                  "match": "tx.Commit(",
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_post_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.postReceipt",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 210,
+              "function_end_line": 227,
+              "evidence": [
+                {
+                  "line": 223,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 226,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.postReceipt",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 210,
+          "function_end_line": 227,
+          "evidence": [
+            {
+              "line": 221,
+              "match": "h.Service.PostReceipt(",
+              "excerpt": "v, e := h.Service.PostReceipt(r.Context(), chi.URLParam(r, \"id\"), in.Version, principal(r).UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.PostReceipt",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 79,
+          "function_end_line": 81,
+          "evidence": [
+            {
+              "line": 80,
+              "match": "s.store.PostReceipt(",
+              "excerpt": "return s.store.PostReceipt(ctx, id, version, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.postReceipt",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 210,
+          "function_end_line": 227,
+          "evidence": [
+            {
+              "line": 211,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !domain.CanApprove(principal(r).Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/platform/authorization/super_admin.go",
+          "function": "CanSelfReview",
+          "role": "SELF_REVIEW_POLICY",
+          "function_start_line": 10,
+          "function_end_line": 14,
+          "evidence": [
+            {
+              "line": 12,
+              "match": "role='SUPER_ADMIN' AND status='ACTIVE'",
+              "excerpt": "...= tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND role='SUPER_ADMIN' AND status='ACTIVE')`, actor).Scan(&allowed)"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 125,
+              "match": "PostReceipt(",
+              "excerpt": "if _, e = s.PostReceipt(ctx, gr.ID, gr.Version, operatorID, \"r8-self\"); e == nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_gr_post_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_0",
+          "source": "role_supervisor_l3_gr_post_start",
+          "target": "role_supervisor_l3_gr_post_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_1",
+          "source": "role_supervisor_l3_gr_post_input",
+          "target": "role_supervisor_l3_gr_post_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_2",
+          "source": "role_supervisor_l3_gr_post_check",
+          "target": "role_supervisor_l3_gr_post_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_3",
+          "source": "role_supervisor_l3_gr_post_valid",
+          "target": "role_supervisor_l3_gr_post_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_4",
+          "source": "role_supervisor_l3_gr_post_effect0",
+          "target": "role_supervisor_l3_gr_post_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_5",
+          "source": "role_supervisor_l3_gr_post_effect1",
+          "target": "role_supervisor_l3_gr_post_effect2",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_6",
+          "source": "role_supervisor_l3_gr_post_effect2",
+          "target": "role_supervisor_l3_gr_post_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_Flow_7",
+          "source": "role_supervisor_l3_gr_post_valid",
+          "target": "role_supervisor_l3_gr_post_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_result_to_activity",
+          "source": "role_supervisor_l3_gr_post_result_merge",
+          "target": "role_supervisor_l3_gr_post_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_post_result_to_end",
+          "source": "role_supervisor_l3_gr_post_result_activity",
+          "target": "role_supervisor_l3_gr_post_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn",
+      "process_id": "Process_role_supervisor_l3_gr_reverse",
+      "name": "Reverse Goods Receipt yang sudah posted - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "gr-reverse",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_input",
+          "name": "Isi alasan reversal",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/goods-receipt-panel.tsx",
+              "function": "GoodsReceiptPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 8,
+              "function_end_line": 25,
+              "evidence": [
+                {
+                  "line": 21,
+                  "match": "/reverse`",
+                  "excerpt": "...n\" disabled={!reason} onClick={() => run(`/goods-receipts/${receiptId}/reverse`, { reason }, \"Goods receipt berhasil direverse.\")}>Reverse</button>}{canCreate(session?.role) && <button type=\"button\" disabled={!reason} onClick={() => run(`/goods-receipts/${receiptId}/cancel`, { reason }, \"Goods receipt dibatalkan.\")}>Ca..."
+                },
+                {
+                  "line": 21,
+                  "match": "disabled={!reason}",
+                  "excerpt": "...on\">Post</button>}{canApprove(session?.role) && <button type=\"button\" disabled={!reason} onClick={() => run(`/goods-receipts/${receiptId}/reverse`, { reason }, \"Goods receipt berhasil direverse.\")}>Reverse</button>}{canCreate(session?.role) && <button type=\"button\" disabled={!reason} onClick={() => run(`/goods-receipts..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_check",
+          "name": "Lock GR POSTED; tidak ada invoice non-VOID; stok akhir nonnegatif",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Movement lama tidak diedit/dihapus. Tidak ada syarat reviewer berbeda dari creator untuk reversal.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ReverseReceipt",
+              "role": "VALIDATION",
+              "function_start_line": 398,
+              "function_end_line": 475,
+              "evidence": [
+                {
+                  "line": 399,
+                  "match": "reason == \"\"",
+                  "excerpt": "if reason == \"\" {"
+                },
+                {
+                  "line": 410,
+                  "match": "d.Status != \"POSTED\"",
+                  "excerpt": "if e != nil || d.Status != \"POSTED\" {"
+                },
+                {
+                  "line": 414,
+                  "match": "status<>'VOID'",
+                  "excerpt": "...EXISTS(SELECT 1 FROM supplier_invoices WHERE purchase_order_id=$1 AND status<>'VOID')`, po).Scan(&invoiced); e != nil || invoiced {"
+                },
+                {
+                  "line": 442,
+                  "match": "balance < l.qty",
+                  "excerpt": "if e != nil || balance < l.qty {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_effect0",
+          "name": "Kurangi saldo/received qty; append movement inverse",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ReverseReceipt",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 398,
+              "function_end_line": 475,
+              "evidence": [
+                {
+                  "line": 445,
+                  "match": "quantity=quantity-$1",
+                  "excerpt": "_, e = tx.Exec(ctx, `UPDATE stock_balances SET quantity=quantity-$1,updated_at=now() WHERE warehouse_id=$2 AND product_id=$3`, l.qty, warehouse, l.product)"
+                },
+                {
+                  "line": 449,
+                  "match": "'GOODS_RECEIPT_REVERSAL'",
+                  "excerpt": "..._type,source_id,source_line_id,reversal_of,created_by)VALUES($1,$2,$3,'GOODS_RECEIPT_REVERSAL','GOODS_RECEIPT',$4,$5,$6,$7)`, warehouse, l.product, -l.qty, id, l.line, l.movement, actor)"
+                },
+                {
+                  "line": 453,
+                  "match": "received_quantity=received_quantity-$1",
+                  "excerpt": "_, e = tx.Exec(ctx, `UPDATE purchase_order_lines pol SET received_quantity=received_quantity-$1 FROM goods_receipt_lines gl WHERE gl.id=$2 AND pol.id=gl.purchase_order_line_id`, l.qty, l.line)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_effect1",
+          "name": "GR REVERSED; PO ISSUED atau PARTIALLY_RECEIVED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ReverseReceipt",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 398,
+              "function_end_line": 475,
+              "evidence": [
+                {
+                  "line": 458,
+                  "match": "status='REVERSED'",
+                  "excerpt": "_, e = tx.Exec(ctx, `UPDATE goods_receipts SET status='REVERSED',reason=$1,version=version+1 WHERE id=$2`, reason, id)"
+                },
+                {
+                  "line": 462,
+                  "match": "THEN'PARTIALLY_RECEIVED'ELSE'ISSUED'",
+                  "excerpt": "...rchase_order_lines WHERE purchase_order_id=$1 AND received_quantity>0)THEN'PARTIALLY_RECEIVED'ELSE'ISSUED'END,version=version+1 WHERE id=$1`, po)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_effect2",
+          "name": "Audit reversal; commit atomik",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.ReverseReceipt",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 398,
+              "function_end_line": 475,
+              "evidence": [
+                {
+                  "line": 466,
+                  "match": "\"ACT-PUR-GR-REVERSE\"",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"REVERSE_GOODS_RECEIPT\", \"ACT-PUR-GR-REVERSE\", \"GOODS_RECEIPT\", id, \"POSTED\", \"REVERSED\", reason, request); e != nil {"
+                },
+                {
+                  "line": 469,
+                  "match": "tx.Commit(",
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_gr_reverse_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.reverseReceipt",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 228,
+              "function_end_line": 245,
+              "evidence": [
+                {
+                  "line": 241,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 244,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.reverseReceipt",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 228,
+          "function_end_line": 245,
+          "evidence": [
+            {
+              "line": 239,
+              "match": "h.Service.ReverseReceipt(",
+              "excerpt": "v, e := h.Service.ReverseReceipt(r.Context(), chi.URLParam(r, \"id\"), in.Reason, principal(r).UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.ReverseReceipt",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 82,
+          "function_end_line": 84,
+          "evidence": [
+            {
+              "line": 83,
+              "match": "s.store.ReverseReceipt(",
+              "excerpt": "return s.store.ReverseReceipt(ctx, id, reason, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.reverseReceipt",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 228,
+          "function_end_line": 245,
+          "evidence": [
+            {
+              "line": 229,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !domain.CanApprove(principal(r).Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_gr_reverse_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_0",
+          "source": "role_supervisor_l3_gr_reverse_start",
+          "target": "role_supervisor_l3_gr_reverse_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_1",
+          "source": "role_supervisor_l3_gr_reverse_input",
+          "target": "role_supervisor_l3_gr_reverse_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_2",
+          "source": "role_supervisor_l3_gr_reverse_check",
+          "target": "role_supervisor_l3_gr_reverse_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_3",
+          "source": "role_supervisor_l3_gr_reverse_valid",
+          "target": "role_supervisor_l3_gr_reverse_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_4",
+          "source": "role_supervisor_l3_gr_reverse_effect0",
+          "target": "role_supervisor_l3_gr_reverse_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_5",
+          "source": "role_supervisor_l3_gr_reverse_effect1",
+          "target": "role_supervisor_l3_gr_reverse_effect2",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_6",
+          "source": "role_supervisor_l3_gr_reverse_effect2",
+          "target": "role_supervisor_l3_gr_reverse_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_Flow_7",
+          "source": "role_supervisor_l3_gr_reverse_valid",
+          "target": "role_supervisor_l3_gr_reverse_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_result_to_activity",
+          "source": "role_supervisor_l3_gr_reverse_result_merge",
+          "target": "role_supervisor_l3_gr_reverse_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_gr_reverse_result_to_end",
+          "source": "role_supervisor_l3_gr_reverse_result_activity",
+          "target": "role_supervisor_l3_gr_reverse_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn",
+      "process_id": "Process_role_supervisor_l3_po_cancel",
+      "name": "Batalkan Purchase Order - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "po-cancel",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_po_cancel_input",
+          "name": "Isi alasan pembatalan PO",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-order-panel.tsx",
+              "function": "PurchaseOrderPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 9,
+              "function_end_line": 26,
+              "evidence": [
+                {
+                  "line": 22,
+                  "match": "/cancel`",
+                  "excerpt": "...on\" disabled={!reason} onClick={() => run(`/purchase-orders/${orderId}/cancel`, { reason }, \"Purchase order dibatalkan.\")}>Cancel</button></span></form>}"
+                },
+                {
+                  "line": 22,
+                  "match": "disabled={!reason}",
+                  "excerpt": "...tions\"><button className=\"button\">Issue</button><button type=\"button\" disabled={!reason} onClick={() => run(`/purchase-orders/${orderId}/cancel`, { reason }, \"Purchase order dibatalkan.\")}>Cancel</button></span></form>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_cancel_check",
+          "name": "PO DRAFT/ISSUED; tidak ada GR POSTED; alasan ada",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. PO batal tetap tercatat. PR dapat dikonversi ke satu PO pengganti aktif; tidak ada owner check atau version input.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelOrder",
+              "role": "VALIDATION",
+              "function_start_line": 512,
+              "function_end_line": 544,
+              "evidence": [
+                {
+                  "line": 513,
+                  "match": "reason == \"\"",
+                  "excerpt": "if reason == \"\" {"
+                },
+                {
+                  "line": 525,
+                  "match": "previous != \"DRAFT\"",
+                  "excerpt": "if e != nil || (previous != \"DRAFT\" && previous != \"ISSUED\") {"
+                },
+                {
+                  "line": 528,
+                  "match": "g.status='POSTED'",
+                  "excerpt": "...STS(SELECT 1 FROM goods_receipts g WHERE g.purchase_order_id=p.id AND g.status='POSTED') RETURNING id,document_no,status,creator_id,version,purchase_request_id`, id, reason, previous).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version, &requestID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_cancel_effect0",
+          "name": "Ubah PO CANCELLED; PR asal kembali APPROVED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelOrder",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 512,
+              "function_end_line": 544,
+              "evidence": [
+                {
+                  "line": 528,
+                  "match": "status='CANCELLED'",
+                  "excerpt": "e = tx.QueryRow(ctx, `UPDATE purchase_orders p SET status='CANCELLED',reason=$2,version=version+1,updated_at=now() WHERE p.id=$1 AND p.status=$3 AND NOT EXISTS(SELECT 1 FROM goods_receipts g WHERE g.purchase_order_id=p.id AND g.status='POSTED') RETURNING id,document_no,status,creator_id,version,purchase_request_id`, id..."
+                },
+                {
+                  "line": 532,
+                  "match": "status='APPROVED'",
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE purchase_requests SET status='APPROVED',version=version+1,updated_at=now() WHERE id=$1 AND status='CONVERTED_TO_PO'`, requestID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_cancel_effect1",
+          "name": "Audit PO dan PR; commit atomik",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.CancelOrder",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 512,
+              "function_end_line": 544,
+              "evidence": [
+                {
+                  "line": 536,
+                  "match": "\"CANCEL_PO\"",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"CANCEL_PO\", \"ACT-PUR-PO-CANCEL\", \"PURCHASE_ORDER\", id, previous, \"CANCELLED\", reason, request); e != nil {"
+                },
+                {
+                  "line": 539,
+                  "match": "\"REOPEN_PR_AFTER_PO_CANCEL\"",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"REOPEN_PR_AFTER_PO_CANCEL\", \"ACT-PUR-PO-CANCEL\", \"PURCHASE_REQUEST\", requestID, \"CONVERTED_TO_PO\", \"APPROVED\", reason, request); e != nil {"
+                },
+                {
+                  "line": 542,
+                  "match": "tx.Commit(",
+                  "excerpt": "e = tx.Commit(ctx)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_cancel_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.cancelOrder",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 142,
+              "function_end_line": 157,
+              "evidence": [
+                {
+                  "line": 153,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 156,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.cancelOrder",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 142,
+          "function_end_line": 157,
+          "evidence": [
+            {
+              "line": 151,
+              "match": "h.Service.CancelOrder(",
+              "excerpt": "v, e := h.Service.CancelOrder(r.Context(), chi.URLParam(r, \"id\"), in.Reason, principal(r).UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.CancelOrder",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 88,
+          "function_end_line": 90,
+          "evidence": [
+            {
+              "line": 89,
+              "match": "s.store.CancelOrder(",
+              "excerpt": "return s.store.CancelOrder(c, id, reason, actor, r)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.cancelOrder",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 142,
+          "function_end_line": 157,
+          "evidence": [
+            {
+              "line": 143,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !domain.CanApprove(principal(r).Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_po_cancel_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_0",
+          "source": "role_supervisor_l3_po_cancel_start",
+          "target": "role_supervisor_l3_po_cancel_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_1",
+          "source": "role_supervisor_l3_po_cancel_input",
+          "target": "role_supervisor_l3_po_cancel_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_2",
+          "source": "role_supervisor_l3_po_cancel_check",
+          "target": "role_supervisor_l3_po_cancel_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_3",
+          "source": "role_supervisor_l3_po_cancel_valid",
+          "target": "role_supervisor_l3_po_cancel_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_4",
+          "source": "role_supervisor_l3_po_cancel_effect0",
+          "target": "role_supervisor_l3_po_cancel_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_5",
+          "source": "role_supervisor_l3_po_cancel_effect1",
+          "target": "role_supervisor_l3_po_cancel_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_Flow_6",
+          "source": "role_supervisor_l3_po_cancel_valid",
+          "target": "role_supervisor_l3_po_cancel_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_result_to_activity",
+          "source": "role_supervisor_l3_po_cancel_result_merge",
+          "target": "role_supervisor_l3_po_cancel_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_cancel_result_to_end",
+          "source": "role_supervisor_l3_po_cancel_result_activity",
+          "target": "role_supervisor_l3_po_cancel_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn",
+      "process_id": "Process_role_supervisor_l3_po_issue",
+      "name": "Terbitkan Purchase Order - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "po-issue",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_po_issue_input",
+          "name": "Review dan issue PO draft",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-order-panel.tsx",
+              "function": "PurchaseOrderPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 9,
+              "function_end_line": 26,
+              "evidence": [
+                {
+                  "line": 22,
+                  "match": "/issue`",
+                  "excerpt": "...nt) => { event.preventDefault(); void run(`/purchase-orders/${orderId}/issue`, { version: Number(version) }, \"Purchase order berhasil diterbitkan.\"); }}><strong>Review Purchase Order</strong><label>Purchase Order ID<input value={orderId} onChange={(event) => setOrderId(event.target.value)} required /></label><label>Ver..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_issue_check",
+          "name": "PO DRAFT; version cocok; Supervisor bukan creator; Super Admin boleh self-issue",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Tidak ada email atau pengiriman otomatis PO ke supplier.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.IssueOrder",
+              "role": "VALIDATION",
+              "function_start_line": 242,
+              "function_end_line": 258,
+              "evidence": [
+                {
+                  "line": 249,
+                  "match": "status='DRAFT'",
+                  "excerpt": "...ET status='ISSUED',version=version+1,updated_at=now() WHERE id=$1 AND status='DRAFT' AND version=$2 AND (creator_id<>$3 OR EXISTS(SELECT 1 FROM users WHERE id=$3 AND role='SUPER_ADMIN' AND status='ACTIVE')) RETURNING id,document_no,status,creator_id,version`, id, version, actor).Scan(&d.ID, &d.DocumentNo, &d.Status, &d..."
+                },
+                {
+                  "line": 249,
+                  "match": "role='SUPER_ADMIN' AND status='ACTIVE'",
+                  "excerpt": "...=$2 AND (creator_id<>$3 OR EXISTS(SELECT 1 FROM users WHERE id=$3 AND role='SUPER_ADMIN' AND status='ACTIVE')) RETURNING id,document_no,status,creator_id,version`, id, version, actor).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version)"
+                },
+                {
+                  "line": 249,
+                  "match": "version=$2",
+                  "excerpt": "...version=version+1,updated_at=now() WHERE id=$1 AND status='DRAFT' AND version=$2 AND (creator_id<>$3 OR EXISTS(SELECT 1 FROM users WHERE id=$3 AND role='SUPER_ADMIN' AND status='ACTIVE')) RETURNING id,document_no,status,creator_id,version`, id, version, actor).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Vers..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_issue_effect0",
+          "name": "Update PO menjadi ISSUED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.IssueOrder",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 242,
+              "function_end_line": 258,
+              "evidence": [
+                {
+                  "line": 249,
+                  "match": "status='ISSUED'",
+                  "excerpt": "e = tx.QueryRow(ctx, `UPDATE purchase_orders SET status='ISSUED',version=version+1,updated_at=now() WHERE id=$1 AND status='DRAFT' AND version=$2 AND (creator_id<>$3 OR EXISTS(SELECT 1 FROM users WHERE id=$3 AND role='SUPER_ADMIN' AND status='ACTIVE')) RETURNING id,document_no,status,creator_id,version`, id, version, a..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_issue_effect1",
+          "name": "Audit PUR-PO-002; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.IssueOrder",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 242,
+              "function_end_line": 258,
+              "evidence": [
+                {
+                  "line": 253,
+                  "match": "\"PUR-PO-002\"",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"ISSUE_PO\", \"PUR-PO-002\", \"PURCHASE_ORDER\", id, \"DRAFT\", \"ISSUED\", \"\", request); e != nil {"
+                },
+                {
+                  "line": 256,
+                  "match": "tx.Commit(",
+                  "excerpt": "e = tx.Commit(ctx)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_po_issue_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.issue",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 174,
+              "function_end_line": 191,
+              "evidence": [
+                {
+                  "line": 187,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 190,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.issue",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 174,
+          "function_end_line": 191,
+          "evidence": [
+            {
+              "line": 185,
+              "match": "h.Service.IssueOrder(",
+              "excerpt": "v, e := h.Service.IssueOrder(r.Context(), chi.URLParam(r, \"id\"), in.Version, principal(r).UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.IssueOrder",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 73,
+          "function_end_line": 75,
+          "evidence": [
+            {
+              "line": 74,
+              "match": "s.store.IssueOrder(",
+              "excerpt": "return s.store.IssueOrder(ctx, id, version, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.issue",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 174,
+          "function_end_line": 191,
+          "evidence": [
+            {
+              "line": 175,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !domain.CanApprove(principal(r).Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 106,
+              "match": "IssueOrder(",
+              "excerpt": "if _, e = s.IssueOrder(ctx, po.ID, po.Version, operatorID, \"r6-self\"); e == nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_po_issue_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_0",
+          "source": "role_supervisor_l3_po_issue_start",
+          "target": "role_supervisor_l3_po_issue_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_1",
+          "source": "role_supervisor_l3_po_issue_input",
+          "target": "role_supervisor_l3_po_issue_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_2",
+          "source": "role_supervisor_l3_po_issue_check",
+          "target": "role_supervisor_l3_po_issue_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_3",
+          "source": "role_supervisor_l3_po_issue_valid",
+          "target": "role_supervisor_l3_po_issue_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_4",
+          "source": "role_supervisor_l3_po_issue_effect0",
+          "target": "role_supervisor_l3_po_issue_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_5",
+          "source": "role_supervisor_l3_po_issue_effect1",
+          "target": "role_supervisor_l3_po_issue_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_Flow_6",
+          "source": "role_supervisor_l3_po_issue_valid",
+          "target": "role_supervisor_l3_po_issue_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_result_to_activity",
+          "source": "role_supervisor_l3_po_issue_result_merge",
+          "target": "role_supervisor_l3_po_issue_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_po_issue_result_to_end",
+          "source": "role_supervisor_l3_po_issue_result_activity",
+          "target": "role_supervisor_l3_po_issue_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn",
+      "process_id": "Process_role_supervisor_l3_pr_review",
+      "name": "Review Purchase Request - Supervisor",
+      "role": "supervisor",
+      "module": "p2p",
+      "level": 3,
+      "operation": "pr-review",
+      "activities": [
+        {
+          "task_id": "role_supervisor_l3_pr_review_input",
+          "name": "Pilih approve/reject; UI kirim alasan demo saat reject",
+          "type": "userTask",
+          "actor": "Supervisor",
+          "documentation": "Request ini dijalankan oleh Supervisor; guard backend tetap berlaku. Panel PR tidak menyediakan input alasan reject; API tetap menerima reason.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/purchasing/purchase-request-panel.tsx",
+              "function": "PurchaseRequestPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 14,
+              "function_end_line": 63,
+              "evidence": [
+                {
+                  "line": 56,
+                  "match": "action(document, \"approve\")",
+                  "excerpt": "...serId || session?.role === \"SUPER_ADMIN\") && <><button onClick={() => action(document, \"approve\")}>Approve</button><button onClick={() => action(document, \"reject\")}>Reject</button></>}"
+                },
+                {
+                  "line": 56,
+                  "match": "action(document, \"reject\")",
+                  "excerpt": "...> action(document, \"approve\")}>Approve</button><button onClick={() => action(document, \"reject\")}>Reject</button></>}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_pr_review_check",
+          "name": "Lock PR; SUBMITTED; versi cocok; Supervisor bukan creator; Super Admin boleh self-review",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Bypass self-review Super Admin memeriksa role aktif di database; guard status/versi tetap berlaku.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "VALIDATION",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 154,
+                  "match": "from != \"SUBMITTED\"",
+                  "excerpt": "if from != \"SUBMITTED\" {"
+                },
+                {
+                  "line": 158,
+                  "match": "authorization.CanSelfReview(",
+                  "excerpt": "allowed, roleErr := authorization.CanSelfReview(ctx, tx, actor)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_pr_review_positive",
+          "name": "Set PR APPROVED",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "BRANCH_OUTCOME",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 163,
+                  "match": "d.Status = \"APPROVED\"",
+                  "excerpt": "d.Status = \"APPROVED\""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_pr_review_negative",
+          "name": "Set PR REJECTED dan alasan",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "BRANCH_OUTCOME",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 175,
+                  "match": "d.Status = \"REJECTED\"",
+                  "excerpt": "d.Status = \"REJECTED\""
+                },
+                {
+                  "line": 166,
+                  "match": "reason == \"\"",
+                  "excerpt": "if from != \"SUBMITTED\" || reason == \"\" {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_pr_review_effect1",
+          "name": "Simpan reviewer; audit PUR-PR-003; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/postgres/store.go",
+              "function": "Store.TransitionRequest",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 130,
+              "function_end_line": 199,
+              "evidence": [
+                {
+                  "line": 187,
+                  "match": "reviewer_id=CASE",
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE purchase_requests SET status=$1,reviewer_id=CASE WHEN $2 IN('approve','reject') THEN $3::uuid ELSE reviewer_id END,reason=NULLIF($4,''),version=version+1,updated_at=now() WHERE id=$5 AND version=$6`, d.Status, action, actor, reason, id, version)"
+                },
+                {
+                  "line": 153,
+                  "match": "\"PUR-PR-003\"",
+                  "excerpt": "trace = \"PUR-PR-003\""
+                },
+                {
+                  "line": 191,
+                  "match": "audit(ctx",
+                  "excerpt": "if e = audit(ctx, tx, actor, \"PR_\"+action, trace, \"PURCHASE_REQUEST\", id, from, d.Status, reason, request); e != nil {"
+                },
+                {
+                  "line": 194,
+                  "match": "tx.Commit(",
+                  "excerpt": "if e = tx.Commit(ctx); e != nil {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_supervisor_l3_pr_review_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "Handler.prAction",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 103,
+              "function_end_line": 141,
+              "evidence": [
+                {
+                  "line": 137,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 140,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/purchasing/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 71,
+              "function_end_line": 75,
+              "evidence": [
+                {
+                  "line": 73,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 74,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 134,
+              "match": "h.Service.TransitionRequest(",
+              "excerpt": "v, e = h.Service.TransitionRequest(r.Context(), chi.URLParam(r, \"id\"), action, p.UserID, in.Reason, in.Version, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/application/service.go",
+          "function": "Service.TransitionRequest",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 67,
+          "function_end_line": 69,
+          "evidence": [
+            {
+              "line": 68,
+              "match": "s.store.TransitionRequest(",
+              "excerpt": "return s.store.TransitionRequest(ctx, id, action, actor, reason, version, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/purchasing/adapter/http/handler.go",
+          "function": "Handler.prAction",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 103,
+          "function_end_line": 141,
+          "evidence": [
+            {
+              "line": 130,
+              "match": "domain.CanApprove(",
+              "excerpt": "if (action == \"approve\" || action == \"reject\") && !domain.CanApprove(p.Role) || (action != \"approve\" && action != \"reject\" && !domain.CanCreate(p.Role)) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/platform/authorization/super_admin.go",
+          "function": "CanSelfReview",
+          "role": "SELF_REVIEW_POLICY",
+          "function_start_line": 10,
+          "function_end_line": 14,
+          "evidence": [
+            {
+              "line": 12,
+              "match": "role='SUPER_ADMIN' AND status='ACTIVE'",
+              "excerpt": "...= tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id=$1 AND role='SUPER_ADMIN' AND status='ACTIVE')`, actor).Scan(&allowed)"
+            }
+          ]
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "function": "TestP2PPartialReceiptPostsImmutableSourceLinkedLedger",
+          "role": "RELATED_TEST_NOT_EXECUTED",
+          "function_start_line": 84,
+          "function_end_line": 194,
+          "evidence": [
+            {
+              "line": 93,
+              "match": "TransitionRequest(",
+              "excerpt": "if _, e = s.TransitionRequest(ctx, pr.ID, \"submit\", operatorID, \"\", pr.Version, \"r2\"); e != nil {"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "related source inspected, not executed",
+      "control_elements": [
+        {
+          "id": "role_supervisor_l3_pr_review_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_valid",
+          "type": "exclusiveGateway",
+          "name": "Hasil review PR?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_0",
+          "source": "role_supervisor_l3_pr_review_start",
+          "target": "role_supervisor_l3_pr_review_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_1",
+          "source": "role_supervisor_l3_pr_review_input",
+          "target": "role_supervisor_l3_pr_review_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_2",
+          "source": "role_supervisor_l3_pr_review_check",
+          "target": "role_supervisor_l3_pr_review_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_3",
+          "source": "role_supervisor_l3_pr_review_effect1",
+          "target": "role_supervisor_l3_pr_review_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_4",
+          "source": "role_supervisor_l3_pr_review_valid",
+          "target": "role_supervisor_l3_pr_review_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_5",
+          "source": "role_supervisor_l3_pr_review_valid",
+          "target": "role_supervisor_l3_pr_review_positive",
+          "name": "Approve",
+          "condition": "Approve"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_6",
+          "source": "role_supervisor_l3_pr_review_valid",
+          "target": "role_supervisor_l3_pr_review_negative",
+          "name": "Reject",
+          "condition": "Reject"
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_7",
+          "source": "role_supervisor_l3_pr_review_positive",
+          "target": "role_supervisor_l3_pr_review_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_Flow_8",
+          "source": "role_supervisor_l3_pr_review_negative",
+          "target": "role_supervisor_l3_pr_review_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_result_to_activity",
+          "source": "role_supervisor_l3_pr_review_result_merge",
+          "target": "role_supervisor_l3_pr_review_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_supervisor_l3_pr_review_result_to_end",
+          "source": "role_supervisor_l3_pr_review_result_activity",
+          "target": "role_supervisor_l3_pr_review_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    }
+  ]
+}

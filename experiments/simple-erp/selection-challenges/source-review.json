@@ -1,0 +1,25 @@
+{
+  "status": "provisional single-AI source review before inference; no independent truth",
+  "baseline_source": "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn",
+  "baseline_source_sha256": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+  "baseline_refinement": "English labels; split existing combined status/master check into two tasks. Same current source eligibility, not an untouched original BPMN.",
+  "source_hashes": {
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03",
+    "backend/internal/purchasing/domain/purchase_request.go": "4e33b7ab72574459d2d7d9d6932387b612247bd3726e2e4db0371df16523e036",
+    "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67"
+  },
+  "requirements": {
+    "remove-check": "Allow copying REJECTED PR with inactive products. Remove active-master guard only; preserve status/locking/copy/audit/commit. No UI change: Copy already visible for REJECTED.",
+    "change-condition": "Allow REJECTED or CANCELLED source PR to be copied into new DRAFT, retain active-product check. Source status remains unchanged. UI exposes Copy for CANCELLED too; audit records actual source status."
+  },
+  "evidence": [
+    "Store.CopyRequest reads status/purpose/mastersActive in transaction; rejects status != REJECTED or !mastersActive, copies lines, writes hardcoded REJECTED audit origin.",
+    "TestCopyRejectedDocumentsRequiresActiveMasters rejects copying inactive PR; operations tests should separate PR changes from unchanged sales assertions and cover retained guards.",
+    "PurchaseRequestPanel displays Copy to Draft only for REJECTED; condition extension needs CANCELLED visibility. Guard removal does not change UI.",
+    "Application.CopyRequest delegates unchanged signature. Domain PurchaseRequest.Copy already creates DRAFT with no REJECTED guard. Neither is labelled mandatory modification.",
+    "No new fields, route, migration, role permission, or physical deletion of shared Store.CopyRequest required. REMOVE_TASK maps to MODIFY in shared function."
+  ],
+  "policy": "Use existing outputs/selection-calibration/policy.json unchanged. No tuning/labels altered after inference."
+}

@@ -17,16 +17,20 @@ const (
 	RelationCallsMethod       RelationKind = "CALLS_METHOD"
 	RelationInterfaceDispatch RelationKind = "INTERFACE_DISPATCH"
 	RelationHTTPRoute         RelationKind = "HTTP_ROUTE"
+	RelationHTTPPattern       RelationKind = "HTTP_ROUTE_PATTERN"
+	RelationConstructorCall   RelationKind = "CONSTRUCTOR_INTERFACE_CALL"
 )
 
 // SourceRelation links indexed artifacts. Evidence is located in repository-relative source.
 type SourceRelation struct {
-	Kind           RelationKind
-	TargetID       string
-	Location       string
-	Excerpt        string
-	TargetLocation string
-	TargetExcerpt  string
+	BindingLocation string
+	BindingExcerpt  string
+	Kind            RelationKind
+	TargetID        string
+	Location        string
+	Excerpt         string
+	TargetLocation  string
+	TargetExcerpt   string
 }
 
 // FileAnalysis describes actual processing, including degraded text fallback.

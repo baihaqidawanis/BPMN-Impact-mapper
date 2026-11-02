@@ -10,15 +10,27 @@ import (
 
 // ContextBM25 is the lexical branch of the production hybrid. BPMN context
 // forms the query; source clues explain results but never alter their rank.
-type ContextBM25 struct{}
+type ContextBM25 struct {
+	// OmitStartEndLabels is an opt-in query ablation, not a production default.
+	// Only neighbour start/end labels are omitted, not BPMN boundaryEvent nodes.
+	OmitStartEndLabels bool
+	UseBaselineAnchors bool
+}
 
 func (ContextBM25) Method() domain.AnalysisMethod { return domain.MethodHybrid }
 
-func (ContextBM25) MethodMetadata() map[string]string {
-	return map[string]string{"ranking_version": "context-bm25-v1", "evidence_version": "non-ranking-clues-v1"}
+func (strategy ContextBM25) MethodMetadata() map[string]string {
+	metadata := map[string]string{"ranking_version": "context-bm25-v3-gateway-branch", "evidence_version": "non-ranking-clues-v1"}
+	if strategy.OmitStartEndLabels {
+		metadata["query_ablation"] = "omit-neighbour-start-end-labels-v1"
+	}
+	if strategy.UseBaselineAnchors {
+		metadata["baseline_anchor_query"] = "label-tokens-v1"
+	}
+	return metadata
 }
 
-func (ContextBM25) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, options Config) ([]domain.Change, []domain.Warning, error) {
+func (strategy ContextBM25) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, options Config) ([]domain.Change, []domain.Warning, error) {
 	if options.TopK <= 0 {
 		options.TopK = DefaultConfig().TopK
 	}
@@ -32,7 +44,17 @@ func (ContextBM25) Attach(_ context.Context, changes []domain.Change, artifacts 
 			}
 			continue
 		}
-		query, ids := queryFor(*change)
+		queryChange := *change
+		if strategy.OmitStartEndLabels {
+			queryChange = withoutStartEndLabels(queryChange)
+		}
+		query, ids := queryFor(queryChange)
+		if strategy.UseBaselineAnchors && change.Context != nil {
+			for _, anchor := range change.Context.BaselineAnchors {
+				query = append(query, textutil.Tokenize(anchor.Name)...)
+			}
+			query = textutil.UniqueSorted(query)
+		}
 		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
 			change.UnresolvedImpact = append(change.UnresolvedImpact, "context BM25 found no lexical candidate")
@@ -45,7 +67,7 @@ func (ContextBM25) Attach(_ context.Context, changes []domain.Change, artifacts 
 			}
 			artifact := candidate.Artifact
 			score := round(candidate.Score / maximum)
-			evidence := contextBM25Evidence(*change, artifact, query, ids)
+			evidence := contextBM25Evidence(queryChange, artifact, query, ids)
 			change.Impacts = append(change.Impacts, domain.Impact{
 				Module: artifact.Module, Layer: artifact.Layer, File: artifact.File,
 				Symbol: displaySymbol(artifact.Symbol), RequiredAction: domain.ActionVerify,
@@ -54,6 +76,26 @@ func (ContextBM25) Attach(_ context.Context, changes []domain.Change, artifacts 
 		}
 	}
 	return changes, nil, nil
+}
+
+func withoutStartEndLabels(change domain.Change) domain.Change {
+	if change.Context == nil {
+		return change
+	}
+	copyContext := *change.Context
+	clearLabels := func(elements []domain.ElementContext) []domain.ElementContext {
+		result := append([]domain.ElementContext(nil), elements...)
+		for index := range result {
+			if result[index].Type == "startEvent" || result[index].Type == "endEvent" {
+				result[index].Name = ""
+			}
+		}
+		return result
+	}
+	copyContext.Predecessors = clearLabels(copyContext.Predecessors)
+	copyContext.Successors = clearLabels(copyContext.Successors)
+	change.Context = &copyContext
+	return change
 }
 
 func contextBM25Evidence(change domain.Change, artifact domain.Artifact, query, ids []string) []domain.Evidence {

@@ -21,6 +21,8 @@ type Strategy struct {
 	Right               mapping.Strategy
 	PreserveLeftActions bool
 	DiversifyFiles      bool
+	ConservativeSymbols bool
+	FileLevelFusion     bool
 	K                   int
 }
 
@@ -39,6 +41,12 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 	}
 	if strategy.DiversifyFiles {
 		metadata["display_selection"] = "highest-ranked-candidate-per-file-before-top-k"
+	}
+	if strategy.FileLevelFusion {
+		metadata["ranking_unit"] = "file-first-occurrence-v1; sequence-flow keeps artifact eligibility"
+	}
+	if strategy.ConservativeSymbols {
+		metadata["symbol_selection"] = "unique-direct-id-or-two-label-words-v1; otherwise file-level"
 	}
 	if strategy.Left != nil {
 		metadata["left_method"] = string(strategy.Left.Method())
@@ -97,7 +105,21 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	result := cloneChanges(changes)
 	warnings := make([]domain.Warning, 0)
 	for index := range result {
-		result[index].Impacts = fuse(left[index].Impacts, right[index].Impacts, topK, k, strategy.PreserveLeftActions, strategy.DiversifyFiles, strategy.Left.Method(), strategy.Right.Method())
+		// Thresholding can leave one retriever with too little support to
+		// interpret a high rank-consensus score as broad agreement.
+		if len(right[index].Impacts) < topK && len(right[index].Impacts) < len(left[index].Impacts) {
+			warnings = append(warnings, domain.Warning{Code: "FUSION_SPARSE_SUPPORT", Message: fmt.Sprintf("%s: %s returned %d qualifying candidates versus %d from %s. High RRF scores may reflect agreement within a small list; review the evidence.", changeIdentifier(result[index]), strategy.Right.Method(), len(right[index].Impacts), len(left[index].Impacts), strategy.Left.Method())})
+		}
+		leftImpacts, rightImpacts := left[index].Impacts, right[index].Impacts
+		if strategy.FileLevelFusion && result[index].ChangeType != domain.ModifySequenceFlow {
+			leftImpacts, rightImpacts = fileRanking(leftImpacts), fileRanking(rightImpacts)
+		}
+		result[index].Impacts = fuse(leftImpacts, rightImpacts, topK, k, strategy.PreserveLeftActions, strategy.DiversifyFiles, strategy.Left.Method(), strategy.Right.Method())
+		// The flow-label eligibility check keys a candidate by its original
+		// file/symbol pair; do not rewrite that key after eligibility.
+		if strategy.ConservativeSymbols && result[index].ChangeType != domain.ModifySequenceFlow {
+			resolveSymbolScope(&result[index], artifacts)
+		}
 		result[index].UnresolvedImpact = []string{}
 		if len(result[index].Impacts) == 0 {
 			result[index].UnresolvedImpact = uniqueStrings(append(append([]string{}, left[index].UnresolvedImpact...), right[index].UnresolvedImpact...))

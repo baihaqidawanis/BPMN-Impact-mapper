@@ -1,0 +1,1771 @@
+{
+  "schema_version": "2",
+  "purpose": "research-only baseline traceability; excluded from inference and model assessment input",
+  "review_status": "provisional single AI static source review",
+  "repository": {
+    "name": "Simple-ERP",
+    "git_head": "c9344971a573d5c44d9d4e58f23657eda4d18a86",
+    "working_tree_dirty": true
+  },
+  "limitations": [
+    "Single AI static source review; no independent review or runtime/role-session verification.",
+    "Existing task-to-code relationships are not required-change labels or an exhaustive dependency graph.",
+    "Gateway branches are preserved as BPMN control references; not all conditions have independent source mappings.",
+    "Function ranges use declaration text, not AST; TypeScript component ranges may include nested functions.",
+    "Related test source was inspected, not executed; absence of a link does not establish absence of tests.",
+    "L0-L2 are navigation/decomposition references, not invented direct task-to-code mappings.",
+    "BPMN labels and source evidence remain in their original language; no diagram/source is rewritten."
+  ],
+  "file_sha256": {
+    "backend/cmd/api/main.go": "e4116d945eaa0081e4576d7ea6b4c8fbfcae4e520b8cd9f638e31f58b8642a1b",
+    "backend/internal/auth/domain/role.go": "79a9076fa8f88e01656b0069e47b64368b07c97392edb32b285e46eb077d8158",
+    "backend/internal/finance/adapter/http/handler.go": "05a5d8e35eb1fdab74afbda263df8db03d9a96febc8f78e9c3617beaea8e9af4",
+    "backend/internal/finance/adapter/postgres/store.go": "b23d1c4093f0b52336e0b370677b1668463f211d7b1bbd337107ad408d1d955c",
+    "backend/internal/finance/application/service.go": "cf2b716d4ffd256c6fd90ab367a289d802f255148df1bd68f7c9416f981ea784",
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/internal/inventory/application/service.go": "fb9d72bf4e7d68f4bbd750822ae019055ad79121aa21dbcdae2b9448f6cd7783",
+    "backend/internal/masterdata/adapter/http/handler.go": "e0be36ba5f99f2d0cc876309da1a9e2df13b4d77138d5bceaa1a3aa1bc92d01b",
+    "backend/internal/masterdata/adapter/http/settings.go": "f9f72651cdef8c4430228cad626c820d64406eaabf0956b789db8a571f8b8260",
+    "backend/internal/masterdata/adapter/postgres/settings.go": "8523bc3b3e3a361123b9989d39e35279fa04e4e6b438d6c964965cf1ef826b9c",
+    "backend/internal/masterdata/adapter/postgres/store.go": "d838d63024920cd1801df70d90fbeedb7cc6c81f8a2fcb84fac183fe2e616fc9",
+    "backend/internal/masterdata/application/service.go": "ae7d07d8012fb06077d83c4b41757fd3ae15cc73636c1c9e106a5bfabcec2a27",
+    "backend/internal/masterdata/application/settings.go": "dd94e9a4af20b9fd8c76ae0f5abec0f70b193eb305e5b8d0dce234df5afc5220",
+    "backend/internal/masterdata/domain/entity.go": "4fdccaf6781a739612d4d7a31d3f2c61bd198c1d6c941dde91a130f3cb004458",
+    "backend/internal/masterdata/domain/settings.go": "d37acf53cb91e9e509b1b689b6bcf84b681f51221fdd453d801d999b41f12833",
+    "backend/internal/platform/authorization/super_admin.go": "091da1a53710e1f693872185753cff04ff1b45b6334c5c83acff631bbb21ed41",
+    "backend/internal/purchasing/adapter/http/handler.go": "72c9f7914560a07f8348fe3afc0d3aac5ca04121ed4ca5bb58e21e048c6df13c",
+    "backend/internal/purchasing/adapter/postgres/store.go": "bc806637c6b847d3aabcf1c80c6d2352c89545ebf2f6b27e33f4bb9331b47688",
+    "backend/internal/purchasing/application/service.go": "d944174015032d9ee65855fba90fd310efff8908925123f932b9fed7e7dacf67",
+    "backend/internal/sales/adapter/http/handler.go": "beae2365a129e0ac9d21cb65983b756e23f2c9476dc8fe75c903e8f72c9f5c05",
+    "backend/internal/sales/adapter/postgres/store.go": "cd2625b386f9f315baa854878832f2b731a2122d84e35d533d5bcc34d90bda67",
+    "backend/internal/sales/application/service.go": "9b9ca9da22a158724af7ff98f3904bd967936cf644c065b167da38948c2da916",
+    "backend/test/integration/finance_test.go": "4b5691329c854a12c3b9fc81ea55dd67084f2f33319d69d0b131805dd5d0ab98",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "docs/bpm-haqi/roles/staff/inventory/level-1/role-staff-l1-inventory.bpmn": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn": "079b9f005afe3e6aab55b7c788330ae0bd9a87d702b0a510489473166abb6d4c",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-correction.bpmn": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+    "docs/bpm-haqi/roles/staff/inventory/level-2/role-staff-l2-inv-sources.bpmn": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn": "1aead6115c0c7fe82e9abd3863b895b61bf1f534a989f15410d6409aa2796966",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-create.bpmn": "5c6c5aeebeff196ca00e2457b1adf08461290eb9f8560fa05d7baacc3c52e5c7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-post.bpmn": "ac677a4401b21e5ebc15293ee743817500897f53141b5be758f99a9f6f0a30ed",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-delivery-post.bpmn": "14b1a2b7a882866374840960418f9b294841ab4293d661ff41e31170d60328a7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn": "78cb3d88f5adc46832b105efee83f8377351f9c1d72708088247f465b51625e7",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-balances.bpmn": "2cc2cfd5bc5f233f9f12595346f8207f7dc1185e3d2a9c010bd0ee17aef8aa4a",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-inv-movements.bpmn": "a58db3762897909ad74a4be402c901d438f93971f9d3860467e7efac839bf38d",
+    "docs/bpm-haqi/roles/staff/level-0/role-staff-l0.bpmn": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l1-master.bpmn": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l2-master.bpmn": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+    "docs/bpm-haqi/roles/staff/master-data/role-staff-l3-master-list.bpmn": "171557b86a9773fa0fee6d4212698f34ac3aab9a3dfb3bd7b3e2e82a44401572",
+    "docs/bpm-haqi/roles/staff/p2p/level-1/role-staff-l1-p2p.bpmn": "9a945fb31c80e51c908c9fd13e4912b6172b75b30eb59f66e166f3f6a6d98eea",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-ap.bpmn": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-correction.bpmn": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-po-gr.bpmn": "a5ba00ee8ba3b60131f1a61aad7859b0a06231cb4b9d6c932b05be5a33caccc7",
+    "docs/bpm-haqi/roles/staff/p2p/level-2/role-staff-l2-pr.bpmn": "8a10565947a4f67d2b797f44a471d741366a7899fe627e291a886c99a139ea9d",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-payment.bpmn": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-gr-create.bpmn": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-po-convert.bpmn": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-copy.bpmn": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+    "docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-submit.bpmn": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn": "01c398e15b88d4ec5d106eff27d049ab3a525d600c71afbd15ecbd778844a148",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn": "4aebd70c6abba119a059e343a626c07787b796d487b535dda4529d427982b8f0",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn": "c96bf8d2c9a3d65931c39862dca60ca5d14dfd87267fbd511afaf91381b7e4f5",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn": "a8a8a2c8a39b4930c8dd92a3482a7bb698c32359a85dff987f73ebead1d2135c",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn": "d407f0923dafaac4acf22a3a240ea685b87a45606f6fab7d20ecad06b8c0aef3",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn": "68540c68b20e4c0a2d7de29b6da9af520eebd305e324994499adb9c35c4cc5a4",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn": "bd3053a6f69459cc3d94b1c08c512749ef8726cd21a58dede8961c817022b577",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn": "eb600e95c6de03fe245ec4b3547a619ab67ae4f4a7bf054b72995a7c6371db2a",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn": "0ae2fd5fc34ad15a99ae17839723ffd482244a4770b97faf482a498dea6076f1",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn": "8437aab61408c43131224bdb4fbc753e7e795472dec3b5288819b49c5a595add",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn": "eecfac822aae8f672f0331a038f6b55f07370eea59e190781fe866723fe86276",
+    "docs/bpm-haqi/roles/super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn": "038e6df589d12fdfa8441cb543eff9c6387d2d2059e83b6cac491226d1265bdf",
+    "docs/bpm-haqi/roles/super-admin/level-0/role-super-admin-l0.bpmn": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn": "028d68d2d92c0d9e0aa796cdca4fabbfd582864199bf27b5c8914a808d7e3e7c",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn": "4f80c3bb29148c9c1d6838b795564ff2d03f6e4e897804e40e3b4de2b4092c1f",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn": "3ed34b48b2babc189faf0f7fe48a72d25d1cd3c9be3ba9747cfba5b52779c320",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn": "a8f3d5a07a491bd3d98361f12cb0d33bd642d576013bd7fcbe319e2958fd65d1",
+    "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn": "0578f9e19cb240a29875a787193ffc23a3e7f66999cb4653e1ca970ce5d72443",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn": "728678cd61a2f63414fe007394988fdde897e6745f0f0db3fc731d310fc34173",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn": "e54d18e356b62b5ea9f44ea454fdb4a884cef3fad6ebb68cd544c4c3884704d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn": "e7ddbbc542c5507c9926160c9b9cff827f94549a7f602be4b962002dbe116b44",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn": "c2348574c3fbf3b16f18cf0168abb1024fa5c0e85c854ca1825147eb52c90909",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn": "43ea014d63f90e462a2dd9df6c4955d8973e7c1d9109903f02fbfff887a1b339",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn": "3c4b94c80423329bdadb5b81a079e7fb0a90e252c254430cb47678bd51b9ee78",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn": "f28a13f7a9237111981efacb27022a2d181e545e81b0645d9335c34a46c41a1e",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn": "5ff01680be0e624ef430fac32f3321d225132626b8c0a60b7178fd287c9f2fcf",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn": "8de75b74168cbbe706afba0b718b569f6db10d75cad87ad1f672c31d44baa5d8",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn": "a96e6815a38a0f04b68e15a3fb0ea1f3bbb3c86584638c115c175ffae71aca02",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn": "47c4a180e3f2485a2d70be56717ef25f64a85537f6eda54c49f65f318cfce3f0",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn": "35893308e574e79e1a86b465d24e1a63be0186c1564561d36ace9118e561c681",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn": "0e7c68f2fd95a09a4aa2fa5d75979c8e4a4579c8080d148988d7273eb836d2fe",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn": "433841646daea14b8c54f0aa4eada081ee3917ffa349488968c19b60c06d6617",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn": "7caf08d98976257dc1b4bd852c846e232236475fd0f6ac789d16495ff0c8444a",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn": "f8a995ea61885f0d236cb858b7ec740f5ad76cb0eece21d63546d895f6ea91a4",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn": "095fee3e07d51ac1e21c135de0686cd9c06c51f2bf030d8b22436e764f70ce27",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn": "f214a0c836410ec2c5f2ad80bb9b7fb2bb86ac8c43d0e1c85a138d0f3c2f0171",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn": "d67e026b4018ae05bc597375fb7895d1d86a27482acbd6670dbd73f081ae9c9d",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn": "551e807848f02150371eca6b1b4666e94f37c8b3b07dcb3ad3ef8ceaeb63e4ce",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn": "0eb241b9c0a35cacd3f9ab7c53ab7c675788d77fd22301cacf97b1176495e410",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn": "8a5de1a161993813fe69902bde3086e25ce0e847a8d66659c5fd0cd600f775ec",
+    "docs/bpm-haqi/roles/super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn": "4c94fa74ea5f1d4fcc4481336111d19e7b25929ceeea245d5ca797d6e3d4ca2c",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn": "fb89bd0d5d8ba8ee9ead75341e777ca19417fb6e58287fb7d09422bec42e99de",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn": "bfd98f23a4ebf1011c66a2f0b86c5437795b1d94fe62d82ed19265c98d5e7efb",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn": "5aaf8e76909cc2ee70c1506e30f9677097b69f84c74c9c1f94ac558f041bb848",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn": "c433a35484e67902e761f6c3ffd6e86521bfeb1cee39c1410e0a636ba8c0b14d",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn": "c84bdfded4af5009122c7932a78ddd67b0206c4974948f8a2b1b0502d9285358",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn": "13bddb1286d5d8a64337283cc77880a2d53b2b3253ec04d2fe5d51c8f4294b2a",
+    "docs/bpm-haqi/roles/supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn": "ec8e12b0c146ef074b0736a394d758aef5ed74288724fd52dddf2d635b39bbd5",
+    "docs/bpm-haqi/roles/supervisor/level-0/role-supervisor-l0.bpmn": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn": "e05788ae156f2d75e9e4dfa7b3edd14cbd820fedc1d3886e0aa5f65443d76ce3",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn": "6889b5fad4d741b43cb16bd685ddb6d460944c3495f84a2204e965cf80c36e78",
+    "docs/bpm-haqi/roles/supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn": "88e5d3fe6c1bf11b07ffd1c12cffcc5bfb59ba602d782f051ccdac2aef16377c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn": "49b7212be2ee63ea055c92c03ea393a0205aa2caecd98a740ca8121f628b2e97",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn": "0127196e8c103e7085a5ad94186be8c4cb1e9b3b80b7ec3bf39a4f6a2ef2d0d3",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn": "6e8e4350e7a641f6b9a82e6cf399f20cfbc16458e801533d884e85f5eb4eecbe",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn": "db5a55033a864aede3d388506c9ab7cf6727f37c2433117398b020d607503f18",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn": "d4bfd5fd66a50c732e52fe32de5c0dff783594201939d1e9239621a6e47d6894",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn": "6181a04150e5626b8e23db00c71a65b34a53ab2e61286d25027a6a9ba114323c",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn": "0adad4153fd78601141820b23d93394a281aebdd9709675eec53f59969dbfba5",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn": "167dabeeb195fdfcdbe566f61fa51552c95ced4bc4a13de0b180930dc9572443",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn": "a2ff12fbb9b3621dbb30eaf42fffad1f3a39fa4dec85dab0b092fa066dfe53c4",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn": "8f3c7627ade95008115397cd5166e7c554d654cc9f59e6d6155d709e931ca624",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn": "208fdbc2145ca30f35cd2497dd9076a3241a4515201a218486c4173af4948a0f",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn": "c48fc6b83ebe2c92b947edd946faa31f169c98c58557fa1be1258b5684fc6a07",
+    "docs/bpm-haqi/roles/supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn": "50b3751ce79c82d88a9ff6652ed7344d3f47d7b247a7235914bfdd9bd1622f2d",
+    "frontend/features/finance/finance-workspace.tsx": "566d7ba0abcb5bb3429399f7e159fbba1b07ac8e1a34d5ab1edce236a133bb7c",
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "frontend/features/inventory/inventory-workspace.tsx": "c8c579fa066fc19c2c5b762dc34dabc3c1bc7b22aa43aff5ba07c7cde21fd947",
+    "frontend/features/master-data/master-data-panel.tsx": "c1e8f90ece61b702373993a8aae746ba6aa4b87a98c1c53566e00e60c5a90cb6",
+    "frontend/features/purchasing/goods-receipt-panel.tsx": "74db5c6e72f8453f59f80298b336fcc56e424d0e678f90c6d1914c9b48b5a240",
+    "frontend/features/purchasing/purchase-order-panel.tsx": "c34482b062d81ff06690183b42f54c29bacfe29991f40a1b56fa241cfd8c97dc",
+    "frontend/features/purchasing/purchase-request-panel.tsx": "b8185700375fe90e73d40da30ff8addfef4212fd638518c79f5486a4b86bcf03",
+    "frontend/features/sales/delivery-panel.tsx": "bd72027cbc595d059d6766ad119a3214405a477c60c90222dd0746c263399756",
+    "frontend/features/settings/settings-form.tsx": "d03add2dbce9c31db23ac87c752699cb19409cd31ab5bf1b7a829d703d78b577"
+  },
+  "snapshot_id": "876d5d30117e798a8733986217f19434",
+  "scope": {
+    "role": "super-admin",
+    "module": "master-data",
+    "level": 3,
+    "processes": 5,
+    "activities": 21
+  },
+  "processes": [
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn",
+      "process_id": "Process_role_super_admin_l3_master_create",
+      "name": "Buat master data - Super Admin",
+      "role": "super-admin",
+      "module": "master-data",
+      "level": 3,
+      "operation": "master-create",
+      "activities": [
+        {
+          "task_id": "role_super_admin_l3_master_create_input",
+          "name": "Pilih jenis; isi kode dan nama",
+          "type": "userTask",
+          "actor": "Super Admin",
+          "documentation": "Aktor alternatif pada lane, bukan dua persetujuan.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/master-data/master-data-panel.tsx",
+              "function": "MasterDataPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 11,
+              "function_end_line": 19,
+              "evidence": [
+                {
+                  "line": 18,
+                  "match": "onSubmit={create}",
+                  "excerpt": "...}>{value}</button>)}</div>{canManage && <form className=\"inline-form\" onSubmit={create}><input aria-label=\"Kode\" placeholder=\"Kode\" value={code} onChange={(event) => setCode(event.target.value)} required /><input aria-label=\"Nama\" placeholder=\"Nama\" value={name} onChange={(event) => setName(event.target.value)} require..."
+                },
+                {
+                  "line": 16,
+                  "match": "JSON.stringify({ code, name })",
+                  "excerpt": "...; try { await api(`/master-data/${resource}`, { method: \"POST\", body: JSON.stringify({ code, name }) }); setCode(\"\"); setName(\"\"); setRevision((value) => value + 1); } catch (cause) { setError(cause instanceof Error ? cause.message : \"Data gagal disimpan.\"); } }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_create_check",
+          "name": "Kind di whitelist; input valid; product perlu unit PCS aktif; constraint database",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Untuk product, INSERT SELECT unit code='PCS' aktif dan RowsAffected wajib 1. Tidak ada endpoint edit nama atau hapus.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.Create",
+              "role": "VALIDATION",
+              "function_start_line": 51,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 52,
+                  "match": "table(r.Kind)",
+                  "excerpt": "t, e := table(r.Kind)"
+                },
+                {
+                  "line": 62,
+                  "match": "code='PCS' AND active",
+                  "excerpt": "...INTO products(id,sku,name,unit_id)SELECT $1,$2,$3,id FROM units WHERE code='PCS' AND active`, r.ID, r.Code, r.Name)"
+                },
+                {
+                  "line": 66,
+                  "match": "tag.RowsAffected() != 1",
+                  "excerpt": "if tag.RowsAffected() != 1 {"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/domain/entity.go",
+              "function": "NewRecord",
+              "role": "INPUT_VALIDATION",
+              "function_start_line": 27,
+              "function_end_line": 37,
+              "evidence": [
+                {
+                  "line": 29,
+                  "match": "invalid kind",
+                  "excerpt": "return Record{}, errors.New(\"invalid kind\")"
+                },
+                {
+                  "line": 33,
+                  "match": "code == \"\" || name == \"\"",
+                  "excerpt": "if code == \"\" || name == \"\" {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_create_effect0",
+          "name": "Insert unit, product, supplier, customer atau warehouse",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.Create",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 51,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 62,
+                  "match": "INSERT INTO products",
+                  "excerpt": "tag, insertErr := tx.Exec(ctx, `INSERT INTO products(id,sku,name,unit_id)SELECT $1,$2,$3,id FROM units WHERE code='PCS' AND active`, r.ID, r.Code, r.Name)"
+                },
+                {
+                  "line": 70,
+                  "match": "\"INSERT INTO \"+t",
+                  "excerpt": "_, e = tx.Exec(ctx, \"INSERT INTO \"+t+\"(id,code,name) VALUES($1,$2,$3)\", r.ID, r.Code, r.Name)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_create_effect1",
+          "name": "Audit CREATE_MASTER_DATA; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.Create",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 51,
+              "function_end_line": 80,
+              "evidence": [
+                {
+                  "line": 75,
+                  "match": "'CREATE_MASTER_DATA'",
+                  "excerpt": "...,action,trace_id,entity_type,entity_id,new_state,request_id)VALUES($1,'CREATE_MASTER_DATA','CAP-MDM-001',$2,$3,'ACTIVE',$4)`, actor, string(r.Kind), r.ID, request)"
+                },
+                {
+                  "line": 79,
+                  "match": "tx.Commit(",
+                  "excerpt": "return tx.Commit(ctx)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_create_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "Handler.create",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 47,
+              "function_end_line": 68,
+              "evidence": [
+                {
+                  "line": 64,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 67,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 201, item)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 94,
+              "function_end_line": 98,
+              "evidence": [
+                {
+                  "line": 96,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 97,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/masterdata/adapter/http/handler.go",
+          "function": "Handler.create",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 47,
+          "function_end_line": 68,
+          "evidence": [
+            {
+              "line": 62,
+              "match": "h.Service.Create(",
+              "excerpt": "item, e := h.Service.Create(r.Context(), kind(chi.URLParam(r, \"kind\")), in.Code, in.Name, p.UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/application/service.go",
+          "function": "Service.Create",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 22,
+          "function_end_line": 30,
+          "evidence": [
+            {
+              "line": 28,
+              "match": "s.store.Create(",
+              "excerpt": "err = s.store.Create(ctx, r, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/adapter/http/handler.go",
+          "function": "Handler.create",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 47,
+          "function_end_line": 68,
+          "evidence": [
+            {
+              "line": 58,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !authdomain.CanApprove(p.Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/adapter/postgres/store.go",
+          "function": "table",
+          "role": "ALLOWED_MASTER_KINDS",
+          "function_start_line": 12,
+          "function_end_line": 26,
+          "evidence": [
+            {
+              "line": 14,
+              "match": "case domain.Product:",
+              "excerpt": "case domain.Product:"
+            },
+            {
+              "line": 16,
+              "match": "case domain.Supplier:",
+              "excerpt": "case domain.Supplier:"
+            },
+            {
+              "line": 18,
+              "match": "case domain.Customer:",
+              "excerpt": "case domain.Customer:"
+            },
+            {
+              "line": 20,
+              "match": "case domain.Unit:",
+              "excerpt": "case domain.Unit:"
+            },
+            {
+              "line": 22,
+              "match": "case domain.Warehouse:",
+              "excerpt": "case domain.Warehouse:"
+            },
+            {
+              "line": 25,
+              "match": "invalid kind",
+              "excerpt": "return \"\", fmt.Errorf(\"invalid kind\")"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_super_admin_l3_master_create_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_create_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_create_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_create_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_super_admin_l3_master_create_Flow_0",
+          "source": "role_super_admin_l3_master_create_start",
+          "target": "role_super_admin_l3_master_create_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_1",
+          "source": "role_super_admin_l3_master_create_input",
+          "target": "role_super_admin_l3_master_create_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_2",
+          "source": "role_super_admin_l3_master_create_check",
+          "target": "role_super_admin_l3_master_create_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_3",
+          "source": "role_super_admin_l3_master_create_valid",
+          "target": "role_super_admin_l3_master_create_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_4",
+          "source": "role_super_admin_l3_master_create_effect0",
+          "target": "role_super_admin_l3_master_create_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_5",
+          "source": "role_super_admin_l3_master_create_effect1",
+          "target": "role_super_admin_l3_master_create_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_Flow_6",
+          "source": "role_super_admin_l3_master_create_valid",
+          "target": "role_super_admin_l3_master_create_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_super_admin_l3_master_create_result_to_activity",
+          "source": "role_super_admin_l3_master_create_result_merge",
+          "target": "role_super_admin_l3_master_create_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_create_result_to_end",
+          "source": "role_super_admin_l3_master_create_result_activity",
+          "target": "role_super_admin_l3_master_create_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn",
+      "process_id": "Process_role_super_admin_l3_master_list",
+      "name": "Lihat master data - Super Admin",
+      "role": "super-admin",
+      "module": "master-data",
+      "level": 3,
+      "operation": "master-list",
+      "activities": [
+        {
+          "task_id": "role_super_admin_l3_master_list_input",
+          "name": "Pilih units, products, suppliers, customers, atau warehouses",
+          "type": "userTask",
+          "actor": "Super Admin",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/master-data/master-data-panel.tsx",
+              "function": "MasterDataPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 11,
+              "function_end_line": 19,
+              "evidence": [
+                {
+                  "line": 15,
+                  "match": "`/master-data/${resource}`",
+                  "excerpt": "useEffect(() => { api<{ data: RecordItem[] }>(`/master-data/${resource}`).then((value) => setItems(value.data)).catch((cause: Error) => setError(cause.message)).finally(() => setBusy(false)); }, [resource, revision]);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_list_read",
+          "name": "Autentikasi dan baca data",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.List",
+              "role": "READ_QUERY",
+              "function_start_line": 27,
+              "function_end_line": 50,
+              "evidence": [
+                {
+                  "line": 28,
+                  "match": "table(k)",
+                  "excerpt": "t, e := table(k)"
+                },
+                {
+                  "line": 36,
+                  "match": "SELECT id,",
+                  "excerpt": "rows, e := s.Pool.Query(ctx, \"SELECT id,\"+code+\",name,active,version FROM \"+t+\" ORDER BY \"+code)"
+                },
+                {
+                  "line": 36,
+                  "match": "ORDER BY",
+                  "excerpt": "... s.Pool.Query(ctx, \"SELECT id,\"+code+\",name,active,version FROM \"+t+\" ORDER BY \"+code)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_list_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "Handler.list",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 39,
+              "function_end_line": 46,
+              "evidence": [
+                {
+                  "line": 42,
+                  "match": "respond(w, 400",
+                  "excerpt": "respond(w, 400, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 45,
+                  "match": "respond(w, 200",
+                  "excerpt": "respond(w, 200, map[string]any{\"data\": items})"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 94,
+              "function_end_line": 98,
+              "evidence": [
+                {
+                  "line": 96,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 97,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/masterdata/adapter/http/handler.go",
+          "function": "Handler.list",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 39,
+          "function_end_line": 46,
+          "evidence": [
+            {
+              "line": 40,
+              "match": "h.Service.List(",
+              "excerpt": "items, e := h.Service.List(r.Context(), kind(chi.URLParam(r, \"kind\")))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/application/service.go",
+          "function": "Service.List",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 19,
+          "function_end_line": 21,
+          "evidence": [
+            {
+              "line": 20,
+              "match": "s.store.List(",
+              "excerpt": "return s.store.List(ctx, k)"
+            }
+          ]
+        },
+        {
+          "file": "backend/cmd/api/main.go",
+          "function": "main",
+          "role": "AUTHENTICATION_BOUNDARY",
+          "function_start_line": 39,
+          "function_end_line": 121,
+          "evidence": [
+            {
+              "line": 83,
+              "match": "api.Mount(\"/master-data\", authMiddleware.RequireAuth(masterHandler.Routes()))",
+              "excerpt": "api.Mount(\"/master-data\", authMiddleware.RequireAuth(masterHandler.Routes()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/adapter/postgres/store.go",
+          "function": "table",
+          "role": "ALLOWED_MASTER_KINDS",
+          "function_start_line": 12,
+          "function_end_line": 26,
+          "evidence": [
+            {
+              "line": 14,
+              "match": "case domain.Product:",
+              "excerpt": "case domain.Product:"
+            },
+            {
+              "line": 16,
+              "match": "case domain.Supplier:",
+              "excerpt": "case domain.Supplier:"
+            },
+            {
+              "line": 18,
+              "match": "case domain.Customer:",
+              "excerpt": "case domain.Customer:"
+            },
+            {
+              "line": 20,
+              "match": "case domain.Unit:",
+              "excerpt": "case domain.Unit:"
+            },
+            {
+              "line": 22,
+              "match": "case domain.Warehouse:",
+              "excerpt": "case domain.Warehouse:"
+            },
+            {
+              "line": 25,
+              "match": "invalid kind",
+              "excerpt": "return \"\", fmt.Errorf(\"invalid kind\")"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_super_admin_l3_master_list_start",
+          "type": "startEvent",
+          "name": "Perlu informasi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_list_valid",
+          "type": "exclusiveGateway",
+          "name": "Baca berhasil?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_list_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_list_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_super_admin_l3_master_list_Flow_0",
+          "source": "role_super_admin_l3_master_list_start",
+          "target": "role_super_admin_l3_master_list_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_list_Flow_1",
+          "source": "role_super_admin_l3_master_list_input",
+          "target": "role_super_admin_l3_master_list_read",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_list_Flow_2",
+          "source": "role_super_admin_l3_master_list_read",
+          "target": "role_super_admin_l3_master_list_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_list_Flow_3",
+          "source": "role_super_admin_l3_master_list_valid",
+          "target": "role_super_admin_l3_master_list_result_merge",
+          "name": "Ya; Data ditampilkan; tanpa perubahan",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_super_admin_l3_master_list_Flow_4",
+          "source": "role_super_admin_l3_master_list_valid",
+          "target": "role_super_admin_l3_master_list_result_merge",
+          "name": "Tidak; Gagal membaca; tampilkan pesan",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_super_admin_l3_master_list_result_to_activity",
+          "source": "role_super_admin_l3_master_list_result_merge",
+          "target": "role_super_admin_l3_master_list_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_list_result_to_end",
+          "source": "role_super_admin_l3_master_list_result_activity",
+          "target": "role_super_admin_l3_master_list_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn",
+      "process_id": "Process_role_super_admin_l3_master_status",
+      "name": "Aktif/nonaktifkan master data - Super Admin",
+      "role": "super-admin",
+      "module": "master-data",
+      "level": 3,
+      "operation": "master-status",
+      "activities": [
+        {
+          "task_id": "role_super_admin_l3_master_status_input",
+          "name": "Pilih master dan status aktif",
+          "type": "userTask",
+          "actor": "Super Admin",
+          "documentation": "Aktor alternatif pada lane, bukan dua persetujuan.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/master-data/master-data-panel.tsx",
+              "function": "MasterDataPanel",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 11,
+              "function_end_line": 19,
+              "evidence": [
+                {
+                  "line": 18,
+                  "match": "toggle(item)",
+                  "excerpt": "...ll><span className=\"row-actions\">{canManage && <button onClick={() => toggle(item)}>{item.active ? \"Nonaktifkan\" : \"Aktifkan\"}</button>}</span></div>)}</div></div>;"
+                },
+                {
+                  "line": 17,
+                  "match": "version: item.version",
+                  "excerpt": "...tus`, { method: \"PATCH\", body: JSON.stringify({ active: !item.active, version: item.version }) }); setRevision((value) => value + 1); } catch (cause) { setError(cause instanceof Error ? cause.message : \"Status gagal diubah.\"); } }"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_status_check",
+          "name": "Kind valid; id dan version cocok",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. ",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.SetActive",
+              "role": "VALIDATION",
+              "function_start_line": 81,
+              "function_end_line": 103,
+              "evidence": [
+                {
+                  "line": 82,
+                  "match": "table(k)",
+                  "excerpt": "t, e := table(k)"
+                },
+                {
+                  "line": 95,
+                  "match": "tag.RowsAffected() != 1",
+                  "excerpt": "if tag.RowsAffected() != 1 {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_status_effect0",
+          "name": "Update active dan version",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.SetActive",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 81,
+              "function_end_line": 103,
+              "evidence": [
+                {
+                  "line": 91,
+                  "match": "SET active=$1,version=version+1",
+                  "excerpt": "tag, e := tx.Exec(ctx, \"UPDATE \"+t+\" SET active=$1,version=version+1,updated_at=now() WHERE id=$2 AND version=$3\", active, id, version)"
+                },
+                {
+                  "line": 91,
+                  "match": "WHERE id=$2 AND version=$3",
+                  "excerpt": "...c(ctx, \"UPDATE \"+t+\" SET active=$1,version=version+1,updated_at=now() WHERE id=$2 AND version=$3\", active, id, version)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_status_effect1",
+          "name": "Audit SET_MASTER_DATA_STATUS; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/store.go",
+              "function": "Store.SetActive",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 81,
+              "function_end_line": 103,
+              "evidence": [
+                {
+                  "line": 98,
+                  "match": "'SET_MASTER_DATA_STATUS'",
+                  "excerpt": "...,action,trace_id,entity_type,entity_id,new_state,request_id)VALUES($1,'SET_MASTER_DATA_STATUS','CAP-MDM-001',$2,$3,$4,$5)`, actor, string(k), id, map[bool]string{true: \"ACTIVE\", false: \"INACTIVE\"}[active], request)"
+                },
+                {
+                  "line": 102,
+                  "match": "tx.Commit(",
+                  "excerpt": "return tx.Commit(ctx)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_master_status_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "Handler.status",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 69,
+              "function_end_line": 93,
+              "evidence": [
+                {
+                  "line": 89,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 92,
+                  "match": "w.WriteHeader(204)",
+                  "excerpt": "w.WriteHeader(204)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 94,
+              "function_end_line": 98,
+              "evidence": [
+                {
+                  "line": 96,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 97,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/masterdata/adapter/http/handler.go",
+          "function": "Handler.status",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 69,
+          "function_end_line": 93,
+          "evidence": [
+            {
+              "line": 87,
+              "match": "h.Service.SetActive(",
+              "excerpt": "e = h.Service.SetActive(r.Context(), kind(chi.URLParam(r, \"kind\")), chi.URLParam(r, \"id\"), in.Active, in.Version, p.UserID, middleware.GetReqID(r.Context()))"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/application/service.go",
+          "function": "Service.SetActive",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 31,
+          "function_end_line": 33,
+          "evidence": [
+            {
+              "line": 32,
+              "match": "s.store.SetActive(",
+              "excerpt": "return s.store.SetActive(ctx, k, id, active, version, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/adapter/http/handler.go",
+          "function": "Handler.status",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 69,
+          "function_end_line": 93,
+          "evidence": [
+            {
+              "line": 83,
+              "match": "domain.CanApprove(",
+              "excerpt": "if !authdomain.CanApprove(p.Role) {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/auth/domain/role.go",
+          "function": "CanApprove",
+          "role": "ROLE_POLICY",
+          "function_start_line": 17,
+          "function_end_line": 20,
+          "evidence": [
+            {
+              "line": 18,
+              "match": "return role == RoleSupervisor || role == RoleSuperAdmin",
+              "excerpt": "return role == RoleSupervisor || role == RoleSuperAdmin"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/adapter/postgres/store.go",
+          "function": "table",
+          "role": "ALLOWED_MASTER_KINDS",
+          "function_start_line": 12,
+          "function_end_line": 26,
+          "evidence": [
+            {
+              "line": 14,
+              "match": "case domain.Product:",
+              "excerpt": "case domain.Product:"
+            },
+            {
+              "line": 16,
+              "match": "case domain.Supplier:",
+              "excerpt": "case domain.Supplier:"
+            },
+            {
+              "line": 18,
+              "match": "case domain.Customer:",
+              "excerpt": "case domain.Customer:"
+            },
+            {
+              "line": 20,
+              "match": "case domain.Unit:",
+              "excerpt": "case domain.Unit:"
+            },
+            {
+              "line": 22,
+              "match": "case domain.Warehouse:",
+              "excerpt": "case domain.Warehouse:"
+            },
+            {
+              "line": 25,
+              "match": "invalid kind",
+              "excerpt": "return \"\", fmt.Errorf(\"invalid kind\")"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_super_admin_l3_master_status_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_status_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_status_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_master_status_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_super_admin_l3_master_status_Flow_0",
+          "source": "role_super_admin_l3_master_status_start",
+          "target": "role_super_admin_l3_master_status_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_1",
+          "source": "role_super_admin_l3_master_status_input",
+          "target": "role_super_admin_l3_master_status_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_2",
+          "source": "role_super_admin_l3_master_status_check",
+          "target": "role_super_admin_l3_master_status_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_3",
+          "source": "role_super_admin_l3_master_status_valid",
+          "target": "role_super_admin_l3_master_status_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_4",
+          "source": "role_super_admin_l3_master_status_effect0",
+          "target": "role_super_admin_l3_master_status_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_5",
+          "source": "role_super_admin_l3_master_status_effect1",
+          "target": "role_super_admin_l3_master_status_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_Flow_6",
+          "source": "role_super_admin_l3_master_status_valid",
+          "target": "role_super_admin_l3_master_status_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_super_admin_l3_master_status_result_to_activity",
+          "source": "role_super_admin_l3_master_status_result_merge",
+          "target": "role_super_admin_l3_master_status_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_master_status_result_to_end",
+          "source": "role_super_admin_l3_master_status_result_activity",
+          "target": "role_super_admin_l3_master_status_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn",
+      "process_id": "Process_role_super_admin_l3_settings_get",
+      "name": "Lihat pengaturan organisasi - Super Admin",
+      "role": "super-admin",
+      "module": "master-data",
+      "level": 3,
+      "operation": "settings-get",
+      "activities": [
+        {
+          "task_id": "role_super_admin_l3_settings_get_input",
+          "name": "Buka halaman Settings",
+          "type": "userTask",
+          "actor": "Super Admin",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/settings/settings-form.tsx",
+              "function": "SettingsForm",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 3,
+              "function_end_line": 3,
+              "evidence": [
+                {
+                  "line": 3,
+                  "match": "api<Settings>(\"/settings/organization\")",
+                  "excerpt": "...useState(empty);const[message,setMessage]=useState(\"\");useEffect(()=>{api<Settings>(\"/settings/organization\").then(setValue).catch(e=>setMessage(e.message))},[]);async function save(e:React.FormEvent){e.preventDefault();try{await api(\"/settings/organization\",{method:\"PATCH\",body:JSON.stringify(value)});setMessage(\"Peng..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_get_read",
+          "name": "Autentikasi dan baca data",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/settings.go",
+              "function": "SettingsStore.Get",
+              "role": "READ_QUERY",
+              "function_start_line": 11,
+              "function_end_line": 14,
+              "evidence": [
+                {
+                  "line": 12,
+                  "match": "SELECT organization_name",
+                  "excerpt": "e = s.Pool.QueryRow(ctx, `SELECT organization_name,currency,timezone,default_warehouse_id FROM organization_settings WHERE singleton`).Scan(&v.OrganizationName, &v.Currency, &v.Timezone, &v.DefaultWarehouseID)"
+                },
+                {
+                  "line": 12,
+                  "match": "WHERE singleton",
+                  "excerpt": "...ame,currency,timezone,default_warehouse_id FROM organization_settings WHERE singleton`).Scan(&v.OrganizationName, &v.Currency, &v.Timezone, &v.DefaultWarehouseID)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_get_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/http/settings.go",
+              "function": "SettingsHandler.ServeHTTP",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 14,
+              "function_end_line": 38,
+              "evidence": [
+                {
+                  "line": 19,
+                  "match": "respond(w, 500",
+                  "excerpt": "respond(w, 500, map[string]string{\"message\": \"Pengaturan tidak tersedia.\"})"
+                },
+                {
+                  "line": 22,
+                  "match": "respond(w, 200",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 94,
+              "function_end_line": 98,
+              "evidence": [
+                {
+                  "line": 96,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 97,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/masterdata/adapter/http/settings.go",
+          "function": "SettingsHandler.ServeHTTP",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 14,
+          "function_end_line": 38,
+          "evidence": [
+            {
+              "line": 17,
+              "match": "h.Service.Get(",
+              "excerpt": "v, e := h.Service.Get(r.Context())"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/application/settings.go",
+          "function": "SettingsService.Get",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 15,
+          "function_end_line": 17,
+          "evidence": [
+            {
+              "line": 16,
+              "match": "s.store.Get(",
+              "excerpt": "return s.store.Get(ctx)"
+            }
+          ]
+        },
+        {
+          "file": "backend/cmd/api/main.go",
+          "function": "main",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 39,
+          "function_end_line": 121,
+          "evidence": [
+            {
+              "line": 84,
+              "match": "api.Handle(\"/settings/organization\", authMiddleware.RequireRole(domain.RoleSuperAdmin, settingsHandler))",
+              "excerpt": "api.Handle(\"/settings/organization\", authMiddleware.RequireRole(domain.RoleSuperAdmin, settingsHandler))"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_super_admin_l3_settings_get_start",
+          "type": "startEvent",
+          "name": "Perlu informasi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_valid",
+          "type": "exclusiveGateway",
+          "name": "Baca berhasil?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_super_admin_l3_settings_get_Flow_0",
+          "source": "role_super_admin_l3_settings_get_start",
+          "target": "role_super_admin_l3_settings_get_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_Flow_1",
+          "source": "role_super_admin_l3_settings_get_input",
+          "target": "role_super_admin_l3_settings_get_read",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_Flow_2",
+          "source": "role_super_admin_l3_settings_get_read",
+          "target": "role_super_admin_l3_settings_get_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_Flow_3",
+          "source": "role_super_admin_l3_settings_get_valid",
+          "target": "role_super_admin_l3_settings_get_result_merge",
+          "name": "Ya; Data ditampilkan; tanpa perubahan",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_Flow_4",
+          "source": "role_super_admin_l3_settings_get_valid",
+          "target": "role_super_admin_l3_settings_get_result_merge",
+          "name": "Tidak; Gagal membaca; tampilkan pesan",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_result_to_activity",
+          "source": "role_super_admin_l3_settings_get_result_merge",
+          "target": "role_super_admin_l3_settings_get_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_get_result_to_end",
+          "source": "role_super_admin_l3_settings_get_result_activity",
+          "target": "role_super_admin_l3_settings_get_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    },
+    {
+      "bpmn_file": "docs/bpm-haqi/roles/super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn",
+      "process_id": "Process_role_super_admin_l3_settings_update",
+      "name": "Ubah pengaturan organisasi - Super Admin",
+      "role": "super-admin",
+      "module": "master-data",
+      "level": 3,
+      "operation": "settings-update",
+      "activities": [
+        {
+          "task_id": "role_super_admin_l3_settings_update_input",
+          "name": "Isi organisasi, currency, timezone, warehouse",
+          "type": "userTask",
+          "actor": "Super Admin",
+          "documentation": "Aktor alternatif pada lane, bukan dua persetujuan.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "frontend/features/settings/settings-form.tsx",
+              "function": "SettingsForm",
+              "role": "USER_INPUT_OR_VIEW",
+              "function_start_line": 3,
+              "function_end_line": 3,
+              "evidence": [
+                {
+                  "line": 3,
+                  "match": "method:\"PATCH\"",
+                  "excerpt": "...FormEvent){e.preventDefault();try{await api(\"/settings/organization\",{method:\"PATCH\",body:JSON.stringify(value)});setMessage(\"Pengaturan tersimpan dan tercatat di audit trail.\")}catch(e){setMessage(e instanceof Error?e.message:\"Gagal menyimpan.\")}}return <form className=\"settings-card\"onSubmit={save}><label>Nama organi..."
+                },
+                {
+                  "line": 3,
+                  "match": "onSubmit={save}",
+                  "excerpt": "...?e.message:\"Gagal menyimpan.\")}}return <form className=\"settings-card\"onSubmit={save}><label>Nama organisasi<input value={value.organizationName}onChange={e=>setValue({...value,organizationName:e.target.value})}/></label><label>Mata uang<input value={value.currency}maxLength={3}onChange={e=>setValue({...value,currency:..."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_update_check",
+          "name": "Currency 3 karakter; timezone dan warehouse terisi",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Setelah kontrol akses HTTP; lihat l3-kontrol-request. Warehouse mengikuti FK; validasi domain tidak memeriksa timezone IANA, kode ISO atau warehouse aktif. Baca melalui GET pada route yang sama.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/settings.go",
+              "function": "SettingsStore.Update",
+              "role": "VALIDATION",
+              "function_start_line": 15,
+              "function_end_line": 33,
+              "evidence": [
+                {
+                  "line": 25,
+                  "match": "tag.RowsAffected() != 1",
+                  "excerpt": "if tag.RowsAffected() != 1 {"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/domain/settings.go",
+              "function": "OrganizationSettings.Validate",
+              "role": "INPUT_VALIDATION",
+              "function_start_line": 15,
+              "function_end_line": 20,
+              "evidence": [
+                {
+                  "line": 16,
+                  "match": "len(s.Currency) != 3",
+                  "excerpt": "if len(s.Currency) != 3 || strings.TrimSpace(s.Timezone) == \"\" || strings.TrimSpace(s.DefaultWarehouseID) == \"\" {"
+                },
+                {
+                  "line": 16,
+                  "match": "strings.TrimSpace(s.Timezone)",
+                  "excerpt": "if len(s.Currency) != 3 || strings.TrimSpace(s.Timezone) == \"\" || strings.TrimSpace(s.DefaultWarehouseID) == \"\" {"
+                },
+                {
+                  "line": 16,
+                  "match": "strings.TrimSpace(s.DefaultWarehouseID)",
+                  "excerpt": "if len(s.Currency) != 3 || strings.TrimSpace(s.Timezone) == \"\" || strings.TrimSpace(s.DefaultWarehouseID) == \"\" {"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_update_effect0",
+          "name": "Update singleton organization_settings",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/settings.go",
+              "function": "SettingsStore.Update",
+              "role": "PERSISTENCE_OR_STATE",
+              "function_start_line": 15,
+              "function_end_line": 33,
+              "evidence": [
+                {
+                  "line": 21,
+                  "match": "UPDATE organization_settings SET",
+                  "excerpt": "tag, e := tx.Exec(ctx, `UPDATE organization_settings SET organization_name=$1,currency=$2,timezone=$3,default_warehouse_id=$4,updated_by=$5,updated_at=now() WHERE singleton`, v.OrganizationName, v.Currency, v.Timezone, v.DefaultWarehouseID, actor)"
+                },
+                {
+                  "line": 21,
+                  "match": "WHERE singleton",
+                  "excerpt": "...$2,timezone=$3,default_warehouse_id=$4,updated_by=$5,updated_at=now() WHERE singleton`, v.OrganizationName, v.Currency, v.Timezone, v.DefaultWarehouseID, actor)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_update_effect1",
+          "name": "Audit UPDATE_SETTINGS; commit",
+          "type": "serviceTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/postgres/settings.go",
+              "function": "SettingsStore.Update",
+              "role": "AUDIT_AND_COMMIT",
+              "function_start_line": 15,
+              "function_end_line": 33,
+              "evidence": [
+                {
+                  "line": 28,
+                  "match": "'UPDATE_SETTINGS'",
+                  "excerpt": "...,action,trace_id,entity_type,entity_id,new_state,request_id)VALUES($1,'UPDATE_SETTINGS','CAP-MDM-001','ORGANIZATION_SETTINGS','singleton','UPDATED',$2)`, actor, request)"
+                },
+                {
+                  "line": 32,
+                  "match": "tx.Commit(",
+                  "excerpt": "return tx.Commit(ctx)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "task_id": "role_super_admin_l3_settings_update_result_activity",
+          "name": "Kirim respons hasil aksi (sukses atau gagal)",
+          "type": "sendTask",
+          "actor": "Sistem Simple ERP",
+          "documentation": "Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.",
+          "review_status": "provisional-source-reviewed",
+          "mappings": [
+            {
+              "file": "backend/internal/masterdata/adapter/http/settings.go",
+              "function": "SettingsHandler.ServeHTTP",
+              "role": "SUCCESS_ERROR_RESPONSE",
+              "function_start_line": 14,
+              "function_end_line": 38,
+              "evidence": [
+                {
+                  "line": 31,
+                  "match": "respond(w, 409",
+                  "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+                },
+                {
+                  "line": 22,
+                  "match": "respond(w, 20",
+                  "excerpt": "respond(w, 200, v)"
+                }
+              ]
+            },
+            {
+              "file": "backend/internal/masterdata/adapter/http/handler.go",
+              "function": "respond",
+              "role": "HTTP_JSON_RESPONSE",
+              "function_start_line": 94,
+              "function_end_line": 98,
+              "evidence": [
+                {
+                  "line": 96,
+                  "match": "w.WriteHeader(s)",
+                  "excerpt": "w.WriteHeader(s)"
+                },
+                {
+                  "line": 97,
+                  "match": "json.NewEncoder(w)",
+                  "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "operation_context": [
+        {
+          "file": "backend/internal/masterdata/adapter/http/settings.go",
+          "function": "SettingsHandler.ServeHTTP",
+          "role": "API_SERVICE_BINDING",
+          "function_start_line": 14,
+          "function_end_line": 38,
+          "evidence": [
+            {
+              "line": 30,
+              "match": "h.Service.Update(",
+              "excerpt": "if e := h.Service.Update(r.Context(), v, p.UserID, middleware.GetReqID(r.Context())); e != nil {"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/masterdata/application/settings.go",
+          "function": "SettingsService.Update",
+          "role": "SERVICE_STORE_BINDING",
+          "function_start_line": 18,
+          "function_end_line": 23,
+          "evidence": [
+            {
+              "line": 22,
+              "match": "s.store.Update(",
+              "excerpt": "return s.store.Update(ctx, v, actor, request)"
+            }
+          ]
+        },
+        {
+          "file": "backend/cmd/api/main.go",
+          "function": "main",
+          "role": "ROLE_ACCESS_BOUNDARY",
+          "function_start_line": 39,
+          "function_end_line": 121,
+          "evidence": [
+            {
+              "line": 84,
+              "match": "api.Handle(\"/settings/organization\", authMiddleware.RequireRole(domain.RoleSuperAdmin, settingsHandler))",
+              "excerpt": "api.Handle(\"/settings/organization\", authMiddleware.RequireRole(domain.RoleSuperAdmin, settingsHandler))"
+            }
+          ]
+        }
+      ],
+      "test_link_status": "dedicated test link not reviewed",
+      "control_elements": [
+        {
+          "id": "role_super_admin_l3_settings_update_start",
+          "type": "startEvent",
+          "name": "Kebutuhan aksi",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_valid",
+          "type": "exclusiveGateway",
+          "name": "Syarat terpenuhi?",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_done",
+          "type": "endEvent",
+          "name": "Respons dikirim",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_result_merge",
+          "type": "exclusiveGateway",
+          "name": "Gabungkan hasil alternatif",
+          "status": "BPMN control reference; no standalone source mapping asserted"
+        }
+      ],
+      "sequence_flows": [
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_0",
+          "source": "role_super_admin_l3_settings_update_start",
+          "target": "role_super_admin_l3_settings_update_input",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_1",
+          "source": "role_super_admin_l3_settings_update_input",
+          "target": "role_super_admin_l3_settings_update_check",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_2",
+          "source": "role_super_admin_l3_settings_update_check",
+          "target": "role_super_admin_l3_settings_update_valid",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_3",
+          "source": "role_super_admin_l3_settings_update_valid",
+          "target": "role_super_admin_l3_settings_update_effect0",
+          "name": "Ya",
+          "condition": "Ya"
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_4",
+          "source": "role_super_admin_l3_settings_update_effect0",
+          "target": "role_super_admin_l3_settings_update_effect1",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_5",
+          "source": "role_super_admin_l3_settings_update_effect1",
+          "target": "role_super_admin_l3_settings_update_result_merge",
+          "name": "Aksi selesai; hasil diterima",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_Flow_6",
+          "source": "role_super_admin_l3_settings_update_valid",
+          "target": "role_super_admin_l3_settings_update_result_merge",
+          "name": "Tidak; Ditolak / gagal; tidak commit",
+          "condition": "Tidak"
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_result_to_activity",
+          "source": "role_super_admin_l3_settings_update_result_merge",
+          "target": "role_super_admin_l3_settings_update_result_activity",
+          "name": "",
+          "condition": ""
+        },
+        {
+          "id": "role_super_admin_l3_settings_update_result_to_end",
+          "source": "role_super_admin_l3_settings_update_result_activity",
+          "target": "role_super_admin_l3_settings_update_done",
+          "name": "",
+          "condition": ""
+        }
+      ]
+    }
+  ]
+}

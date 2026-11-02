@@ -27,8 +27,11 @@ type passage struct {
 }
 
 type Strategy struct {
-	Embedder       Embedder
-	DiversifyFiles bool
+	Embedder              Embedder
+	DiversifyFiles        bool
+	IncludeProcessContext bool
+	UseBaselineAnchors    bool
+	AdjacentPassages      bool
 }
 
 func (Strategy) Method() domain.AnalysisMethod { return domain.MethodSemantic }
@@ -38,7 +41,17 @@ func (strategy Strategy) MethodMetadata() map[string]string {
 		return nil
 	}
 	identity := strategy.Embedder.Identity()
-	metadata := map[string]string{"provider": identity.Provider, "model": identity.Model, "adapter_sha256": identity.AdapterSHA256, "query_version": "named-task-short-context-anchor-v1", "passage_version": "head-middle-tail-v1"}
+	metadata := map[string]string{"provider": identity.Provider, "model": identity.Model, "adapter_sha256": identity.AdapterSHA256, "query_version": "named-task-gateway-branch-v2", "passage_version": "head-middle-tail-v1"}
+	metadata["input_profile"] = modelInputProfile(identity.Model)
+	if strategy.AdjacentPassages {
+		metadata["passage_version"] = "head-tail-middle-adjacent-v2"
+	}
+	if strategy.IncludeProcessContext {
+		metadata["query_version"] = "named-task-process-gateway-branch-v3"
+	}
+	if strategy.UseBaselineAnchors {
+		metadata["baseline_anchor_query"] = "labels-v1"
+	}
 	if identity.PythonVersion != "" {
 		metadata["python_version"] = identity.PythonVersion
 		metadata["sentence_transformers_version"] = identity.SentenceTransformersVersion
@@ -72,8 +85,9 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	}
 
 	texts := make([]string, 0, len(changes)+len(artifacts))
+	profile := modelInputProfile(strategy.Embedder.Identity().Model)
 	for _, change := range changes {
-		texts = append(texts, queryText(change))
+		texts = append(texts, embeddingInput(profile, strategy.queryText(change), true))
 	}
 	passages := make([][]passage, len(artifacts))
 	passageIndexes := make([][]int, len(artifacts))
@@ -81,18 +95,22 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	// round-robin where budget permits, without query-dependent corpus selection.
 	remaining := maxEmbeddingTexts - len(changes) - len(artifacts)
 	for index, artifact := range artifacts {
-		passages[index] = artifactPassages(artifact)
+		passages[index] = artifactPassagesWithAdjacent(artifact, strategy.AdjacentPassages)
 		passageIndexes[index] = append(passageIndexes[index], len(texts))
-		texts = append(texts, passages[index][0].text)
+		texts = append(texts, embeddingInput(profile, passages[index][0].text, false))
 	}
-	for passageNumber := 1; passageNumber < 3 && remaining > 0; passageNumber++ {
+	passageLimit := 3
+	if strategy.AdjacentPassages {
+		passageLimit = 5
+	}
+	for passageNumber := 1; passageNumber < passageLimit && remaining > 0; passageNumber++ {
 		for index := range artifacts {
 			if remaining == 0 {
 				break
 			}
 			if len(passages[index]) > passageNumber {
 				passageIndexes[index] = append(passageIndexes[index], len(texts))
-				texts = append(texts, passages[index][passageNumber].text)
+				texts = append(texts, embeddingInput(profile, passages[index][passageNumber].text, false))
 				remaining--
 			}
 		}
@@ -106,6 +124,9 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 		return nil, nil, err
 	}
 	warnings := []domain.Warning{}
+	if profile == "e5-query-passage-v1" {
+		warnings = append(warnings, domain.Warning{Code: "SEMANTIC_MODEL_CALIBRATION", Message: fmt.Sprintf("E5 uses a different cosine-score distribution from MiniLM. Threshold %.4f is a retrieval setting, not a calibrated probability; validate it on held-out scenarios.", threshold)})
+	}
 	if omittedPassages > 0 {
 		warnings = append(warnings, domain.Warning{Code: "SEMANTIC_PASSAGE_LIMIT", Message: fmt.Sprintf("%d additional source passages omitted because of the embedding input limit", omittedPassages)})
 	}
@@ -132,7 +153,7 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 				continue
 			}
 			best := passages[artifactIndex][bestPassage]
-			location, excerpt := passageEvidence(best, queryText(*change), artifact.File)
+			location, excerpt := passageEvidence(best, strategy.queryText(*change), artifact.File)
 			ranked = append(ranked, domain.Impact{
 				Module: artifact.Module, Layer: artifact.Layer, File: artifact.File,
 				Symbol: displaySymbol(artifact.Symbol), RequiredAction: domain.ActionVerify,
@@ -180,6 +201,28 @@ func (strategy Strategy) Attach(ctx context.Context, changes []domain.Change, ar
 	return changes, warnings, nil
 }
 
+func (strategy Strategy) queryText(change domain.Change) string {
+	query := queryText(change)
+	if strategy.UseBaselineAnchors && change.Context != nil {
+		for _, anchor := range change.Context.BaselineAnchors {
+			if anchor.Name != "" && !strings.Contains(strings.ToLower(query), strings.ToLower(anchor.Name)) {
+				query += ". Nearby baseline task: " + anchor.Name
+			}
+		}
+	}
+	if strategy.IncludeProcessContext && change.Context != nil {
+		name := strings.Join(strings.Fields(change.Context.ProcessName), " ")
+		runes := []rune(name)
+		if len(runes) > 160 {
+			name = string(runes[:160])
+		}
+		if name != "" && !strings.Contains(strings.ToLower(query), strings.ToLower(name)) {
+			query += ". Process: " + name
+		}
+	}
+	return query
+}
+
 func queryText(change domain.Change) string {
 	if element := namedAddedOrRemovedTask(change); element != nil {
 		parts := []string{element.Name, element.State}
@@ -220,6 +263,7 @@ func queryText(change domain.Change) string {
 		useContext = false
 	}
 	if useContext {
+		parts = append(parts, change.Context.BranchTerms...)
 		for _, element := range append(append([]domain.ElementContext{}, change.Context.Predecessors...), change.Context.Successors...) {
 			parts = append(parts, element.Name)
 		}
@@ -259,6 +303,10 @@ func neighborNames(context *domain.ChangeContext) []string {
 }
 
 func artifactPassages(artifact domain.Artifact) []passage {
+	return artifactPassagesWithAdjacent(artifact, false)
+}
+
+func artifactPassagesWithAdjacent(artifact domain.Artifact, adjacent bool) []passage {
 	prefix := strings.Join(nonEmpty([]string{
 		"repository artifact", artifact.File, "module", artifact.Module, "layer", artifact.Layer,
 		"language", artifact.Language, "symbol", displaySymbol(artifact.Symbol), "kind", artifact.Symbol.Kind,
@@ -273,7 +321,16 @@ func artifactPassages(artifact domain.Artifact) []passage {
 		}
 	}
 	result := make([]passage, 0, len(starts))
+	if adjacent && len(runes) > maxPassageCharacters {
+		tail := len(runes) - maxPassageCharacters
+		starts = append(starts, min(maxPassageCharacters, tail), max(0, tail-maxPassageCharacters))
+	}
+	seen := map[int]bool{}
 	for _, start := range starts {
+		if seen[start] {
+			continue
+		}
+		seen[start] = true
 		end := start + maxPassageCharacters
 		if end > len(runes) {
 			end = len(runes)

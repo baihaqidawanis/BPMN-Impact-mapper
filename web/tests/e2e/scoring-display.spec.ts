@@ -23,7 +23,7 @@ test("hybrid separates neighbouring IDs, unused checks and combined ranks", asyn
   };
   await page.route("**/backend/api/v1/capabilities/semantic/check", route => route.fulfill({ json: { available: true, provider: "fixture", model: "fixture", message: "Ready" } }));
   await page.route("**/backend/api/v1/analyses", route => route.fulfill({ status: route.request().method() === "POST" ? 201 : 200, json: route.request().method() === "POST" ? report : { analyses: [] } }));
-  await page.goto("/");
+  await page.goto("/?view=analysis");
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
   await expect(page.getByText("Synthetic demo ready")).toBeVisible();
   await page.getByRole("button", { name: "Run impact analysis" }).click();

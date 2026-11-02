@@ -1,0 +1,23 @@
+{
+  "version": "1",
+  "cases": [
+    {
+      "change_type": "ADD_GATEWAY",
+      "element_id": "ReasonDecision",
+      "expected": [
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "required_action": "MODIFY"
+        },
+        {
+          "file": "backend/test/integration/operations_test.go",
+          "required_action": "MODIFY"
+        }
+      ]
+    }
+  ]
+}

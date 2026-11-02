@@ -40,7 +40,7 @@ func TestParseRejectsDirectiveAndLimits(t *testing.T) {
 
 func TestParsePreservesProcessSubprocessAndEventContext(t *testing.T) {
 	data := []byte(`<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
-		<process id="PROCESS-1">
+		<process id="PROCESS-1" name="Expense reimbursement">
 			<subProcess id="SUB-1" name="Review">
 				<userTask id="TASK-1" name="Check" default="FLOW-DEFAULT"/>
 				<boundaryEvent id="EVENT-TIMER" attachedToRef="TASK-1"><timerEventDefinition/></boundaryEvent>
@@ -53,6 +53,9 @@ func TestParsePreservesProcessSubprocessAndEventContext(t *testing.T) {
 		t.Fatal(err)
 	}
 	task := graph.Elements["TASK-1"]
+	if graph.ProcessNames[task.ProcessID] != "Expense reimbursement" {
+		t.Fatal("process name context was lost")
+	}
 	if task.ProcessID != "PROCESS-1" || task.ParentID != "SUB-1" || task.DefaultFlow != "FLOW-DEFAULT" {
 		t.Fatalf("task context=%+v", task)
 	}

@@ -1,0 +1,35 @@
+import { expect, test } from "@playwright/test";
+import path from "node:path";
+
+test("library preserves a diagram across refresh and loads it into Canvas", async ({page}) => {
+  await page.goto("/?view=analysis");
+  const nav=page.getByRole("navigation",{name:"Workspace navigation"});
+  await nav.getByRole("button",{name:"BPMN Library",exact:true}).click();
+  const library=page.getByRole("region",{name:"BPMN library"});
+  const process=`Library browser ${Date.now()}`;
+  await library.getByLabel("BPMN file",{exact:true}).setInputFiles(path.resolve(__dirname,"../../public/demo/insert-task-old.bpmn"));
+  await library.getByLabel("Repository label").fill("Synthetic library");
+  await library.getByLabel("Process name").fill(process);
+  await library.getByLabel("Role (optional)").fill("Staff");
+  await library.getByLabel("Version label").fill("v1");
+  await library.getByRole("button",{name:"Save diagram",exact:true}).click();
+  await expect(library.getByRole("status")).toContainText("Original XML preserved");
+  await page.reload();
+  await nav.getByRole("button",{name:"BPMN Library",exact:true}).click();
+  await library.getByLabel("Find diagrams").fill(process);
+  const entry=library.locator("article").filter({hasText:process});
+  await expect(entry).toHaveCount(1);
+  await expect(entry.getByRole("button",{name:"Use as changed BPMN",exact:true})).toBeDisabled();
+  await entry.getByRole("button",{name:"Use as baseline",exact:true}).click();
+  await nav.getByRole("button",{name:"BPMN Canvas",exact:true}).click();
+  await expect(page.getByTestId("bpmn-baseline-canvas").locator(".djs-element[data-element-id]").first()).toBeVisible();
+  await nav.getByRole("button",{name:"BPMN Library",exact:true}).click();
+  await entry.getByRole("button",{name:"Use as changed BPMN",exact:true}).click();
+  await nav.getByRole("button",{name:"BPMN Canvas",exact:true}).click();
+  await expect(page.getByTestId("bpmn-editor-canvas").locator(".djs-element[data-element-id]").first()).toBeVisible();
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole("button",{name:"Toggle navigation"}).click();
+  await nav.getByRole("button",{name:"BPMN Library",exact:true}).click();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath("bpmn-library-mobile.png"),fullPage:true});
+});

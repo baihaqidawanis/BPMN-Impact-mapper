@@ -34,7 +34,13 @@ type Request struct {
 }
 
 type Analyzer struct {
-	Resolver mapping.Resolver
+	// ConditionDeltaQueries annotates changed condition words for offline query studies.
+	ConditionDeltaQueries bool
+	IncludeSourceCallers  bool
+	SourceCallers         func(domain.Change, []domain.Artifact) []domain.RelatedFile
+	// BaselineContextHops enables bounded research-only context expansion. Zero is production.
+	BaselineContextHops int
+	Resolver            mapping.Resolver
 	// Indexers optionally supplies language adapters at the composition boundary.
 	Indexers *index.Registry
 }
@@ -55,7 +61,7 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	if err != nil {
 		return domain.Report{}, err
 	}
-	ingestOptions := request.Ingest
+	ingestOptions := request.Ingest.Normalized()
 	ingestOptions.Ignore = append([]string(nil), request.Ingest.Ignore...)
 	ingestOptions.Ignore = appendInputExclusions(request.RepositoryPath, ingestOptions.Ignore, request.OldBPMNPath, request.NewBPMNPath, request.MappingConfigPath)
 	inventory, err := ingest.Build(ctx, request.RepositoryPath, ingestOptions)
@@ -89,9 +95,38 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	indexed := registry.Build(inventory)
 	artifacts, indexWarnings := indexed.Artifacts, indexed.Warnings
 	changes := diff.Compare(oldGraph, newGraph)
+	if analyzer.BaselineContextHops < 0 || analyzer.BaselineContextHops > 4 {
+		return domain.Report{}, errors.New("baseline context hops must be between zero and four")
+	}
+	if analyzer.BaselineContextHops > 0 {
+		diff.ExpandBaselineContext(oldGraph, newGraph, changes, analyzer.BaselineContextHops)
+	}
+	if analyzer.ConditionDeltaQueries {
+		diff.AnnotateConditionDelta(oldGraph, newGraph, changes)
+	}
 	changes, retrievalWarnings, err := attachPrimaryChanges(ctx, strategy, changes, artifacts, request.Retrieval)
 	if err != nil {
 		return domain.Report{}, fmt.Errorf("apply %s mapping: %w", method, err)
+	}
+	if analyzer.IncludeSourceCallers {
+		if analyzer.SourceCallers == nil {
+			return domain.Report{}, errors.New("source-caller resolver is not configured")
+		}
+		for i := range changes {
+			if err := ctx.Err(); err != nil {
+				return domain.Report{}, err
+			}
+			ranked := map[string]int{}
+			for position, candidate := range changes[i].Impacts {
+				if ranked[candidate.File] == 0 {
+					ranked[candidate.File] = position + 1
+				}
+			}
+			for _, file := range analyzer.SourceCallers(changes[i], artifacts) {
+				file.RankedPosition = ranked[file.File]
+				changes[i].RelatedFiles = append(changes[i].RelatedFiles, file)
+			}
+		}
 	}
 	name := strings.TrimSpace(request.RepositoryName)
 	if name == "" {
@@ -109,6 +144,14 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 		warnings = append(warnings, domain.Warning{Code: "INDEX_FALLBACK", Message: warning})
 	}
 	warnings = append(warnings, retrievalWarnings...)
+	for _, item := range []struct {
+		name  string
+		graph *domain.Graph
+	}{{"baseline", oldGraph}, {"changed", newGraph}} {
+		for _, warning := range item.graph.Warnings {
+			warnings = append(warnings, domain.Warning{Code: "BPMN_PARTIAL_SUPPORT", Message: item.name + ": " + warning})
+		}
+	}
 	sort.Slice(warnings, func(i, j int) bool {
 		if warnings[i].Code != warnings[j].Code {
 			return warnings[i].Code < warnings[j].Code
@@ -119,6 +162,28 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	var methodMetadata map[string]string
 	if provider, ok := strategy.(mapping.MetadataProvider); ok {
 		methodMetadata = provider.MethodMetadata()
+	}
+	if methodMetadata == nil {
+		methodMetadata = make(map[string]string)
+	}
+	methodMetadata["change_policy"] = "gateway-condition-flow-grouping-v4-branch-transitions"
+	if analyzer.IncludeSourceCallers {
+		methodMetadata["source_caller_policy"] = "top5-unique-name2-reverse3-cap128-related3-v1"
+	}
+	if analyzer.ConditionDeltaQueries {
+		methodMetadata["condition_query_policy"] = "per-flow-token-delta-gateway-label-v1-full-fallback"
+	}
+	if analyzer.BaselineContextHops > 0 {
+		methodMetadata["baseline_context_policy"] = fmt.Sprintf("nearest-existing-task-v1-hops%d-cap128-anchors2", analyzer.BaselineContextHops)
+	}
+	if len(oldGraph.Warnings) > 0 || len(newGraph.Warnings) > 0 {
+		methodMetadata["bpmn_capability_policy"] = "partial-semantics-diagnostics-v1"
+	}
+	if method != domain.MethodConfiguration {
+		if methodMetadata == nil {
+			methodMetadata = make(map[string]string)
+		}
+		methodMetadata["flow_label_policy"] = "explicit-condition-direct-source-reference-v1"
 	}
 	methodIdentity := methodConfig
 	if len(methodMetadata) > 0 {
@@ -226,6 +291,7 @@ func readBPMN(path string) ([]byte, error) {
 }
 
 func inputFingerprint(name, revision string, oldData, newData []byte, inventory ingest.Inventory, options ingest.Options) string {
+	options = options.Normalized()
 	hash := sha256.New()
 	writeHash(hash, []byte(name))
 	writeHash(hash, []byte(revision))
@@ -245,7 +311,7 @@ func inputFingerprint(name, revision string, oldData, newData []byte, inventory 
 func analysisID(fingerprint string, request Request, methodConfig []byte, indexIdentity string) string {
 	hash := sha256.New()
 	writeHash(hash, []byte(indexIdentity))
-	writeHash(hash, []byte("engine-3.5d-file-level-topk"))
+	writeHash(hash, []byte("engine-3.5j-conservative-symbol-scope"))
 	writeHash(hash, []byte(fingerprint))
 	writeHash(hash, []byte(request.Method))
 	writeHash(hash, methodConfig)

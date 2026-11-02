@@ -43,25 +43,42 @@ type AtK struct {
 }
 
 type Metrics struct {
-	Recall               AtK                   `json:"recall"`
-	Precision            AtK                   `json:"precision"`
-	MRR                  float64               `json:"mrr"`
-	MAP                  float64               `json:"map"`
-	FilePrecision        float64               `json:"file_precision"`
-	FileRecall           float64               `json:"file_recall"`
-	FileF1               float64               `json:"file_f1"`
-	ModuleAccuracy       float64               `json:"module_accuracy"`
-	LayerAccuracy        float64               `json:"layer_accuracy"`
-	ActionAccuracy       float64               `json:"required_action_accuracy"`
-	ActionMacroF1        float64               `json:"required_action_macro_f1"`
-	ActionClasses        []ActionClassMetric   `json:"required_action_classes"`
-	ActionConfusion      ActionConfusionMatrix `json:"required_action_confusion"`
-	UnresolvedRate       float64               `json:"unresolved_rate"`
-	FalsePositiveRate    float64               `json:"false_positive_rate"`
-	LatencyMilliseconds  int64                 `json:"latency_ms"`
-	EvaluatedChanges     int                   `json:"evaluated_changes"`
-	ExpectedImpacts      int                   `json:"expected_impacts"`
-	PredictedUniqueFiles int                   `json:"predicted_unique_files"`
+	PositiveRanking         *RankingSummary       `json:"positive_ranking,omitempty"`
+	Recall                  AtK                   `json:"recall"`
+	Precision               AtK                   `json:"precision"`
+	MRR                     float64               `json:"mrr"`
+	MAP                     float64               `json:"map"`
+	FilePrecision           float64               `json:"file_precision"`
+	FileRecall              float64               `json:"file_recall"`
+	FileF1                  float64               `json:"file_f1"`
+	ModuleAccuracy          float64               `json:"module_accuracy"`
+	LayerAccuracy           float64               `json:"layer_accuracy"`
+	ActionAccuracy          float64               `json:"required_action_accuracy"`
+	ActionMacroF1           float64               `json:"required_action_macro_f1"`
+	ActionClasses           []ActionClassMetric   `json:"required_action_classes"`
+	ActionConfusion         ActionConfusionMatrix `json:"required_action_confusion"`
+	UnresolvedRate          float64               `json:"unresolved_rate"`
+	FalsePositiveRate       float64               `json:"false_positive_rate"`
+	NegativeControls        int                   `json:"negative_controls"`
+	CorrectAbstentions      int                   `json:"correct_abstentions"`
+	NegativeControlAccuracy float64               `json:"negative_control_accuracy"`
+	LatencyMilliseconds     int64                 `json:"latency_ms"`
+	EvaluatedChanges        int                   `json:"evaluated_changes"`
+	ExpectedImpacts         int                   `json:"expected_impacts"`
+	PredictedUniqueFiles    int                   `json:"predicted_unique_files"`
+}
+
+// RankingSummary excludes empty-reference cases, whose ranking metrics are
+// undefined. They remain separately evaluated as abstentions.
+type RankingSummary struct {
+	Count       int     `json:"positive_changes"`
+	MAP         float64 `json:"map"`
+	MRR         float64 `json:"mrr"`
+	RPrecision  float64 `json:"r_precision"`
+	Precision5  float64 `json:"precision_at_5"`
+	Precision10 float64 `json:"precision_at_10"`
+	Recall5     float64 `json:"recall_at_5"`
+	Recall10    float64 `json:"recall_at_10"`
 }
 
 type ActionClassMetric struct {
@@ -83,6 +100,7 @@ var actionLabels = []domain.RequiredAction{
 }
 
 type ChangeResult struct {
+	RPrecision       *float64          `json:"r_precision,omitempty"`
 	ChangeType       domain.ChangeType `json:"change_type"`
 	ElementID        string            `json:"element_id"`
 	ExpectedFiles    []string          `json:"expected_files"`
@@ -172,6 +190,12 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 		expected := expectedMap(truthCase.Expected)
 		metrics.ExpectedImpacts += len(expected)
 		metrics.PredictedUniqueFiles += len(predictions)
+		if len(expected) == 0 {
+			metrics.NegativeControls++
+			if len(predictions) == 0 {
+				metrics.CorrectAbstentions++
+			}
+		}
 		result := ChangeResult{ChangeType: truthCase.ChangeType, ElementID: truthCase.ElementID, ExpectedFiles: sortedKeys(expected), PredictedFiles: impactFiles(predictions), Unresolved: !exists || len(predictions) == 0 || len(change.UnresolvedImpact) > 0}
 		if result.Unresolved {
 			metrics.UnresolvedRate++
@@ -186,6 +210,22 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 		result.AveragePrecision = averagePrecision(predictions, expected)
 		metrics.MRR += result.ReciprocalRank
 		metrics.MAP += result.AveragePrecision
+		if len(expected) > 0 {
+			rp := round(precisionAt(predictions, expected, len(expected)))
+			result.RPrecision = &rp
+			if metrics.PositiveRanking == nil {
+				metrics.PositiveRanking = &RankingSummary{}
+			}
+			p := metrics.PositiveRanking
+			p.Count++
+			p.MAP += result.AveragePrecision
+			p.MRR += result.ReciprocalRank
+			p.RPrecision += rp
+			p.Precision5 += precisionAt(predictions, expected, 5)
+			p.Precision10 += precisionAt(predictions, expected, 10)
+			p.Recall5 += recallAt(predictions, expected, 5)
+			p.Recall10 += recallAt(predictions, expected, 10)
+		}
 		predictedSet := map[string]domain.Impact{}
 		for _, impact := range predictions {
 			predictedSet[impact.File] = impact
@@ -231,19 +271,37 @@ func Evaluate(prediction domain.Report, predictionBytes []byte, truth GroundTrut
 		metrics.UnresolvedRate = round(metrics.UnresolvedRate / count)
 	}
 	metrics.FilePrecision = ratio(truePositive, truePositive+falsePositive)
+	if p := metrics.PositiveRanking; p != nil {
+		p.Normalize()
+	}
 	metrics.FileRecall = ratio(truePositive, truePositive+falseNegative)
 	if metrics.FilePrecision+metrics.FileRecall > 0 {
 		metrics.FileF1 = round(2 * metrics.FilePrecision * metrics.FileRecall / (metrics.FilePrecision + metrics.FileRecall))
 	}
 	metrics.FalsePositiveRate = ratio(falsePositive, truePositive+falsePositive)
+	metrics.NegativeControlAccuracy = ratio(metrics.CorrectAbstentions, metrics.NegativeControls)
 	metrics.ModuleAccuracy = ratio(moduleCorrect, matchedPairs)
 	metrics.LayerAccuracy = ratio(layerCorrect, matchedPairs)
 	metrics.ActionAccuracy = ratio(actionCorrect, matchedPairs)
 	metrics.ActionClasses, metrics.ActionMacroF1 = actionClassification(actionMatrix)
 	metrics.ActionConfusion = ActionConfusionMatrix{Labels: append([]domain.RequiredAction(nil), actionLabels...), Rows: actionMatrix}
 	predictionHash, truthHash := sha256Hex(predictionBytes), sha256Hex(truthBytes)
-	evaluationSeed := []byte(predictionHash + ":" + truthHash)
+	evaluationSeed := []byte("positive-ranking-v1:" + predictionHash + ":" + truthHash)
 	return Report{EvaluationID: sha256Hex(evaluationSeed)[:32], AnalysisID: prediction.AnalysisID, Method: prediction.Method, PredictionSHA256: predictionHash, GroundTruthSHA256: truthHash, Metrics: metrics, Changes: results}, nil
+}
+
+func (p *RankingSummary) Normalize() {
+	if p.Count == 0 {
+		return
+	}
+	n := float64(p.Count)
+	p.MAP = round(p.MAP / n)
+	p.MRR = round(p.MRR / n)
+	p.RPrecision = round(p.RPrecision / n)
+	p.Precision5 = round(p.Precision5 / n)
+	p.Precision10 = round(p.Precision10 / n)
+	p.Recall5 = round(p.Recall5 / n)
+	p.Recall10 = round(p.Recall10 / n)
 }
 
 func actionIndex(action domain.RequiredAction) int {

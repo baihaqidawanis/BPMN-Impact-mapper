@@ -1,0 +1,16 @@
+{
+  "scenario": "remove-gateway",
+  "requirement": "Replace the explicit DRAFT-only eligibility gateway with service validation that allows DRAFT or APPROVED adjustment resubmission. Preserve version/access guards and failure rollback, clear previous reviewer on resubmit, and require a fresh approval without posting inventory. Other states remain forbidden.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "a5724a6543588d62dbc740d2d9a71622ad89f6e77769199f2c598f5ac6910a0a",
+  "expected_existing_files": [
+    "backend/internal/inventory/adapter/postgres/store.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}

@@ -27,12 +27,13 @@ const (
 
 type Limits struct {
 	CandidatesPerChange  int
+	RelatedPerChange     int
 	EvidencePerCandidate int
 	ExcerptRunes         int
 }
 
 func DefaultLimits() Limits {
-	return Limits{CandidatesPerChange: 10, EvidencePerCandidate: 8, ExcerptRunes: 240}
+	return Limits{CandidatesPerChange: 10, RelatedPerChange: 3, EvidencePerCandidate: 8, ExcerptRunes: 240}
 }
 
 type EvidenceItem struct {
@@ -48,26 +49,48 @@ type Candidate struct {
 	Module          string                `json:"module"`
 	Layer           string                `json:"layer"`
 	SuggestedAction domain.RequiredAction `json:"suggested_action"`
-	RetrievalScore  float64               `json:"retrieval_score"`
+	RetrievalScore  *float64              `json:"retrieval_score,omitempty"`
+	Origin          string                `json:"origin,omitempty"`
 	Evidence        []EvidenceItem        `json:"evidence"`
 }
 
 type ChangeInput struct {
-	ChangeType  domain.ChangeType `json:"change_type"`
-	ElementID   string            `json:"element_id"`
-	ElementName string            `json:"element_name,omitempty"`
-	Reason      string            `json:"reason,omitempty"`
-	Candidates  []Candidate       `json:"candidates"`
+	Before            *ElementInput         `json:"before,omitempty"`
+	After             *ElementInput         `json:"after,omitempty"`
+	BranchChanges     []domain.BranchChange `json:"branch_changes,omitempty"`
+	ContextTruncated  bool                  `json:"context_truncated,omitempty"`
+	ContextIncomplete bool                  `json:"context_incomplete,omitempty"`
+	ChangeType        domain.ChangeType     `json:"change_type"`
+	ElementID         string                `json:"element_id"`
+	ElementName       string                `json:"element_name,omitempty"`
+	Reason            string                `json:"reason,omitempty"`
+	Candidates        []Candidate           `json:"candidates"`
+}
+
+type ElementInput struct {
+	GatewayDirection string   `json:"gateway_direction,omitempty"`
+	DefaultFlow      string   `json:"default_flow,omitempty"`
+	AttachedToRef    string   `json:"attached_to_ref,omitempty"`
+	EventDefinitions []string `json:"event_definitions,omitempty"`
+	ID               string   `json:"id"`
+	Name             string   `json:"name,omitempty"`
+	Type             string   `json:"type"`
+	Actor            string   `json:"actor,omitempty"`
+	State            string   `json:"state,omitempty"`
+	Documentation    string   `json:"documentation,omitempty"`
+	DataRequirements []string `json:"data_requirements,omitempty"`
 }
 
 type EvidenceBundle struct {
-	Version          string                `json:"version"`
-	ContextID        string                `json:"context_id"`
-	AnalysisID       string                `json:"analysis_id"`
-	InputFingerprint string                `json:"input_fingerprint"`
-	Method           domain.AnalysisMethod `json:"method"`
-	Repository       domain.Repository     `json:"repository"`
-	Changes          []ChangeInput         `json:"changes"`
+	Warnings          []domain.Warning      `json:"warnings,omitempty"`
+	WarningsTruncated bool                  `json:"warnings_truncated,omitempty"`
+	Version           string                `json:"version"`
+	ContextID         string                `json:"context_id"`
+	AnalysisID        string                `json:"analysis_id"`
+	InputFingerprint  string                `json:"input_fingerprint"`
+	Method            domain.AnalysisMethod `json:"method"`
+	Repository        domain.Repository     `json:"repository"`
+	Changes           []ChangeInput         `json:"changes"`
 }
 
 type ProviderIdentity struct {
@@ -111,16 +134,18 @@ type LayerPlanningRequest struct {
 }
 
 type FilePlan struct {
-	ChangeType  domain.ChangeType     `json:"change_type"`
-	ElementID   string                `json:"element_id"`
-	File        string                `json:"file"`
-	Symbol      string                `json:"symbol,omitempty"`
-	Module      string                `json:"module"`
-	Layer       string                `json:"layer"`
-	Action      domain.RequiredAction `json:"action"`
-	Summary     string                `json:"summary"`
-	Steps       []string              `json:"steps"`
-	EvidenceIDs []string              `json:"evidence_ids"`
+	ChangeType       domain.ChangeType     `json:"change_type"`
+	ElementID        string                `json:"element_id"`
+	File             string                `json:"file"`
+	Symbol           string                `json:"symbol,omitempty"`
+	Module           string                `json:"module"`
+	Layer            string                `json:"layer"`
+	Action           domain.RequiredAction `json:"action"`
+	Summary          string                `json:"summary"`
+	Steps            []string              `json:"steps"`
+	ProposedChanges  []string              `json:"proposed_changes,omitempty"`
+	AcceptanceChecks []string              `json:"acceptance_checks,omitempty"`
+	EvidenceIDs      []string              `json:"evidence_ids"`
 }
 
 type LayerPlanningResponse struct {
@@ -139,15 +164,16 @@ type ReviewResponse struct {
 }
 
 type ChangePlan struct {
-	Version          string           `json:"version"`
-	PlanID           string           `json:"plan_id"`
-	AnalysisID       string           `json:"analysis_id"`
-	InputFingerprint string           `json:"input_fingerprint"`
-	ContextID        string           `json:"context_id"`
-	Provider         ProviderIdentity `json:"provider"`
-	Status           Status           `json:"status"`
-	Plans            []FilePlan       `json:"plans"`
-	ReviewIssues     []string         `json:"review_issues"`
+	FullReview       *FullReviewProgress `json:"full_review,omitempty"`
+	Version          string              `json:"version"`
+	PlanID           string              `json:"plan_id"`
+	AnalysisID       string              `json:"analysis_id"`
+	InputFingerprint string              `json:"input_fingerprint"`
+	ContextID        string              `json:"context_id"`
+	Provider         ProviderIdentity    `json:"provider"`
+	Status           Status              `json:"status"`
+	Plans            []FilePlan          `json:"plans"`
+	ReviewIssues     []string            `json:"review_issues"`
 }
 
 type PlanSummary struct {

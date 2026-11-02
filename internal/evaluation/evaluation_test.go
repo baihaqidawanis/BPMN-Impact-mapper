@@ -1,6 +1,7 @@
 package evaluation_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
@@ -49,6 +50,31 @@ func TestEvaluateCountsMissedExpectedFileAsUnresolvedAction(t *testing.T) {
 	}
 	if result.Metrics.ActionConfusion.Rows[0][5] != 1 || result.Metrics.ActionMacroF1 != 0 {
 		t.Fatalf("missed action=%#v", result.Metrics)
+	}
+}
+
+func TestEvaluateSeparatesCorrectNegativeControlsFromAbstention(t *testing.T) {
+	prediction := domain.Report{Changes: []domain.Change{
+		{ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "FLOW-A", Type: "sequenceFlow"}, UnresolvedImpact: []string{"no direct source reference"}},
+		{ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "FLOW-B", Type: "sequenceFlow"}, Impacts: []domain.Impact{{File: "unrelated.go", RequiredAction: domain.ActionVerify}}},
+	}}
+	truth := evaluation.GroundTruth{Version: "1", Cases: []evaluation.Case{
+		{ChangeType: domain.ModifySequenceFlow, ElementID: "FLOW-A", Expected: []evaluation.ExpectedImpact{}},
+		{ChangeType: domain.ModifySequenceFlow, ElementID: "FLOW-B", Expected: []evaluation.ExpectedImpact{}},
+	}}
+	result, err := evaluation.Evaluate(prediction, []byte("prediction"), truth, []byte("truth"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	metrics := result.Metrics
+	if metrics.NegativeControls != 2 || metrics.CorrectAbstentions != 1 || metrics.NegativeControlAccuracy != 0.5 || metrics.UnresolvedRate != 0.5 {
+		t.Fatalf("negative-control and abstention metrics conflated: %#v", metrics)
+	}
+	if metrics.FalsePositiveRate != 1 {
+		t.Fatalf("false discovery proportion=%v, want 1", metrics.FalsePositiveRate)
+	}
+	if !strings.Contains(string(evaluation.Markdown(result)), "Correct negative controls | 1 / 2 (0.5000)") {
+		t.Fatal("negative-control result missing from Markdown")
 	}
 }
 

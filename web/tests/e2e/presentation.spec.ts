@@ -18,7 +18,7 @@ test("semantic preflight blocks unavailable runtime while BM25 stays independent
 		if (request.method() === "POST" && request.url().endsWith("/api/v1/analyses")) analysisRequests++;
 	});
 
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await page.getByRole("button", { name: "Check runtime" }).click();
 	await expect(page.getByRole("status").filter({ hasText: "Semantic runtime is unavailable." })).toBeVisible();
@@ -38,7 +38,7 @@ test("semantic preflight blocks unavailable runtime while BM25 stays independent
 
 test("evaluation reconciles conflicts and evaluates immutable comparison reports", async ({ page }) => {
 	test.setTimeout(420_000);
-  await page.goto("/");
+  await page.goto("/?view=analysis");
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
@@ -74,6 +74,8 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
   await dashboard.getByLabel("Resolution 1", { exact: true }).selectOption("b");
   await dashboard.getByRole("button", { name: "Evaluate stored reports" }).click();
   const results = dashboard.getByTestId("evaluation-results");
+  await expect(results.getByRole("row", { name: /^R-precision — positive changes/ })).toBeVisible();
+  await expect(results.getByRole("row", { name: /^MAP — positive changes/ })).toBeVisible();
   await expect(results).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "bm25" })).toBeVisible();
   await expect(results.getByRole("columnheader", { name: "semantic" })).toBeVisible();
@@ -85,6 +87,7 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
   await hybridDiagnostics.locator("summary").click();
   await expect(hybridDiagnostics.getByText("missing/expected.go").first()).toBeVisible();
   await expect(hybridDiagnostics.getByRole("columnheader", { name: "RR" })).toBeVisible();
+  await expect(hybridDiagnostics.getByRole("columnheader", { name: "R-precision", exact: true })).toBeVisible();
   await results.screenshot({ path: test.info().outputPath("evaluation-results.png") });
   const downloaded = page.waitForEvent("download");
   await results.getByRole("button", { name: "Download evaluation JSON" }).click();
@@ -99,7 +102,7 @@ test("evaluation reconciles conflicts and evaluates immutable comparison reports
 });
 
 test("synthetic demo completes and exposes evidence downloads", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?view=analysis");
   await expect(page.getByRole("heading", { name: "BPMN Impact Mapper" })).toBeVisible();
 
   await page.getByRole("button", { name: "Load synthetic demo" }).click();
@@ -111,7 +114,8 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
   await expect(page.getByRole("heading", { name: "Synthetic Request Workflow" })).toBeVisible();
   await expect(page.getByTestId("report-view").getByText("BPMN changes", { exact: true })).toBeVisible();
   await page.getByText(/^Source analysis coverage/).click();
-  await expect(page.getByTestId("report-view").getByText(/web\/request-form.ts/)).toContainText("TEXT_ONLY");
+  const coverage = page.getByText(/^Source analysis coverage/).locator("..");
+  await expect(coverage.locator("p").filter({ hasText: "web/request-form.ts" })).toContainText("TEXT_ONLY");
   await expect(page.getByText("MODIFY TASK LABEL").first()).toBeVisible();
 
 	const firstCandidate = page.getByTestId("impact-details").first();
@@ -124,21 +128,23 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
 		await page.screenshot({ path: path.resolve(process.cwd(), "../.data/ui-report.png"), fullPage: true });
 	}
 	const navigation = page.getByRole("navigation", { name: "Workspace navigation" });
-	await navigation.getByRole("button", { name: "Planning", exact: true }).click();
+	await page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true }).click();
 	const planning = page.getByTestId("planning-context-view");
 	await expect(planning).toBeVisible();
-	await expect(planning.getByText("Pre-LLM audit boundary")).toBeVisible();
+    await planning.getByText("Source context and audit exports", {exact:true}).click();
+	await expect(planning.getByText("Mapping evidence", { exact: true })).toBeVisible();
 	await expect(planning.getByText("Evidence items")).toBeVisible();
 	await expect(planning.getByRole("link", { name: "Download JSON" })).toHaveAttribute("href", /planning-context\.json$/);
+	await planning.locator("summary").filter({ hasText: "Offline audit snapshots" }).click();
 	await planning.getByRole("button", { name: "Create planning record" }).click();
-	await expect(planning.getByRole("heading", { name: "Planning record prepared" })).toBeVisible();
+	await expect(planning.getByRole("heading", { name: "Context snapshot saved" })).toBeVisible();
 	await expect(planning.getByText("DISABLED", { exact: true }).first()).toBeVisible();
 	await expect(planning.getByText("1 immutable record", { exact: true })).toBeVisible();
 	const planDownloadPromise = page.waitForEvent("download");
 	await planning.getByRole("link", { name: "Plan JSON" }).click();
 	const planDownload = await planDownloadPromise;
 	expect(planDownload.suggestedFilename()).toMatch(/^change-plan-[a-f0-9]{32}\.json$/);
-	await navigation.getByRole("button", { name: "Mapping", exact: true }).click();
+	await navigation.getByRole("button", { name: "Analysis", exact: true }).click();
 
   const jsonLink = page.getByRole("link", { name: "JSON" });
   const markdownLink = page.getByRole("link", { name: "Markdown" });
@@ -152,9 +158,8 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
   expect(download.suggestedFilename()).toMatch(/^impact-report-[a-f0-9]{32}\.md$/);
 
 	await page.reload();
-	await page.getByRole("navigation", { name:"Workspace navigation" }).getByRole("button", { name:"Saved analyses", exact:true }).click();
+	await page.getByRole("navigation", { name:"Workspace navigation" }).getByRole("button", { name:"History", exact:true }).click();
 	const history = page.getByTestId("analysis-history");
-	await history.locator("summary").click();
 	const saved = history.locator("article").filter({ hasText: "Synthetic Request Workflow" }).first();
 	await expect(saved).toBeVisible();
 	await saved.getByRole("button", { name: "Open report" }).click();
@@ -162,7 +167,7 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
 });
 
 test("manual BPMN upload workflow remains available", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.locator('input[name="repo_path"]').fill("testdata\\repository");
 	await page.getByLabel("Repository name").fill("Manual fixture run");
 	await page.locator('input[name="old_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/old.bpmn"));
@@ -176,7 +181,7 @@ test("manual BPMN upload workflow remains available", async ({ page }) => {
 });
 
 test("inserted task exposes composite topology context", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.locator('input[name="repo_path"]').fill("testdata\\repository");
 	await page.getByLabel("Repository name").fill("Composite insertion fixture");
 	await page.locator('input[name="old_bpmn"]').setInputFiles(path.resolve(process.cwd(), "../testdata/bpmn/insert-task-old.bpmn"));
@@ -190,7 +195,7 @@ test("inserted task exposes composite topology context", async ({ page }) => {
 });
 
 test("scenario presets expose move and unresolved controls", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.getByLabel("Demo scenario").selectOption("move-task");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
@@ -209,7 +214,7 @@ test("scenario presets expose move and unresolved controls", async ({ page }) =>
 
 test("same-input method comparison exposes retrieval differences", async ({ page }) => {
 	test.setTimeout(300_000);
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
@@ -251,7 +256,7 @@ test("same-input method comparison exposes retrieval differences", async ({ page
 });
 
 test("reviewer annotation exports selected and missing impacts locally", async ({ page }) => {
-	await page.goto("/");
+	await page.goto("/?view=analysis");
 	await page.getByRole("button", { name: "Load synthetic demo" }).click();
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });

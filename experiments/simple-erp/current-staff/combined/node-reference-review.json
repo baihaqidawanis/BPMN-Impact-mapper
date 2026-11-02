@@ -1,0 +1,49 @@
+{
+  "scope": "all seven added task/gateway nodes; sequence-flow changes excluded, not declared negative",
+  "reference_status": "provisional single-AI source review; retrospective extension of exposed development case, not blind/independent validation",
+  "baseline_path": "experiments/simple-erp/current-staff/combined/before.bpmn",
+  "baseline_sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+  "changed_path": "experiments/simple-erp/current-staff/combined/after.bpmn",
+  "changed_sha256": "47e5163cec1e5af037441677dd9242ae04e4801f344d226312699bd556691fce",
+  "reference_sha256": "c0048f6fb542637fb679e6f6b76de92d25d08e4a4e77edfb922021b31d825f18",
+  "source_hashes": {
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  },
+  "rationale": [
+    {
+      "element_id": "ReasonDecision",
+      "reason": "Require nonempty submit reason. UI currently submits empty reason; store submit branch only checks DRAFT/version; existing handler already accepts Reason."
+    },
+    {
+      "element_id": "MasterChecksSplit",
+      "reason": "Both master checks are required before submit; implement within the existing transaction, no goroutine requirement."
+    },
+    {
+      "element_id": "CheckWarehouse",
+      "reason": "Recheck warehouse active at submit; create-time validation is insufficient if warehouse later becomes inactive."
+    },
+    {
+      "element_id": "CheckProducts",
+      "reason": "Recheck all referenced products active at submit, not merely at create time."
+    },
+    {
+      "element_id": "MasterChecksJoin",
+      "reason": "All required checks return a result before status mutation; any failure prevents submission."
+    },
+    {
+      "element_id": "CombineValidation",
+      "reason": "Aggregate both validation results with no stock/status mutation before success is established."
+    },
+    {
+      "element_id": "MasterDecision",
+      "reason": "Reject if either validation fails; preserve DRAFT/version/access guards and rollback behavior."
+    }
+  ],
+  "unchanged_contracts": [
+    "Existing Reason input field and endpoint reused; no API/schema/migration change required by this scenario.",
+    "Existing result handler and response task retained.",
+    "Only hypothetical requirements reviewed; no ERP code or tests modified or executed."
+  ]
+}

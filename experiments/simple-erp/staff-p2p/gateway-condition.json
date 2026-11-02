@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "scenario_id": "staff-p2p-pr-create-gateway-condition",
+  "description": "Hypothetical stricter PR validation outcome before creating a draft.",
+  "baseline_sha256": "93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c",
+  "operations": [
+    {
+      "kind": "set_child_text",
+      "element_id": "role_staff_l3_pr_create_Flow_3",
+      "child": "conditionExpression",
+      "value": "Input valid dan total PR tidak melebihi batas anggaran"
+    }
+  ]
+}

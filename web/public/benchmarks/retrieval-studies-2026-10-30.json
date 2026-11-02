@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "date": "2026-10-30",
+  "repository": "Simple-ERP",
+  "method": "hybrid",
+  "reference_status": "provisional-source-review",
+  "analysis_runs": 32,
+  "top_k": 10,
+  "independent_validation": false,
+  "adopted_variants": [],
+  "source_bindings": [
+    {
+      "file": "outputs/condition-focus-challenges/study-summary.json",
+      "sha256": "45234d6b603651dd7201522601bfd91a2dceb10e37518908ca6c03a8f7057f58"
+    },
+    {
+      "file": "outputs/generic-window-challenges/study-summary.json",
+      "sha256": "848174b4bbc45e1fb2731f58ee99811accff9cca8995f31d6d0cf9ae683764a2"
+    },
+    {
+      "file": "outputs/code-window-condition/study-summary.json",
+      "sha256": "c9b8cbbaff06cb2a3994d3cc492f180e71c8a334171b0dc71f1ec0265e2c81dc"
+    }
+  ],
+  "results": [
+    {
+      "scenario": "selection-challenge-remove-check",
+      "variant": "full",
+      "precision_at_5": 0.4,
+      "recall_at_5": 1,
+      "recall_at_10": 1,
+      "map": 0.7,
+      "mrr": 1,
+      "r_precision": 0.5
+    },
+    {
+      "scenario": "selection-challenge-remove-check",
+      "variant": "condition-focus",
+      "precision_at_5": 0.4,
+      "recall_at_5": 1,
+      "recall_at_10": 1,
+      "map": 0.85,
+      "mrr": 1,
+      "r_precision": 0.75
+    },
+    {
+      "scenario": "selection-challenge-change-condition",
+      "variant": "full",
+      "precision_at_5": 0.4,
+      "recall_at_5": 0.6667,
+      "recall_at_10": 0.6667,
+      "map": 0.5,
+      "mrr": 1,
+      "r_precision": 0.3333
+    },
+    {
+      "scenario": "selection-challenge-change-condition",
+      "variant": "condition-focus",
+      "precision_at_5": 0.4,
+      "recall_at_5": 0.6667,
+      "recall_at_10": 0.6667,
+      "map": 0.3333,
+      "mrr": 0.5,
+      "r_precision": 0.3333
+    },
+    {
+      "scenario": "selection-challenge-remove-check",
+      "variant": "generic-windows",
+      "precision_at_5": 0.2,
+      "recall_at_5": 0.5,
+      "recall_at_10": 1,
+      "map": 0.6429,
+      "mrr": 1,
+      "r_precision": 0.5
+    },
+    {
+      "scenario": "selection-challenge-change-condition",
+      "variant": "generic-windows",
+      "precision_at_5": 0.2,
+      "recall_at_5": 0.3333,
+      "recall_at_10": 0.6667,
+      "map": 0.4444,
+      "mrr": 1,
+      "r_precision": 0.3333
+    },
+    {
+      "scenario": "selection-challenge-change-condition",
+      "variant": "code-windows",
+      "precision_at_5": 0.4,
+      "recall_at_5": 0.6667,
+      "recall_at_10": 0.6667,
+      "map": 0.5,
+      "mrr": 1,
+      "r_precision": 0.3333
+    }
+  ]
+}

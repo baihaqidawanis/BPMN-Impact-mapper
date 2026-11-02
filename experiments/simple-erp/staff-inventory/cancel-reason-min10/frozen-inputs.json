@@ -1,0 +1,40 @@
+{
+    "scenario_id":  "staff-inventory-cancel-reason-min10",
+    "status":  "prepared-unscored",
+    "label_provenance":  "single-source-review",
+    "source_head":  "c9344971a573d5c44d9d4e58f23657eda4d18a86",
+    "source_dirty_entries":  232,
+    "expected_change_type":  "MODIFY_TASK_LABEL",
+    "expected_element_id":  "role_staff_l3_adj_cancel_input",
+    "di_unchanged":  true,
+    "hashes":  [
+                   {
+                       "path":  "experiments/simple-erp/staff-inventory/cancel-reason-min10/baseline.bpmn",
+                       "sha256":  "6b4d5cfec3a18bc35772be7c0b3c3ec710acfbdbb202ddd4eada3195226d05af"
+                   },
+                   {
+                       "path":  "experiments/simple-erp/staff-inventory/cancel-reason-min10/changed.bpmn",
+                       "sha256":  "cfb6b0100b7991831ce7c4a61a6964d15207b9c2a981960ba5cb025c8486b01e"
+                   },
+                   {
+                       "path":  "experiments/simple-erp/staff-inventory/cancel-reason-min10/mutation.json",
+                       "sha256":  "d4fbbba5316a8e921b536548d2fd98071198ba4ec05b695171214c7261dcb99a"
+                   },
+                   {
+                       "path":  "docs/ground-truth/staff-inventory-cancel-reason-min10-reference.json",
+                       "sha256":  "ba0e88ee57d33764b793a63623a059449ffd35646b2879c1a5f9d4a10f911288"
+                   },
+                   {
+                       "path":  "../Simple-ERP/backend/internal/inventory/adapter/postgres/store.go",
+                       "sha256":  "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184"
+                   },
+                   {
+                       "path":  "../Simple-ERP/frontend/features/inventory/inventory-adjustment-panel.tsx",
+                       "sha256":  "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61"
+                   },
+                   {
+                       "path":  "../Simple-ERP/backend/test/integration/operations_test.go",
+                       "sha256":  "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+                   }
+               ]
+}

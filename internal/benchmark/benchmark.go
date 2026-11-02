@@ -20,11 +20,12 @@ import (
 )
 
 type Manifest struct {
-	Version     string                  `json:"version"`
-	Repetitions int                     `json:"repetitions"`
-	TopK        int                     `json:"top_k"`
-	Methods     []domain.AnalysisMethod `json:"methods"`
-	Scenarios   []Scenario              `json:"scenarios"`
+	Version         string                  `json:"version"`
+	Repetitions     int                     `json:"repetitions"`
+	TopK            int                     `json:"top_k"`
+	LabelProvenance string                  `json:"label_provenance,omitempty"`
+	Methods         []domain.AnalysisMethod `json:"methods"`
+	Scenarios       []Scenario              `json:"scenarios"`
 }
 
 type Scenario struct {
@@ -40,6 +41,7 @@ type Scenario struct {
 	MappingConfigSHA256      string `json:"mapping_config_sha256"`
 	GroundTruthPath          string `json:"ground_truth_path"`
 	GroundTruthSHA256        string `json:"ground_truth_sha256"`
+	TruthScope               string `json:"truth_scope,omitempty"`
 	ExpectedInputFingerprint string `json:"expected_input_fingerprint,omitempty"`
 }
 
@@ -73,6 +75,7 @@ type ScenarioMethodResult struct {
 	EvaluationID     string                `json:"evaluation_id"`
 	Repetitions      int                   `json:"repetitions"`
 	Reproducible     bool                  `json:"reproducible"`
+	TruthScope       string                `json:"truth_scope,omitempty"`
 	Metrics          evaluation.Metrics    `json:"metrics"`
 }
 
@@ -83,9 +86,11 @@ type MethodAggregate struct {
 }
 
 type Report struct {
-	BenchmarkID string                 `json:"benchmark_id"`
-	Results     []ScenarioMethodResult `json:"results"`
-	Aggregates  []MethodAggregate      `json:"aggregates"`
+	BenchmarkID      string                 `json:"benchmark_id"`
+	LabelProvenance  string                 `json:"label_provenance,omitempty"`
+	Results          []ScenarioMethodResult `json:"results"`
+	Aggregates       []MethodAggregate      `json:"aggregates"`
+	PartialScenarios []string               `json:"partial_scenarios,omitempty"`
 }
 
 type Timing struct {
@@ -110,6 +115,11 @@ func (manifest Manifest) Validate() error {
 	if manifest.TopK <= 0 || manifest.TopK > 100 {
 		return errors.New("benchmark top_k must be between 1 and 100")
 	}
+	switch manifest.LabelProvenance {
+	case "", "fixture-authored", "single-source-review", "adjudicated":
+	default:
+		return fmt.Errorf("unsupported benchmark label provenance %q", manifest.LabelProvenance)
+	}
 	methodSet := map[domain.AnalysisMethod]bool{}
 	for _, method := range manifest.Methods {
 		if !method.Valid() || methodSet[method] {
@@ -123,11 +133,18 @@ func (manifest Manifest) Validate() error {
 		}
 	}
 	seen := map[string]bool{}
+	completeScenarios := 0
 	for index, scenario := range manifest.Scenarios {
 		if strings.TrimSpace(scenario.ID) == "" || seen[scenario.ID] {
 			return fmt.Errorf("scenario %d has empty or duplicate id %q", index, scenario.ID)
 		}
 		seen[scenario.ID] = true
+		if scenario.TruthScope != "" && scenario.TruthScope != "complete" && scenario.TruthScope != "subset" {
+			return fmt.Errorf("scenario %s has invalid truth scope %q", scenario.ID, scenario.TruthScope)
+		}
+		if scenario.TruthScope != "subset" {
+			completeScenarios++
+		}
 		if scenario.RepositoryPath == "" || scenario.OldBPMNPath == "" || scenario.NewBPMNPath == "" || scenario.GroundTruthPath == "" {
 			return fmt.Errorf("scenario %s is missing required paths", scenario.ID)
 		}
@@ -151,6 +168,9 @@ func (manifest Manifest) Validate() error {
 	}
 	if len(manifest.Scenarios) == 0 {
 		return errors.New("benchmark manifest requires at least one scenario")
+	}
+	if completeScenarios == 0 {
+		return errors.New("benchmark manifest requires at least one complete ground-truth scenario for method aggregates")
 	}
 	return nil
 }
@@ -218,6 +238,17 @@ func (runner Runner) Run(ctx context.Context, manifest Manifest) (Report, Timing
 				if err := decodeStrict(truthBytes, &truth); err != nil {
 					return Report{}, Timing{}, err
 				}
+				if scenario.TruthScope == "subset" {
+					if err := evaluation.ValidateSubsetCoverage(prediction, truth); err != nil {
+						return Report{}, Timing{}, fmt.Errorf("scenario %s diagnostic subset does not match the BPMN diff: %w", scenario.ID, err)
+					}
+				} else if len(prediction.Changes) == 0 {
+					if len(truth.Cases) != 0 {
+						return Report{}, Timing{}, fmt.Errorf("scenario %s ground truth has cases but BPMN diff is empty", scenario.ID)
+					}
+				} else if err := evaluation.ValidateCoverage(prediction, truth); err != nil {
+					return Report{}, Timing{}, fmt.Errorf("scenario %s ground truth does not cover the BPMN diff: %w", scenario.ID, err)
+				}
 				evaluated, err := evaluation.Evaluate(prediction, predictionBytes, truth, truthBytes)
 				if err != nil {
 					return Report{}, Timing{}, err
@@ -234,7 +265,7 @@ func (runner Runner) Run(ctx context.Context, manifest Manifest) (Report, Timing
 			if !reproducible {
 				return Report{}, Timing{}, fmt.Errorf("scenario %s method %s is not reproducible", scenario.ID, method)
 			}
-			results = append(results, ScenarioMethodResult{ScenarioID: scenario.ID, Method: method, AnalysisID: analysisID, InputFingerprint: commonFingerprint, PredictionSHA256: predictionHash, EvaluationID: evaluationID, Repetitions: manifest.Repetitions, Reproducible: true, Metrics: firstMetrics})
+			results = append(results, ScenarioMethodResult{ScenarioID: scenario.ID, Method: method, AnalysisID: analysisID, InputFingerprint: commonFingerprint, PredictionSHA256: predictionHash, EvaluationID: evaluationID, Repetitions: manifest.Repetitions, Reproducible: true, TruthScope: scenario.TruthScope, Metrics: firstMetrics})
 		}
 	}
 	sort.Slice(results, func(i, j int) bool {
@@ -243,7 +274,12 @@ func (runner Runner) Run(ctx context.Context, manifest Manifest) (Report, Timing
 		}
 		return results[i].Method < results[j].Method
 	})
-	report := Report{Results: results, Aggregates: aggregate(results)}
+	report := Report{Results: results, Aggregates: aggregate(results), LabelProvenance: manifest.LabelProvenance}
+	for _, scenario := range scenarios {
+		if scenario.TruthScope == "subset" {
+			report.PartialScenarios = append(report.PartialScenarios, scenario.ID)
+		}
+	}
 	seed, _ := json.Marshal(report)
 	report.BenchmarkID = sha256Hex(seed)[:32]
 	return report, Timing{BenchmarkID: report.BenchmarkID, Runs: timings}, nil
@@ -299,6 +335,9 @@ func (runner Runner) writeRunArtifacts(scenarioID string, method domain.Analysis
 func aggregate(results []ScenarioMethodResult) []MethodAggregate {
 	groups := map[domain.AnalysisMethod][]evaluation.Metrics{}
 	for _, result := range results {
+		if result.TruthScope == "subset" {
+			continue
+		}
 		groups[result.Method] = append(groups[result.Method], result.Metrics)
 	}
 	methods := make([]domain.AnalysisMethod, 0, len(groups))
@@ -316,6 +355,21 @@ func aggregate(results []ScenarioMethodResult) []MethodAggregate {
 func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 	var result evaluation.Metrics
 	for _, value := range values {
+		if p := value.PositiveRanking; p != nil && p.Count > 0 {
+			if result.PositiveRanking == nil {
+				result.PositiveRanking = &evaluation.RankingSummary{}
+			}
+			r := result.PositiveRanking
+			n := float64(p.Count)
+			r.Count += p.Count
+			r.MAP += p.MAP * n
+			r.MRR += p.MRR * n
+			r.RPrecision += p.RPrecision * n
+			r.Precision5 += p.Precision5 * n
+			r.Precision10 += p.Precision10 * n
+			r.Recall5 += p.Recall5 * n
+			r.Recall10 += p.Recall10 * n
+		}
 		result.Recall.At1 += value.Recall.At1
 		result.Recall.At3 += value.Recall.At3
 		result.Recall.At5 += value.Recall.At5
@@ -333,6 +387,8 @@ func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 		result.ActionMacroF1 += value.ActionMacroF1
 		result.UnresolvedRate += value.UnresolvedRate
 		result.FalsePositiveRate += value.FalsePositiveRate
+		result.NegativeControls += value.NegativeControls
+		result.CorrectAbstentions += value.CorrectAbstentions
 		result.EvaluatedChanges += value.EvaluatedChanges
 		result.ExpectedImpacts += value.ExpectedImpacts
 		result.PredictedUniqueFiles += value.PredictedUniqueFiles
@@ -342,6 +398,9 @@ func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 		return result
 	}
 	result.Recall.At1 = round(result.Recall.At1 / count)
+	if result.PositiveRanking != nil {
+		result.PositiveRanking.Normalize()
+	}
 	result.Recall.At3 = round(result.Recall.At3 / count)
 	result.Recall.At5 = round(result.Recall.At5 / count)
 	result.Precision.At1 = round(result.Precision.At1 / count)
@@ -358,6 +417,9 @@ func meanMetrics(values []evaluation.Metrics) evaluation.Metrics {
 	result.ActionMacroF1 = round(result.ActionMacroF1 / count)
 	result.UnresolvedRate = round(result.UnresolvedRate / count)
 	result.FalsePositiveRate = round(result.FalsePositiveRate / count)
+	if result.NegativeControls > 0 {
+		result.NegativeControlAccuracy = round(float64(result.CorrectAbstentions) / float64(result.NegativeControls))
+	}
 	return result
 }
 

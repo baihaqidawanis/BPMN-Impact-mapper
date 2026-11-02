@@ -11,9 +11,122 @@ import (
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/app"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/ingest"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/semantic"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/wiring"
 )
+
+type constantTestEmbedder struct{ calls int }
+
+func (*constantTestEmbedder) Identity() semantic.Identity {
+	return semantic.Identity{Provider: "test", Model: "constant-test"}
+}
+
+func (embedder *constantTestEmbedder) Embed(_ context.Context, texts []string) ([][]float64, error) {
+	embedder.calls++
+	vectors := make([][]float64, len(texts))
+	for index := range texts {
+		vectors[index] = []float64{1, 0}
+	}
+	return vectors, nil
+}
+
+func TestFlowLabelEligibilityAcrossPublicRetrievalMethods(t *testing.T) {
+	oldPath := filepath.Join("..", "..", "testdata", "bpmn", "old.bpmn")
+	oldData, err := os.ReadFile(oldPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	repository := filepath.Join(root, "repository")
+	if err := os.MkdirAll(repository, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	// The source has an exact reference to one possible display label, plus
+	// broad process vocabulary that must not qualify a different label edit.
+	source := "package review\n// Request approved is displayed in the review screen.\nfunc ApproveRequest() bool { return true }\n// valid request budget approval\n"
+	if err := os.WriteFile(filepath.Join(repository, "review.go"), []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	variants := []struct {
+		name       string
+		old        string
+		new        string
+		wantImpact bool
+	}{
+		{name: "label without direct source reference", old: `name="yes"`, new: `name="Data missing"`},
+		{name: "label with direct source reference", old: `name="yes"`, new: `name="Request approved"`, wantImpact: true},
+		{name: "behavioral condition change", old: `${valid == true}`, new: `${valid == true &amp;&amp; budget &lt; 100}`, wantImpact: true},
+	}
+	for _, method := range []domain.AnalysisMethod{domain.MethodBM25, domain.MethodSemantic, domain.MethodFusion, domain.MethodHybrid} {
+		for _, variant := range variants {
+			t.Run(string(method)+"/"+variant.name, func(t *testing.T) {
+				newData := strings.Replace(string(oldData), variant.old, variant.new, 1)
+				if newData == string(oldData) {
+					t.Fatalf("fixture mutation did not apply: %q", variant.old)
+				}
+				newPath := filepath.Join(root, "changed-"+strings.ReplaceAll(variant.name, " ", "-")+".bpmn")
+				if err := os.WriteFile(newPath, []byte(newData), 0o600); err != nil {
+					t.Fatal(err)
+				}
+				embedder := &constantTestEmbedder{}
+				request := app.Request{RepositoryPath: repository, OldBPMNPath: oldPath, NewBPMNPath: newPath, Method: method}
+				first, err := wiring.NewAnalyzerWithSemanticEmbedder(embedder).Analyze(context.Background(), request)
+				if err != nil {
+					t.Fatal(err)
+				}
+				second, err := wiring.NewAnalyzerWithSemanticEmbedder(&constantTestEmbedder{}).Analyze(context.Background(), request)
+				if err != nil || !reflect.DeepEqual(first, second) {
+					t.Fatalf("non-deterministic scenario result: %v", err)
+				}
+				if len(first.Changes) == 0 {
+					t.Fatal("BPMN change not detected")
+				}
+				matched := false
+				for _, change := range first.Changes {
+					if change.ChangeType != domain.ModifySequenceFlow {
+						continue
+					}
+					matched = true
+					if variant.name == "behavioral condition change" {
+						if change.PartOf == "" || len(change.Impacts) != 0 {
+							t.Fatalf("condition flow must be represented under its gateway: %#v", change)
+						}
+						foundGatewayImpact := false
+						for _, primary := range first.Changes {
+							if primary.ChangeType == domain.ModifyGatewayCondition && primary.NewElement.ID == change.PartOf && len(primary.Impacts) > 0 {
+								foundGatewayImpact = true
+							}
+						}
+						if !foundGatewayImpact {
+							t.Fatal("grouping lost gateway retrieval")
+						}
+						continue
+					}
+					if variant.wantImpact && len(change.Impacts) == 0 || !variant.wantImpact && (len(change.Impacts) != 0 || len(change.UnresolvedImpact) == 0) {
+						t.Fatalf("unexpected flow candidates: %#v", change)
+					}
+					if !variant.wantImpact && embedder.calls != 0 {
+						t.Fatalf("no-reference label edit invoked the semantic runtime %d times", embedder.calls)
+					}
+					if variant.name == "label with direct source reference" && len(change.Impacts) > 0 {
+						foundReference := false
+						for _, evidence := range change.Impacts[0].Evidence {
+							foundReference = foundReference || evidence.Type == "FLOW_LABEL_TEXT"
+						}
+						if !foundReference {
+							t.Fatalf("direct label evidence missing: %#v", change.Impacts[0])
+						}
+					}
+				}
+				if !matched {
+					t.Fatal("sequence-flow change missing")
+				}
+			})
+		}
+	}
+}
 
 func TestAnalyzeEndToEndIsDeterministicAndPrivate(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")
@@ -70,6 +183,28 @@ func TestAnalyzeEndToEndIsDeterministicAndPrivate(t *testing.T) {
 	}
 }
 
+func TestOmittedAndExplicitDefaultIngestLimitsShareIdentity(t *testing.T) {
+	root := filepath.Join("..", "..", "testdata")
+	request := app.Request{
+		RepositoryPath: filepath.Join(root, "repository"),
+		OldBPMNPath:    filepath.Join(root, "bpmn", "old.bpmn"),
+		NewBPMNPath:    filepath.Join(root, "bpmn", "new.bpmn"),
+		RepositoryName: "synthetic-repository", Revision: "fixture-v1", Method: domain.MethodBM25,
+	}
+	implicit, err := wiring.NewAnalyzer().Analyze(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.Ingest = ingest.Options{MaxFileSize: 1 << 20, MaxTotalSize: 64 << 20, MaxFiles: 10000}
+	explicit, err := wiring.NewAnalyzer().Analyze(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if implicit.InputFingerprint != explicit.InputFingerprint || implicit.AnalysisID != explicit.AnalysisID {
+		t.Fatalf("equivalent ingest limits changed identity: implicit=%s/%s explicit=%s/%s", implicit.InputFingerprint, implicit.AnalysisID, explicit.InputFingerprint, explicit.AnalysisID)
+	}
+}
+
 func TestInsertTaskKeepsFlowDiffWithoutDuplicateRetrieval(t *testing.T) {
 	root := filepath.Join("..", "..", "testdata")
 	result, err := wiring.NewAnalyzer().Analyze(context.Background(), app.Request{
@@ -99,7 +234,7 @@ func TestInsertTaskKeepsFlowDiffWithoutDuplicateRetrieval(t *testing.T) {
 		t.Fatalf("primary=%d details=%d", primary, details)
 	}
 	markdown := string(report.Markdown(result))
-	if !strings.Contains(markdown, "Supporting sequence-flow edits (mapped with this task)") || strings.Count(markdown, "## 4. ADD_TASK") != 1 || strings.Contains(markdown, "## 1. MODIFY_SEQUENCE_FLOW") {
+	if !strings.Contains(markdown, "Supporting sequence-flow edits (mapped with this change)") || strings.Count(markdown, "## 4. ADD_TASK") != 1 || strings.Contains(markdown, "## 1. MODIFY_SEQUENCE_FLOW") {
 		t.Fatalf("Markdown did not group supporting edits: %s", markdown)
 	}
 }

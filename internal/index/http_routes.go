@@ -16,9 +16,14 @@ import (
 // literal JS/TS api/fetch calls with an explicit method and a unique Go route
 // registration whose handler can be resolved by the native Go indexer.
 // It is not a JavaScript AST or a general HTTP call graph.
-type HTTPRouteExtractor struct{}
+type HTTPRouteExtractor struct{ Parameterized bool }
 
-func (HTTPRouteExtractor) Name() string { return "literal-http-route-links-v1" }
+func (e HTTPRouteExtractor) Name() string {
+	if e.Parameterized {
+		return "literal-and-parameter-http-route-links-v2"
+	}
+	return "literal-http-route-links-v1"
+}
 func (HTTPRouteExtractor) Capabilities() []domain.Capability {
 	return []domain.Capability{domain.HTTPRouteLinks}
 }
@@ -29,7 +34,7 @@ func (HTTPRouteExtractor) Supports(file domain.FileAnalysis) bool {
 	if file.Adapter == "go-syntax" {
 		return !isTestSource(file.File)
 	}
-	if file.Adapter != "generic-text" {
+	if file.Adapter != "generic-text" && file.Adapter != (TextWindowAdapter{}).Name() && file.Adapter != (TextWindowAdapter{CodeOnly: true}).Name() {
 		return false
 	}
 	switch path.Ext(file.File) {
@@ -47,7 +52,7 @@ type httpRoute struct {
 
 var clientHTTPCall = regexp.MustCompile(`\b(?:api(?:<[^>]+>)?|fetch)\s*\(\s*["'](/[^"'\s]*)["']\s*,\s*\{[^}\n]*\bmethod\s*:\s*["'](GET|POST|PUT|PATCH|DELETE)["']`)
 
-func (HTTPRouteExtractor) Extract(inventory ingest.Inventory, artifacts []domain.Artifact) (map[string][]domain.SourceRelation, error) {
+func (extractor HTTPRouteExtractor) Extract(inventory ingest.Inventory, artifacts []domain.Artifact) (map[string][]domain.SourceRelation, error) {
 	result := map[string][]domain.SourceRelation{}
 	byID := make(map[string]int, len(artifacts))
 	for i, artifact := range artifacts {
@@ -92,11 +97,11 @@ func (HTTPRouteExtractor) Extract(inventory ingest.Inventory, artifacts []domain
 					return true
 				}
 				routePath, err := strconv.Unquote(literal.Value)
-				if err != nil || !literalRoute(routePath) {
+				if err != nil || (!literalRoute(routePath) && !(extractor.Parameterized && supportedRoutePattern(routePath))) {
 					return true
 				}
 				handlerID, _ := model.resolveCall(file, &ast.CallExpr{Fun: call.Args[1]}, environment)
-				if handlerID == "" {
+				if handlerID == "" && !extractor.Parameterized {
 					return true
 				}
 				line := file.set.Position(call.Pos()).Line
@@ -133,7 +138,7 @@ func (HTTPRouteExtractor) Extract(inventory ingest.Inventory, artifacts []domain
 					continue
 				}
 				serverRoutes := routes[match[2]+" "+match[1]]
-				if len(serverRoutes) != 1 {
+				if len(serverRoutes) != 1 || serverRoutes[0].targetID == "" {
 					continue // Duplicate registrations cannot establish a unique handler.
 				}
 				route := serverRoutes[0]
@@ -143,6 +148,9 @@ func (HTTPRouteExtractor) Extract(inventory ingest.Inventory, artifacts []domain
 					TargetLocation: route.location, TargetExcerpt: route.excerpt,
 				})
 			}
+		}
+		if extractor.Parameterized {
+			result[file.RelativePath] = append(result[file.RelativePath], patternClientLinks(file, routes)...)
 		}
 	}
 	return result, nil

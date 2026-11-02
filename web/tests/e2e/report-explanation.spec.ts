@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { rankingExplanation, traceExplanation, usesCodeEvidence } from "../../src/lib/report-explanation";
+import { fusionCalculation, rankingExplanation, traceExplanation, usesCodeEvidence } from "../../src/lib/report-explanation";
 import type { Impact } from "../../src/lib/types";
 
 function candidate(excerpt?: string): Impact {
@@ -9,6 +9,16 @@ function candidate(excerpt?: string): Impact {
     evidence: excerpt ? [{ type: "RRF_FUSION", location: "service.go", excerpt }] : [],
   };
 }
+
+test("RRF calculation uses recorded ranks and rejects incomplete metadata", () => {
+  expect(fusionCalculation(candidate("left_rank=3; right_rank=2; k=60")))
+    .toContain("(1/(60+3) + 1/(60+2)) / (2/(60+1))");
+  expect(fusionCalculation(candidate("left_rank=absent; right_rank=1; k=60")))
+    .toContain("(0 + 1/(60+1))");
+  expect(fusionCalculation(candidate())).toBeNull();
+  expect(fusionCalculation(candidate("left_rank=0; right_rank=2; k=60"))).toBeNull();
+  expect(fusionCalculation(candidate("left_rank=1; right_rank=2; k=unknown"))).toBeNull();
+});
 
 test("ranking explanation distinguishes two ranks from a missing search result", () => {
   expect(rankingExplanation(candidate("left_method=hybrid; left_rank=1; right_method=semantic; right_rank=10; k=60")))

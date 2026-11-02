@@ -1,0 +1,18 @@
+{
+  "scenario": "move-role",
+  "requirement": "Only Supervisor (plus existing Super Admin override) may submit stock adjustments; Staff can still prepare drafts. Other actions retain their permissions.",
+  "reference_status": "provisional-source-review; not implementation proof",
+  "baseline_sha256": "d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d",
+  "changed_sha256": "a8079826a5b39845814b412d5e909f76dbfd276957314473ef35f5abdf483e5e",
+  "expected_existing_files": [
+    "frontend/features/inventory/inventory-adjustment-panel.tsx",
+    "backend/internal/inventory/adapter/http/handler.go",
+    "backend/test/integration/operations_test.go"
+  ],
+  "evaluation_scope": "file union across primary changes; atomic references pending parser validation",
+  "source_hashes": {
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101"
+  }
+}
