@@ -30,6 +30,8 @@ export interface PlanningChange {
 }
 
 export interface PlanningContext {
+  repository_overview?: {file:string;summary:string;truncated:boolean};
+  process_context?: { before: unknown; after: unknown };
   warnings?: { code: string; message: string }[];
   warnings_truncated?: boolean;
   version: string;
@@ -57,6 +59,7 @@ export interface PlanSummary {
 }
 
 export interface FullReviewProgress {
+  consistency_review?: string;
   source_fingerprint?: string;
   phase: string; files_total: number; files_reviewed: number;
   chunks_total: number; chunks_reviewed: number; relevant_files: number; weak_files: number;
@@ -65,6 +68,8 @@ export interface FullReviewProgress {
 }
 
 export interface ChangePlan {
+	 review_findings?: Array<{file:string;symbol?:string;element_id:string;change_type:string;basis:string;source_excerpt?:string;implementation_excerpt?:string;evidence_ids:string[];checks:Array<{criterion:string;finding:string;status:"PASS"|"REVISE"|"NEED_EVIDENCE"}>}>;
+  change_coverage?: Array<{change_type:string;element_id:string;plans:number;status:string}>;
   full_review?: FullReviewProgress;
   plan_id: string;
   analysis_id: string;
@@ -74,6 +79,8 @@ export interface ChangePlan {
   version: string;
   input_fingerprint: string;
   plans: Array<{
+	change_type?: string; element_id?: string;
+    current_behavior?: string; target_behavior?: string; design_rationale?: string; assumptions?: string[];
     file: string;
     symbol?: string;
     module: string;

@@ -61,3 +61,58 @@ func TestRepositoryChunksCoverAllEligibleBytesAndRemainImmutable(t *testing.T) {
 		t.Fatal("snapshot changed after live file write")
 	}
 }
+
+func TestBulkScanSkipsProseAndDependencyManifests(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"README.md", "notes.mdx", "guide.rst", "package.json", "package-lock.json", "go.mod", "go.sum", "service.go", "schema.sql", "settings.json"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte("allowed textual fixture"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	snapshot, err := agenttools.New(context.Background(), root, ingest.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	names := map[string]bool{}
+	for _, c := range snapshot.RepositoryChunks() {
+		names[c.File] = true
+	}
+	for _, name := range []string{"README.md", "notes.mdx", "guide.rst", "package.json", "package-lock.json", "go.mod", "go.sum"} {
+		if names[name] {
+			t.Fatal("unnecessary bulk input", name)
+		}
+	}
+	for _, name := range []string{"service.go", "schema.sql", "settings.json"} {
+		if !names[name] {
+			t.Fatal("implementation excluded", name)
+		}
+	}
+}
+
+func TestRootReadmeIsBoundedAndOptional(t *testing.T) {
+	root := t.TempDir()
+	text := strings.Repeat("overview ", 1500)
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := agenttools.New(context.Background(), root, ingest.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	readme := snapshot.RootReadme()
+	if readme == nil || !readme.Truncated || len(readme.Content) > 8192 || !utf8.ValidString(readme.Content) {
+		t.Fatal("unbounded README", readme)
+	}
+	for _, chunk := range snapshot.RepositoryChunks() {
+		if chunk.File == "README.md" {
+			t.Fatal("README in exhaustive scan")
+		}
+	}
+	empty, err := agenttools.New(context.Background(), t.TempDir(), ingest.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if empty.RootReadme() != nil {
+		t.Fatal("invented README")
+	}
+}

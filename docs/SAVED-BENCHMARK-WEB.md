@@ -39,7 +39,7 @@ No experimental variant was adopted. The historical table remains unchanged.
 Rebuild from frozen analysis/evaluation artifacts, without running inference:
 
 ```powershell
-python experiments/simple-erp/publish_retrieval_studies.py
+python experiments/tools/publish_retrieval_studies.py
 ```
 
 The publisher verifies reference/BPMN hashes, repeated prediction/evaluation

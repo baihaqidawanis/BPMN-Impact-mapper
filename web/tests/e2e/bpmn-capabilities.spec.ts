@@ -1,3 +1,4 @@
+import { loadAnalysisFixture } from "./helpers/analysis-fixture";
 import { expect, test } from "@playwright/test";
 
 test("partial BPMN semantics cannot appear as a complete zero-change result", async ({ page }) => {
@@ -11,8 +12,8 @@ test("partial BPMN semantics cannot appear as a complete zero-change result", as
     }) });
   });
   await page.goto("/?view=analysis");
-  await page.getByRole("button", { name: "Load synthetic demo" }).click();
-  await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+  await loadAnalysisFixture(page);
+  await expect(page.getByText("New BPMN ready:", { exact: false })).toBeVisible();
   await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
   await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
   await page.getByRole("button", { name: "Run impact analysis" }).click();

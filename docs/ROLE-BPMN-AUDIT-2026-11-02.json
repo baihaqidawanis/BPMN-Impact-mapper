@@ -1,0 +1,1760 @@
+{
+  "files_checked": 112,
+  "files_with_findings": 87,
+  "finding_count": 158,
+  "files": [
+    {
+      "file": "staff/inventory/level-1/role-staff-l1-inventory.bpmn",
+      "sha256": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn",
+      "sha256": "079b9f005afe3e6aab55b7c788330ae0bd9a87d702b0a510489473166abb6d4c",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_2",
+          "source": "role_staff_l2_inv_adjustment_gate0",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_5",
+          "source": "role_staff_l2_inv_adjustment_gate1",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_9",
+          "source": "role_staff_l2_inv_adjustment_gate3",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_10",
+          "source": "role_staff_l2_inv_adjustment_gate3",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_11",
+          "source": "role_staff_l2_inv_adjustment_gate2",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_inv_adjustment_Flow_13",
+          "source": "role_staff_l2_inv_adjustment_gate2",
+          "target": "role_staff_l2_inv_adjustment_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-correction.bpmn",
+      "sha256": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn",
+      "sha256": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-sources.bpmn",
+      "sha256": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn",
+      "sha256": "1aead6115c0c7fe82e9abd3863b895b61bf1f534a989f15410d6409aa2796966",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_adj_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_adj_cancel_Flow_6",
+          "source": "role_staff_l3_adj_cancel_valid",
+          "target": "role_staff_l3_adj_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-create.bpmn",
+      "sha256": "5c6c5aeebeff196ca00e2457b1adf08461290eb9f8560fa05d7baacc3c52e5c7",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_adj_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_adj_create_Flow_6",
+          "source": "role_staff_l3_adj_create_valid",
+          "target": "role_staff_l3_adj_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-post.bpmn",
+      "sha256": "ac677a4401b21e5ebc15293ee743817500897f53141b5be758f99a9f6f0a30ed",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_adj_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_adj_post_Flow_7",
+          "source": "role_staff_l3_adj_post_valid",
+          "target": "role_staff_l3_adj_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-submit.bpmn",
+      "sha256": "ac327e5a722cdc7811ed0f1daf39c427802a9c01c38a2257ca66c4ee945ef415",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_adj_submit",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_adj_submit_Flow_6",
+          "source": "role_staff_l3_adj_submit_valid",
+          "target": "role_staff_l3_adj_submit_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-delivery-post.bpmn",
+      "sha256": "14b1a2b7a882866374840960418f9b294841ab4293d661ff41e31170d60328a7",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_delivery_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_delivery_post_Flow_7",
+          "source": "role_staff_l3_delivery_post_valid",
+          "target": "role_staff_l3_delivery_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn",
+      "sha256": "78cb3d88f5adc46832b105efee83f8377351f9c1d72708088247f465b51625e7",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_adjustments_Flow_3",
+          "source": "role_staff_l3_inv_adjustments_valid",
+          "target": "role_staff_l3_inv_adjustments_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_adjustments_Flow_4",
+          "source": "role_staff_l3_inv_adjustments_valid",
+          "target": "role_staff_l3_inv_adjustments_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-balances.bpmn",
+      "sha256": "2cc2cfd5bc5f233f9f12595346f8207f7dc1185e3d2a9c010bd0ee17aef8aa4a",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_balances_Flow_3",
+          "source": "role_staff_l3_inv_balances_valid",
+          "target": "role_staff_l3_inv_balances_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_balances_Flow_4",
+          "source": "role_staff_l3_inv_balances_valid",
+          "target": "role_staff_l3_inv_balances_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-movements.bpmn",
+      "sha256": "a58db3762897909ad74a4be402c901d438f93971f9d3860467e7efac839bf38d",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_movements_Flow_3",
+          "source": "role_staff_l3_inv_movements_valid",
+          "target": "role_staff_l3_inv_movements_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_inv_movements_Flow_4",
+          "source": "role_staff_l3_inv_movements_valid",
+          "target": "role_staff_l3_inv_movements_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/level-0/role-staff-l0.bpmn",
+      "sha256": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l1-master.bpmn",
+      "sha256": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l2-master.bpmn",
+      "sha256": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l3-master-list.bpmn",
+      "sha256": "171557b86a9773fa0fee6d4212698f34ac3aab9a3dfb3bd7b3e2e82a44401572",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_master_list_Flow_3",
+          "source": "role_staff_l3_master_list_valid",
+          "target": "role_staff_l3_master_list_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_master_list_Flow_4",
+          "source": "role_staff_l3_master_list_valid",
+          "target": "role_staff_l3_master_list_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-1/role-staff-l1-p2p.bpmn",
+      "sha256": "9a945fb31c80e51c908c9fd13e4912b6172b75b30eb59f66e166f3f6a6d98eea",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l1_p2p_Flow_1",
+          "source": "role_staff_l1_p2p_gate0",
+          "target": "role_staff_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l1_p2p_Flow_4",
+          "source": "role_staff_l1_p2p_gate1",
+          "target": "role_staff_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l1_p2p_Flow_7",
+          "source": "role_staff_l1_p2p_gate2",
+          "target": "role_staff_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l1_p2p_Flow_8",
+          "source": "role_staff_l1_p2p_gate2",
+          "target": "role_staff_l1_p2p_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-ap.bpmn",
+      "sha256": "55fe763ee6e0a61d649d3021a1b4a13122e6ebb33da35343276e725737511269",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_ap_Flow_3",
+          "source": "role_staff_l2_ap_gate3",
+          "target": "role_staff_l2_ap_end"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-correction.bpmn",
+      "sha256": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-po-gr.bpmn",
+      "sha256": "a5ba00ee8ba3b60131f1a61aad7859b0a06231cb4b9d6c932b05be5a33caccc7",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_po_gr_Flow_2",
+          "source": "role_staff_l2_po_gr_gate0",
+          "target": "role_staff_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_po_gr_Flow_5",
+          "source": "role_staff_l2_po_gr_gate1",
+          "target": "role_staff_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_po_gr_Flow_8",
+          "source": "role_staff_l2_po_gr_gate2",
+          "target": "role_staff_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_po_gr_Flow_11",
+          "source": "role_staff_l2_po_gr_gate3",
+          "target": "role_staff_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_po_gr_Flow_13",
+          "source": "role_staff_l2_po_gr_gate3",
+          "target": "role_staff_l2_po_gr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-pr.bpmn",
+      "sha256": "8a10565947a4f67d2b797f44a471d741366a7899fe627e291a886c99a139ea9d",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_pr_Flow_2",
+          "source": "role_staff_l2_pr_gate0",
+          "target": "role_staff_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_pr_Flow_5",
+          "source": "role_staff_l2_pr_gate1",
+          "target": "role_staff_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_pr_Flow_8",
+          "source": "role_staff_l2_pr_gate2",
+          "target": "role_staff_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_pr_Flow_9",
+          "source": "role_staff_l2_pr_gate2",
+          "target": "role_staff_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_staff_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l2_pr_Flow_10",
+          "source": "role_staff_l2_pr_gate2",
+          "target": "role_staff_l2_pr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn",
+      "sha256": "a263de87b93200467b04225fa8c9768e1db4863541ba9e19e0490665bd97893c",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_ap_invoice",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_ap_invoice_Flow_6",
+          "source": "role_staff_l3_ap_invoice_valid",
+          "target": "role_staff_l3_ap_invoice_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-payment.bpmn",
+      "sha256": "60325f38e034c4305fcd448c5897e30e0b236d0e99911bef29c5f56f1aeefa26",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_ap_payment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_ap_payment_Flow_6",
+          "source": "role_staff_l3_ap_payment_valid",
+          "target": "role_staff_l3_ap_payment_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn",
+      "sha256": "78b2b6f5dfef73af203909c754d50163b3d91acc8e2c960287fc45657cc27d2e",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_ap_resolve",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_ap_resolve_Flow_6",
+          "source": "role_staff_l3_ap_resolve_valid",
+          "target": "role_staff_l3_ap_resolve_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn",
+      "sha256": "808707429cbf79a9f25f148f4a4e3ea140ced21b10d071050dbdbdeb8261c8cc",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_gr_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_gr_cancel_Flow_6",
+          "source": "role_staff_l3_gr_cancel_valid",
+          "target": "role_staff_l3_gr_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-gr-create.bpmn",
+      "sha256": "989f48cceb5b3e1f46d7a0a49cff6bfbca68077593864e96554e59ee80f490e3",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_gr_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_gr_create_Flow_6",
+          "source": "role_staff_l3_gr_create_valid",
+          "target": "role_staff_l3_gr_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-po-convert.bpmn",
+      "sha256": "681220b94b3be5664f57c23a3f1b9ee41639b89e8529c46108a1c1b97436a8ae",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_po_convert",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_po_convert_Flow_6",
+          "source": "role_staff_l3_po_convert_valid",
+          "target": "role_staff_l3_po_convert_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn",
+      "sha256": "57adfef46cb0df0f27de71e95246b1bbaef51d61d1c10ca0db5651b1760c5625",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_pr_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_pr_cancel_Flow_6",
+          "source": "role_staff_l3_pr_cancel_valid",
+          "target": "role_staff_l3_pr_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-copy.bpmn",
+      "sha256": "329e01d3e851af8300a84cf644b98f5559369e14512a1fa7812ae97681d06187",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_pr_copy",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_pr_copy_Flow_6",
+          "source": "role_staff_l3_pr_copy_valid",
+          "target": "role_staff_l3_pr_copy_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-create.bpmn",
+      "sha256": "9d1780780368a3c03effcfe3d74f37dc5cd6966a33aa5f35709a29b6bbbf11b9",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_pr_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_pr_create_Flow_6",
+          "source": "role_staff_l3_pr_create_valid",
+          "target": "role_staff_l3_pr_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-submit.bpmn",
+      "sha256": "c8f32100aabcb32befc2e429ae679c7efdad0cba8f928d5d19a5189a16bc4c43",
+      "issues": [
+        {
+          "scope": "Process_role_staff_l3_pr_submit",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_staff_l3_pr_submit_Flow_6",
+          "source": "role_staff_l3_pr_submit_valid",
+          "target": "role_staff_l3_pr_submit_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn",
+      "sha256": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn",
+      "sha256": "01c398e15b88d4ec5d106eff27d049ab3a525d600c71afbd15ecbd778844a148",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_2",
+          "source": "role_super_admin_l2_inv_adjustment_gate0",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_5",
+          "source": "role_super_admin_l2_inv_adjustment_gate1",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_9",
+          "source": "role_super_admin_l2_inv_adjustment_gate3",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_10",
+          "source": "role_super_admin_l2_inv_adjustment_gate3",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_11",
+          "source": "role_super_admin_l2_inv_adjustment_gate2",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_inv_adjustment_Flow_13",
+          "source": "role_super_admin_l2_inv_adjustment_gate2",
+          "target": "role_super_admin_l2_inv_adjustment_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn",
+      "sha256": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn",
+      "sha256": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn",
+      "sha256": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn",
+      "sha256": "4aebd70c6abba119a059e343a626c07787b796d487b535dda4529d427982b8f0",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_cancel_Flow_6",
+          "source": "role_super_admin_l3_adj_cancel_valid",
+          "target": "role_super_admin_l3_adj_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn",
+      "sha256": "c96bf8d2c9a3d65931c39862dca60ca5d14dfd87267fbd511afaf91381b7e4f5",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_create_Flow_6",
+          "source": "role_super_admin_l3_adj_create_valid",
+          "target": "role_super_admin_l3_adj_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn",
+      "sha256": "a8a8a2c8a39b4930c8dd92a3482a7bb698c32359a85dff987f73ebead1d2135c",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_post_Flow_7",
+          "source": "role_super_admin_l3_adj_post_valid",
+          "target": "role_super_admin_l3_adj_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn",
+      "sha256": "d407f0923dafaac4acf22a3a240ea685b87a45606f6fab7d20ecad06b8c0aef3",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_reverse_Flow_6",
+          "source": "role_super_admin_l3_adj_reverse_valid",
+          "target": "role_super_admin_l3_adj_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn",
+      "sha256": "68540c68b20e4c0a2d7de29b6da9af520eebd305e324994499adb9c35c4cc5a4",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_review",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_review_Flow_4",
+          "source": "role_super_admin_l3_adj_review_valid",
+          "target": "role_super_admin_l3_adj_review_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn",
+      "sha256": "bd3053a6f69459cc3d94b1c08c512749ef8726cd21a58dede8961c817022b577",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_adj_submit",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_adj_submit_Flow_6",
+          "source": "role_super_admin_l3_adj_submit_valid",
+          "target": "role_super_admin_l3_adj_submit_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn",
+      "sha256": "eb600e95c6de03fe245ec4b3547a619ab67ae4f4a7bf054b72995a7c6371db2a",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_delivery_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_delivery_post_Flow_7",
+          "source": "role_super_admin_l3_delivery_post_valid",
+          "target": "role_super_admin_l3_delivery_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn",
+      "sha256": "0ae2fd5fc34ad15a99ae17839723ffd482244a4770b97faf482a498dea6076f1",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_delivery_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_delivery_reverse_Flow_7",
+          "source": "role_super_admin_l3_delivery_reverse_valid",
+          "target": "role_super_admin_l3_delivery_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn",
+      "sha256": "8437aab61408c43131224bdb4fbc753e7e795472dec3b5288819b49c5a595add",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_adjustments_Flow_3",
+          "source": "role_super_admin_l3_inv_adjustments_valid",
+          "target": "role_super_admin_l3_inv_adjustments_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_adjustments_Flow_4",
+          "source": "role_super_admin_l3_inv_adjustments_valid",
+          "target": "role_super_admin_l3_inv_adjustments_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn",
+      "sha256": "eecfac822aae8f672f0331a038f6b55f07370eea59e190781fe866723fe86276",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_balances_Flow_3",
+          "source": "role_super_admin_l3_inv_balances_valid",
+          "target": "role_super_admin_l3_inv_balances_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_balances_Flow_4",
+          "source": "role_super_admin_l3_inv_balances_valid",
+          "target": "role_super_admin_l3_inv_balances_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn",
+      "sha256": "038e6df589d12fdfa8441cb543eff9c6387d2d2059e83b6cac491226d1265bdf",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_movements_Flow_3",
+          "source": "role_super_admin_l3_inv_movements_valid",
+          "target": "role_super_admin_l3_inv_movements_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_inv_movements_Flow_4",
+          "source": "role_super_admin_l3_inv_movements_valid",
+          "target": "role_super_admin_l3_inv_movements_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/level-0/role-super-admin-l0.bpmn",
+      "sha256": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn",
+      "sha256": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn",
+      "sha256": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn",
+      "sha256": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn",
+      "sha256": "028d68d2d92c0d9e0aa796cdca4fabbfd582864199bf27b5c8914a808d7e3e7c",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_master_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_master_create_Flow_6",
+          "source": "role_super_admin_l3_master_create_valid",
+          "target": "role_super_admin_l3_master_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn",
+      "sha256": "4f80c3bb29148c9c1d6838b795564ff2d03f6e4e897804e40e3b4de2b4092c1f",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_master_list_Flow_3",
+          "source": "role_super_admin_l3_master_list_valid",
+          "target": "role_super_admin_l3_master_list_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_master_list_Flow_4",
+          "source": "role_super_admin_l3_master_list_valid",
+          "target": "role_super_admin_l3_master_list_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn",
+      "sha256": "3ed34b48b2babc189faf0f7fe48a72d25d1cd3c9be3ba9747cfba5b52779c320",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_master_status",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_master_status_Flow_6",
+          "source": "role_super_admin_l3_master_status_valid",
+          "target": "role_super_admin_l3_master_status_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn",
+      "sha256": "a8f3d5a07a491bd3d98361f12cb0d33bd642d576013bd7fcbe319e2958fd65d1",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_settings_get",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_settings_get_Flow_3",
+          "source": "role_super_admin_l3_settings_get_valid",
+          "target": "role_super_admin_l3_settings_get_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l3_settings_get",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_settings_get_Flow_4",
+          "source": "role_super_admin_l3_settings_get_valid",
+          "target": "role_super_admin_l3_settings_get_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn",
+      "sha256": "0578f9e19cb240a29875a787193ffc23a3e7f66999cb4653e1ca970ce5d72443",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_settings_update",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_settings_update_Flow_6",
+          "source": "role_super_admin_l3_settings_update_valid",
+          "target": "role_super_admin_l3_settings_update_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn",
+      "sha256": "728678cd61a2f63414fe007394988fdde897e6745f0f0db3fc731d310fc34173",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l1_p2p_Flow_1",
+          "source": "role_super_admin_l1_p2p_gate0",
+          "target": "role_super_admin_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l1_p2p_Flow_4",
+          "source": "role_super_admin_l1_p2p_gate1",
+          "target": "role_super_admin_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l1_p2p_Flow_7",
+          "source": "role_super_admin_l1_p2p_gate2",
+          "target": "role_super_admin_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l1_p2p_Flow_8",
+          "source": "role_super_admin_l1_p2p_gate2",
+          "target": "role_super_admin_l1_p2p_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn",
+      "sha256": "e54d18e356b62b5ea9f44ea454fdb4a884cef3fad6ebb68cd544c4c3884704d8",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_2",
+          "source": "role_super_admin_l2_ap_gate0",
+          "target": "role_super_admin_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_6",
+          "source": "role_super_admin_l2_ap_gate2",
+          "target": "role_super_admin_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_9",
+          "source": "role_super_admin_l2_ap_gate3",
+          "target": "role_super_admin_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_11",
+          "source": "role_super_admin_l2_ap_gate3",
+          "target": "role_super_admin_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_14",
+          "source": "role_super_admin_l2_ap_gate1",
+          "target": "role_super_admin_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_ap_Flow_17",
+          "source": "role_super_admin_l2_ap_resolved",
+          "target": "role_super_admin_l2_ap_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn",
+      "sha256": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn",
+      "sha256": "e7ddbbc542c5507c9926160c9b9cff827f94549a7f602be4b962002dbe116b44",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_po_gr_Flow_2",
+          "source": "role_super_admin_l2_po_gr_gate0",
+          "target": "role_super_admin_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_po_gr_Flow_5",
+          "source": "role_super_admin_l2_po_gr_gate1",
+          "target": "role_super_admin_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_po_gr_Flow_8",
+          "source": "role_super_admin_l2_po_gr_gate2",
+          "target": "role_super_admin_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_po_gr_Flow_11",
+          "source": "role_super_admin_l2_po_gr_gate3",
+          "target": "role_super_admin_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_po_gr_Flow_13",
+          "source": "role_super_admin_l2_po_gr_gate3",
+          "target": "role_super_admin_l2_po_gr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn",
+      "sha256": "c2348574c3fbf3b16f18cf0168abb1024fa5c0e85c854ca1825147eb52c90909",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_pr_Flow_2",
+          "source": "role_super_admin_l2_pr_gate0",
+          "target": "role_super_admin_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_pr_Flow_5",
+          "source": "role_super_admin_l2_pr_gate1",
+          "target": "role_super_admin_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_pr_Flow_8",
+          "source": "role_super_admin_l2_pr_gate2",
+          "target": "role_super_admin_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_pr_Flow_9",
+          "source": "role_super_admin_l2_pr_gate2",
+          "target": "role_super_admin_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_super_admin_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l2_pr_Flow_10",
+          "source": "role_super_admin_l2_pr_gate2",
+          "target": "role_super_admin_l2_pr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn",
+      "sha256": "43ea014d63f90e462a2dd9df6c4955d8973e7c1d9109903f02fbfff887a1b339",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_invoice_void",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_invoice_void_Flow_6",
+          "source": "role_super_admin_l3_ap_invoice_void_valid",
+          "target": "role_super_admin_l3_ap_invoice_void_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn",
+      "sha256": "3c4b94c80423329bdadb5b81a079e7fb0a90e252c254430cb47678bd51b9ee78",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_invoice",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_invoice_Flow_6",
+          "source": "role_super_admin_l3_ap_invoice_valid",
+          "target": "role_super_admin_l3_ap_invoice_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn",
+      "sha256": "f28a13f7a9237111981efacb27022a2d181e545e81b0645d9335c34a46c41a1e",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_match",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_match_Flow_4",
+          "source": "role_super_admin_l3_ap_match_valid",
+          "target": "role_super_admin_l3_ap_match_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn",
+      "sha256": "5ff01680be0e624ef430fac32f3321d225132626b8c0a60b7178fd287c9f2fcf",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_payment_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_payment_post_Flow_7",
+          "source": "role_super_admin_l3_ap_payment_post_valid",
+          "target": "role_super_admin_l3_ap_payment_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn",
+      "sha256": "8de75b74168cbbe706afba0b718b569f6db10d75cad87ad1f672c31d44baa5d8",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_payment_void",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_payment_void_Flow_7",
+          "source": "role_super_admin_l3_ap_payment_void_valid",
+          "target": "role_super_admin_l3_ap_payment_void_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn",
+      "sha256": "a96e6815a38a0f04b68e15a3fb0ea1f3bbb3c86584638c115c175ffae71aca02",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_payment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_payment_Flow_6",
+          "source": "role_super_admin_l3_ap_payment_valid",
+          "target": "role_super_admin_l3_ap_payment_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn",
+      "sha256": "47c4a180e3f2485a2d70be56717ef25f64a85537f6eda54c49f65f318cfce3f0",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_ap_resolve",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_ap_resolve_Flow_6",
+          "source": "role_super_admin_l3_ap_resolve_valid",
+          "target": "role_super_admin_l3_ap_resolve_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn",
+      "sha256": "35893308e574e79e1a86b465d24e1a63be0186c1564561d36ace9118e561c681",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_gr_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_gr_cancel_Flow_6",
+          "source": "role_super_admin_l3_gr_cancel_valid",
+          "target": "role_super_admin_l3_gr_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn",
+      "sha256": "0e7c68f2fd95a09a4aa2fa5d75979c8e4a4579c8080d148988d7273eb836d2fe",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_gr_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_gr_create_Flow_6",
+          "source": "role_super_admin_l3_gr_create_valid",
+          "target": "role_super_admin_l3_gr_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn",
+      "sha256": "433841646daea14b8c54f0aa4eada081ee3917ffa349488968c19b60c06d6617",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_gr_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_gr_post_Flow_7",
+          "source": "role_super_admin_l3_gr_post_valid",
+          "target": "role_super_admin_l3_gr_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn",
+      "sha256": "7caf08d98976257dc1b4bd852c846e232236475fd0f6ac789d16495ff0c8444a",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_gr_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_gr_reverse_Flow_7",
+          "source": "role_super_admin_l3_gr_reverse_valid",
+          "target": "role_super_admin_l3_gr_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn",
+      "sha256": "f8a995ea61885f0d236cb858b7ec740f5ad76cb0eece21d63546d895f6ea91a4",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_po_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_po_cancel_Flow_6",
+          "source": "role_super_admin_l3_po_cancel_valid",
+          "target": "role_super_admin_l3_po_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn",
+      "sha256": "095fee3e07d51ac1e21c135de0686cd9c06c51f2bf030d8b22436e764f70ce27",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_po_convert",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_po_convert_Flow_6",
+          "source": "role_super_admin_l3_po_convert_valid",
+          "target": "role_super_admin_l3_po_convert_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn",
+      "sha256": "f214a0c836410ec2c5f2ad80bb9b7fb2bb86ac8c43d0e1c85a138d0f3c2f0171",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_po_issue",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_po_issue_Flow_6",
+          "source": "role_super_admin_l3_po_issue_valid",
+          "target": "role_super_admin_l3_po_issue_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn",
+      "sha256": "d67e026b4018ae05bc597375fb7895d1d86a27482acbd6670dbd73f081ae9c9d",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_pr_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_pr_cancel_Flow_6",
+          "source": "role_super_admin_l3_pr_cancel_valid",
+          "target": "role_super_admin_l3_pr_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn",
+      "sha256": "551e807848f02150371eca6b1b4666e94f37c8b3b07dcb3ad3ef8ceaeb63e4ce",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_pr_copy",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_pr_copy_Flow_6",
+          "source": "role_super_admin_l3_pr_copy_valid",
+          "target": "role_super_admin_l3_pr_copy_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn",
+      "sha256": "0eb241b9c0a35cacd3f9ab7c53ab7c675788d77fd22301cacf97b1176495e410",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_pr_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_pr_create_Flow_6",
+          "source": "role_super_admin_l3_pr_create_valid",
+          "target": "role_super_admin_l3_pr_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn",
+      "sha256": "8a5de1a161993813fe69902bde3086e25ce0e847a8d66659c5fd0cd600f775ec",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_pr_review",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_pr_review_Flow_4",
+          "source": "role_super_admin_l3_pr_review_valid",
+          "target": "role_super_admin_l3_pr_review_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn",
+      "sha256": "4c94fa74ea5f1d4fcc4481336111d19e7b25929ceeea245d5ca797d6e3d4ca2c",
+      "issues": [
+        {
+          "scope": "Process_role_super_admin_l3_pr_submit",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_super_admin_l3_pr_submit_Flow_6",
+          "source": "role_super_admin_l3_pr_submit_valid",
+          "target": "role_super_admin_l3_pr_submit_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn",
+      "sha256": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn",
+      "sha256": "fb89bd0d5d8ba8ee9ead75341e777ca19417fb6e58287fb7d09422bec42e99de",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_2",
+          "source": "role_supervisor_l2_inv_adjustment_gate0",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_5",
+          "source": "role_supervisor_l2_inv_adjustment_gate1",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_9",
+          "source": "role_supervisor_l2_inv_adjustment_gate3",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_10",
+          "source": "role_supervisor_l2_inv_adjustment_gate3",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_11",
+          "source": "role_supervisor_l2_inv_adjustment_gate2",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_inv_adjustment",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_inv_adjustment_Flow_13",
+          "source": "role_supervisor_l2_inv_adjustment_gate2",
+          "target": "role_supervisor_l2_inv_adjustment_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn",
+      "sha256": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn",
+      "sha256": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn",
+      "sha256": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn",
+      "sha256": "bfd98f23a4ebf1011c66a2f0b86c5437795b1d94fe62d82ed19265c98d5e7efb",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_adj_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_adj_reverse_Flow_6",
+          "source": "role_supervisor_l3_adj_reverse_valid",
+          "target": "role_supervisor_l3_adj_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn",
+      "sha256": "5aaf8e76909cc2ee70c1506e30f9677097b69f84c74c9c1f94ac558f041bb848",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_adj_review",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_adj_review_Flow_4",
+          "source": "role_supervisor_l3_adj_review_valid",
+          "target": "role_supervisor_l3_adj_review_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn",
+      "sha256": "c433a35484e67902e761f6c3ffd6e86521bfeb1cee39c1410e0a636ba8c0b14d",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_delivery_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_delivery_reverse_Flow_7",
+          "source": "role_supervisor_l3_delivery_reverse_valid",
+          "target": "role_supervisor_l3_delivery_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn",
+      "sha256": "c84bdfded4af5009122c7932a78ddd67b0206c4974948f8a2b1b0502d9285358",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_adjustments_Flow_3",
+          "source": "role_supervisor_l3_inv_adjustments_valid",
+          "target": "role_supervisor_l3_inv_adjustments_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l3_inv_adjustments",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_adjustments_Flow_4",
+          "source": "role_supervisor_l3_inv_adjustments_valid",
+          "target": "role_supervisor_l3_inv_adjustments_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn",
+      "sha256": "13bddb1286d5d8a64337283cc77880a2d53b2b3253ec04d2fe5d51c8f4294b2a",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_balances_Flow_3",
+          "source": "role_supervisor_l3_inv_balances_valid",
+          "target": "role_supervisor_l3_inv_balances_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l3_inv_balances",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_balances_Flow_4",
+          "source": "role_supervisor_l3_inv_balances_valid",
+          "target": "role_supervisor_l3_inv_balances_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn",
+      "sha256": "ec8e12b0c146ef074b0736a394d758aef5ed74288724fd52dddf2d635b39bbd5",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_movements_Flow_3",
+          "source": "role_supervisor_l3_inv_movements_valid",
+          "target": "role_supervisor_l3_inv_movements_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l3_inv_movements",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_inv_movements_Flow_4",
+          "source": "role_supervisor_l3_inv_movements_valid",
+          "target": "role_supervisor_l3_inv_movements_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/level-0/role-supervisor-l0.bpmn",
+      "sha256": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn",
+      "sha256": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn",
+      "sha256": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn",
+      "sha256": "e05788ae156f2d75e9e4dfa7b3edd14cbd820fedc1d3886e0aa5f65443d76ce3",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_master_create",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_master_create_Flow_6",
+          "source": "role_supervisor_l3_master_create_valid",
+          "target": "role_supervisor_l3_master_create_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn",
+      "sha256": "6889b5fad4d741b43cb16bd685ddb6d460944c3495f84a2204e965cf80c36e78",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_master_list_Flow_3",
+          "source": "role_supervisor_l3_master_list_valid",
+          "target": "role_supervisor_l3_master_list_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l3_master_list",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_master_list_Flow_4",
+          "source": "role_supervisor_l3_master_list_valid",
+          "target": "role_supervisor_l3_master_list_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn",
+      "sha256": "88e5d3fe6c1bf11b07ffd1c12cffcc5bfb59ba602d782f051ccdac2aef16377c",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_master_status",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_master_status_Flow_6",
+          "source": "role_supervisor_l3_master_status_valid",
+          "target": "role_supervisor_l3_master_status_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn",
+      "sha256": "49b7212be2ee63ea055c92c03ea393a0205aa2caecd98a740ca8121f628b2e97",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l1_p2p_Flow_1",
+          "source": "role_supervisor_l1_p2p_gate0",
+          "target": "role_supervisor_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l1_p2p_Flow_4",
+          "source": "role_supervisor_l1_p2p_gate1",
+          "target": "role_supervisor_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l1_p2p_Flow_7",
+          "source": "role_supervisor_l1_p2p_gate2",
+          "target": "role_supervisor_l1_p2p_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l1_p2p",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l1_p2p_Flow_8",
+          "source": "role_supervisor_l1_p2p_gate2",
+          "target": "role_supervisor_l1_p2p_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn",
+      "sha256": "0127196e8c103e7085a5ad94186be8c4cb1e9b3b80b7ec3bf39a4f6a2ef2d0d3",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_2",
+          "source": "role_supervisor_l2_ap_gate0",
+          "target": "role_supervisor_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_6",
+          "source": "role_supervisor_l2_ap_gate2",
+          "target": "role_supervisor_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_9",
+          "source": "role_supervisor_l2_ap_gate3",
+          "target": "role_supervisor_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_11",
+          "source": "role_supervisor_l2_ap_gate3",
+          "target": "role_supervisor_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_14",
+          "source": "role_supervisor_l2_ap_gate1",
+          "target": "role_supervisor_l2_ap_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_ap",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_ap_Flow_17",
+          "source": "role_supervisor_l2_ap_resolved",
+          "target": "role_supervisor_l2_ap_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn",
+      "sha256": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn",
+      "sha256": "6e8e4350e7a641f6b9a82e6cf399f20cfbc16458e801533d884e85f5eb4eecbe",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_po_gr_Flow_2",
+          "source": "role_supervisor_l2_po_gr_gate0",
+          "target": "role_supervisor_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_po_gr_Flow_5",
+          "source": "role_supervisor_l2_po_gr_gate1",
+          "target": "role_supervisor_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_po_gr_Flow_8",
+          "source": "role_supervisor_l2_po_gr_gate2",
+          "target": "role_supervisor_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_po_gr_Flow_11",
+          "source": "role_supervisor_l2_po_gr_gate3",
+          "target": "role_supervisor_l2_po_gr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_po_gr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_po_gr_Flow_13",
+          "source": "role_supervisor_l2_po_gr_gate3",
+          "target": "role_supervisor_l2_po_gr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn",
+      "sha256": "db5a55033a864aede3d388506c9ab7cf6727f37c2433117398b020d607503f18",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_pr_Flow_2",
+          "source": "role_supervisor_l2_pr_gate0",
+          "target": "role_supervisor_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_pr_Flow_5",
+          "source": "role_supervisor_l2_pr_gate1",
+          "target": "role_supervisor_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_pr_Flow_8",
+          "source": "role_supervisor_l2_pr_gate2",
+          "target": "role_supervisor_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_pr_Flow_9",
+          "source": "role_supervisor_l2_pr_gate2",
+          "target": "role_supervisor_l2_pr_result_merge"
+        },
+        {
+          "scope": "Process_role_supervisor_l2_pr",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l2_pr_Flow_10",
+          "source": "role_supervisor_l2_pr_gate2",
+          "target": "role_supervisor_l2_pr_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn",
+      "sha256": "d4bfd5fd66a50c732e52fe32de5c0dff783594201939d1e9239621a6e47d6894",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_ap_invoice_void",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_ap_invoice_void_Flow_6",
+          "source": "role_supervisor_l3_ap_invoice_void_valid",
+          "target": "role_supervisor_l3_ap_invoice_void_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn",
+      "sha256": "6181a04150e5626b8e23db00c71a65b34a53ab2e61286d25027a6a9ba114323c",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_ap_match",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_ap_match_Flow_4",
+          "source": "role_supervisor_l3_ap_match_valid",
+          "target": "role_supervisor_l3_ap_match_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn",
+      "sha256": "0adad4153fd78601141820b23d93394a281aebdd9709675eec53f59969dbfba5",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_ap_payment_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_ap_payment_post_Flow_7",
+          "source": "role_supervisor_l3_ap_payment_post_valid",
+          "target": "role_supervisor_l3_ap_payment_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn",
+      "sha256": "167dabeeb195fdfcdbe566f61fa51552c95ced4bc4a13de0b180930dc9572443",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_ap_payment_void",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_ap_payment_void_Flow_7",
+          "source": "role_supervisor_l3_ap_payment_void_valid",
+          "target": "role_supervisor_l3_ap_payment_void_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn",
+      "sha256": "a2ff12fbb9b3621dbb30eaf42fffad1f3a39fa4dec85dab0b092fa066dfe53c4",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_gr_post",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_gr_post_Flow_7",
+          "source": "role_supervisor_l3_gr_post_valid",
+          "target": "role_supervisor_l3_gr_post_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn",
+      "sha256": "8f3c7627ade95008115397cd5166e7c554d654cc9f59e6d6155d709e931ca624",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_gr_reverse",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_gr_reverse_Flow_7",
+          "source": "role_supervisor_l3_gr_reverse_valid",
+          "target": "role_supervisor_l3_gr_reverse_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn",
+      "sha256": "208fdbc2145ca30f35cd2497dd9076a3241a4515201a218486c4173af4948a0f",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_po_cancel",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_po_cancel_Flow_6",
+          "source": "role_supervisor_l3_po_cancel_valid",
+          "target": "role_supervisor_l3_po_cancel_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn",
+      "sha256": "c48fc6b83ebe2c92b947edd946faa31f169c98c58557fa1be1258b5684fc6a07",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_po_issue",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_po_issue_Flow_6",
+          "source": "role_supervisor_l3_po_issue_valid",
+          "target": "role_supervisor_l3_po_issue_result_merge"
+        }
+      ]
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn",
+      "sha256": "50b3751ce79c82d88a9ff6652ed7344d3f47d7b247a7235914bfdd9bd1622f2d",
+      "issues": [
+        {
+          "scope": "Process_role_supervisor_l3_pr_review",
+          "rule": "ACTIVITY_AFTER_GATEWAY",
+          "flow": "role_supervisor_l3_pr_review_Flow_4",
+          "source": "role_supervisor_l3_pr_review_valid",
+          "target": "role_supervisor_l3_pr_review_result_merge"
+        }
+      ]
+    }
+  ]
+}

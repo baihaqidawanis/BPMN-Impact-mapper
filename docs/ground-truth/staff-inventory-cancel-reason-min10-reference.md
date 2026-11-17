@@ -46,7 +46,7 @@ implementation diff. Never adjust this reference from candidate rankings;
 record any later adjudication as a new version.
 
 The paired baseline and mutation live in
-`experiments/simple-erp/staff-inventory/cancel-reason-min10/`. Input/source
+`experiments/history/simple-erp/staff-inventory/cancel-reason-min10/`. Input/source
 hashes and preparation status are recorded there. Ground truth must not enter
 the Simple-ERP retrieval corpus. No mapper ranking for this case was inspected
 during preparation.

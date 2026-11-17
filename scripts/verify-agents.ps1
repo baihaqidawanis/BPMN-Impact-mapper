@@ -3,8 +3,9 @@ param([switch]$Browser)
 $ErrorActionPreference = 'Stop'
 $mapperRoot = Split-Path -Parent $PSScriptRoot
 $checks = [System.Collections.Generic.List[object]]::new()
-$previousCache = $env:GOCACHE
-$previousToolchain = $env:GOTOOLCHAIN
+$environmentNames = @('GOCACHE', 'GOTOOLCHAIN', 'GOMAXPROCS', 'GOMEMLIMIT', 'GOFLAGS', 'GOPROXY', 'GOSUMDB', 'GOMODCACHE')
+$previousEnvironment = @{}
+foreach ($name in $environmentNames) { $previousEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 $started = [DateTime]::UtcNow
 $successful = $false
 
@@ -21,6 +22,12 @@ Push-Location -LiteralPath $mapperRoot
 try {
     $env:GOCACHE = Join-Path $mapperRoot '.gocache'
     $env:GOTOOLCHAIN = 'local'
+    $env:GOMAXPROCS = '1'
+    $env:GOMEMLIMIT = '128MiB'
+    $env:GOFLAGS = '-p=1'
+    $env:GOPROXY = 'off'
+    $env:GOSUMDB = 'off'
+    $env:GOMODCACHE = Join-Path $mapperRoot '.data/go-mod-cache'
     $packages = @('./internal/planning', './internal/llm', './internal/agenttools', './internal/agentjobs', './internal/api', './internal/filestore')
     Invoke-AgentCheck 'Offline agent contracts and HTTP pipeline' 'go' (@('test', '-count=1') + $packages)
     Invoke-AgentCheck 'Go vet' 'go' (@('vet') + $packages)
@@ -44,8 +51,7 @@ try {
         browser_requested = [bool]$Browser
         checks = @($checks.ToArray())
     } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $reportDirectory 'result.json') -Encoding UTF8
-    $env:GOCACHE = $previousCache
-    $env:GOTOOLCHAIN = $previousToolchain
+    foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name], 'Process') }
     Pop-Location
 }
 Write-Host 'Offline checks passed. Report: outputs/agent-readiness/result.json'

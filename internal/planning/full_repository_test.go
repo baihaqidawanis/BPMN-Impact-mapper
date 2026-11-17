@@ -119,3 +119,31 @@ func TestFullRepositoryRejectsManifestGapsBeforeInference(t *testing.T) {
 		t.Fatal("incomplete byte coverage accepted", err, calls)
 	}
 }
+
+func TestFullRepositoryReviewsAllChangesInOneScan(t *testing.T) {
+	source := fullFixture()
+	source.chunks = source.chunks[:1]
+	bundle := agentBundle()
+	second := bundle.Changes[0]
+	second.ElementID = "new-gateway"
+	second.Candidates = nil
+	bundle.Changes = append(bundle.Changes, second)
+	bundle.ContextID, _ = ComputeContextID(bundle)
+	calls := 0
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if len(turn.Bundle.Changes) != 2 {
+			t.Fatal("a change was omitted")
+		}
+		if turn.RepositoryChunk != nil {
+			calls++
+		}
+		return goodReply(turn)
+	}}
+	result, err := (FullRepositoryEngine{Model: model, Source: source, Store: memorySessions{}}).Run(context.Background(), "all-changes", bundle)
+	if err != nil || result.Status != "COMPLETE" || calls != 1 || len(result.Draft) != 2 {
+		t.Fatalf("all-change review failed: %s %v %d %d", result.Status, err, calls, len(result.Draft))
+	}
+	if len(result.Bundle.Changes) != 2 || len(result.Bundle.Changes[1].Candidates) != 1 {
+		t.Fatal("second change evidence lost")
+	}
+}

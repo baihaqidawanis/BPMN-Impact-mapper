@@ -8,8 +8,8 @@ for (const scenario of ["remove-task", "add-xor", "remove-gateway", "remove-gate
       await page.goto("/?view=analysis");
       await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "BPMN Canvas", exact: true }).click();
       const folder = scenario === "staff-single-end"
-        ? path.resolve(__dirname, "../../../experiments/simple-erp/staff-single-end")
-        : path.resolve(__dirname, "../../../experiments/simple-erp/structural-staff", scenario);
+        ? path.resolve(__dirname, "../../../experiments/history/simple-erp/staff-single-end")
+        : path.resolve(__dirname, "../../../experiments/history/simple-erp/structural-staff", scenario);
       const file = path.join(folder, name);
       const xml = fs.readFileSync(file, "utf8");
       const elementIDs = [...xml.matchAll(/bpmnElement="([^"]+)"/g)].map(match => match[1]);

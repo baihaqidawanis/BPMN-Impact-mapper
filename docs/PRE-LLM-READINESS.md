@@ -7,7 +7,7 @@ Ini kesiapan teknis integrasi, bukan klaim akurasi 100% atau evaluasi independen
 
 ## Bahan penelitian yang dikunci
 
-[Freeze penelitian](../experiments/simple-erp/research-freeze/README.md) mengikat
+[Freeze penelitian](../experiments/history/simple-erp/research-freeze/README.md) mengikat
 10 kasus development/regression, source review, label dan kode metode. Semua
 kasus tersebut sudah terekspos; independent test set masih kosong. Jangan
 menggunakan freeze ini sebagai input retrieval atau konteks penilai LLM.

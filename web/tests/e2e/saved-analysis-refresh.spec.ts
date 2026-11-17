@@ -75,3 +75,25 @@ test("opening another saved report cancels an older slow restoration", async ({ 
     await expect(page.getByTestId("report-view")).not.toContainText(old.analysis_id);
   } finally { release(); }
 });
+
+test("saved BPMN pair restores both canvases and complete process context", async ({ page, request }) => {
+ const response=await request.post("/backend/api/v1/analyses",{multipart:{
+ repo_path:path.join(root,"testdata/repository"),repository_name:"BPMN restoration fixture",method:"bm25",
+ old_bpmn:{name:"before.bpmn",mimeType:"text/xml",buffer:fs.readFileSync(path.join(root,"web/public/demo/insert-task-old.bpmn"))},
+ new_bpmn:{name:"after.bpmn",mimeType:"text/xml",buffer:fs.readFileSync(path.join(root,"web/public/demo/insert-task-new.bpmn"))}
+ }});expect(response.ok()).toBe(true);const report=await response.json();
+ const pair=await request.get(`/backend/api/v1/analyses/${report.analysis_id}/bpmn-inputs.json`);
+ expect(pair.ok()).toBe(true);
+ const inputs=await pair.json();
+ expect(inputs.before_xml).toBe(fs.readFileSync(path.join(root,"web/public/demo/insert-task-old.bpmn"),"utf8"));
+ const context=await (await request.get(`/backend/api/v1/analyses/${report.analysis_id}/planning-context.json`)).json();
+ expect(Object.keys(context.process_context.before.Elements).length).toBeGreaterThan(0);
+ expect(Object.keys(context.process_context.after.Flows).length).toBeGreaterThan(0);
+ await page.goto(`/?analysis=${report.analysis_id}`);
+ await expect(page.locator('label').filter({ has: page.locator('input[name="old_bpmn"]') }).getByText("baseline.bpmn", { exact: true })).toBeVisible();
+ await page.getByRole("group",{name:"Analysis workflow"}).getByRole("button",{name:"Canvas",exact:true}).click();
+ await expect.poll(()=>page.locator('.djs-container').count()).toBeGreaterThanOrEqual(2);
+ await expect.poll(()=>page.locator('.djs-shape').count()).toBeGreaterThan(0);
+ await page.reload();
+ await expect.poll(()=>page.locator('.djs-container').count()).toBeGreaterThanOrEqual(2);
+});

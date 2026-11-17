@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -18,7 +17,6 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/index"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/ingest"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/mapping"
-	"github.com/baihaqidawan/bpmn-impact-mapper/internal/report"
 )
 
 type Request struct {
@@ -229,30 +227,6 @@ func excludeMethodInputCopies(inventory ingest.Inventory, inputs ...[]byte) inge
 	return inventory
 }
 
-func WriteArtifacts(outputDirectory string, value domain.Report) error {
-	if strings.TrimSpace(outputDirectory) == "" {
-		return errors.New("output directory is required")
-	}
-	abs, err := filepath.Abs(outputDirectory)
-	if err != nil {
-		return err
-	}
-	if err := os.MkdirAll(abs, 0o750); err != nil {
-		return fmt.Errorf("create output directory: %w", err)
-	}
-	jsonData, err := report.JSON(value)
-	if err != nil {
-		return err
-	}
-	if err := atomicWrite(filepath.Join(abs, "impact-report.json"), jsonData); err != nil {
-		return err
-	}
-	if err := atomicWrite(filepath.Join(abs, "impact-report.md"), report.Markdown(value)); err != nil {
-		return err
-	}
-	return nil
-}
-
 func validateRequest(request Request) error {
 	if strings.TrimSpace(request.RepositoryPath) == "" || strings.TrimSpace(request.OldBPMNPath) == "" || strings.TrimSpace(request.NewBPMNPath) == "" {
 		return errors.New("repository, old BPMN, and new BPMN paths are required")
@@ -271,23 +245,6 @@ func validateRequest(request Request) error {
 		return errors.New("mapping configuration is only valid for configuration method")
 	}
 	return nil
-}
-
-func readBPMN(path string) ([]byte, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return nil, errors.New("BPMN path must not be a symlink")
-	}
-	if !info.Mode().IsRegular() {
-		return nil, errors.New("BPMN path must be a regular file")
-	}
-	if info.Size() > bpmn.DefaultMaxBytes {
-		return nil, fmt.Errorf("BPMN exceeds byte limit %d", bpmn.DefaultMaxBytes)
-	}
-	return os.ReadFile(path)
 }
 
 func inputFingerprint(name, revision string, oldData, newData []byte, inventory ingest.Inventory, options ingest.Options) string {
@@ -320,60 +277,9 @@ func analysisID(fingerprint string, request Request, methodConfig []byte, indexI
 	return hex.EncodeToString(hash.Sum(nil)[:16])
 }
 
-func appendInputExclusions(root string, patterns []string, inputPaths ...string) []string {
-	rootAbsolute, err := filepath.Abs(root)
-	if err != nil {
-		return patterns
-	}
-	for _, input := range inputPaths {
-		if strings.TrimSpace(input) == "" {
-			continue
-		}
-		absolute, err := filepath.Abs(input)
-		if err != nil {
-			continue
-		}
-		relative, err := filepath.Rel(rootAbsolute, absolute)
-		if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-			patterns = append(patterns, filepath.ToSlash(relative))
-		}
-	}
-	sort.Strings(patterns)
-	return patterns
-}
-
 type hashWriter interface{ Write([]byte) (int, error) }
 
 func writeHash(hash hashWriter, value []byte) {
 	_, _ = hash.Write([]byte(fmt.Sprintf("%d:", len(value))))
 	_, _ = hash.Write(value)
-}
-
-func atomicWrite(target string, data []byte) error {
-	directory := filepath.Dir(target)
-	temporary, err := os.CreateTemp(directory, ".impact-*")
-	if err != nil {
-		return err
-	}
-	temporaryName := temporary.Name()
-	defer os.Remove(temporaryName)
-	if err := temporary.Chmod(0o640); err != nil {
-		temporary.Close()
-		return err
-	}
-	if _, err := temporary.Write(data); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Sync(); err != nil {
-		temporary.Close()
-		return err
-	}
-	if err := temporary.Close(); err != nil {
-		return err
-	}
-	if err := os.Remove(target); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return err
-	}
-	return os.Rename(temporaryName, target)
 }

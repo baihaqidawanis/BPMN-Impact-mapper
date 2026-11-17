@@ -109,7 +109,7 @@ func TestAgentHTTPAsyncPersistenceAndStrictInput(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &done); err != nil {
 		t.Fatal(err)
 	}
-	if done.Status != "COMPLETE" || done.Plan == nil {
+	if done.Status != "NEEDS_REVIEW" || done.Plan == nil {
 		t.Fatal("job did not survive request cancellation")
 	}
 	w = httptest.NewRecorder()

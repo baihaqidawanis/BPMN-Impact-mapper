@@ -111,7 +111,7 @@ test("workspace navigation supports canvas-first upload and mobile layout", asyn
   await nav.getByRole("button", { name:"BPMN Canvas", exact:true }).click();
   await page.getByRole("button", { name:"Use edited BPMN" }).click();
   await expect(nav.getByRole("button", { name:"Analysis", exact:true })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByText("Loaded: simple-erp-p2p-add-user-task.bpmn")).toBeVisible();
+  await expect(page.locator('label').filter({ has: page.locator('input[name="old_bpmn"]') }).getByText("simple-erp-p2p-add-user-task.bpmn", { exact: true })).toBeVisible();
   await page.screenshot({ path:test.info().outputPath("workspace-desktop.png"), fullPage:true });
   await page.setViewportSize({ width:390, height:844 });
   await page.getByRole("button",{name:"Toggle navigation"}).click();

@@ -49,12 +49,18 @@ type Handler struct {
 func (handler Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("X-Content-Type-Options", "nosniff")
 	switch {
+	case request.URL.Path == "/api/v1/agent-settings" || request.URL.Path == "/api/v1/agent-models":
+		handler.agentSettings(writer, request)
 	case request.URL.Path == "/api/v1/bpmn-library" || strings.HasPrefix(request.URL.Path, "/api/v1/bpmn-library/"):
 		handler.library(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/capabilities/agents/check":
 		handler.agentCapability(writer, request)
 	case request.Method == http.MethodPost && isAgentStart(request.URL.Path):
 		handler.startAgents(writer, request)
+	case request.Method == http.MethodPost && strings.HasPrefix(request.URL.Path, "/api/v1/agent-sessions/") && strings.HasSuffix(request.URL.Path, "/draft-plan"):
+		handler.exportAgentDraft(writer, request)
+	case request.Method == http.MethodDelete && strings.HasPrefix(request.URL.Path, "/api/v1/agent-sessions/"):
+		handler.stopAgents(writer, request)
 	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/api/v1/agent-sessions/"):
 		handler.getAgentSession(writer, request)
 	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/capabilities/semantic/check":
@@ -181,6 +187,22 @@ func (handler Handler) createAnalysis(writer http.ResponseWriter, request *http.
 	if err := handler.Store.Save(request.Context(), value); err != nil {
 		handler.internalError(writer, err)
 		return
+	}
+	if storage, ok := handler.Store.(reportstore.BPMNStore); ok {
+		before, e := os.ReadFile(files["old_bpmn"])
+		if e != nil {
+			handler.internalError(writer, e)
+			return
+		}
+		after, e := os.ReadFile(files["new_bpmn"])
+		if e != nil {
+			handler.internalError(writer, e)
+			return
+		}
+		if e := storage.SaveBPMN(request.Context(), domain.BPMNPair{AnalysisID: value.AnalysisID, InputFingerprint: value.InputFingerprint, BeforeXML: string(before), AfterXML: string(after)}); e != nil {
+			handler.internalError(writer, e)
+			return
+		}
 	}
 	writer.Header().Set("Location", "/api/v1/analyses/"+value.AnalysisID)
 	data, err := report.JSON(value)
@@ -353,6 +375,23 @@ func (handler Handler) getAnalysis(writer http.ResponseWriter, request *http.Req
 		format = parts[1]
 	}
 	switch format {
+	case "bpmn-inputs.json":
+		storage, ok := handler.Store.(reportstore.BPMNStore)
+		if !ok {
+			writeAPIError(writer, 404, "BPMN_NOT_SAVED", "BPMN inputs are unavailable; upload the pair and run a new analysis.")
+			return
+		}
+		pair, e := storage.GetBPMN(request.Context(), value.AnalysisID)
+		if errors.Is(e, reportstore.ErrNotFound) {
+			writeAPIError(writer, 404, "BPMN_NOT_SAVED", "BPMN inputs were not saved for this older report. Upload both files and run analysis again.")
+			return
+		}
+		if e != nil {
+			handler.internalError(writer, e)
+			return
+		}
+		writer.Header().Set("Cache-Control", "no-store")
+		writeJSON(writer, http.StatusOK, pair)
 	case "report.json":
 		data, err := report.JSON(value)
 		if err != nil {

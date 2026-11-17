@@ -15,7 +15,7 @@ repository retrieval or claim research Precision/Recall from it.
   ingest identity normalization). Source corpus: 198 indexed files.
 - Old BPMN: `docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn`;
   SHA-256 `93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c`.
-- New BPMN: `experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-add-document.bpmn`
+- New BPMN: `experiments/history/simple-erp/staff-p2p/role-staff-l3-pr-create-add-document.bpmn`
   in the mapper repository. Staff must provide exactly one valid PDF, at most
   1 MiB, when creating a PR. An invalid/missing file must leave no new DRAFT;
   accepted bytes and metadata commit with the PR.

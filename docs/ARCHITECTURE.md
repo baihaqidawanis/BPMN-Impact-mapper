@@ -1,91 +1,69 @@
 # Architecture
 
-## Clean Architecture rule
+The mapper uses a modular Go backend and a separate Next.js presentation layer. It produces impact candidates and optional developer plans; it never executes or edits the analyzed repository.
 
-The dependency direction is transport/composition → application/use cases → ports → domain contracts. Concrete mapping adapters point inward to `mapping.Strategy`; `app.Analyzer` receives a `mapping.Resolver` and does not import BM25 or configuration adapters. `wiring` is the sole composition root that binds those adapters. `evaluation`, `benchmark`, `review`, `reviewpack`, and the case-agnostic `scenario` mutator are separate use cases and cannot import retrieval/configuration/filesystem adapters. A dependency-rule test parses imports and fails on boundary inversion.
+## Responsibilities and dependencies
 
-The target repository is passive data. No component imports, compiles, starts, or otherwise executes it.
+| Area | Packages | Responsibility |
+|---|---|---|
+| Contracts and domain | domain, mapping | BPMN changes, source artifacts, mapping strategy ports |
+| Analysis | bpmn, diff, index, retrieval, fusion, semantic | Parse, compare, index and retrieve evidence; embedding runtime is an outward adapter |
+| Planning core | planning | Analyst/Planner/Reviewer orchestration, budgets, validation, resumable partitions and canonical plan rendering |
+| Agent application service | agentjobs | Async job lifecycle, cancellation, approved source/model preparation and persistence through ports |
+| Outward adapters | llm, agenttools, ingest, filestore | Model HTTP transport, read-only source tools, repository ingestion and local storage |
+| Delivery | api, web | HTTP endpoints and presentation; no duplicate scoring implementation in the UI |
+| Composition | wiring, cmd | Select concrete adapters and wire application services |
+| Research | evaluation, benchmark, experiment, experiments/tools | Hidden-reference evaluation and reproducible studies, outside model evidence |
 
-## Pipeline
+planning depends on domain contracts, not HTTP, Ollama, filesystem storage or concrete source tools. agentjobs receives model/source/store interfaces. llm and filestore point inward to those contracts. RoleRouter selects one configured model per role and serializes calls; it does not contain planning rules or silently replace models.
 
-1. `ingest.Build` canonicalizes the local root, applies exclusions and limits, skips symlinks/binary/secret/leakage files, and returns sorted relative paths with in-memory content.
-2. `bpmn.Parse` tokenizes bounded XML, rejects directives, extracts supported nodes, lanes, data state/requirements, and sequence flows, then builds incoming/outgoing adjacency maps.
-3. `diff.Compare` matches stable IDs first. A conservative unique structural fallback can match changed IDs; ties become `UNRESOLVED_MATCH`.
-4. The indexing registry dispatches `.go` files to `go/parser` and every other allowed text file to the generic adapter. Relation extractors run only over compatible indexed files; adapter failures fall back to text with a warning.
-5. For a sequence-flow display-label-only change with an unchanged explicit condition, the application layer first restricts retrieval to artifacts that directly mention the flow ID or old/new label phrase; without such a reference it abstains. This common eligibility rule does not apply to behavioral flow changes or explicit configuration mappings. The selected `mapping.Strategy` then runs configuration-driven compatibility, BM25-only, offline Semantic, BM25 + Semantic RRF fusion, or BPMN-Context-Aware Hybrid Retrieval and emits only candidates with evidence. The fusion adapter composes strategies through the application port instead of coupling their implementations.
-6. `app.Analyzer` constructs a deterministic report and warnings. `report.JSON` is authoritative; `report.Markdown` is a pure view of the same object.
-7. Separately, `experiment.Run` decodes a completed report and hidden ground truth, then invokes pure `evaluation.Evaluate`; there is no reverse edge into inference.
-8. `benchmark.Runner` coordinates injected analyzer, file, and prediction-renderer ports. The experiment adapter supplies local filesystem behavior; hidden ground truth is read only after a completed prediction.
-9. `review.Reconcile` compares independent annotations in memory and emits an agreed subset plus unresolved conflicts.
-10. Before inference, optional experiment tooling applies a hash-locked `scenario.Spec` to BPMN bytes, validates the result with `bpmn.Parse`, and writes a new file through the outward `experiment` adapter. It never edits the baseline or target source repository.
-11. The web adapter streams bounded BPMN uploads into a request-scoped temporary directory, invokes the same analyzer, persists the resulting canonical report through the `reportstore.Store` port, and removes uploads before returning.
-12. Separately and only after a canonical report exists, `planning.Orchestrator`
-    packages bounded evidence, invokes verifier/planner/reviewer provider roles,
-    validates every returned target against mapper candidates, and renders a
-    change plan. Planning never feeds candidates back into inference and never
-    modifies repository source.
-13. The web may request a planning record for an immutable analysis. The
-    orchestrator binds it to the exact context/provider/model/prompt identity,
-    then `planstore.Store` persists JSON and Markdown without overwriting a
-    different plan. With `NoLLMProvider`, the record is explicitly `DISABLED`.
+### Go call-literal facts for source inspection
 
-## Source relation model
+Source tools v11 enrich `inspect_source` with at most one bounded
+`AST_CALL_LITERALS` item from the approved in-memory Go file. It reports a call
+name and explicitly 1-based string-literal argument positions near inspected
+source spans, for example `3="publish", 5=""`. This is syntax, not inferred
+parameter meaning, a resolved dependency or runtime behavior. Original source
+excerpts remain alongside it; expressions are not evaluated. Long literal values
+are omitted, facts remain within the existing evidence-size/count bounds, and
+malformed Go or unsupported languages retain their text fallback.
 
-`domain.SourceRelation` is adapter-neutral and links two indexed artifact IDs with a relation kind plus repository-relative call-site evidence. The Go extractor emits `CALLS` for free functions, `CALLS_METHOD` for a statically known receiver, and `INTERFACE_DISPATCH` only when one indexed named type uniquely satisfies the supported interface method set. Receiver fields can be followed through selector chains such as `handler.service.Execute()`.
+The change strengthens source evidence for agents; it adds no retrieval method,
+ranking weight, embedding model or source execution. Snapshot identity changes,
+so start a fresh AI session after restarting the backend. Saved mappings remain
+usable when their repository snapshot matches. Fixture tests cover literal
+positions, empty strings versus expressions, stable ordering, snapshot isolation,
+text fallback and retention through the planning evidence merge. Offline checks
+do not establish improved model accuracy; live comparison remains pending.
 
-The resolver compares complete supported method names and normalized parameter/result type shapes. It abstains on ambiguous implementations, embedded interfaces, generic or promoted dispatch, unresolved external implementations, unsupported type expressions, and shadowed receiver names. Retrieval expands only one edge from an exact-trace seed, discounts the dependency score, and always labels the propagated candidate `VERIFY`. Thus a static edge is useful retrieval context, not runtime or causality proof.
+This is pragmatic Clean Architecture, not a claim of a completely pure ports-and-adapters design. The path-based app facade still invokes ingestion/index services and filesystem compatibility helpers directly. Those helpers are isolated in internal/app/files.go; internal/app/analyzer.go coordinates analysis. Splitting files clarifies responsibilities without pretending the package dependency changed.
 
-## Graph model
+Architecture tests enforce allowed internal imports, plus no direct filesystem/network/process/database imports in domain, mapping, planning and agentjobs. Adapter dependency checks cover llm, agenttools and filestore. These tests protect dependency direction; they do not prove runtime correctness.
 
-`domain.Graph` contains stable-ID maps for elements and flows plus `Incoming` and `Outgoing` adjacency maps. Serialized report elements contain sorted incoming/outgoing flow IDs, so no Go map iteration order reaches public output.
+## Data flow
 
-The parser recognizes task variants, call/subprocess activities, common events, five gateway types, sequence flows, lanes, data object/store references, data associations, conditions, and data states. The diff now reports changes to a stable-ID gateway's XML type (for example XOR to AND), direction, and default flow as `MODIFY_GATEWAY_SEMANTICS`. It does not infer the gateway type from branch counts or simulate execution. Unsupported executable BPMN semantics are not simulated.
+Repository and before/after BPMN -> secure ingestion -> semantic parser -> conservative graph diff -> source index -> selected retrieval method -> canonical JSON -> Markdown/web.
 
-## Determinism
+Optional planning starts from a saved immutable analysis and its BPMN graphs. Analyst inspects source, Planner proposes edits or an evidence-backed NO_ACTION, and Reviewer checks each target and combined consistency. Oversized planning/review turns are partitioned without silently dropping targets. Completed parts are cached against the exact source, draft, feedback and model identity. Additional calls inside a planning/review partition consume the same child-session turn budget. Focused seed groups have separate bounded child sessions: an oversized or capacity-exhausted multi-seed group can be split deterministically into smaller groups, with failed work retained in total counts and checkpoints. Splitting stops at one seed; no candidate is dropped and no approval is inferred from a failed attempt.
 
-- inventory, artifacts, changes, impacts, evidence, and warnings use explicit stable sorting;
-- BM25 ties use artifact ID;
-- JSON uses typed structs and fixed indentation;
-- analysis IDs hash logical repository metadata, BPMN bytes, and sorted allowed repository content;
-- no timestamp, random value, absolute path, or environment-dependent Git command enters output.
+Scores are retrieval signals, not probabilities. Model approval is not independent correctness. A relevant file is not automatically a file requiring edits. NO_ACTION assessments are retained for audit and excluded from proposed-edit counts.
 
-## API boundary
+## Interfaces and persistence
 
-`internal/api.Handler` supports only `POST /analyze`, limits request bodies, rejects unknown fields, honors request cancellation, and returns canonical JSON. Phase 1 intentionally provides no server command, upload, authentication, persistence, or multi-user lifecycle.
+- api exposes versioned health, analyses, BPMN library, planning/agent sessions, report/plan downloads and research endpoints; it is no longer the historical Phase-1 POST /analyze-only adapter.
+- reportstore and planstore define persistence ports; filestore implements them.
+- .data stores local analyses, BPMN snapshots, sessions and plans. It is not source code or a cleanup target.
+- outputs contains generated results and older local tools. Its go.mod prevents generated Go fixtures becoming application packages; only that boundary file is eligible for version control.
+- Deterministic analysis IDs bind logical inputs and configured methodology. Agent identities separately bind source/model/prompt/profile policy; changes require a fresh agent session, not re-uploading intact saved BPMN snapshots.
 
-## Module boundaries
+## Development and diagnostics
 
-- Enterprise/domain: `domain`.
-- Application ports/use cases: `mapping`, `app`, `evaluation`, `reportstore`,
-  `planning`, `planstore`.
-- Experiment/review use cases: `benchmark`, `review`, `reviewpack`, `scenario`.
-- Optional post-inference planning use case and provider port: `planning`.
-- Analysis/domain services: `bpmn`, `diff`, `index`.
-- Outward adapters: `retrieval`, `configmapping`, `ingest`, `report`, `filestore`, `experiment`, `api`, CLI, Next.js.
-- Optional outward embedding adapter: `semantic`; it invokes a trusted embedded
-  Python helper and a locally cached model, never target-repository code.
-- Optional outward LLM adapters: `llm`; Phase 1 still supplies only the offline
-  provider, which also satisfies the planning port without making network calls.
-- Composition: `wiring` only.
+Normal tests: go test ./... and go vet ./.... Use scripts/verify-agents.ps1 for bounded offline agent/API/frontend checks. It disables dependency downloads and restores its process environment afterward. No browser is started unless -Browser is explicitly passed.
 
-## Local web application
+Lab/checkpoint diagnostic harnesses are excluded from normal compilation with the labdiagnostics build tag. For an explicitly configured experiment, use go test -tags labdiagnostics ./internal/llm or ./internal/api with -run selecting the intended test. Existing per-test environment opt-ins are still required; the tag alone does not contact a model. Keep raw diagnostic payloads in ignored .data, not tracked source.
 
-`cmd/bpmn-impact-mapper-server` is the Go process composition boundary. It configures the analyzer, filesystem report store, upload workspace, request limits, HTTP timeouts, and graceful shutdown. The versioned API exposes health, multipart analysis creation, canonical report retrieval, and JSON/Markdown downloads. API errors are bounded and do not return internal filesystem errors.
+Active experiments: experiments/simple-erp/current-staff-v2 and baseline-traceability. Historical packages and frozen hashes remain in experiments/history. They are regression/research evidence, not production code and not automatically obsolete.
 
-`web/` is a separate Next.js presentation adapter. During development, a same-origin rewrite proxies `/backend/*` to the Go server, avoiding browser CORS coupling. TypeScript types mirror the canonical report contract but contain no parser, diff, retrieval, scoring, or action-classification logic.
+Source discovery includes bounded declaration evidence from the approved snapshot. Declaration anchors survive later action-window merges, so parameter information is not lost merely because a local branch was inspected. Excerpts remain partial source observations, not proof that unshown behavior is absent.
 
-Method comparison is orchestration in the presentation adapter: it submits the same bounded form sequentially with different method selectors and rejects reports whose method-independent input fingerprints differ. Each response remains an ordinary immutable canonical report. The comparison computes descriptive set overlap only; research metrics stay in the post-inference evaluation use case.
-
-Reviewer annotation creation remains browser-local export. The separate EvaluationDashboard uploads completed annotations to bounded evaluation routes. `review.Adjudicate` preserves agreements and validates explicit conflict resolutions; `evaluation.ValidateCoverage` enforces complete change coverage. The HTTP adapter loads immutable stored predictions and invokes the existing pure evaluator. It never invokes the analyzer or saves reviewer data. The returned bundle contains metrics, adjudication provenance and Markdown derived from the same Go evaluation objects.
-
-The blind-review panel calls a separate post-inference `/api/v1/review-packs` route with immutable analysis IDs, the shared fingerprint, and reviewer identifiers only. The adapter reloads stored canonical reports and invokes the same pure `reviewpack.Build` use case as the CLI. The browser receives four separately downloadable artifacts; no reviewer finding or ground truth crosses this route. Batch method execution remains the existing frozen `benchmark` use case, which parses ground truth only after each prediction completes; a second batch engine would weaken rather than improve the method boundary.
-
-Completed reports are immutable deterministic artifacts stored below a configurable local directory. This MVP intentionally uses no database: single-user local presentation does not need concurrent mutation, query indexes, identity, or transactional workflows. The `reportstore.Store` port permits a later PostgreSQL adapter without changing analysis or HTTP contracts.
-
-Change plans use a separate filesystem root and `planstore.Store` port. Their
-identity includes the analysis context and provider identity, allowing multiple
-future model/prompt variants without mutating the canonical impact report.
-Writes are atomic and idempotent; a different artifact cannot overwrite an
-existing plan ID.
-
-The report-store port also exposes deterministic summaries for history. Filesystem listing accepts only canonical analysis-ID directories and bounded regular, non-symlink JSON files, then sorts by analysis ID. The API and web history panel can reopen immutable reports without rerunning analysis. No creation timestamp is invented because canonical reports do not contain a trustworthy one.
+Research model-choice summaries are saved experiments, not runtime routing or proof of production quality. Structural validity, control verdicts, file-selection metrics and technical plan correctness are separate measurements.

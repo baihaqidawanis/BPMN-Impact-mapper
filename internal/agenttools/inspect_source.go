@@ -32,6 +32,22 @@ func (s *Snapshot) inspectSource(ctx context.Context, q planning.ToolRequest) (p
 	if len(tokens) == 0 {
 		return out, errors.New("nonempty inspection query required")
 	}
+	// A literal dispatch case matching a query word provides a useful local
+	// behavior window. This is a textual anchor, not a proven call graph.
+	for i, line := range strings.Split(content, "\n") {
+		if err := ctx.Err(); err != nil {
+			return out, err
+		}
+		lower := strings.ToLower(strings.TrimSpace(line))
+		for _, token := range tokens {
+			if strings.HasPrefix(lower, "case ") && (strings.Contains(lower, `"`+token+`"`) || strings.Contains(lower, "'"+token+"'")) {
+				result, err := s.readSource(ctx, planning.ToolRequest{Name: "read_source", File: q.File, StartLine: i + 1})
+				result.Note = "Action-label text matched the query; inspect this local dispatch window. Other actions and callers are not proven by this excerpt."
+				return result, err
+			}
+		}
+	}
+
 	type span struct {
 		line, start, end, score int
 		text                    string

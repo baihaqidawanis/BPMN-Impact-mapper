@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,49 +30,49 @@ type Snapshot interface {
 }
 
 type View struct {
-	Mode       string                       `json:"mode"`
-	FullReview *planning.FullReviewProgress `json:"full_review,omitempty"`
-	SessionID  string                       `json:"session_id"`
-	AnalysisID string                       `json:"analysis_id"`
-	Status     string                       `json:"status"`
-	Role       planning.AgentRole           `json:"role"`
-	Turns      int                          `json:"turns"`
-	Tools      int                          `json:"tools"`
-	Revisions  int                          `json:"revisions"`
-	Provider   planning.ProviderIdentity    `json:"provider"`
-	Message    string                       `json:"message,omitempty"`
-	Plan       *planning.ChangePlan         `json:"plan,omitempty"`
-	Context    *planning.EvidenceBundle     `json:"context,omitempty"`
-	Decisions  []planning.CandidateDecision `json:"decisions,omitempty"`
-	Events     []planning.AgentEvent        `json:"events,omitempty"`
-	Issues     []string                     `json:"issues,omitempty"`
+	SourceActivity []SourceActivity                `json:"source_activity,omitempty"`
+	Mode           string                          `json:"mode"`
+	FocusedReview  *planning.FocusedReviewProgress `json:"focused_review,omitempty"`
+	FullReview     *planning.FullReviewProgress    `json:"full_review,omitempty"`
+	SessionID      string                          `json:"session_id"`
+	AnalysisID     string                          `json:"analysis_id"`
+	Status         string                          `json:"status"`
+	Role           planning.AgentRole              `json:"role"`
+	Turns          int                             `json:"turns"`
+	Tools          int                             `json:"tools"`
+	Revisions      int                             `json:"revisions"`
+	Provider       planning.ProviderIdentity       `json:"provider"`
+	Message        string                          `json:"message,omitempty"`
+	Plan           *planning.ChangePlan            `json:"plan,omitempty"`
+	Context        *planning.EvidenceBundle        `json:"context,omitempty"`
+	Decisions      []planning.CandidateDecision    `json:"decisions,omitempty"`
+	Events         []planning.AgentEvent           `json:"events,omitempty"`
+	Issues         []string                        `json:"issues,omitempty"`
 }
 
 type Service struct {
-	Model    Model
-	Sessions planning.AgentSessionStore
-	Plans    planstore.Store
-	Source   func(context.Context, string) (Snapshot, error)
-	Base     context.Context
-	Timeout  time.Duration
-	LogError func(error)
-	mu       sync.Mutex
-	active   bool
-	activeID string
-	wg       sync.WaitGroup
-	views    map[string]View
+	Configuration *Configuration
+	Model         Model
+	Sessions      planning.AgentSessionStore
+	Plans         planstore.Store
+	Source        func(context.Context, string) (Snapshot, error)
+	Base          context.Context
+	Timeout       time.Duration
+	LogError      func(error)
+	mu            sync.Mutex
+	active        bool
+	activeID      string
+	cancel        context.CancelFunc
+	wg            sync.WaitGroup
+	views         map[string]View
 }
 
 func (s *Service) Check(ctx context.Context) error {
-	if s == nil || s.Model == nil {
+	if s == nil {
 		return errors.New("model disabled")
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.active {
-		return ErrBusy
-	}
-	return s.Model.Prepare(ctx)
+	_, err := s.InspectModel(ctx)
+	return err
 }
 
 func (s *Service) Start(ctx context.Context, report domain.Report, repo string, changeIndex int, id string, modes ...string) (View, error) {
@@ -82,10 +83,10 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	if mode != "focused" && mode != "full" {
 		return View{}, ErrBinding
 	}
-	if s.Model == nil || s.Sessions == nil || s.Plans == nil || s.Source == nil {
+	if s.Sessions == nil || s.Plans == nil || s.Source == nil {
 		return View{}, errors.New("agent service incomplete")
 	}
-	if changeIndex < 0 || changeIndex >= len(report.Changes) || repo == "" {
+	if changeIndex < -1 || changeIndex >= len(report.Changes) || len(report.Changes) == 0 || repo == "" {
 		return View{}, ErrBinding
 	}
 	if err := ctx.Err(); err != nil {
@@ -97,16 +98,32 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 		}
 	}
 	selected := report
-	selected.Changes = []domain.Change{report.Changes[changeIndex]}
-	bundle := planning.BuildEvidenceBundle(selected, planning.Limits{CandidatesPerChange: 3, RelatedPerChange: 1, EvidencePerCandidate: 2, ExcerptRunes: 120})
+	if changeIndex >= 0 {
+		selected.Changes = []domain.Change{report.Changes[changeIndex]}
+	}
+	limit := 3
+	related := 1
+	if mode == "focused" {
+		limit = 1
+		related = -1
+		for _, c := range selected.Changes {
+			if len(c.Impacts) > limit {
+				limit = len(c.Impacts)
+			}
+		}
+	}
+	bundle := planning.BuildEvidenceBundle(selected, planning.Limits{CandidatesPerChange: limit, RelatedPerChange: related, EvidencePerCandidate: 2, ExcerptRunes: 120})
+	var resumeIdentity *planning.ProviderIdentity
 	if id != "" {
 		stored, err := s.Sessions.Load(ctx, id)
 		if err != nil {
 			return View{}, err
 		}
-		if stored.Bundle.AnalysisID != report.AnalysisID || len(stored.Bundle.Changes) != 1 || stored.Bundle.Changes[0].ChangeType != bundle.Changes[0].ChangeType || stored.Bundle.Changes[0].ElementID != bundle.Changes[0].ElementID {
+		if stored.Bundle.AnalysisID != report.AnalysisID || stored.Bundle.InputFingerprint != bundle.InputFingerprint || stored.Bundle.Method != bundle.Method || !sameChanges(stored.Bundle.Changes, bundle.Changes) {
 			return View{}, ErrBinding
 		}
+		identity := stored.Identity
+		resumeIdentity = &identity
 		storedMode := "focused"
 		if stored.FullReview != nil {
 			storedMode = "full"
@@ -124,6 +141,14 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 		id = hex.EncodeToString(raw)
 	}
 	s.mu.Lock()
+	if s.Model == nil {
+		s.mu.Unlock()
+		return View{}, errors.New("model disabled")
+	}
+	if resumeIdentity != nil && *resumeIdentity != s.Model.Identity() {
+		s.mu.Unlock()
+		return View{}, ErrBinding
+	}
 	if s.active {
 		s.mu.Unlock()
 		return View{}, ErrBusy
@@ -140,19 +165,20 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	v.Mode = mode
 	s.views[id] = v
 	s.active = true
+	runBase, runCancel := context.WithCancel(safeBase(s.Base))
+	s.cancel = runCancel
 	s.activeID = id
 	s.wg.Add(1)
 	s.mu.Unlock()
-	base := s.Base
+	base := runBase
 	if base == nil {
 		base = context.Background()
 	}
 	timeout := s.Timeout
-	if timeout <= 0 && mode != "full" {
-		timeout = 10 * time.Minute
-	}
+	// Whole jobs are cancellable/resumable; each model turn still has a timeout.
 	go func() {
 		defer s.wg.Done()
+		defer runCancel()
 		runCtx, cancel := context.WithCancel(base)
 		if timeout > 0 {
 			cancel()
@@ -163,6 +189,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 		s.mu.Lock()
 		s.active = false
 		s.activeID = ""
+		s.cancel = nil
 		s.mu.Unlock()
 	}()
 	return v, nil
@@ -196,8 +223,7 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 		}
 		session, runErr = (planning.FullRepositoryEngine{Model: s.Model, Source: fullSource, Store: s.Sessions}).Run(ctx, v.SessionID, bundle)
 	} else {
-		engine := planning.AgentEngine{Model: s.Model, Tools: source, Store: s.Sessions}
-		session, runErr = engine.Run(ctx, v.SessionID, bundle)
+		session, runErr = (planning.FocusedEngine{Model: s.Model, Tools: source, Store: s.Sessions}).Run(ctx, v.SessionID, bundle)
 	}
 	if session.ID != "" {
 		v = viewSession(session)
@@ -209,9 +235,13 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 		if errors.Is(runErr, planning.ErrAgentContextLimit) {
 			v.Message = "Evidence exceeds the configured model context. Use a smaller candidate report or increase --agent-context, then start a new session. Source was not silently truncated."
 		} else if errors.Is(runErr, planning.ErrAgentModelOutput) {
-			v.Message = "Model output was incomplete or invalid. Resume to retry; consumed turns remain charged."
+			v.Message = "Model response could not be validated. Inspect Session issues for the failed role and reason before retrying; consumed turns remain charged."
+		} else if errors.Is(runErr, context.DeadlineExceeded) {
+			v.Message = "A model turn exceeded its time budget while loading or generating. The checkpoint is saved; a timeout alone does not prove VPN/tunnel failure."
+		} else if errors.Is(runErr, context.Canceled) {
+			v.Message = "Review was cancelled. Completed checkpoints remain saved."
 		} else if session.Status == "PAUSED" {
-			v.Message = "Model connection interrupted. Restore VPN/tunnel and resume."
+			v.Message = "A model request was interrupted. The checkpoint is saved. Inspect the backend log and model runtime before resuming; this message does not establish a VPN or GPU-memory failure."
 		} else {
 			v.Message = "Session could not continue or its evidence failed validation. Inspect the checkpoint; start a new session if source/model changed."
 		}
@@ -222,6 +252,9 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 		return
 	}
 	plan, err := session.ChangePlan()
+	if err != nil && session.Status == "NEEDS_REVIEW" {
+		plan, err = session.PartialPlan()
+	}
 	if err != nil {
 		if s.LogError != nil {
 			s.LogError(err)
@@ -253,7 +286,7 @@ func viewSession(session planning.AgentSession) View {
 	if session.FullReview != nil {
 		mode = "full"
 	}
-	return View{Mode: mode, FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
+	return View{FocusedReview: session.FocusedReview, SourceActivity: sourceActivity(session.Observations), Message: session.ProgressMessage, Mode: mode, FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
 }
 
 func (s *Service) Get(ctx context.Context, id string) (View, error) {
@@ -278,6 +311,42 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 		return View{}, err
 	}
 	result := viewSession(session)
+	result.SourceActivity = sourceActivity(session.Observations)
+	// Older focused parents did not aggregate child observations. Restore the
+	// trace from their immutable checkpoints, including the active child.
+	if session.FullReview == nil && (len(session.Bundle.Changes) > 1 || session.FocusedReview != nil) {
+		result.SourceActivity = nil
+		batches := len(session.Bundle.Changes)
+		if session.FocusedReview != nil {
+			batches = session.FocusedReview.BatchesTotal
+		}
+		for i := 0; i < batches; i++ {
+			child, err := s.Sessions.Load(ctx, fmt.Sprintf("%s-focused-%d", session.ID, i))
+			if err != nil {
+				continue
+			}
+			for _, item := range sourceActivity(child.Observations) {
+				item.ChangeIndex = i
+				if len(child.Bundle.Changes) == 1 {
+					for index, c := range session.Bundle.Changes {
+						if c.ChangeType == child.Bundle.Changes[0].ChangeType && c.ElementID == child.Bundle.Changes[0].ElementID {
+							item.ChangeIndex = index
+							break
+						}
+					}
+				}
+				result.SourceActivity = append(result.SourceActivity, item)
+			}
+		}
+	}
+	if active && session.Status == "RUNNING" && session.ActiveChildID != "" {
+		if child, err := s.Sessions.Load(ctx, session.ActiveChildID); err == nil {
+			result.Role = child.Role
+			result.Turns += child.Turns
+			result.Tools += child.Tools
+			result.Revisions += child.Revisions
+		}
+	}
 	if active && (result.Status == "PAUSED" || result.Status == "RUNNING") {
 		result.Status = "RUNNING"
 	}
@@ -286,7 +355,11 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 		result.Message = "Server restarted. Re-enter the source path and resume this checkpoint."
 	}
 	if result.Status == "COMPLETE" || result.Status == "NEEDS_REVIEW" {
-		if plan, e := session.ChangePlan(); e == nil {
+		plan, e := session.ChangePlan()
+		if e != nil && session.Status == "NEEDS_REVIEW" {
+			plan, e = session.PartialPlan()
+		}
+		if e == nil {
 			if saved, e := s.Plans.Get(ctx, plan.PlanID); e == nil {
 				result.Plan = &saved
 			} else {
@@ -307,4 +380,34 @@ func (s *Service) Wait(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+func safeBase(base context.Context) context.Context {
+	if base == nil {
+		return context.Background()
+	}
+	return base
+}
+func (s *Service) Stop(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.activeID != id || s.cancel == nil {
+		return ErrMissing
+	}
+	s.cancel()
+	return nil
+}
+
+// Runtime bundles gain discovered evidence and README context. Engines bind the
+// immutable initial context separately; resume must not compare enriched hashes.
+func sameChanges(a, b []planning.ChangeInput) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].ChangeType != b[i].ChangeType || a[i].ElementID != b[i].ElementID {
+			return false
+		}
+	}
+	return true
 }

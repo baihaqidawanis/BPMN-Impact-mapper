@@ -19,15 +19,21 @@ import (
 	"sync"
 	"time"
 
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 )
 
 type OllamaAgentConfig struct {
-	BaseURL     string
-	Model       string
-	ContextSize int
-	MaxOutput   int
-	Client      *http.Client
+	BaseURL           string
+	Model             string
+	ContextSize       int
+	MaxOutput         int
+	Think             bool
+	ReviewComparisons bool
+	ReviewJSONMode    bool
+	Profile           string
+	OnInference       func(InferenceMetric)
+	Client            *http.Client
 }
 
 // OllamaAgent uses Ollama JSON-schema output for one action per turn. Tool
@@ -35,10 +41,19 @@ type OllamaAgentConfig struct {
 type OllamaAgent struct {
 	base, model            string
 	contextSize, maxOutput int
+	think                  bool
+	reviewComparisons      bool
+	reviewJSONMode         bool
+	profile                string
+	onInference            func(InferenceMetric)
 	client                 *http.Client
 	mu                     sync.RWMutex
 	digest, version        string
 }
+
+// Explicit JSON review is an experimental, file-scoped policy.
+// The planning engine owns checkpointed partitioning and the final contract check.
+func (m *OllamaAgent) PreferFileReview() bool { return m.reviewJSONMode }
 
 func NewOllamaAgent(c OllamaAgentConfig) (*OllamaAgent, error) {
 	u, err := url.Parse(c.BaseURL)
@@ -61,6 +76,12 @@ func NewOllamaAgent(c OllamaAgentConfig) (*OllamaAgent, error) {
 	if c.ContextSize < 4096 || c.ContextSize > 32768 || c.MaxOutput < 32 || c.MaxOutput > 8192 || c.MaxOutput >= c.ContextSize {
 		return nil, errors.New("Ollama context/output budget invalid")
 	}
+	if c.Profile == "" {
+		c.Profile = "baseline"
+	}
+	if c.Profile != "baseline" && c.Profile != "coding" {
+		return nil, errors.New("unknown agent generation profile; use baseline or coding")
+	}
 	client := http.Client{Timeout: 85 * time.Second, Transport: &http.Transport{Proxy: nil}}
 	if c.Client != nil {
 		client = *c.Client
@@ -69,7 +90,7 @@ func NewOllamaAgent(c OllamaAgentConfig) (*OllamaAgent, error) {
 		}
 	}
 	client.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	return &OllamaAgent{base: c.BaseURL, model: c.Model, contextSize: c.ContextSize, maxOutput: c.MaxOutput, client: &client}, nil
+	return &OllamaAgent{base: c.BaseURL, model: c.Model, contextSize: c.ContextSize, maxOutput: c.MaxOutput, think: c.Think, reviewComparisons: c.ReviewComparisons, reviewJSONMode: c.ReviewJSONMode, profile: c.Profile, onInference: c.OnInference, client: &client}, nil
 }
 
 func (m *OllamaAgent) request(ctx context.Context, method, path string, payload any, out any) error {
@@ -91,15 +112,37 @@ func (m *OllamaAgent) request(ctx context.Context, method, path string, payload 
 	r.Header.Set("Content-Type", "application/json")
 	resp, err := m.client.Do(r)
 	if err != nil {
-		return errors.New("Ollama connection interrupted; check VPN/tunnel")
+		if errors.Is(err, context.Canceled) {
+			return fmt.Errorf("Ollama request cancelled: %w", context.Canceled)
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("Ollama request deadline exceeded while loading or generating; this does not establish a VPN failure: %w", context.DeadlineExceeded)
+		}
+		return &modelTransportError{cause: err}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		limited, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		if json.Unmarshal(limited, &failure) == nil {
+			message := strings.ToLower(failure.Error)
+			if strings.Contains(message, "out of memory") || strings.Contains(message, "requires more system memory") {
+				return errors.New("Ollama model could not fit available memory; reduce the model/context or free lab resources, then start a new session")
+			}
+		}
 		return fmt.Errorf("Ollama HTTP %d; response omitted", resp.StatusCode)
 	}
 	data, err := io.ReadAll(io.LimitReader(resp.Body, (1<<20)+1))
-	if err != nil || len(data) > 1<<20 {
-		return errors.New("Ollama response unavailable or oversized")
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("Ollama response interrupted while reading: %w", err)
+		}
+		return &modelTransportError{cause: err}
+	}
+	if len(data) > 1<<20 {
+		return errors.New("Ollama response exceeded the size limit")
 	}
 	if err := json.Unmarshal(data, out); err != nil {
 		return errors.New("Ollama returned invalid JSON")
@@ -129,14 +172,24 @@ func (m *OllamaAgent) localDigest(ctx context.Context) (string, error) {
 			if err != nil || len(decoded) != 32 {
 				return "", errors.New("model digest missing/invalid")
 			}
-			hasTools := false
+			canGenerate := false
+			canThink := false
 			for _, c := range tag.Capabilities {
-				if c == "tools" {
-					hasTools = true
+				if c == "completion" || c == "tools" {
+					canGenerate = true
+				}
+				if c == "thinking" {
+					canThink = true
 				}
 			}
-			if !hasTools {
-				return "", errors.New("selected model does not advertise tools capability")
+			// Agent actions use schema-constrained completion, not Ollama native
+			// tool_calls. Imported GGUF models can advertise completion only.
+			// Source-tool permissions and evidence remain engine-validated.
+			if !canGenerate {
+				return "", errors.New("selected model does not advertise text generation capability")
+			}
+			if m.think && !canThink {
+				return "", errors.New("selected model does not advertise thinking capability")
 			}
 			return tag.Digest, nil
 		}
@@ -175,15 +228,26 @@ func (m *OllamaAgent) Identity() planning.ProviderIdentity {
 	contracts := []any{}
 	for _, role := range []planning.AgentRole{planning.Analyst, planning.Planner, planning.Reviewer} {
 		schema, _ := agentActionSchema(role)
-		contracts = append(contracts, ollamaAgentInstruction(role), schema)
+		contracts = append(contracts, ollamaAgentInstruction(role), hostTransportInstruction(role), schema)
 	}
-	data, _ := json.Marshal([]any{"ollama-agent-json-v3", contracts, fullChunkInstructions, m.digest, m.version, m.contextSize, m.maxOutput, false, 0})
+	version := "ollama-agent-json-v20"
+	if m.reviewComparisons {
+		version = "ollama-agent-json-v21"
+	}
+	if m.reviewJSONMode {
+		version = "ollama-agent-json-v28"
+	}
+	parts := []any{version, contracts, fullChunkInstructions, readmeOrientationInstructions, sharedProcessInstructions, reviewInstructions(m.reviewComparisons)}
+	parts = append(parts, m.digest, m.version, m.contextSize, m.maxOutput, m.think, m.generationOptions())
+	if m.reviewJSONMode {
+		parts = append(parts, true, implementationReviewInstruction, proposedReviewInstruction, proposalContractInstruction, "source-projection-v3-local-obligations", "related-proposals-v1", "json-file-review-v4-bounded-format-repair")
+	}
+	data, _ := json.Marshal(parts)
 	sum := sha256.Sum256(data)
-	return planning.ProviderIdentity{Provider: "ollama-local", Model: m.model, PromptVersion: "ollama-agent-json-v3-" + hex.EncodeToString(sum[:])[:24]}
+	return planning.ProviderIdentity{Provider: "ollama-local", Model: m.model, PromptVersion: version + "-" + hex.EncodeToString(sum[:])[:24]}
 }
 
-func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.AgentReply, error) {
-	var out planning.AgentReply
+func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (out planning.AgentReply, turnErr error) {
 	m.mu.RLock()
 	pinned := m.digest
 	m.mu.RUnlock()
@@ -198,6 +262,48 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		return out, errors.New("Ollama model digest drift")
 	}
 	inputTurn := t
+	// Full flow lists retain all edges. Avoid repeating the same adjacency both
+	// on every element and in graph lookup maps in the model transport.
+	if t.Bundle.ProcessContext != nil {
+		inputTurn.Bundle.ProcessContext = &domain.ProcessContext{Before: compactProcessGraph(t.Bundle.ProcessContext.Before), After: compactProcessGraph(t.Bundle.ProcessContext.After)}
+	}
+
+	if t.RepositoryChunk != nil || t.Bundle.ProcessContext != nil {
+		if t.RepositoryChunk != nil {
+			chunk := *t.RepositoryChunk
+			chunk.HybridLeads = nil // per-file HybridRank remains; avoid repeating the global hint list
+			inputTurn.RepositoryChunk = &chunk
+		}
+		inputTurn.Bundle.Changes = append([]planning.ChangeInput(nil), t.Bundle.Changes...)
+		for i, change := range inputTurn.Bundle.Changes {
+			// Every candidate cites the same complete source chunk supplied separately.
+			inputTurn.Bundle.Changes[i].Candidates = append([]planning.Candidate(nil), change.Candidates...)
+			for j, c := range change.Candidates {
+				c.Evidence = append([]planning.EvidenceItem(nil), c.Evidence...)
+				for k := range c.Evidence {
+					if t.RepositoryChunk == nil && strings.HasPrefix(c.Evidence[k].Location, c.File+":") {
+						c.Evidence[k].Location = strings.TrimPrefix(c.Evidence[k].Location, c.File)
+					}
+					if t.RepositoryChunk != nil && c.Evidence[k].Type == "FULL_SOURCE_CHUNK" {
+						c.Evidence[k].Excerpt = ""
+						c.Evidence[k].Location = ""
+					}
+				}
+				inputTurn.Bundle.Changes[i].Candidates[j] = c
+			}
+			if pc := t.Bundle.ProcessContext; pc != nil {
+				if (pc.Before != nil && (pc.Before.Elements[change.ElementID] != nil || pc.Before.Flows[change.ElementID] != nil)) || (pc.After != nil && (pc.After.Elements[change.ElementID] != nil || pc.After.Flows[change.ElementID] != nil)) {
+					inputTurn.Bundle.Changes[i].ElementName = ""
+				}
+				if elementInProcess(pc.Before, change.Before) {
+					inputTurn.Bundle.Changes[i].Before = nil
+				}
+				if elementInProcess(pc.After, change.After) {
+					inputTurn.Bundle.Changes[i].After = nil
+				}
+			}
+		}
+	}
 	switch t.Role {
 	case planning.Analyst:
 		inputTurn.Draft = nil
@@ -205,13 +311,30 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		inputTurn.Observations = compactAgentObservations(t.Observations)
 	case planning.Planner:
 		inputTurn.Observations = nil
+		inputTurn.Bundle = plannerEvidenceBundle(inputTurn.Bundle, t.Decisions)
+		// planning_targets already carries the host-validated RELEVANT slots.
+		// Do not repeat long Analyst rationales and identity strings alongside
+		// the same source proof, revision draft and reviewer findings.
+		inputTurn.Decisions = nil
 	case planning.Reviewer:
 		inputTurn.Decisions = nil
 		inputTurn.Observations = nil
+		if m.reviewJSONMode {
+			inputTurn.Draft = implementationReviewDraft(t)
+		}
 	}
 	input, err := json.Marshal(inputTurn)
+	if err == nil && t.RepositoryChunk == nil && inputTurn.Bundle.ProcessContext != nil {
+		input, err = sharedProcessInput(input, inputTurn.Bundle.ProcessContext)
+	}
 	if err != nil {
 		return out, err
+	}
+	if t.RepositoryChunk == nil && t.Readme == nil {
+		input, err = annotateAgentInput(input, t)
+		if err != nil {
+			return out, err
+		}
 	}
 	if len(input) > 24<<10 {
 		return out, fmt.Errorf("%w: use a smaller evidence bundle", planning.ErrAgentContextLimit)
@@ -219,6 +342,10 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 	schema, err := agentActionSchema(t.Role)
 	if err != nil {
 		return out, err
+	}
+	if t.Role == planning.Planner && (t.RemainingTools <= 0 || t.RemainingRevisions <= 0) {
+		// Do not offer an evidence handoff the engine can no longer execute.
+		schema = map[string]any{"type": "object", "properties": map[string]any{"plan": schemaType(reflect.TypeOf(planning.LayerPlanningResponse{}))}, "required": []string{"plan"}, "additionalProperties": false}
 	}
 	if t.Role == planning.Analyst && t.RemainingTools <= 0 {
 		schema = map[string]any{"type": "object", "properties": map[string]any{"verification": schemaType(reflect.TypeOf(planning.VerificationResponse{}))}, "required": []string{"verification"}, "additionalProperties": false}
@@ -238,13 +365,17 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		}
 	}
 	if t.Role == planning.Analyst && t.RemainingTools > 0 && !agentSearchedRepository(t) {
+		// The source service accepts at most 12 words. Do not let a generated
+		// function signature exhaust the entire budget before source inspection.
+		index := 0
 		tool := map[string]any{"type": "object", "properties": map[string]any{
 			"name":         map[string]any{"type": "string", "enum": []string{"search_source"}},
-			"change_index": map[string]any{"type": "integer", "minimum": 0, "maximum": max(0, len(t.Bundle.Changes)-1)},
-			"query":        map[string]any{"type": "string", "minLength": 1, "maxLength": 200},
+			"change_index": map[string]any{"type": "integer", "enum": []int{index}},
+			"query":        map[string]any{"type": "string", "enum": []string{agentInspectionQuery(t, index)}},
 		}, "required": []string{"name", "change_index", "query"}, "additionalProperties": false}
 		schema = map[string]any{"type": "object", "properties": map[string]any{"tool": tool}, "required": []string{"tool"}, "additionalProperties": false}
 	}
+
 	// Cardinality follows the current bundle, including tool discoveries. Schema
 	// constraints complement (never replace) engine identity/evidence validation.
 	if t.Role == planning.Analyst {
@@ -255,13 +386,16 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		constrainActionArray(schema, "verification", "decisions", count)
 	}
 	if t.Role == planning.Planner {
-		count := 0
+		minimum, maximum := 0, 0
 		for _, decision := range t.Decisions {
+			if decision.Verdict == planning.VerdictRelevant {
+				minimum++
+			}
 			if decision.Verdict != planning.VerdictReject {
-				count++
+				maximum++
 			}
 		}
-		constrainActionArray(schema, "plan", "plans", count)
+		constrainActionRange(schema, "plan", "plans", minimum, maximum)
 	}
 	ids := []string{}
 	seenIDs := map[string]bool{}
@@ -282,43 +416,151 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		constrainActionEvidence(schema, "plan", "plans", ids)
 	}
 	if t.Role == planning.Analyst {
-		bindAgentTargets(schema, "verification", "decisions", t, false)
+		indexedTargetSchema(schema, "verification", "decisions", t, false)
 	}
 	if t.Role == planning.Planner {
-		bindAgentTargets(schema, "plan", "plans", t, true)
+		indexedTargetSchema(schema, "plan", "plans", t, true)
 	}
+	if t.Role == planning.Reviewer && len(t.Draft) > 0 {
+		schema = reviewAuditSchema(t, m.reviewComparisons)
+	}
+	if t.Readme != nil {
+		if t.Role != planning.Analyst || t.RepositoryChunk != nil || len(t.Readme.Content) > 8192 {
+			return out, errors.New("invalid README orientation turn")
+		}
+		schema = map[string]any{"type": "object", "properties": map[string]any{"verification": map[string]any{"type": "object", "properties": map[string]any{"decisions": map[string]any{"type": "array", "maxItems": 0, "items": schemaType(reflect.TypeOf(planning.CandidateDecision{}))}, "repository_summary": map[string]any{"type": "string", "minLength": 1, "maxLength": 1600}}, "required": []string{"decisions", "repository_summary"}, "additionalProperties": false}}, "required": []string{"verification"}, "additionalProperties": false}
+	}
+	if t.RepositoryChunk != nil {
+		count := len(t.Bundle.Changes)
+		schema = map[string]any{"type": "object", "properties": map[string]any{"verification": map[string]any{"type": "object", "properties": map[string]any{"decisions": map[string]any{"type": "array", "minItems": count, "maxItems": count, "items": map[string]any{"type": "object", "properties": map[string]any{"change_index": map[string]any{"type": "integer", "minimum": 0, "maximum": count - 1}, "verdict": map[string]any{"type": "string", "enum": []string{"RELEVANT", "WEAK", "REJECT"}}, "rationale": map[string]any{"type": "string", "minLength": 1, "maxLength": 1200}}, "required": []string{"change_index", "verdict", "rationale"}, "additionalProperties": false}}}, "required": []string{"decisions"}, "additionalProperties": false}}, "required": []string{"verification"}, "additionalProperties": false}
+	}
+
 	instruction := ollamaAgentInstruction(t.Role)
+	if t.Role == planning.Reviewer && len(t.Draft) > 0 {
+		if m.reviewJSONMode {
+			instruction = proposedReviewInstruction
+		}
+		instruction += reviewInstructions(m.reviewComparisons)
+	}
+	if t.RepositoryChunk == nil && inputTurn.Bundle.ProcessContext != nil {
+		instruction += sharedProcessInstructions
+	}
+	if t.Role == planning.Planner && (t.RemainingTools <= 0 || t.RemainingRevisions <= 0) {
+		instruction += " No further evidence handoff is available. Return plan only, based on supplied evidence. Explicitly state missing facts and conditional proposals; use VERIFY, never invent observed behavior or claim certainty."
+	}
+	if m.reviewJSONMode && len(t.RelatedProposals) > 0 {
+		instruction += " related_proposals are compact future contracts for other files. Coordinate this file's responsibility with them, but verify current behavior only from source evidence. They are not citable source or proof of implemented behavior."
+	}
+	if t.Readme != nil {
+		instruction = readmeOrientationInstructions
+	}
+
 	if t.RepositoryChunk != nil {
 		if t.Role != planning.Analyst || len(t.RepositoryChunk.Content) > 4096 {
 			return out, errors.New("invalid full review chunk turn")
 		}
 		instruction += fullChunkInstructions
 	}
+	if t.RepositoryChunk == nil && t.Readme == nil {
+		instruction += hostTransportInstruction(t.Role)
+	}
 	schemaBytes, _ := json.Marshal(schema)
+	var format any = schema
+	formatBytes := len(schemaBytes)
+	if m.reviewJSONMode && t.Role == planning.Reviewer && len(t.Draft) > 0 {
+		// Experimental alternative for models that handle an explicit schema
+		// prompt better than grammar-constrained decoding. Host validation is
+		// identical; JSON mode never supplies approval or repairs model output.
+		instruction += implementationReviewInstruction
+		if proposalOnlyReview(t) || reviewNeedsFormatRepair(t) {
+			// The contract-only pass has fixed empty source references and a
+			// small schema. Constrain decoding instead of inviting invented IDs
+			// or dropping checks. Host validation remains unchanged.
+			if proposalOnlyReview(t) {
+				instruction += proposalContractInstruction
+			} else {
+				instruction += " FORMAT REPAIR: the previous response failed host validation. Return every schema-required criterion exactly once; no duplicate keys in any JSON object. Keep evidence bound to this file and never replace findings with a bare approval."
+			}
+		} else {
+			instruction += " Return one JSON object conforming exactly to this schema; all fields are required as declared. JSON schema: " + string(schemaBytes)
+			format = "json"
+			formatBytes = len(`"json"`)
+		}
+	}
 	// Byte count is a conservative tokenizer-independent upper bound, with a
 	// template reserve. Reject instead of relying on server-side input truncation.
-	if len(input)+len(instruction)+len(schemaBytes) > m.contextSize-m.maxOutput-512 {
-		return out, fmt.Errorf("%w: export fewer candidates/evidence or increase configured context", planning.ErrAgentContextLimit)
+	if len(input)+len(instruction)+formatBytes > m.contextSize-m.maxOutput-512 {
+		return out, fmt.Errorf("%w: request budget %d bytes exceeds %d; export fewer candidates/evidence or increase configured context", planning.ErrAgentContextLimit, len(input)+len(instruction)+formatBytes, m.contextSize-m.maxOutput-512)
 	}
-	payload := map[string]any{"model": m.model, "stream": false, "think": false, "keep_alive": "2m", "format": schema, "options": map[string]any{"num_ctx": m.contextSize, "num_predict": m.maxOutput, "temperature": 0}, "messages": []map[string]string{{"role": "system", "content": instruction}, {"role": "user", "content": string(input)}}}
+	payload := map[string]any{"model": m.model, "stream": false, "think": m.think, "keep_alive": "2m", "format": format, "options": m.generationOptions(), "messages": []map[string]string{{"role": "system", "content": instruction}, {"role": "user", "content": string(input)}}}
 	var response struct {
-		Model   string `json:"model"`
-		Done    bool   `json:"done"`
-		Reason  string `json:"done_reason"`
-		Message struct {
+		PromptTokens    int    `json:"prompt_eval_count"`
+		GeneratedTokens int    `json:"eval_count"`
+		LoadDuration    int64  `json:"load_duration"`
+		Model           string `json:"model"`
+		Done            bool   `json:"done"`
+		Reason          string `json:"done_reason"`
+		Message         struct {
 			Role    string `json:"role"`
 			Content string `json:"content"`
 		} `json:"message"`
 	}
+	started := time.Now()
+	defer func() {
+		if m.onInference == nil {
+			return
+		}
+		outcome := "validated"
+		if turnErr != nil {
+			outcome = "rejected"
+			if errors.Is(turnErr, context.DeadlineExceeded) {
+				outcome = "timeout"
+			}
+			if errors.Is(turnErr, context.Canceled) {
+				outcome = "cancelled"
+			}
+		}
+		m.onInference(InferenceMetric{Role: t.Role, Model: m.model, Profile: m.profile, Think: m.think, Outcome: outcome, Milliseconds: time.Since(started).Milliseconds(), LoadMilliseconds: response.LoadDuration / int64(time.Millisecond), PromptTokens: response.PromptTokens, GeneratedTokens: response.GeneratedTokens})
+	}()
 	if err := m.request(ctx, http.MethodPost, "/api/chat", payload, &response); err != nil {
 		return out, err
 	}
-	if !response.Done || response.Reason == "length" || response.Model != m.model || response.Message.Role != "assistant" || strings.TrimSpace(response.Message.Content) == "" {
-		return out, fmt.Errorf("%w: completion incomplete or identity invalid", planning.ErrAgentModelOutput)
+	if response.Reason == "length" {
+		return out, fmt.Errorf("%w: output token limit reached before JSON completed", planning.ErrAgentModelOutput)
+	}
+	if !response.Done {
+		return out, fmt.Errorf("%w: model completion was not marked done", planning.ErrAgentModelOutput)
+	}
+	if response.Model != m.model || response.Message.Role != "assistant" {
+		return out, fmt.Errorf("%w: response model or role mismatch", planning.ErrAgentModelOutput)
+	}
+	if strings.TrimSpace(response.Message.Content) == "" {
+		return out, fmt.Errorf("%w: empty assistant content", planning.ErrAgentModelOutput)
+	}
+	if t.Role == planning.Reviewer && len(t.Draft) > 0 {
+		restored, err := restoreReviewAudit(response.Message.Content, t, m.reviewComparisons)
+		if err != nil {
+			return out, fmt.Errorf("%w: %v", planning.ErrAgentModelOutput, err)
+		}
+		response.Message.Content = restored
+	}
+
+	if t.RepositoryChunk == nil && t.Readme == nil {
+		restored, err := restoreTargetReferences(response.Message.Content, t)
+		if err != nil {
+			return out, fmt.Errorf("%w: %v", planning.ErrAgentModelOutput, err)
+		}
+		response.Message.Content = restored
 	}
 	d := json.NewDecoder(strings.NewReader(response.Message.Content))
 	d.DisallowUnknownFields()
-	if err := d.Decode(&out); err != nil {
+	var decodeErr error
+	if t.RepositoryChunk != nil {
+		out, decodeErr = decodeChunkVerification(d, t)
+	} else {
+		decodeErr = d.Decode(&out)
+	}
+	if err := decodeErr; err != nil {
 		return out, fmt.Errorf("%w: invalid structured action", planning.ErrAgentModelOutput)
 	}
 	var extra any
@@ -335,6 +577,13 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 	if n != 1 || !validRole {
 		return out, fmt.Errorf("%w: exactly one role-appropriate action required", planning.ErrAgentModelOutput)
 	}
+	if out.Plan != nil {
+		for _, p := range out.Plan.Plans {
+			if strings.TrimSpace(p.CurrentBehavior) == "" || strings.TrimSpace(p.TargetBehavior) == "" || strings.TrimSpace(p.DesignRationale) == "" {
+				return out, fmt.Errorf("%w: current_behavior, target_behavior and design_rationale are required", planning.ErrAgentPlanIncomplete)
+			}
+		}
+	}
 	// References are sets. Ollama's grammar does not reliably enforce
 	// uniqueItems; remove identical repetitions, never unknown references.
 	if out.Verification != nil {
@@ -348,6 +597,21 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (planning.
 		}
 	}
 	return out, nil
+}
+
+func (m *OllamaAgent) generationOptions() map[string]any {
+	options := map[string]any{"num_ctx": m.contextSize, "num_predict": m.maxOutput, "temperature": 0}
+	if m.profile == "coding" {
+		// Explicitly override inherited model sampling defaults. The preset is
+		// a testable profile, not a claim that it is optimal for every model.
+		options["temperature"] = 0.6
+		options["top_p"] = 0.95
+		options["top_k"] = 20
+		options["presence_penalty"] = 0.0
+		options["repeat_penalty"] = 1.0
+		options["seed"] = 42
+	}
+	return options
 }
 
 // The bundle contains the currently citable excerpts. Keep past requests and
@@ -474,7 +738,33 @@ func bindAgentTargets(schema map[string]any, action, field string, t planning.Ag
 		}
 	}
 	if len(items) > 0 {
-		array["items"] = map[string]any{"oneOf": items}
+		// Factor repeated property schemas. Enums bound individual values; the
+		// engine still validates the exact change/file/symbol/evidence tuple.
+		if len(items) > 3 {
+			item := items[0].(map[string]any)
+			properties := item["properties"].(map[string]any)
+			for key, property := range properties {
+				p := property.(map[string]any)
+				if _, ok := p["enum"]; !ok {
+					continue
+				}
+				values := []string{}
+				for _, candidate := range items {
+					v := candidate.(map[string]any)["properties"].(map[string]any)[key].(map[string]any)["enum"].([]string)
+					values = append(values, v...)
+				}
+				p["enum"] = uniqueAgentReferences(values)
+			}
+			ids := []string{}
+			for _, candidate := range items {
+				p := candidate.(map[string]any)["properties"].(map[string]any)["evidence_ids"].(map[string]any)
+				ids = append(ids, p["items"].(map[string]any)["enum"].([]string)...)
+			}
+			properties["evidence_ids"].(map[string]any)["items"].(map[string]any)["enum"] = uniqueAgentReferences(ids)
+			array["items"] = item
+		} else {
+			array["items"] = map[string]any{"oneOf": items}
+		}
 	}
 }
 
@@ -532,7 +822,7 @@ func agentActionSchema(role planning.AgentRole) (map[string]any, error) {
 			required := []string{"name", "change_index"}
 			if name == "search_source" {
 				props["offset"] = map[string]any{"type": "integer", "minimum": 0, "maximum": 10000}
-				props["query"] = map[string]any{"type": "string", "minLength": 1, "maxLength": 200}
+				props["query"] = map[string]any{"type": "string", "minLength": 1, "maxLength": 200, "pattern": `^\S+(\s+\S+){0,11}$`}
 				required = append(required, "query")
 			} else if name == "read_source" || name == "inspect_source" {
 				props["file"] = map[string]any{"type": "string", "minLength": 1, "maxLength": 500}
@@ -579,7 +869,7 @@ func agentActionSchema(role planning.AgentRole) (map[string]any, error) {
 
 func agentSearchedRepository(t planning.AgentTurn) bool {
 	for _, o := range t.Observations {
-		if o.Request.Name == "search_source" && o.Result.Error == "" {
+		if o.Request.Name == "search_source" {
 			return true
 		}
 	}
@@ -587,6 +877,11 @@ func agentSearchedRepository(t planning.AgentTurn) bool {
 }
 
 func schemaType(t reflect.Type) map[string]any {
+	// Named string enums must match the engine contract; an unconstrained
+	// verdict lets grammar-valid PASS/VERIFIED responses fail downstream.
+	if t == reflect.TypeOf(planning.Verdict("")) {
+		return map[string]any{"type": "string", "enum": []string{string(planning.VerdictRelevant), string(planning.VerdictWeak), string(planning.VerdictReject)}}
+	}
 	if t.Kind() == reflect.Pointer {
 		return schemaType(t.Elem())
 	}
@@ -613,7 +908,7 @@ func schemaType(t reflect.Type) map[string]any {
 			if f.Name == "ProposedChanges" || f.Name == "AcceptanceChecks" {
 				props[tag[0]].(map[string]any)["minItems"] = 1
 			}
-			if len(tag) == 1 || f.Name == "Symbol" || f.Name == "ProposedChanges" || f.Name == "AcceptanceChecks" {
+			if len(tag) == 1 || f.Name == "Symbol" || f.Name == "ProposedChanges" || f.Name == "AcceptanceChecks" || f.Name == "CurrentBehavior" || f.Name == "TargetBehavior" || f.Name == "DesignRationale" {
 				required = append(required, tag[0])
 			}
 		}
@@ -630,14 +925,153 @@ func schemaType(t reflect.Type) map[string]any {
 }
 
 func agentInspectionQuery(t planning.AgentTurn, index int) string {
-	c := t.Bundle.Changes[index]
-	query := strings.TrimSpace(c.ElementName)
-	if query == "" {
-		query = c.ElementID
+	query := "process change"
+	if index >= 0 && index < len(t.Bundle.Changes) {
+		c := t.Bundle.Changes[index]
+		query = strings.TrimSpace(c.ElementName)
+		if pc := t.Bundle.ProcessContext; pc != nil {
+			for _, g := range []*domain.Graph{pc.After, pc.Before} {
+				if g == nil {
+					continue
+				}
+				flow := g.Flows[c.ElementID]
+				if flow == nil {
+					continue
+				}
+				parts := []string{}
+				for _, id := range []string{flow.SourceRef, flow.TargetRef} {
+					if node := g.Elements[id]; node != nil && strings.TrimSpace(node.Name) != "" {
+						parts = append(parts, node.Name)
+					}
+				}
+				if len(parts) > 0 {
+					query = strings.Join(parts, " ")
+					break
+				}
+			}
+		}
+		if query == "" {
+			query = c.ElementID
+		}
 	}
+	words := strings.Fields(query)
+	if len(words) > 12 {
+		words = words[:12]
+	}
+	query = strings.Join(words, " ")
 	r := []rune(query)
 	for len(string(r)) > 200 {
 		r = r[:len(r)-1]
 	}
+	if len(r) == 0 {
+		return "process change"
+	}
 	return string(r)
 }
+
+func compactProcessGraph(g *domain.Graph) *domain.Graph {
+	if g == nil {
+		return nil
+	}
+	out := *g
+	out.Incoming = nil
+	out.Outgoing = nil
+	out.Elements = make(map[string]*domain.Element, len(g.Elements))
+	for id, e := range g.Elements {
+		if e == nil {
+			out.Elements[id] = nil
+			continue
+		}
+		v := *e
+		v.Incoming = nil
+		v.Outgoing = nil
+		out.Elements[id] = &v
+	}
+	return &out
+}
+
+func elementInProcess(g *domain.Graph, e *planning.ElementInput) bool {
+	if g == nil || e == nil {
+		return false
+	}
+	return g.Elements[e.ID] != nil || g.Flows[e.ID] != nil
+}
+
+// Model chooses relevance, host binds immutable target and evidence identities.
+func decodeChunkVerification(d *json.Decoder, t planning.AgentTurn) (planning.AgentReply, error) {
+	var wire struct {
+		Verification *struct {
+			Decisions []struct {
+				ChangeIndex *int             `json:"change_index"`
+				Verdict     planning.Verdict `json:"verdict"`
+				Rationale   string           `json:"rationale"`
+			} `json:"decisions"`
+		} `json:"verification"`
+	}
+	var out planning.AgentReply
+	if err := d.Decode(&wire); err != nil {
+		return out, err
+	}
+	if wire.Verification == nil || len(wire.Verification.Decisions) != len(t.Bundle.Changes) {
+		return out, errors.New("every chunk change requires one decision")
+	}
+	response := &planning.VerificationResponse{}
+	seen := map[int]bool{}
+	for _, item := range wire.Verification.Decisions {
+		if item.ChangeIndex == nil {
+			return out, errors.New("chunk decision has no change index")
+		}
+		i := *item.ChangeIndex
+		if i < 0 || i >= len(t.Bundle.Changes) || seen[i] {
+			return out, errors.New("unknown or duplicate chunk change index")
+		}
+		seen[i] = true
+		change := t.Bundle.Changes[i]
+		if len(change.Candidates) != 1 || len(change.Candidates[0].Evidence) != 1 || change.Candidates[0].Evidence[0].Type != "FULL_SOURCE_CHUNK" {
+			return out, errors.New("chunk decision requires one snapshot candidate")
+		}
+		c := change.Candidates[0]
+		if t.RepositoryChunk.File != "" && c.File != t.RepositoryChunk.File {
+			return out, errors.New("chunk candidate differs from source snapshot")
+		}
+		if item.Verdict != planning.VerdictRelevant && item.Verdict != planning.VerdictWeak && item.Verdict != planning.VerdictReject {
+			return out, errors.New("invalid chunk verdict")
+		}
+		if strings.TrimSpace(item.Rationale) == "" || len([]rune(item.Rationale)) > 1200 {
+			return out, errors.New("invalid chunk rationale")
+		}
+		response.Decisions = append(response.Decisions, planning.CandidateDecision{ChangeType: change.ChangeType, ElementID: change.ElementID, File: c.File, Symbol: c.Symbol, Verdict: item.Verdict, Rationale: item.Rationale, EvidenceIDs: []string{c.Evidence[0].ID}})
+	}
+	out.Verification = response
+	return out, nil
+}
+
+// Only relevant targets are mandatory; weak evidence must not force invented edits.
+func constrainActionRange(schema map[string]any, action, field string, minimum, maximum int) {
+	if choices, ok := schema["oneOf"].([]any); ok {
+		for _, c := range choices {
+			constrainActionRange(c.(map[string]any), action, field, minimum, maximum)
+		}
+		return
+	}
+	props, ok := schema["properties"].(map[string]any)
+	if !ok {
+		return
+	}
+	value, ok := props[action].(map[string]any)
+	if !ok {
+		return
+	}
+	array := value["properties"].(map[string]any)[field].(map[string]any)
+	array["minItems"] = minimum
+	array["maxItems"] = maximum
+}
+
+// Keep network diagnostics available to errors.Is/As without exposing endpoint
+// credentials, private paths or raw transport messages in user-facing errors.
+type modelTransportError struct{ cause error }
+
+func (e *modelTransportError) Error() string {
+	return "Ollama transport interrupted; endpoint, tunnel or model runtime may be unavailable"
+}
+func (e *modelTransportError) Unwrap() error { return e.cause }

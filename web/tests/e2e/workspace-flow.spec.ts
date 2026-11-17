@@ -1,15 +1,27 @@
+import { loadAnalysisFixture } from "./helpers/analysis-fixture";
 import { expect, test } from "@playwright/test";
 
 test("workspace keeps inputs visible and carries the repository into Planning and refresh", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1440, height: 900 });
   let modelStarts = 0;
   await page.route("**/api/v1/capabilities/agents/check", route => route.fulfill({ json: { enabled: true, available: false, message: "Lab is offline." } }));
   await page.route("**/agent-sessions", route => { modelStarts++; return route.fulfill({ status: 503, json: {} }); });
   await page.goto("/?view=analysis");
+  await expect(page.getByRole("heading", { name: "Set up your comparison" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "01 Repository" })).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("mapping-empty-desktop.png"), fullPage: false });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("navigation", { name: "Workspace navigation" })).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("mapping-empty-mobile.png"), fullPage: false });
+  await page.setViewportSize({ width: 1440, height: 900 });
   const nav = page.getByRole("navigation", { name: "Workspace navigation" });
   await expect(nav.getByRole("button", { name: "Planning", exact: true })).toHaveCount(0);
   await expect(page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true })).toBeDisabled();
-  await page.getByRole("button", { name: "Load synthetic demo" }).click();
+  await expect(page.getByRole("button", { name: "Load synthetic demo" })).toHaveCount(0);
+  await loadAnalysisFixture(page);
+  await expect(page.getByText("Inputs ready. Run impact analysis to continue.", { exact: true })).toBeVisible();
   await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research", exact: true }).click();
   await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
   const input = page.getByRole("complementary").filter({ has: page.getByRole("heading", { name: "Configure analysis" }) });
@@ -27,8 +39,8 @@ test("workspace keeps inputs visible and carries the repository into Planning an
   const review = page.getByTestId("qwen-review");
   await expect(review.getByText("Repository from mapping")).toBeVisible();
   await expect(review.locator("code").first()).toHaveText("testdata\\repository");
-  await expect(review.getByLabel("Repository path for Qwen review")).toHaveCount(0);
-  await expect(review.getByRole("button", { name: "Run Qwen review", exact: true })).toBeDisabled();
+  await expect(review.getByLabel("Repository path for AI review")).toHaveCount(0);
+  await expect(review.getByRole("button", { name: "Run AI review", exact: true })).toBeDisabled();
   await page.reload();
   await expect(page.getByTestId("report-view")).toBeVisible();
   await page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true }).click();

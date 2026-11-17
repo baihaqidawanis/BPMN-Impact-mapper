@@ -26,7 +26,7 @@ func (h Handler) agentCapability(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	err := h.Agents.Check(ctx)
+	model, err := h.Agents.InspectModel(ctx)
 	message := "Local model metadata is available. No source or inference request was sent."
 	if err != nil {
 		message = "Model unavailable. Check VPN, SSH tunnel and installed model."
@@ -34,7 +34,17 @@ func (h Handler) agentCapability(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, agentjobs.ErrBusy) {
 		message = "A review is running. Model metadata remains pinned until it finishes."
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"enabled": true, "available": err == nil, "provider": h.Agents.Model.Identity(), "message": message})
+	if model == nil {
+		writeJSON(w, 200, map[string]any{"enabled": false, "available": false, "message": "Model is not configured."})
+		return
+	}
+	payload := map[string]any{"enabled": true, "available": err == nil, "provider": model.Identity(), "message": message}
+	if routed, ok := model.(interface {
+		RoleIdentities() map[planning.AgentRole]planning.ProviderIdentity
+	}); ok {
+		payload["role_models"] = routed.RoleIdentities()
+	}
+	writeJSON(w, http.StatusOK, payload)
 }
 
 func (h Handler) startAgents(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +89,7 @@ func (h Handler) startAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, 422, "AGENT_START_FAILED", "Session could not start. Check the selected change and existing session identity.")
+		writeAPIError(w, 422, "AGENT_START_FAILED", "Session could not start. Check the selected change and repository. If model/source configuration changed, start a new session instead of resuming.")
 		return
 	}
 	writeJSON(w, http.StatusAccepted, v)
@@ -105,4 +115,39 @@ func (h Handler) getAgentSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, v)
+}
+
+func (h Handler) stopAgents(w http.ResponseWriter, r *http.Request) {
+	if h.Agents == nil {
+		writeAPIError(w, 503, "AGENTS_DISABLED", "Qwen review is disabled.")
+		return
+	}
+	id := strings.TrimPrefix(r.URL.Path, "/api/v1/agent-sessions/")
+	if err := h.Agents.Stop(id); err != nil {
+		writeAPIError(w, 404, "NOT_RUNNING", "Session is not running.")
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]string{"status": "STOPPING"})
+}
+
+func (h Handler) exportAgentDraft(w http.ResponseWriter, r *http.Request) {
+	if h.Agents == nil {
+		writeAPIError(w, 503, "AGENTS_DISABLED", "Agent service is disabled.")
+		return
+	}
+	id := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agent-sessions/"), "/draft-plan")
+	if id == "" || strings.Contains(id, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	p, err := h.Agents.ExportDraft(r.Context(), id)
+	if errors.Is(err, agentjobs.ErrBusy) {
+		writeAPIError(w, 409, "AGENT_BUSY", "Stop the active review and wait before exporting its checkpoint.")
+		return
+	}
+	if err != nil {
+		writeAPIError(w, 422, "DRAFT_UNAVAILABLE", "Stored draft could not pass evidence validation. The checkpoint was preserved.")
+		return
+	}
+	writeJSON(w, 200, p)
 }

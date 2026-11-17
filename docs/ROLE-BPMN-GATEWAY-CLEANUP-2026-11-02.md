@@ -52,7 +52,7 @@ Preparation and backups: `outputs/gateway-activity-2026-11-02/`. The manifest
 records all 112 before/after hashes, removed merge IDs, and the one added task.
 
 ```powershell
-python experiments/simple-erp/verify_result_merge_cleanup.py outputs/gateway-activity-2026-11-02
+python experiments/tools/verify_result_merge_cleanup.py outputs/gateway-activity-2026-11-02
 python scripts/audit_bpmn_conventions.py outputs/gateway-activity-2026-11-02/prepared
 ```
 

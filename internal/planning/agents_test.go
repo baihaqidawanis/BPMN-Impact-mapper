@@ -51,6 +51,66 @@ func agentBundle() EvidenceBundle {
 	return b
 }
 
+func TestPlannerMayLeaveWeakEvidenceUnplannedButMustCoverRelevant(t *testing.T) {
+	bundle := agentBundle()
+	d := CandidateDecision{ChangeType: bundle.Changes[0].ChangeType, ElementID: bundle.Changes[0].ElementID, File: "store.go", Symbol: "Submit", Verdict: VerdictWeak, Rationale: "Insufficient behavior evidence", EvidenceIDs: []string{"proof"}}
+	session := AgentSession{Role: Planner, Bundle: bundle, Decisions: []CandidateDecision{d}}
+	engine := AgentEngine{}
+	if err := engine.apply(context.Background(), &session, AgentReply{Plan: &LayerPlanningResponse{}}, bundle); err != nil {
+		t.Fatal("weak target forced speculative plan", err)
+	}
+	session.Role = Planner
+	session.Decisions[0].Verdict = VerdictRelevant
+	if err := engine.apply(context.Background(), &session, AgentReply{Plan: &LayerPlanningResponse{}}, bundle); err == nil {
+		t.Fatal("relevant target silently omitted")
+	}
+}
+
+func TestFocusedWeakOnlyEvidenceStaysUnresolvedWithoutInventedPlan(t *testing.T) {
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if turn.Role == Analyst {
+			reply, _ := goodReply(turn)
+			for i := range reply.Verification.Decisions {
+				reply.Verification.Decisions[i].Verdict = VerdictWeak
+			}
+			return reply, nil
+		}
+		if turn.Role == Planner {
+			return AgentReply{Plan: &LayerPlanningResponse{}}, nil
+		}
+		return goodReply(turn)
+	}}
+	result, err := (FocusedEngine{Model: model, Tools: fixtureTools{"source"}, Store: memorySessions{}}).Run(context.Background(), "weak-only", agentBundle())
+	if err != nil || result.Status != "NEEDS_REVIEW" || len(result.Draft) != 0 {
+		t.Fatal(result.Status, result.Draft, err)
+	}
+	plan, err := result.ChangePlan()
+	if err != nil || len(plan.ChangeCoverage) != 1 || plan.ChangeCoverage[0].Weak != 1 || plan.ChangeCoverage[0].Status != "UNRESOLVED" {
+		t.Fatal(plan, err)
+	}
+}
+
+func TestAgentTurnReportsRemainingRevisionBudget(t *testing.T) {
+	plannerCalls := 0
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if turn.Role == Planner {
+			want := DefaultAgentBudget().MaxRevisions - plannerCalls
+			if turn.RemainingRevisions != want {
+				t.Fatalf("remaining revisions = %d, want %d", turn.RemainingRevisions, want)
+			}
+			plannerCalls++
+			if plannerCalls == 1 {
+				return AgentReply{NeedEvidence: &EvidenceRequest{Questions: []string{"Confirm validation before submit."}}}, nil
+			}
+		}
+		return goodReply(turn)
+	}}
+	result, err := (AgentEngine{Model: model, Tools: fixtureTools{"source"}, Store: memorySessions{}}).Run(context.Background(), "remaining-budget", agentBundle())
+	if err != nil || result.Status != "COMPLETE" || plannerCalls != 2 {
+		t.Fatal("handoff budget not propagated", result.Status, plannerCalls, err)
+	}
+}
+
 func goodReply(t AgentTurn) (AgentReply, error) {
 	switch t.Role {
 	case Analyst:

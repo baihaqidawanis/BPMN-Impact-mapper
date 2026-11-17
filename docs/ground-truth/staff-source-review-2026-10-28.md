@@ -20,7 +20,7 @@ and each reference JSON. Do not copy this reference into the indexed repo.
 
 Old Staff L3 BPMN: `docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn`,
 SHA-256 `d5c9b4c5d71f1b552a01e915770ea434cb7b3673cfccc6aae0c9be19b430803d`.
-New BPMN: `experiments/simple-erp/staff-inventory/role-staff-l3-adj-submit-nonzero-delta.bpmn`,
+New BPMN: `experiments/history/simple-erp/staff-inventory/role-staff-l3-adj-submit-nonzero-delta.bpmn`,
 SHA-256 `e40124746ac36683e784184ff1517455f514fb29b27e850903ee2c9adc993f9b`.
 
 The success branch now requires at least one counted quantity different from
@@ -46,7 +46,7 @@ not specified by the new BPMN and remains unresolved.
 
 Old Staff L3 BPMN: `docs/bpm-haqi/roles/staff/p2p/level-3/role-staff-l3-pr-create.bpmn`,
 SHA-256 `93f10bf8766b4a8d1849c3803b698fc85a3d1baa05ab4a7e3453078577137d0c`.
-New BPMN: `experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-sequence-label.bpmn`,
+New BPMN: `experiments/history/simple-erp/staff-p2p/role-staff-l3-pr-create-sequence-label.bpmn`,
 SHA-256 `b7f84aa786367a38e769bbcc5322157ab054e5822c715196248aa1d73e0607eb`.
 
 Only the `name` of `role_staff_l3_pr_create_Flow_6` changes from `Tidak` to

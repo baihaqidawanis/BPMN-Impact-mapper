@@ -1,7 +1,7 @@
 # Evaluasi satu kasus inventory dan pencarian repo
 
 Sesi tersimpan: `d0897ce0da2185870b3911defa4cc334`. Acuan tersembunyi untuk
-evaluasi: `experiments/simple-erp/current-staff/add-task/reference.json`.
+evaluasi: `experiments/history/simple-erp/current-staff/add-task/reference.json`.
 Acuan tersebut memuat tiga file dan berstatus provisional source-derived;
 bukan ground truth independen dari perubahan implementasi nyata.
 
@@ -46,7 +46,7 @@ Belum ada uji Qwen lab ulang atas kebijakan pencarian baru.
 ## Mengulang evaluasi tanpa model
 
 ```powershell
-python experiments/evaluate_agent_case.py --report .data/analyses/fb60e3d69eaffe113771ec45fd9338e3/impact-report.json --session .data/agent-sessions/d0897ce0da2185870b3911defa4cc334.json --reference experiments/simple-erp/current-staff/add-task/reference.json --element-id ReasonReview --output outputs/agent-case-evaluation/result.json
+python experiments/evaluate_agent_case.py --report .data/analyses/fb60e3d69eaffe113771ec45fd9338e3/impact-report.json --session .data/agent-sessions/d0897ce0da2185870b3911defa4cc334.json --reference experiments/history/simple-erp/current-staff/add-task/reference.json --element-id ReasonReview --output outputs/agent-case-evaluation/result.json
 ```
 
 Script hanya membaca keluaran inference dan acuan setelah proses selesai.

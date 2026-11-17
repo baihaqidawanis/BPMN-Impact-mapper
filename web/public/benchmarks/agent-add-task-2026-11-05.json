@@ -1,0 +1,97 @@
+{
+  "version": "1",
+  "analysis_id": "89a7e1615e6e85aa107dfe9e04f6dbfd",
+  "input_fingerprint": "bf1ca3fcb205ce6cfd166acb61313148",
+  "session_id": "25ce84d91e6de0a3d3244e004fa28e9c",
+  "session_status": "NEEDS_REVIEW",
+  "model": "qwen3.5:9b-q8_0",
+  "prompt_version": "ollama-agent-json-v6-78932778b7dc47459e9c348a",
+  "reference_status": "provisional-source-review",
+  "selection_policy": "unique file proposals in draft for each reference change",
+  "ranking_unavailable_reason": "Agent proposals have no declared relevance ordering.",
+  "cases": [
+    {
+      "change_type": "ADD_TASK",
+      "element_id": "ReasonReview",
+      "expected_files": [
+        "frontend/features/inventory/inventory-adjustment-panel.tsx",
+        "backend/internal/inventory/adapter/postgres/store.go",
+        "backend/test/integration/operations_test.go"
+      ],
+      "hybrid_display": [
+        {
+          "label": "Hybrid displayed Top 5",
+          "cutoff": 5,
+          "files": [
+            "backend/internal/inventory/adapter/postgres/store.go",
+            "backend/test/integration/operations_test.go",
+            "frontend/features/inventory/inventory-adjustment-panel.tsx",
+            "backend/internal/inventory/domain/adjustment.go",
+            "docs/BUSINESS-RULES.md"
+          ],
+          "selected": 5,
+          "true_positive": 3,
+          "extra_vs_reference": 2,
+          "missed": 0,
+          "precision": 0.6,
+          "recall": 1.0,
+          "f1": 0.75
+        },
+        {
+          "label": "Hybrid displayed Top 10",
+          "cutoff": 10,
+          "files": [
+            "backend/internal/inventory/adapter/postgres/store.go",
+            "backend/test/integration/operations_test.go",
+            "frontend/features/inventory/inventory-adjustment-panel.tsx",
+            "backend/internal/inventory/domain/adjustment.go",
+            "docs/BUSINESS-RULES.md",
+            "backend/migrations/000005_operations.up.sql",
+            "docs/API-CONTRACT.md",
+            "docs/STATE-MACHINES.md",
+            "backend/internal/inventory/domain/stock_test.go",
+            "backend/internal/sales/adapter/postgres/store.go"
+          ],
+          "selected": 10,
+          "true_positive": 3,
+          "extra_vs_reference": 7,
+          "missed": 0,
+          "precision": 0.3,
+          "recall": 1.0,
+          "f1": 0.461538
+        }
+      ],
+      "hybrid_ranking": {
+        "average_precision": 1.0,
+        "reciprocal_rank": 1.0,
+        "r_precision": 1.0
+      },
+      "agent": {
+        "files": [
+          "backend/internal/inventory/adapter/postgres/store.go",
+          "backend/test/integration/operations_test.go",
+          "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "backend/internal/inventory/domain/adjustment.go",
+          "docs/BUSINESS-RULES.md",
+          "backend/migrations/000005_operations.up.sql"
+        ],
+        "selected": 6,
+        "true_positive": 3,
+        "extra_vs_reference": 3,
+        "missed": 0,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.666667,
+        "map": null,
+        "mrr": null,
+        "r_precision": null
+      }
+    }
+  ],
+  "date": "2026-11-05",
+  "input_sha256": {
+    "session": "35e326ede301e05695fdaf7f9f55cb8d4c208eb4bd7b388839ebde29da4182df",
+    "report": "7f122410564787fedc36201b816230b37c27ce1d7d5fb6a1041352260e717b8f",
+    "reference": "df960f051b5fa52bcc34962e656948db201a91441f6c34618c848571eaf8f7bf"
+  }
+}

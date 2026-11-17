@@ -210,10 +210,17 @@ func validatePlans(bundle EvidenceBundle, decisions []CandidateDecision, require
 		if !validAction(plan.Action) || !allowedPlannedAction(candidate.SuggestedAction, plan.Action) {
 			return fmt.Errorf("target %q cannot change suggested action %q to %q", key, candidate.SuggestedAction, plan.Action)
 		}
+		if err := validatePlanScope(plan); err != nil {
+			return err
+		}
 		if err := validatePlanText(plan); err != nil {
 			return fmt.Errorf("target %q: %w", key, err)
 		}
-		if strings.TrimSpace(plan.Summary) == "" || len(cleanStrings(plan.Steps)) == 0 {
+		if plan.Action == domain.ActionNoAction {
+			if err := validateNoChangePlan(plan); err != nil {
+				return err
+			}
+		} else if strings.TrimSpace(plan.Summary) == "" || len(cleanStrings(plan.Steps)) == 0 {
 			return fmt.Errorf("target %q requires valid action, summary, and steps", key)
 		}
 		if err := validateEvidenceIDs(candidate, plan.EvidenceIDs); err != nil {
@@ -240,7 +247,17 @@ func allowedPlannedAction(suggested, planned domain.RequiredAction) bool {
 	if planned == suggested {
 		return true
 	}
-	return planned == domain.ActionVerify || planned == domain.ActionUnresolved
+	return planned == domain.ActionVerify || planned == domain.ActionUnresolved || planned == domain.ActionNoAction
+}
+
+func validateNoChangePlan(p FilePlan) error {
+	if strings.TrimSpace(p.Summary) == "" || strings.TrimSpace(p.CurrentBehavior) == "" || strings.TrimSpace(p.TargetBehavior) == "" || strings.TrimSpace(p.DesignRationale) == "" || len(p.EvidenceIDs) == 0 || len(cleanStrings(p.AcceptanceChecks)) == 0 {
+		return fmt.Errorf("%w: no-change decisions require current/target behavior, evidence, rationale and existing-contract checks", ErrAgentPlanIncomplete)
+	}
+	if len(cleanStrings(p.ProposedChanges)) != 0 || len(cleanStrings(p.Steps)) != 0 {
+		return fmt.Errorf("%w: no-change decision cannot contain implementation steps or proposed edits", ErrAgentPlanIncomplete)
+	}
+	return nil
 }
 
 func validatePlanText(plan FilePlan) error {
@@ -254,7 +271,11 @@ func validatePlanText(plan FilePlan) error {
 	if len(plan.ProposedChanges) > 8 || len(plan.AcceptanceChecks) > 8 {
 		return errors.New("too many proposed changes or acceptance checks")
 	}
-	text := append([]string{plan.Summary}, steps...)
+	text := append([]string{plan.Summary, plan.CurrentBehavior, plan.TargetBehavior, plan.DesignRationale}, steps...)
+	if len(plan.Assumptions) > 8 {
+		return errors.New("too many plan assumptions")
+	}
+	text = append(text, plan.Assumptions...)
 	text = append(text, plan.ProposedChanges...)
 	text = append(text, plan.AcceptanceChecks...)
 	for _, value := range text {

@@ -123,67 +123,62 @@ backend/internal/inventory/adapter/postgres/store.go :: TransitionAdjustment</bp
         <dc:Bounds x="670" y="110" width="175" height="85" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_0_di" bpmnElement="role_staff_l3_adj_submit_Flow_0">
-        <di:waypoint x="212" y="131.0" />
-        <di:waypoint x="316.0" y="131.0" />
-        <di:waypoint x="316.0" y="152.5" />
-        <di:waypoint x="420" y="152.5" />
+        <di:waypoint x="212.0" y="131.0" />
+        <di:waypoint x="236.0" y="131.0" />
+        <di:waypoint x="236.0" y="152.5" />
+        <di:waypoint x="420.0" y="152.5" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_1_di" bpmnElement="role_staff_l3_adj_submit_Flow_1">
-        <di:waypoint x="595" y="152.5" />
-        <di:waypoint x="632.5" y="152.5" />
-        <di:waypoint x="632.5" y="152.5" />
-        <di:waypoint x="670" y="152.5" />
+        <di:waypoint x="595.0" y="152.5" />
+        <di:waypoint x="670.0" y="152.5" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_2_di" bpmnElement="role_staff_l3_adj_submit_Flow_2">
-        <di:waypoint x="1095" y="622.5" />
-        <di:waypoint x="1132.5" y="622.5" />
-        <di:waypoint x="1132.5" y="607.5" />
-        <di:waypoint x="1170" y="607.5" />
+        <di:waypoint x="1095.0" y="622.5" />
+        <di:waypoint x="1119.0" y="622.5" />
+        <di:waypoint x="1119.0" y="607.5" />
+        <di:waypoint x="1170.0" y="607.5" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_3_di" bpmnElement="role_staff_l3_adj_submit_Flow_3">
-        <di:waypoint x="1225" y="607.5" />
-        <di:waypoint x="1322.5" y="607.5" />
-        <di:waypoint x="1322.5" y="622.5" />
-        <di:waypoint x="1420" y="622.5" />
+        <di:waypoint x="1225.0" y="607.5" />
+        <di:waypoint x="1249.0" y="607.5" />
+        <di:waypoint x="1249.0" y="622.5" />
+        <di:waypoint x="1420.0" y="622.5" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1322.5" y="567.5" width="180" height="35" />
+          <dc:Bounds x="1274.5" y="578.5" width="120.0" height="32.0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_4_di" bpmnElement="role_staff_l3_adj_submit_Flow_4">
-        <di:waypoint x="1595" y="622.5" />
-        <di:waypoint x="1632.5" y="622.5" />
-        <di:waypoint x="1632.5" y="622.5" />
-        <di:waypoint x="1670" y="622.5" />
+        <di:waypoint x="1595.0" y="622.5" />
+        <di:waypoint x="1670.0" y="622.5" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_5_di" bpmnElement="role_staff_l3_adj_submit_Flow_5">
-        <di:waypoint x="1845" y="622.5" />
-        <di:waypoint x="1882.5" y="622.5" />
-        <di:waypoint x="1882.5" y="622.5" />
-        <di:waypoint x="1920" y="622.5" />
+        <di:waypoint x="1845.0" y="622.5" />
+        <di:waypoint x="1920.0" y="622.5" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1882.5" y="582.5" width="180" height="35" />
+          <dc:Bounds x="1822.5" y="692.5" width="120.0" height="32.0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_Flow_6_di" bpmnElement="role_staff_l3_adj_submit_Flow_6">
-        <di:waypoint x="1225" y="607.5" />
-        <di:waypoint x="1572.5" y="607.5" />
-        <di:waypoint x="1572.5" y="622.5" />
-        <di:waypoint x="1920" y="622.5" />
+        <di:waypoint x="1197.5" y="580.0" />
+        <di:waypoint x="1197.5" y="556.0" />
+        <di:waypoint x="1896.0" y="556.0" />
+        <di:waypoint x="1896.0" y="622.5" />
+        <di:waypoint x="1920.0" y="622.5" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1572.5" y="567.5" width="180" height="35" />
+          <dc:Bounds x="1486.75" y="454.0" width="120.0" height="32.0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="role_staff_l3_adj_submit_result_to_end_di" bpmnElement="role_staff_l3_adj_submit_result_to_end">
-        <di:waypoint x="2095" y="622.5" />
-        <di:waypoint x="2132.5" y="622.5" />
-        <di:waypoint x="2132.5" y="601.0" />
-        <di:waypoint x="2170" y="601.0" />
+        <di:waypoint x="2095.0" y="622.5" />
+        <di:waypoint x="2119.0" y="622.5" />
+        <di:waypoint x="2119.0" y="601.0" />
+        <di:waypoint x="2170.0" y="601.0" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="ReasonChecked_di" bpmnElement="ReasonChecked">
-        <di:waypoint x="845" y="152.5" />
-        <di:waypoint x="882.5" y="152.5" />
-        <di:waypoint x="882.5" y="622.5" />
-        <di:waypoint x="920" y="622.5" />
+        <di:waypoint x="845.0" y="152.5" />
+        <di:waypoint x="869.0" y="152.5" />
+        <di:waypoint x="869.0" y="622.5" />
+        <di:waypoint x="920.0" y="622.5" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

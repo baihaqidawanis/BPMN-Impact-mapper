@@ -55,3 +55,10 @@ export async function getAnalysis(analysisID: string, signal?: AbortSignal): Pro
   if (!response.ok) throw new Error("The selected analysis is unavailable.");
   return await response.json() as Report;
 }
+
+export async function getAnalysisBPMN(id: string, signal?: AbortSignal): Promise<{before_xml:string;after_xml:string}|null> {
+ const response=await fetch(`/backend/api/v1/analyses/${encodeURIComponent(id)}/bpmn-inputs.json`,{cache:"no-store",signal});
+ if(response.status===404)return null;
+ if(!response.ok)throw new Error("Saved BPMN files could not be loaded.");
+ return response.json();
+}

@@ -215,7 +215,19 @@ type Warning struct {
 	Message string `json:"message"`
 }
 
+// ProcessContext is private analysis input, excluded from shareable impact reports.
+type ProcessContext struct {
+	Before *Graph `json:"before"`
+	After  *Graph `json:"after"`
+}
+type BPMNPair struct {
+	AnalysisID       string `json:"analysis_id"`
+	InputFingerprint string `json:"input_fingerprint"`
+	BeforeXML        string `json:"before_xml"`
+	AfterXML         string `json:"after_xml"`
+}
 type Report struct {
+	ProcessContext   *ProcessContext   `json:"-"`
 	SourceAnalysis   []FileAnalysis    `json:"source_analysis,omitempty"`
 	AnalysisID       string            `json:"analysis_id"`
 	InputFingerprint string            `json:"input_fingerprint"`

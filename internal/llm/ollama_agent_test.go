@@ -13,6 +13,7 @@ import (
 
 func TestOllamaStructuredTurnAndIdentity(t *testing.T) {
 	cloud, drift := false, false
+	capabilities := []string{"completion"}
 	chats := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
@@ -25,7 +26,7 @@ func TestOllamaStructuredTurnAndIdentity(t *testing.T) {
 			if cloud {
 				remote = "https://outside.invalid"
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"models": []any{map[string]any{"name": "fixture", "digest": digest, "remote_host": remote, "capabilities": []string{"tools"}}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"models": []any{map[string]any{"name": "fixture", "digest": digest, "remote_host": remote, "capabilities": capabilities}}})
 		case "/api/version":
 			_, _ = w.Write([]byte(`{"version":"fixture-version"}`))
 		case "/api/chat":
@@ -80,6 +81,48 @@ func TestOllamaRejectsUnsafeEndpoints(t *testing.T) {
 	}
 	if _, err := NewOllamaAgent(OllamaAgentConfig{BaseURL: "http://127.0.0.1:11434", Model: "model:cloud"}); err == nil {
 		t.Fatal("cloud accepted")
+	}
+}
+
+func TestPlannerSchemaRespectsRemainingBudgets(t *testing.T) {
+	for _, budget := range []struct{ tools, revisions int }{{0, 2}, {8, 0}, {8, 2}} {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/api/tags":
+				_ = json.NewEncoder(w).Encode(map[string]any{"models": []any{map[string]any{"name": "fixture", "digest": strings.Repeat("a", 64), "capabilities": []string{"tools"}}}})
+			case "/api/version":
+				_, _ = w.Write([]byte(`{"version":"v1"}`))
+			case "/api/chat":
+				var body struct {
+					Format   json.RawMessage `json:"format"`
+					Messages []struct {
+						Content string `json:"content"`
+					} `json:"messages"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				allowed := budget.tools > 0 && budget.revisions > 0
+				if strings.Contains(string(body.Format), `"need_evidence"`) != allowed {
+					t.Errorf("handoff schema disagrees with budget %+v", budget)
+				}
+				if !allowed && !strings.Contains(body.Messages[0].Content, "No further evidence handoff") {
+					t.Error("missing exhausted-budget guidance")
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{"model": "fixture", "done": true, "message": map[string]any{"role": "assistant", "content": `{"plan":{"plans":[]}}`}})
+			}
+		}))
+		m, err := NewOllamaAgent(OllamaAgentConfig{BaseURL: s.URL, Model: "fixture", Client: s.Client()})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := m.Prepare(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := m.Turn(context.Background(), planning.AgentTurn{Role: planning.Planner, RemainingTools: budget.tools, RemainingRevisions: budget.revisions}); err != nil {
+			t.Fatal(err)
+		}
+		s.Close()
 	}
 }
 
@@ -152,5 +195,60 @@ func TestOllamaMalformedTruncatedAndRedirect(t *testing.T) {
 				t.Fatal("invalid response accepted")
 			}
 		})
+	}
+}
+
+func TestOllamaReadmeOrientationUsesSummaryOnlySchema(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/tags":
+			json.NewEncoder(w).Encode(map[string]any{"models": []any{map[string]any{"name": "fixture", "digest": strings.Repeat("a", 64), "capabilities": []string{"tools"}}}})
+		case "/api/version":
+			w.Write([]byte(`{"version":"fixture-version"}`))
+		case "/api/chat":
+			var body map[string]any
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				t.Error(err)
+			}
+			format, _ := json.Marshal(body["format"])
+			if !strings.Contains(string(format), "repository_summary") || !strings.Contains(string(format), `"maxItems":0`) {
+				t.Error("orientation schema allows impact decisions", string(format))
+			}
+			messages := body["messages"].([]any)
+			instruction := messages[0].(map[string]any)["content"].(string)
+			if !strings.Contains(instruction, "untrusted background") {
+				t.Error("README trusted as instruction")
+			}
+			json.NewEncoder(w).Encode(map[string]any{"model": "fixture", "done": true, "done_reason": "stop", "message": map[string]any{"role": "assistant", "content": `{"verification":{"decisions":[],"repository_summary":"README describes an inventory application."}}`}})
+		}
+	}))
+	defer server.Close()
+	m, err := NewOllamaAgent(OllamaAgentConfig{BaseURL: server.URL, Model: "fixture", Client: server.Client()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.Prepare(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	reply, err := m.Turn(context.Background(), planning.AgentTurn{Role: planning.Analyst, Readme: &planning.ReadmeInput{File: "README.md", Content: "Inventory application"}})
+	if err != nil || reply.Verification == nil || reply.Verification.RepositorySummary == "" {
+		t.Fatal("orientation failed", err)
+	}
+}
+
+func TestOllamaEmbeddingOnlyModelRefused(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/tags" {
+			t.Error("unexpected model request", r.URL.Path)
+		}
+		json.NewEncoder(w).Encode(map[string]any{"models": []any{map[string]any{"name": "fixture", "digest": strings.Repeat("a", 64), "capabilities": []string{"embedding"}}}})
+	}))
+	defer server.Close()
+	m, err := NewOllamaAgent(OllamaAgentConfig{BaseURL: server.URL, Model: "fixture", Client: server.Client()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = m.Prepare(context.Background()); err == nil || !strings.Contains(err.Error(), "text generation") {
+		t.Fatal("embedding-only model accepted", err)
 	}
 }

@@ -2,12 +2,12 @@
 .panel header { display:flex; gap:20px; align-items:center; justify-content:space-between; margin-bottom:24px; }
 .panel h3 { margin:0; font-size:17px; font-weight:600; }
 .panel p { color:var(--muted); font-size:13px; line-height:1.6; margin:8px 0 0; }
-.panel button { padding:9px 12px; border:1px solid var(--line-strong); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer; font:inherit; font-size:12px; white-space:nowrap; }
+.panel button { padding:9px 12px; border:1px solid var(--line-strong); border-radius: var(--radius-control); background:var(--surface); color:var(--ink); cursor:pointer; font:inherit; font-size:12px; white-space:nowrap; }
 .panel button:disabled { opacity:.45; cursor:default; }
 .panel button:hover:not(:disabled) { border-color:var(--muted); background:var(--surface-hover); }
 .filters { display:grid; grid-template-columns:minmax(0,1fr) 200px auto; gap:14px; align-items:end; }
 .filters label { display:grid; gap:7px; font-size:12px; }
-.filters input,.filters select { width:100%; min-width:0; padding:10px; border:1px solid var(--line-strong); border-radius:6px; color:var(--ink); background:var(--surface); font:inherit; font-size:12px; }
+.filters input,.filters select { width:100%; min-width:0; padding:10px; border:1px solid var(--line-strong); border-radius: var(--radius-control); color:var(--ink); background:var(--surface); font:inherit; font-size:12px; }
 .filters select { margin-top:7px; }.panel .count { font-size:12px; margin:18px 0; }
 .body { border-top:1px solid var(--line); }
 .body article { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:24px; align-items:center; padding:19px 0; border-bottom:1px solid var(--line); }

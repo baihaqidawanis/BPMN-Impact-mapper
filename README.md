@@ -18,13 +18,15 @@ cd C:\BPMN-Impact-Mapper\web; npm run dev
 
 Buka http://localhost:3000. Panduan yang dipakai sekarang:
 
-- [Skenario Staff terbaru dan isian web](experiments/simple-erp/current-staff/README.md)
+- [Skenario Staff terbaru dan isian web](experiments/simple-erp/current-staff-v2/README.md)
 - [Tabel mapping baseline Staff P2P L3](experiments/simple-erp/baseline-traceability/README.md)
 - [Peta dokumentasi](docs/README.md)
 - [Alur Workspace: Mapping dan Planning](docs/WORKSPACE-UX-2026-11-02.md)
 - [Kesiapan sebelum model lab dan source connections](docs/PRE-LLM-READINESS.md)
 - [Eksperimen dan baseline historis](experiments/README.md)
 - [Arah TA](TA-DIRECTION-CONCLUSION.md) dan [metode](BASELINE-METHODS.md)
+
+Panduan struktur: [architecture](docs/ARCHITECTURE.md). Tes diagnostik model memakai build tag `labdiagnostics` dan opt-in eksplisit; tes normal tidak menghubungi model lab.
 
 Source backend: `cmd/` dan `internal/`. Frontend: `web/`. Fixture sintetis:
 `testdata/`. Data analisis lokal: `.data/`. Hasil eksperimen: `outputs/`.
@@ -213,7 +215,7 @@ Open `http://127.0.0.1:3000`. The browser uploads only the two BPMN documents; t
 
 The **Saved analyses** panel lists deterministic summaries from local immutable reports and can reopen a report after browser refresh without rerunning inference. It intentionally shows no unreliable creation timestamp.
 
-For presentation, select **Load synthetic demo** and then **Run impact analysis**. The preset uses neutral tracked BPMN/source fixtures and is not a Simple-ERP rule, benchmark result, or ground truth. Start the Go server from the repository root so the relative synthetic repository path resolves correctly. Manual repository and BPMN input remains available.
+Mapping uses a repository path and two BPMN uploads; the demo loader has been removed from the product form. For a synthetic check, use `testdata/repository` and upload `web/public/demo/old.bpmn` and `web/public/demo/new.bpmn`. These are neutral fixtures, not a benchmark result or ground truth. Start the Go server from the repository root so the relative repository path resolves correctly.
 
 The demo selector also provides focused insert-task, add/remove gateway branch, move-task, and ambiguous-match scenarios. These are deterministic functionality demonstrations, not accuracy evidence.
 
@@ -249,7 +251,7 @@ npm run build
 npm run test:e2e
 ```
 
-The Playwright suite uses the installed Chrome browser, starts isolated local Go/Next servers, and covers the one-click presentation demo, manual BPMN upload, composite context, same-input method comparison, reviewer annotation export, and reconciliation/adjudication/evaluation downloads.
+The Playwright suite uses the installed Chrome browser, starts isolated local Go/Next servers, and covers manual synthetic-fixture and BPMN uploads, composite context, same-input method comparison, reviewer annotation export, and reconciliation/adjudication/evaluation downloads.
 
 API routes:
 

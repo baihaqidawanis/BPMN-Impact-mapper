@@ -49,7 +49,7 @@ test("Simple-ERP-derived gateway and task scenario imports with visible diagram 
 test("inventory reason-task scenario has a visible inserted task and both connecting flows", async ({ page }) => {
   await page.goto("/?view=analysis");
   await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "BPMN Canvas", exact: true }).click();
-  await page.getByLabel("Canvas baseline BPMN").setInputFiles(path.resolve(__dirname, "../../../experiments/simple-erp/staff-inventory/role-staff-l3-adj-submit-reason-task.bpmn"));
+  await page.getByLabel("Canvas baseline BPMN").setInputFiles(path.resolve(__dirname, "../../../experiments/history/simple-erp/staff-inventory/role-staff-l3-adj-submit-reason-task.bpmn"));
   const editor = page.getByRole("region", { name: "Edit new BPMN" });
   const canvas = editor.getByTestId("bpmn-editor-canvas");
   await expect(editor.getByRole("button", { name: "Use edited BPMN" })).toBeEnabled();

@@ -31,7 +31,7 @@ func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
 		limits.RelatedPerChange = 3
 	}
 	bundle := EvidenceBundle{
-		Version: BundleVersion, AnalysisID: report.AnalysisID,
+		Version: BundleVersion, AnalysisID: report.AnalysisID, ProcessContext: report.ProcessContext,
 		InputFingerprint: report.InputFingerprint, Method: report.Method,
 		Repository: report.Repository, Changes: make([]ChangeInput, 0, len(report.Changes)),
 	}

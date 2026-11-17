@@ -1,7 +1,8 @@
 /bin/
 /coverage/
 /.gocache/
-/outputs/
+/outputs/*
+!/outputs/go.mod
 /.data/
 /web/.next/
 /web/.next-test/
@@ -12,8 +13,12 @@
 *.tsbuildinfo
 /impact-report.json
 /impact-report.md
+/impact-report-*.md
+/impact-report-*.json
+/tmp/
 /agent-context-*.json
 /change-plan-*.md
+/change-plan-*.json
 *.exe
 *.test
 *.out

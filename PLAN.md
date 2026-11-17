@@ -2591,3 +2591,405 @@ outputs/pre-qwen-ready/rebuilt was used for the reproducibility check instead.
 Scope: frontend presentation only; preserve retrieval, saved data and model opt-in.
 
 Evidence: eight Chrome tests passed (overview, workspace handoff, filters, five editor cases); desktop screenshots inspected. TypeScript and encoding checks passed. No real lab inference run in this UI pass.
+
+## Whole-analysis agent scope and cancellation
+
+- [DONE] UI submits all BPMN changes instead of selecting one; full repository scan classifies every chunk against each change, preserving per-change evidence and file planning in one exported plan.
+- [DONE] Stop review cancels the active worker and model HTTP context; checkpoints remain resumable, with the worker released only after cancellation completes.
+- [DONE] Versioned UI session key and full-scan binding prevent silent reuse of old selected-change sessions.
+- [DONE] Unit tests cover two-change single-scan planning and cancellation/worker release. Targeted browser tests pass using mocked inference.
+Real lab model quality and latency for combined requirements remain unverified. Large bundles fail context validation explicitly; no changes are silently omitted.
+
+## Persisted process specifications and Qwen review (2026-11-03)
+
+- [DONE] Retain immutable uploaded BPMN pair privately, restore Canvas from saved analyses and add complete semantic before/after graphs to bound planning context.
+- [DONE] Keep canonical impact report free of private XML/process graph; explicitly report older missing snapshots.
+- [DONE] Review three-role responsibilities and plan sections; document remaining cross-batch review and context-budget limitations in docs/QWEN-ARCHITECTURE-REVIEW.md.
+- [DONE] Offline persistence/API/browser regression verification. All Go application tests and vet pass, 10 workflow browser cases plus the dedicated persisted-pair Canvas test pass, TypeScript/encoding/diff checks pass. Initial Canvas test used a semantic-only BPMN without DI; corrected to a rendered fixture. Real lab inference deferred until VPN returns.
+
+## Cross-batch review and grouped plans (2026-11-03)
+
+- [DONE] Checkpointed final reviewer across all planning batches, with bounded retries and explicit unresolved coverage.
+- [DONE] Group Markdown by file while preserving per-change evidence, proposals, steps and acceptance checks.
+- [DONE] Offline regression tests for conflicts, interruption/resume and deterministic rendering. Four new planning tests pass; full Go tests/vet pass. Browser fixture validates final-review status, unresolved coverage and restoration without duplicate inference. TypeScript/encoding/diff checks pass. No lab inference or case-study writes. Final conflicts are reported for review rather than automatically rewriting the whole plan.
+
+## Active experiment BPMN diagram audit (2026-11-03)
+
+- [DONE] Audit split/join cardinality and improve routing in active after diagrams without changing process semantics.
+- [DONE] Preserve old active bytes in ignored outputs, refresh diagram hashes and verify semantic identity, branch visibility and browser import.
+Historical experimental packs remain frozen. Simple-ERP is read-only.
+
+Evidence: screened 23 experimental after/new documents with zero gateway-cardinality findings. Active pack verifier passes all 10 BPMNs, including node-avoiding routes. Four modified diagrams preserve semantic XML exactly and routing is idempotent. Five generated after BPMNs reproduce byte-identically. Five browser imports pass; combined screenshot inspected. Diagram labels still require zoom on the wide model. No ERP file changes or model calls.
+
+## Model-neutral AI review and focused bulk corpus (2026-11-03)
+
+- [DONE] AI Agents labels, role descriptions and honest measured/indeterminate progress.
+- [DONE] Bulk scan skips Markdown/prose and dependency manifests; implementation code/schema/config/tests remain eligible. Targeted approved source tools may still investigate dependencies/docs when needed.
+- [DONE] Bind full scan checkpoints to the exact chunk manifest so corpus-policy changes require a new session.
+- [DONE] Verify UI naming/progress and document the three-role plan contract in docs/AI-AGENT-PLAN-CONTRACT.md. Two mocked browser workflows pass; agenttools/planning/agentjobs/API/LLM tests and vet pass. TypeScript/encoding/diff checks pass. No live model calls; real output quality still requires lab validation.
+
+## README as background (2026-11-03)
+
+- [DONE] Root README orientation in full review, bounded UTF-8 input and summary, no implementation decisions in orientation.
+- [DONE] Successful orientation checkpoint reused on replay; missing README is optional; source/model binding protects stale summaries.
+- [DONE] Verify once-per-session behavior, adapter schema and bounded README handling; display background provenance in AI review. Backend tests/vet, TypeScript and encoding checks pass; mocked browser test verifies summary provenance/truncation. No live model calls.
+
+## End-to-end readiness gate (2026-11-03)
+
+- [DONE] Verify full local Ollama HTTP/API/checkpoint/plan-download path with README and multiple changes. Combined real BPMN transport test passes with all 20 changes, full nodes/flows, 4 KiB source chunk and maximum README summary. Full application tests and vet passed; affected API/LLM tests/vet rerun after final transport changes. No real model inference.
+- [DONE] Remove duplicated adjacency/inline process/source excerpts only in model transport; preserve complete graph and exact engine evidence validation. Combined BPMN 20-change payload receives a dedicated 32K offline transport test.
+Model correctness and large-plan consistency budgets remain empirical runtime checks; no arbitrary-scale claim.
+
+## Softer workspace styling (2026-11-03)
+
+- [DONE] Use Form AM/RTWT visual principles read-only: softer card/control radius, subtle elevation, cool neutral surfaces and consistent hover/focus.
+- [DONE] Verify desktop/mobile navigation, canvas and AI review presentation. Eight cases passed initially; mobile overflow at responsive margin transition was fixed and the affected filter/mobile test passed on rerun. Desktop report screenshot inspected. Typecheck, encoding and whitespace checks pass.
+No source changes to reference apps, scoring or agent execution.
+
+## Overall UI readability review (2026-11-03)
+
+- [DONE] Remove tiny 8-10px component text, shorten generic Overview copy and simplify Planning hierarchy.
+- [DONE] Verify Overview/Mapping/Canvas/Planning/Library/History/Research and open Guide on desktop/mobile. Twelve browser cases pass; Overview, Research and full Planning screenshots inspected. TypeScript/encoding/diff checks pass.
+No model/mapping changes in this pass.
+
+## Lab chunk validation correction (2026-11-03)
+
+- [DONE] Compact scan response: model returns zero-based change index, verdict and rationale; adapter binds file/change/evidence from the immutable snapshot.
+- [DONE] Validate missing/duplicate/unknown indices, foreign files, bounded output, HTTP integration and combined input budget. Affected tests and vet pass. Existing failed checkpoint preserved; new model protocol requires a new session. No live lab retry performed by the agent.
+Observed session paused before completing chunk 0; rejected response was not retained, so the original invalid field cannot be identified from the checkpoint alone. Do not weaken evidence checks or rewrite the old checkpoint.
+
+## Focused context overflow (2026-11-03)
+
+- [DONE] Process all focused changes through bounded per-change sessions and merge one final plan; retain completed child checkpoints on resume.
+- [DONE] Expose current focused batch as progress, not session issues; poll current child role/counters without replacing the whole-analysis context.
+Observed two focused runs: eight changes, 24 seed candidates, about 31 KB of bundle data; model request was rejected before inference. No reduction in per-change candidate count or silent loss of changes. Default tool/turn/revision budget applies per child batch now; overall focused session timeout remains enforced by the service.
+
+Focused regression: interrupted second change resumes without replaying the completed first change and exports both plans. Affected planning/service/API/adapter tests and vet pass; TypeScript/encoding/diff checks pass. No live lab retry; fresh focused session required after restart.
+
+## Empty agent plan rendering (2026-11-03)
+
+- [DONE] Handle null historical plan arrays and nested lists without crashing; display explicit no-recommendations status.
+- [DONE] New canonical plan exports serialize an empty plans array rather than null.
+- [DONE] Focused batches preserve failed child diagnostics and continue independent changes; invalid drafts are not exported.
+Observed session 0c7c66bbfcece54249684c2b543029eb had no valid recommendations. This UI fix does not prove live-model planning quality.
+
+Empty-plan verification: two browser cases pass (including null plan restoration without a page error); partial focused-batch regression preserves a later valid plan and marks the failed requirement unresolved. Affected Go tests/vet and TypeScript/encoding/diff checks pass. Live model output quality not retested.
+
+## Planner handoff budget alignment (2026-11-04)
+
+- [DONE] Pass remaining revision allowance alongside remaining source-tool allowance on every agent turn.
+- [DONE] Remove need_evidence from the Ollama planner schema when source tools or revision allowance are exhausted. Preserve engine validation and explicit uncertainty in conditional proposals.
+- [DONE] Bump engine/provider protocol identities so historical sessions cannot silently resume under changed action rules.
+- [DONE] Correct lab handoff instructions: review all changes using internal batches, without a manual ADD_TASK selection.
+- Verification: all cmd/internal Go tests pass with local mock HTTP access enabled; go vet passes; frontend typecheck and encoding checks pass. Regression tests cover consumed revision allowance and schema permissions at zero/nonzero tool and revision budgets.
+- [TODO] Validate plan quality and latency with the actual lab model after VPN is available. Offline tests do not guarantee arbitrary model output or network reliability.
+
+Browser verification: both AI-review cases pass (18.6 seconds), including persisted null-plan recovery without page errors. No model inference was sent to the lab.
+
+## Active experiment diagram reconfirmation (2026-11-04)
+
+- [DONE] Audit gateway cardinality across 23 experimental after BPMNs; no missing inputs/outputs or one-in/one-out gateways found.
+- [DONE] Improve active four after edge-label placement using routed edges, node/external-label bounds and lane boundaries; preserve semantic process XML and baseline bytes. Update manifest/snapshot diagram hashes.
+- [DONE] Render ten active before/after BPMNs with installed bpmn.io in headless Chrome, no import warnings or missing DI elements. Save local SVG/PNG audit outputs; inspect combined, AND, XOR and task layouts.
+- [DONE] Verify active pack conventions/hash/source checks and router idempotence. Fix root README's stale link to current-staff instead of current-staff-v2, and remove stale selected-change instructions from active README.
+- Initial full-app browser batch experienced a tab crash before import and was interrupted. Direct-library rendering verifies importer/diagram completeness separately; it is not substituted for live-model quality.
+- [TODO] Run the new combined input through the actual lab model and inspect evidence/plan quality once VPN is available.
+
+Application retry: combined before/after Canvas browser tests both pass (19.8 seconds).
+
+## Correction: historical gateway adjacency audit (2026-11-04)
+
+- [DONE] Explicit adjacency scan finds 19 direct gateway-to-gateway flows in 12 historical experiment files; current-staff-v2 has zero. Earlier cardinality verification was not an all-pack adjacency guarantee. Detailed findings: docs/EXPERIMENT-GATEWAY-AUDIT.md.
+- [DONE] Add historical-pack README notices and direct new tests to the active validated pack.
+- [TODO] Create versioned replacements for historical scenarios if reused; preserve control-pair equality and justify any added activity before updating references.
+
+## User-authorized experimental after correction
+
+- [DONE] Normalize nine historical positive after diagrams; preserve before and ERP. Remove redundant XOR result merges and explicitly model master-input preparation/zero-delta result handling.
+- [DONE] Render 18 paired documents without warnings/missing elements; rescan confirms remaining three adjacency edges occur only in unchanged-control snapshots.
+- [DONE] Update input hashes and document historical metrics/references limitations. Do not treat notation normalization as new business behavior or reuse old metrics.
+
+## Offline experiment closure (2026-11-04)
+
+- [DONE] Audit production graph diffs for active pairs and nine normalized historical after pairs; document extra notation changes and retain subset scope.
+- [DONE] Recheck reference reasoning against current ERP source without supplying references to inference. No fabricated full coverage or extra schema/API impacts added.
+- [DONE] Execute all four methods on five active scenarios in two batches; first full batch timed out, combined/control rerun completes with reproducibility checks. Document per-case metrics and macro-average of four labeled positive anchors, controls separate.
+- [DONE] Re-run planning/agentjobs/llm/API failure and transport tests successfully.
+- Finding: Fusion MAP exceeds context Hybrid on this small provisional set; do not tune weights to these answers or claim universal superiority.
+- [TODO] Validate actual lab AI plan quality and compare its mapping to the same scoped reference.
+
+## Actual focused-session context regression (2026-11-04)
+
+- [DONE] Inspect uploaded plan and actual persisted checkpoints: 19/20 children hit context guards, one migration draft rejected as insufficient by reviewer; complete graphs were present.
+- [DONE] Factor shared graphs, repeated graph IDs, relative evidence locations and schema definitions. Preserve original saved data and strict engine tuple validation; bump provider identity.
+- [DONE] Replay all 20 captured child turns through localhost stub with final prompts; add graph reconstruction/immutability test; adapter/planning/job/API tests pass.
+- [TODO] Validate actual v5 model output and large final-review handling. No claim that partial migration-only output is a correct completed plan.
+
+## Visible source access trace (2026-11-04)
+
+- [DONE] Preserve focused child tool observations in parent checkpoints and expose a summary trace in agent session responses. Restore older focused traces from child checkpoints.
+- [DONE] Display per-change queries, requested file/function, returned file paths, errors and paging/truncation in Planning; distinguish search matches from returned source excerpts and full-scan coverage.
+- Verification: restored multi-child trace regression, planning/job/API tests and vet pass; TypeScript/encoding checks pass. Browser verification recorded separately below.
+
+Source-trace browser retry passes (19.5 seconds), verifying lookup query, returned file paths, paging metadata and refresh restoration. Old-session audit: 34 distinct read-result paths, not just three initial candidates.
+
+## Focused coverage and developer-plan upgrade
+
+- [DONE] Include every displayed candidate per change, split into two-candidate sessions with independent tool budgets and resumable progress. No silent top-three scope.
+- [DONE] Add explicit current/required behavior and design rationale to structured file plans; require bounded evidence-based steps and acceptance criteria, not chain-of-thought narration or padding.
+- [DONE] Verify ten-seed/service coverage, interruption/resume, detailed Markdown and UI progress contracts. Actual model output quality requires a later lab run.
+
+Focused upgrade verification: all cmd/internal Go tests pass; strict output tests retain rejection of fabricated targets/evidence, now allowing an explicitly empty partial plan. Service resume includes the final consistency-review turn. Model provider identity is v6 and focused binding v2. No live model-quality claim. Browser/type/vet results recorded below.
+
+Browser gate: two AI-review cases pass (28.4 seconds), including new behavior/design fields, source log and null historical plans. TypeScript/encoding checks and vet pass. Focused candidate-progress counts are batch processing counts, not accuracy. Final combined review remains bounded and explicitly reports NEEDS_REVIEW if it cannot fit.
+
+
+## Saved AI selection evaluation (2026-11-05)
+
+- [DONE] Evaluate actual add-task session 25ce84d91e6de0a3d3244e004fa28e9c against the pre-existing three-file ReasonReview reference. Export a sanitized snapshot with analysis/fingerprint checks and input hashes.
+- [DONE] Display single-case draft selection metrics separately in Research: Precision 50%, Recall 100%, F1 66.67%. User-selected Top 5/10 rows are display comparisons, not automatic threshold selectors.
+- [DONE] Leave AI MAP/MRR/R-precision unavailable because proposals have no defined relevance order. Do not treat Markdown or processing order as ranking.
+- [DONE] Document manual plan-quality assessment 55/100, its rubric, source limitations and NEEDS_REVIEW status in docs/AI-EVALUATION-2026-11-05.md. No inference method or plan approval was changed.
+- [DONE] Four offline evaluator tests, TypeScript and UI encoding checks pass. Browser verification recorded after completion below.
+- [TODO] Repair unresolved agent review/context failures and validate a fresh live model run. This saved diagnostic does not establish improved plan correctness or general superiority.
+
+Browser gate: all three benchmark-summary cases pass (14.1 seconds). Initial run exposed mobile overflow on long file paths; wrapping fixed and verified. Tests verify the saved AI metrics, JSON download, unavailable ranking labels and no inference POST. Frontend generated type import restored after test server shutdown.
+
+
+## Agent rejected drafts and final-review context (2026-11-05)
+
+- [DONE] Withhold non-COMPLETE focused/full child drafts from combined recommendations; preserve checkpoints, source decisions and explicit diagnostics. NEEDS_REVIEW Markdown warns that remaining proposals are unapproved.
+- [DONE] On whole-review context overflow, run checkpointed detailed review per file, then compact cross-file contract review. Every file and target/proposed edit remains represented. Failed details cannot pass via the compact stage; oversized groups remain NEEDS_REVIEW.
+- [DONE] Strengthen generic action/API/type/schema review instructions; provider v7, focused v3, full review v6 require new sessions. Historical metrics and reports remain unchanged.
+- [DONE] Add regressions for rejection withholding, fallback review, interruption/resume without replay, contract preservation and conflict detection. Verification results recorded below after completion.
+- [TODO] Re-run the add-task case with the lab model; compare actual plan correctness and the same reference metrics. No claim of a new precision/recall improvement before inference.
+
+## Current-before mapping: Staff adjustment submit (2026-11-05)
+
+- [DONE] Refresh this one process from current ERP BPMN/source, read-only. Record all eight nodes, eight flows, supporting route/service/role/test/schema links and nine file hashes in baseline-traceability/adj-submit-current.json; render the accompanying Markdown.
+- [DONE] Identify obsolete result_merge in the older all-roles snapshot and direct this process to the refreshed mapping; do not silently claim every historical process was revalidated.
+- [DONE] Compare existing behavior to ReasonReview after reference: frontend reason capture, submit-only store validation, inventory regression tests. Existing reason payload/schema need no automatic endpoint or migration change.
+- [DONE] Reassess the same uploaded v6 Qwen plan; score remains 55/100 and saved selection metrics remain provisional P=50%, R=100%, F1=66.67%. No newer v7 inference result exists in the root.
+- [TODO] Independent review and runtime checks remain outside this static source mapping; do not claim complete one-to-one execution equivalence.
+
+Verification: gofmt, go test ./cmd/... ./internal/... and go vet ./cmd/... ./internal/... pass. No live model, source repository mutation, commit or push. Final consistency fallback remains bounded: a too-large single-file group or compact cross-file view is not silently truncated.
+
+Current mapping verification: complete current node/flow ID sets and endpoints match XML; all saved evidence lines match source; nine hashes match; before is byte-identical to the active experiment; expected-source hashes and local Markdown links pass. Saved Qwen metrics reproduced exactly from the original session/report/reference. No model request or ERP mutation.
+
+
+## Pre-presentation baseline screening (2026-11-05)
+
+- [DONE] Read-only screen all scoped 72 L3 processes: 354/354 activity IDs/labels retain mappings; all 34 mapped source/test hashes and saved evidence lines match. No claim of exhaustive semantic/runtime validation.
+- [DONE] Check all 112 scoped diagrams for selected start/end, gateway adjacency and flow endpoint conventions; no flagged diagrams. Resolve 139 L0-L2 decomposition links with XML QName namespaces; no missing/mismatched targets.
+- [DONE] Record stale metadata: 87/112 BPMN hashes differ; all 72 historical L3 flow tables still include obsolete result_merge controls. Preserve snapshots and Qwen outputs during this screening; refreshed adj-submit is the current focused reference.
+- [DONE] Write docs/BASELINE-SCREENING-2026-11-05.md and local outputs/baseline-screening-2026-11-05/screening.json. No live inference or ERP execution/mutation.
+- [TODO] Refresh historical control/flow metadata after presentation with reviewed provenance; perform semantic/runtime validation separately.
+
+
+## Resume workspace cleanup and offline web verification (2026-11-07)
+
+- [DONE] Complete references after interrupted relocation: active inputs remain current-staff-v2 and baseline-traceability; historical packages consolidated under experiments/history/simple-erp, tools under experiments/tools.
+- [DONE] Update code/test paths and Markdown links. Preserve frozen JSON identifiers/hashes; restore original freeze renderer and resolve relocated historical paths in research-only reader.
+- [DONE] All cmd/internal Go tests, vet, 17 Python tool tests, TypeScript/encoding and 10 browser cases pass. Verify 10 active BPMNs against canonical ERP baseline with zero convention findings.
+- [DONE] Keep latest impact/change-plan in root as explicitly requested. Record layout and limitations in docs/WORKSPACE-CLEANUP.md. No model requests, ERP writes, commit or push.
+- [TODO] Inspect lab Coder weights/quantization and serving endpoint, then run the same add-task case with a new AI session. This is the next independent task.
+
+
+## Imported Coder capability check (2026-11-07)
+
+- [DONE] Live metadata-only check confirms tunnel/runtime reachable and bpmn-qwen-coder:30b-q4_k_m installed with completion-only capability. Previous tools-only guard caused false unavailable status.
+- [DONE] Allow local completion models for schema-constrained JSON agent actions; retain cloud refusal, digest identity, source-tool and evidence validation. Reject embedding-only models.
+- [DONE] Completion-only structured-turn regression and llm/agentjobs/planning/API tests pass; diff whitespace check passes. No live source/inference request sent during debugging.
+- [TODO] Restart user backend, recheck model, run a fresh Focused review and inspect actual structured model output.
+
+
+## Coder before/after and evidence identity repair (2026-11-07)
+
+- [DONE] Audit v7 Coder checkpoints: false missing-before objections and mixed file/function/evidence identities; exported plan omits all three core reference files. Preserve actual results.
+- [DONE] Add original host-derived change_facts alongside compressed complete graphs. State intended additions/removals explicitly; no synthetic current behavior or ground-truth mapping enters inference.
+- [DONE] Use per-turn candidate/evidence indices for model verification/plans; host binds original immutable identities and engine retains strict evidence validation. Reject mixed/unknown/null indices. Persisted/export schemas unchanged.
+- [DONE] Strengthen current-versus-required behavior instructions and reject plans that merely edit BPMN or inspect an existing column. Keep three role agents with existing Go orchestration; provider prompt v8 requires a fresh session.
+- [DONE] Add indexed HTTP round-trip and adversarial/reference/immutability tests; replay all seven saved Coder child transports against localhost stub. Final full Go/vet results recorded after completion.
+- [TODO] Restart backend and run a NEW Coder Focused review for the same add-task analysis. No claim of improved precision/recall until that live output exists.
+
+V8 verification: gofmt, go test ./cmd/... ./internal/... and go vet ./cmd/... ./internal/... pass. Seven original Coder checkpoint turns replay successfully using local stub; whitespace checks pass. No lab inference, case-study source modification, frontend/export schema change, commit or push. Live Coder quality remains unverified.
+
+
+## V8 failed plan action / V9 repair (2026-11-07)
+
+- [DONE] Inspect uploaded v8 Coder plan/checkpoints: zero exported plans. Analyst recognises the three primary reference files, but Planner emits unrestricted invalid action strings. This is an adapter schema defect, not a clean model-quality comparison.
+- [DONE] Remove action selection from indexed plan schema; host preserves candidate action. Reject invalid explicit legacy actions. Keep technical intended changes as model prose and all evidence/target validation.
+- [DONE] Skip final model consistency when there are no validated proposals, returning a clear incomplete issue. Provider identity v9 requires a fresh session.
+- [DONE] Add regression coverage for host-bound action, schema exclusion, omitted action HTTP roundtrip and empty final plan. Verification results recorded below.
+- [TODO] Run new v9 Coder Focused session after restart and inspect actual developer plan correctness; old result is not overwritten.
+
+
+## Deeper agent planning coverage audit (2026-11-07)
+
+- [DONE] Remove compulsory WEAK file proposals; retain mandatory RELEVANT coverage and strict candidate/evidence validation. Schema ranges now distinguish required versus optional plans. WEAK omissions remain visible as unresolved coverage.
+- [DONE] Keep three role agents and existing Go orchestrator. Host-bound action fix retained; loop v5/provider v10 require fresh sessions.
+- [DONE] Regression tests for WEAK abstention, RELEVANT omission rejection, schema min/max counts, full cmd/internal Go suite and vet pass. Seven failed v8 checkpoints replay with actual feedback against localhost stub; no real inference.
+- [TODO] Run the same add-task session with latest backend and reassess actual Coder plan correctness. No measured quality improvement is claimed yet.
+
+
+## Offline payload audit (2026-11-09)
+
+- [DONE] Extend opt-in checkpoint replay to inspect actual outbound messages/schema, before/after facts, target/evidence indices and host-bound action exclusion. Preserve captured feedback.
+- [DONE] Reconstruct three roles for each of seven failed states: all 21 transport checks pass. Maximum serialized request 24,337 bytes vs conservative 28,160-byte budget; maximum input 17,700 bytes vs 24 KiB cap. These are test variants, not live inference.
+- [DONE] Add malformed index regression cases (negative/fractional/string/boolean/null/out-of-range). Preserve existing strict evidence/action checks.
+- [DONE] Document exact scope/reproduction/limits in docs/OFFLINE-AGENT-PAYLOAD-AUDIT-2026-11-09.md. No production method change, model call or benchmark overwrite.
+- [TODO] Actual v10 Coder plan correctness still requires a fresh model run; offline audit cannot establish higher precision/recall.
+
+
+## Mapping UI and agent progress (2026-11-09)
+
+- [DONE] Group Mapping inputs into Repository, Process versions and Search settings; remove layered card treatments and consolidate form CSS. Keep input names and existing submission behavior.
+- [DONE] Add a lightweight BPMN empty-state illustration; simplify report heading/metrics and retain sticky inputs.
+- [DONE] Extract agent progress styles; animate only an active role. Needs-review results stay distinct from approved completion; support reduced motion.
+- [DONE] Typecheck and encoding checks pass. Saved-analysis/Canvas and agent browser checks passed in the first suite (6 passed); Mapping retry passed separately (1 passed). First Mapping attempt failed with Chrome ERR_INSUFFICIENT_RESOURCES. A second multi-test run hit resource failures and was stopped; no live model inference was performed.
+- [DONE] Stop browser verification at user request; restore generated Next type paths. No backend method, source corpus, model configuration, commit or push changes.
+
+
+## Product UI simplification (2026-11-09)
+
+- [DONE] Remove Mapping demo controls, fetching logic, transient state and obsolete CSS. Preserve fixture files and Research batch experiments. Update existing browser tests to use ordinary uploads through a shared test helper.
+- [DONE] Consolidate sidebar styling into a light navigation system; remove accumulated overrides and simplify Overview styling. Keep desktop collapse, mobile navigation and focus controls.
+- [DONE] Extract accessible BPMN file fields with active filenames; cancelled selection preserves stored input, changing baseline remounts the after-picker, and editing is disabled during an analysis/runtime check.
+- [DONE] Show repository/before/after input readiness in the empty Mapping workspace. This is input readiness, not analysis success or accuracy.
+- [DONE] Lightweight syntax transpilation of 10 touched TS/TSX files, UTF-8 checks and git whitespace checks pass. No FE/BE startup, browser, full build, model call or VPN use this turn, per user request. Browser tests were adapted but not executed.
+- [TODO] User visual review and upload/Canvas checks when running the web app. Live model plan quality remains a separate pending validation.
+
+
+## Sidebar charcoal refinement (2026-11-09)
+
+- [DONE] Restore charcoal navigation at user request, with a restrained blue active indicator, readable secondary text, dark mobile close-button hover and visible keyboard focus. Main workspace remains light.
+- [DONE] CSS-only change; syntax and whitespace checked without starting browsers, servers, builds or model inference.
+
+
+## Live v10 failure repair (2026-11-09)
+
+- [DONE] Audit uploaded plan 1c7ea3da and session f55153e0: eight rejected >12-word searches in core backend/test batch; duplicate/missing planner targets; misplaced BPMN editing proposals accepted for a documentation target. Preserve failed outputs.
+- [DONE] Align mandatory repository-search query with source-tool limits and avoid forcing repeated failed searches.
+- [DONE] Bind planner output to unique named target slots while preserving immutable candidate/evidence validation.
+- [DONE] Reject clearly misplaced BPMN diagram-edit plans for non-diagram files and clarify blueprint/source contract to all agents.
+- [DONE] Five affected Go package test suites and llm/planning vet pass with limited concurrency. Actual three-role HTTP/engine regression passes; all 21 reconstructed latest checkpoint transports fit context (maximum 26,937/28,160 bytes). No real model inference or quality improvement claim.
+- [TODO] Fresh live session is still required to measure reasoning quality after repair.
+
+Repair details: docs/AI-AGENT-REPAIR-2026-11-09.md. New provider v11 / loop v6 requires backend restart and a new review. Prior failed reports remain unchanged.
+
+
+## Analyst invalid-output follow-up (2026-11-09)
+
+- [DONE] Inspect fa98e249 focused child 0: Analyst stopped after 8 tools, before Planner. Search used generated flow ID ReasonChecked and discovered unrelated candidates. Raw invalid model responses/rejection details were not retained, so the exact historical formatting failure cannot be established.
+- [DONE] Derive flow queries from actual source/target task labels in the process graph, respecting existing query bounds.
+- [DONE] Replace planner-only repair guidance with role-specific feedback. Preserve bounded adapter error categories in session issues after failed repair; distinguish output limit, unfinished response, identity mismatch and empty content. Avoid raw response/source logging.
+- [DONE] Remove generic advice to blindly resume invalid outputs. Provider v12 / loop v7 require a fresh session after restart. Prior sessions unchanged.
+- [DONE] llm/planning/agentjobs tests and vet pass with limited concurrency; regressions check endpoint-derived queries and Analyst/Planner/Reviewer repair guidance. No browser or lab inference.
+- [TODO] Live output validation still required; these repairs do not establish that model reasoning or selection accuracy improved.
+
+
+## V12 live plan audit / verdict schema repair (2026-11-09)
+
+- [DONE] Inspect plan f6d1a398/session e7a66c12: five child batches fail on PASS/VERIFIED/CONFIRMED; one reviewer exceeds context. Only stock_test.go exported, with unsupported proposal to change NewMovement for submit reason validation. No improvement against the provisional three-file reference.
+- [DONE] Constrain the named Verdict string type in generated JSON schema to RELEVANT/WEAK/REJECT, including indexed verification items. Preserve rejection of unsupported verdicts rather than mapping PASS to relevance. Provider v13 requires a new session.
+- [TODO] Semantic submit-versus-movement confusion and oversized batch Reviewer context remain unresolved; do not claim the plan is ready or ask for repeated live runs as if all defects were fixed.
+
+Verdict repair verification: go test ./internal/llm and go vet ./internal/llm pass. No browser, model inference, source-case changes, commit or push.
+
+
+## Reviewer overflow and execution-path repair (2026-11-09)
+
+- [DONE] Route oversized child Reviewer calls through persisted per-file plus cross-file consistency review, respecting remaining turn budget and withholding rejected/incomplete drafts.
+- [DONE] Prioritize complete local action windows during source inspection rather than detached matching lines, without claiming inferred runtime dependencies.
+- [DONE] Strengthen operation/caller grounding for function signature and shared-helper proposals. Preserve provisional reference isolation and existing model selection.
+- [DONE] Reproduced actual four-file Reviewer overflow and completed partitioned adapter/engine replay using scripted local replies. Resume/rejection/budget regressions and five affected package suites/vet pass. No lab call or browser.
+
+- [DONE] Restrict final agent plans to RELEVANT targets. WEAK stays unresolved; optional WEAK planning policy is intentionally superseded. Preserve mapping rankings and reference isolation.
+- [TODO] One new v14 live review still required to judge reasoning quality. No model-quality improvement or readiness guarantee is claimed from offline checks.
+
+
+## V14 empty-plan diagnosis / freeze for model comparison (2026-11-09)
+
+- [DONE] Audit session 3f1bcb35 / plan 50917a4a: all Analyst decisions WEAK; stricter v14 plan eligibility therefore exports zero plans. This is abstention, not better mapping. No model-only conclusion follows from comparison with 9B/v6.
+- [DONE] Identify evidence eviction defect from actual checkpoint: inspect_source returns submit dispatch and DRAFT guard, but item-by-item FIFO merging evicts the first two action lines while retaining adjacent approve lines.
+- [DONE] Replace merge with ordered-window policy: retain up to two initial search/signature anchors, prioritize the beginning of each explicit source-read window, and prevent later search snippets from evicting inspected proof. Eight-item limit and immutable IDs remain enforced.
+- [DONE] Clarify Analyst task as predicting affected implementation, not checking existing compliance; define RELEVANT/WEAK/REJECT in a shorter direct contract. Preserve RELEVANT-only final proposals rather than relabelling weak answers as correct.
+- [DONE] Regression exercises actual AgentEngine tool-result merge, keeping dispatch/guard/mutation together; affected package suites and vet pass. Provider v15 / loop v9 require a fresh session.
+- [TODO] Freeze method/prompt/source settings for a controlled 9B versus Coder run on the same saved analysis. Do not repeatedly alter policy between those two runs or claim improved accuracy from offline tests.
+
+
+## Actual paired lab probe (2026-11-09)
+
+- [DONE] Run 9B and Coder sequentially on identical isolated-source and five-target Analyst inputs (v15). 9B returns valid affected backend/test decisions; Coder passes the isolated case but over-selects documents and cites a nonexistent evidence index on the batch. No ground truth enters inference.
+- [DONE] Run bounded 9B Planner/Reviewer diagnostics, including a declared prose-format control and one revision attempt. Correct files are selected but technical errors remain; all resulting plans stay NEEDS_REVIEW. Ten actual inference requests total; no full scan or benchmark overwrite.
+- [DONE] Fix revision Planner context by excluding ineligible WEAK/rejected source excerpts and rationale while retaining original target indices. Regression and llm/planning/agentjobs/API suites plus vet pass. Captured failed revision now fits transport: 24,120/28,160 bytes. Provider v16; no v16 live plan claimed.
+- [DONE] Record empirical results, limits and local model inventory in docs/LAB-MODEL-PROBE-2026-11-09.md. 27B is not registered in Ollama; do not assume folder label proves identity.
+- [TODO] Planner and Reviewer quality still unresolved; separate role evaluation required. 9B is supported as the Analyst baseline on this one case only. Do not equate test PASS with plan approval.
+
+
+## Offline agent closure (2026-11-10)
+
+- [DONE] Verify the current application package suite with go test ./... and go vet ./... using bounded local resources and disabled dependency network access. Generated outputs are isolated by a module boundary; generated data remains ignored.
+- [DONE] Verify role routing, source-first BM25 discovery, whole-file discovery deduplication, persisted/budgeted Planner partitions, evidence-bound Reviewer findings, and source-backed NO_ACTION assessments. NO_ACTION is excluded from proposed file counts and remains subject to review.
+- [DONE] Record live failures honestly: both full November 9 runs remained NEEDS_REVIEW without a valid final export. Offline test success is not live reasoning quality.
+- [TODO] Once VPN is available, compare 9B versus 35B specifically as Analyst with matched inputs/settings, then run the latest complete pipeline on one unchanged inventory scenario. Use a fresh session; preserve saved analysis/BPMN snapshots.
+- [TODO] Do not call the provisional 9B/GLM/35B role configuration a benchmark winner. Re-evaluate substantive review correctness and no-change decisions before updating historical evaluation results.
+- Details: docs/OFFLINE-AGENT-VERIFICATION-2026-11-10.md.
+
+
+## Bounded workspace and architecture cleanup (2026-11-10)
+
+- [DONE] Remove three stale September build binaries/backups and the superseded Planner-only probe. Preserve raw historical results, frozen case packs, active experiments and requested root reports.
+- [DONE] Isolate lab/checkpoint diagnostics behind labdiagnostics build tags while retaining per-test explicit opt-in. Keep ordinary regression tests in the normal suite.
+- [DONE] Separate filesystem helpers from analysis orchestration without changing public APIs. Extend core/adapter dependency checks; document the remaining direct I/O in the app facade instead of claiming strict architectural purity.
+- [DONE] Bound the offline verification script's resource usage and restore environment afterward. Refresh the active architecture guide.
+- Verification and deletion manifest are recorded in docs/WORKSPACE-CLEANUP.md and ignored .data/cleanup-2026-11-10/.
+
+
+## Matched 9B/35B Analyst comparison (2026-11-10)
+
+- [DONE] Compare both installed model configurations sequentially on identical frozen source inputs. v17 classifications matched, but 35B emitted an out-of-target proof reference permitted by a global schema bound.
+- [DONE] Add keyed Analyst slots with per-target evidence bounds (provider v18), keep strict rejection of unknown references, and test the uneven-list regression. Full Go tests and vet pass.
+- [DONE] Rerun both models with matched v18 inputs/hashes: both valid; 35B more selective toward implementation on this one batch. Do not claim a universal model winner or treat VALID as substantive correctness.
+- [IN PROGRESS] Full inventory focused trial with 35B/GLM/35B and current no-change/partitioning contracts. Final model quality remains pending. See docs/LAB-MODEL-PROBE-2026-11-10.md.
+
+### Research model-choice report / 10 November 2026
+
+- Added a read-only Research summary with per-role model rationale, matched-study counts/timing, protocol/profile labels, qualitative failure notes and downloadable sanitized JSON. No live inference or routing change occurs when viewed.
+- Recorded the v18 full-case trial as PAUSED after a model-connection interruption (10 turns, 4 tool calls, 2 revisions); no final approved export or full-case accuracy claim. Checkpoint preserved.
+- Kept historical evaluation results separate; model selection remains provisional.
+- Frontend TypeScript and UTF-8 checks passed. No browser or frontend/backend server was started for this report.
+
+### Live agent quality and capacity audit / 10 November 2026
+
+- Resumed v18 full case: NEEDS_REVIEW, no complete export; 69 validated inference responses still did not establish correct plans. Source/plan contradictions and repeated weight loads were recorded separately from file-set recall.
+- Added source declaration anchors (source tools v10) and provider v19 instructions separating observed behavior, proposed behavior, unrelated architecture work and success-test fixture updates. No retrieval scoring or ERP source changes.
+- Matched v19 Reviewer controls: 35B accepted the reasonable plan and rejected the invalid string-nil guard; 9B accepted both. These are two controls, not a general accuracy result.
+- Focused v4 larger groups exposed a context guard failure; v5 added deterministic context splitting. Partition turn exhaustion then motivated focused v6 capacity splitting for structured context/turn-budget events. Every seed is retained, failed calls remain charged, child budgets stay bounded, and source/model/policy identities require fresh sessions.
+- Tests cover declaration plus mutation retention, all seed coverage, interruption/resume without repeating completed children, oversized single seeds and bounded budget splitting. Full-case model quality remains under evaluation; no perfect-agent claim.
+
+### Final checkpoint for this audit
+
+- Matched v19 Planner probe compared 35B, GLM, Qwen3 14B and Qwen3.5 9B on fixed three-file targets. All four formats were valid; no proposal was fully correct under source review. 35B is a next-trial Planner candidate, not a validated winner or an automatic runtime change.
+- Research now separates current next-trial candidates, exact per-study model/profile/version results, earlier full-case attempts, and current policy validation limits. Raw source/prompts remain private.
+- Current verification passed: go test ./..., go vet ./..., labdiagnostics compilation without inference, frontend typecheck/UTF-8 check, and diff whitespace check. No browser or application server was started. Complete-case model tests still need review; current focused v6 has regression coverage, not a successful new full-case lab result.
+- Next technical focus: preserve correct current-source claims, explicitly plan the frontend actionReason payload-condition change, update success fixtures and invalid-input/state-preservation checks, and distinguish intended requirement changes from real contract errors during review. Do not add another agent as a substitute for these problems.
+
+### v20 control-gated agent quality iteration
+
+- Reworked generic Planner input-flow guidance and corrected Reviewer contract wording to allow behavior changes required by after BPMN. The fixed-target 35B draft now proposes the missing frontend dispatch change; remaining plan details are not declared correct.
+- Extended matched Reviewer controls to a reasonable three-file proposal, invalid Go-string nil guard, and missing producer payload edit. 35B matched 2/3 expected verdicts; GLM, Coder and Qwen3 14B matched 1/3. All missed the payload defect. Rationale quality remains a separate limitation.
+- Thinking experiments: 4096 output produced no valid final responses on three controls; 6144 accepted the reasonable plan but also the payload defect. Defaults/timeouts were not changed.
+- Added a generic evaluation control gate and opt-in offline replay. Strict replay correctly rejects these configurations; normal code tests and model-quality qualification remain separate.
+- Updated Research conclusion, versioned study tables, thinking-cost notes and control qualification results. No extra agent/framework, ERP changes or automatic runtime routing switch.
+
+Verification after v20/control-gate changes: go test ./..., go vet ./..., labdiagnostics compile-only, frontend typecheck/encoding and whitespace checks passed. Strict saved Reviewer control replay intentionally failed qualification for the captured configurations. All live inference probes completed; the final tunnel availability check subsequently failed, so any next live run requires reconnection. No application servers/browser were started and no case-study source was changed.
+
+### Opt-in source/implementation comparison audit
+
+- Added host-bound source/implementation receipts and a valid-input-path review check; desired outcomes/acceptance checks cannot serve as edit references. Added optional receipt display in canonical plan JSON/Markdown/web and retained NO_ACTION basis through contract compaction.
+- Live three-control prototype still matched only 1/3 expected verdicts. Kept it experimental and disabled by default instead of replacing the baseline with an unproven change.
+- Added explicit configuration/identity separation (baseline v20, experimental v21). Existing saved input analyses remain reusable; changed agent identities require fresh sessions.
+- No additional agent/framework, ERP modifications, model import, browser or application-server startup. Reviewer semantic reliability remains an unresolved development target.
+
+Comparison-audit verification: normal Go tests/vet, diagnostic compile-only and frontend type/encoding checks passed. Strict offline control replay correctly failed the captured prototype (1/3 expected verdicts), so the audit remains disabled by default. No browser, server startup or ERP writes were performed.

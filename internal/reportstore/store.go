@@ -15,3 +15,9 @@ type Store interface {
 	Get(context.Context, string) (domain.Report, error)
 	List(context.Context) ([]domain.ReportSummary, error)
 }
+
+// BPMNStore persists immutable uploaded specifications separately from reports.
+type BPMNStore interface {
+	SaveBPMN(context.Context, domain.BPMNPair) error
+	GetBPMN(context.Context, string) (domain.BPMNPair, error)
+}

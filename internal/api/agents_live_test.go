@@ -1,3 +1,5 @@
+//go:build labdiagnostics
+
 package api_test
 
 import (

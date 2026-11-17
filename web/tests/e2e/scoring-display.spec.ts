@@ -1,3 +1,4 @@
+import { loadAnalysisFixture } from "./helpers/analysis-fixture";
 import { expect, test } from "@playwright/test";
 import type { Impact, Report } from "../../src/lib/types";
 
@@ -24,8 +25,8 @@ test("hybrid separates neighbouring IDs, unused checks and combined ranks", asyn
   await page.route("**/backend/api/v1/capabilities/semantic/check", route => route.fulfill({ json: { available: true, provider: "fixture", model: "fixture", message: "Ready" } }));
   await page.route("**/backend/api/v1/analyses", route => route.fulfill({ status: route.request().method() === "POST" ? 201 : 200, json: route.request().method() === "POST" ? report : { analyses: [] } }));
   await page.goto("/?view=analysis");
-  await page.getByRole("button", { name: "Load synthetic demo" }).click();
-  await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+  await loadAnalysisFixture(page);
+  await expect(page.getByText("New BPMN ready:", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Run impact analysis" }).click();
   const first = page.getByTestId("impact-details").first();
   await first.locator(":scope > summary").click();

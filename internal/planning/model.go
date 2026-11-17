@@ -2,6 +2,7 @@ package planning
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
@@ -81,16 +82,28 @@ type ElementInput struct {
 	DataRequirements []string `json:"data_requirements,omitempty"`
 }
 
+type RepositoryOverview struct {
+	File      string `json:"file"`
+	Summary   string `json:"summary"`
+	Truncated bool   `json:"truncated"`
+}
+type ReadmeInput struct {
+	File      string `json:"file"`
+	Content   string `json:"content"`
+	Truncated bool   `json:"truncated"`
+}
 type EvidenceBundle struct {
-	Warnings          []domain.Warning      `json:"warnings,omitempty"`
-	WarningsTruncated bool                  `json:"warnings_truncated,omitempty"`
-	Version           string                `json:"version"`
-	ContextID         string                `json:"context_id"`
-	AnalysisID        string                `json:"analysis_id"`
-	InputFingerprint  string                `json:"input_fingerprint"`
-	Method            domain.AnalysisMethod `json:"method"`
-	Repository        domain.Repository     `json:"repository"`
-	Changes           []ChangeInput         `json:"changes"`
+	RepositoryOverview *RepositoryOverview    `json:"repository_overview,omitempty"`
+	ProcessContext     *domain.ProcessContext `json:"process_context,omitempty"`
+	Warnings           []domain.Warning       `json:"warnings,omitempty"`
+	WarningsTruncated  bool                   `json:"warnings_truncated,omitempty"`
+	Version            string                 `json:"version"`
+	ContextID          string                 `json:"context_id"`
+	AnalysisID         string                 `json:"analysis_id"`
+	InputFingerprint   string                 `json:"input_fingerprint"`
+	Method             domain.AnalysisMethod  `json:"method"`
+	Repository         domain.Repository      `json:"repository"`
+	Changes            []ChangeInput          `json:"changes"`
 }
 
 type ProviderIdentity struct {
@@ -124,7 +137,8 @@ type VerificationRequest struct {
 }
 
 type VerificationResponse struct {
-	Decisions []CandidateDecision `json:"decisions"`
+	RepositorySummary string              `json:"repository_summary,omitempty"`
+	Decisions         []CandidateDecision `json:"decisions"`
 }
 
 type LayerPlanningRequest struct {
@@ -134,6 +148,10 @@ type LayerPlanningRequest struct {
 }
 
 type FilePlan struct {
+	CurrentBehavior  string                `json:"current_behavior,omitempty"`
+	TargetBehavior   string                `json:"target_behavior,omitempty"`
+	DesignRationale  string                `json:"design_rationale,omitempty"`
+	Assumptions      []string              `json:"assumptions,omitempty"`
 	ChangeType       domain.ChangeType     `json:"change_type"`
 	ElementID        string                `json:"element_id"`
 	File             string                `json:"file"`
@@ -163,7 +181,18 @@ type ReviewResponse struct {
 	Revised  []FilePlan `json:"revised,omitempty"`
 }
 
+type ChangeCoverage struct {
+	ChangeType domain.ChangeType `json:"change_type"`
+	ElementID  string            `json:"element_id"`
+	Relevant   int               `json:"relevant"`
+	Weak       int               `json:"weak"`
+	Rejected   int               `json:"rejected"`
+	Plans      int               `json:"plans"`
+	Status     string            `json:"status"`
+}
 type ChangePlan struct {
+	ReviewFindings   []FileReviewFinding `json:"review_findings,omitempty"`
+	ChangeCoverage   []ChangeCoverage    `json:"change_coverage,omitempty"`
 	FullReview       *FullReviewProgress `json:"full_review,omitempty"`
 	Version          string              `json:"version"`
 	PlanID           string              `json:"plan_id"`
@@ -188,8 +217,25 @@ type PlanSummary struct {
 func Summarize(plan ChangePlan) PlanSummary {
 	return PlanSummary{
 		PlanID: plan.PlanID, AnalysisID: plan.AnalysisID, ContextID: plan.ContextID,
-		Provider: plan.Provider, Status: plan.Status, Files: len(plan.Plans),
+		Provider: plan.Provider, Status: plan.Status, Files: len(ProposedFiles(plan.Plans)),
 	}
+}
+
+// ProposedFiles is an unranked set of files with proposed edits. A source-backed
+// NO_ACTION assessment is reviewed context, not a predicted changed file.
+func ProposedFiles(plans []FilePlan) []string {
+	seen := map[string]bool{}
+	for _, p := range plans {
+		if p.Action != domain.ActionNoAction && p.File != "" {
+			seen[p.File] = true
+		}
+	}
+	files := make([]string, 0, len(seen))
+	for file := range seen {
+		files = append(files, file)
+	}
+	sort.Strings(files)
+	return files
 }
 
 type Provider interface {

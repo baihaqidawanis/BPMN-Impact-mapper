@@ -1,3 +1,4 @@
+import { loadAnalysisFixture } from "./helpers/analysis-fixture";
 import { expect, test } from "@playwright/test";
 import path from "node:path";
 import { readFile } from "node:fs/promises";
@@ -19,7 +20,7 @@ test("semantic preflight blocks unavailable runtime while BM25 stays independent
 	});
 
 	await page.goto("/?view=analysis");
-	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await loadAnalysisFixture(page);
 	await page.getByRole("button", { name: "Check runtime" }).click();
 	await expect(page.getByRole("status").filter({ hasText: "Semantic runtime is unavailable." })).toBeVisible();
 	expect(capabilityRequests).toBe(1);
@@ -39,8 +40,8 @@ test("semantic preflight blocks unavailable runtime while BM25 stays independent
 test("evaluation reconciles conflicts and evaluates immutable comparison reports", async ({ page }) => {
 	test.setTimeout(420_000);
   await page.goto("/?view=analysis");
-  await page.getByRole("button", { name: "Load synthetic demo" }).click();
-	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+  await loadAnalysisFixture(page);
+	await expect(page.getByText("New BPMN ready:", { exact: false })).toBeVisible();
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
   await page.getByLabel("Compare mapping methods").check();
   const reports: Report[] = [];
@@ -105,8 +106,8 @@ test("synthetic demo completes and exposes evidence downloads", async ({ page })
   await page.goto("/?view=analysis");
   await expect(page.getByRole("heading", { name: "BPMN Impact Mapper" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Load synthetic demo" }).click();
-  await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+  await loadAnalysisFixture(page);
+  await expect(page.getByText("New BPMN ready:", { exact: false })).toBeVisible();
   await expect(page.locator('input[name="repo_path"]')).toHaveValue("testdata\\repository");
 
   await page.getByRole("button", { name: "Run impact analysis" }).click();
@@ -194,18 +195,16 @@ test("inserted task exposes composite topology context", async ({ page }) => {
 	await expect(page.getByText("from Prepare request to Register request", { exact: true })).toBeVisible();
 });
 
-test("scenario presets expose move and unresolved controls", async ({ page }) => {
+test("uploaded process scenarios expose move and unresolved controls", async ({ page }) => {
 	await page.goto("/?view=analysis");
-	await page.getByLabel("Demo scenario").selectOption("move-task");
-	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await loadAnalysisFixture(page, "move-task");
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
 	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("MOVE TASK", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 
 	await page.reload();
-	await page.getByLabel("Demo scenario").selectOption("unresolved");
-	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await loadAnalysisFixture(page, "unresolved");
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
 	await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
@@ -215,8 +214,8 @@ test("scenario presets expose move and unresolved controls", async ({ page }) =>
 test("same-input method comparison exposes retrieval differences", async ({ page }) => {
 	test.setTimeout(300_000);
 	await page.goto("/?view=analysis");
-	await page.getByRole("button", { name: "Load synthetic demo" }).click();
-	await expect(page.getByText("Synthetic demo ready")).toBeVisible();
+	await loadAnalysisFixture(page);
+	await expect(page.getByText("New BPMN ready:", { exact: false })).toBeVisible();
 	await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research" }).click();
 	await page.getByLabel("Compare mapping methods").check();
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
@@ -257,7 +256,7 @@ test("same-input method comparison exposes retrieval differences", async ({ page
 
 test("reviewer annotation exports selected and missing impacts locally", async ({ page }) => {
 	await page.goto("/?view=analysis");
-	await page.getByRole("button", { name: "Load synthetic demo" }).click();
+	await loadAnalysisFixture(page);
 	await page.getByRole("button", { name: "Run impact analysis" }).click();
 	await expect(page.getByText("Analysis complete")).toBeVisible({ timeout: 30_000 });
 	await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();

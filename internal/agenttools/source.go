@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"sort"
 	"strings"
 
@@ -16,12 +17,15 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/index"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/ingest"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/retrieval"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/textutil"
 )
 
 type Snapshot struct {
 	artifacts []domain.Artifact
 	identity  string
 	files     map[string]string
+	lexical   *retrieval.BM25
 }
 
 func digest(v any) string {
@@ -50,12 +54,12 @@ func New(ctx context.Context, repo string, options ingest.Options) (*Snapshot, e
 		Registry    string
 		Artifacts   []domain.Artifact
 		Warnings    []string
-	}{"agent-source-tools-v6-full-chunks", registry.Identity(), result.Artifacts, result.Warnings})
+	}{"agent-source-tools-v11-call-literals", registry.Identity(), result.Artifacts, result.Warnings})
 	files := make(map[string]string, len(inv.Files))
 	for _, file := range inv.Files {
 		files[file.RelativePath] = string(file.Content)
 	}
-	return &Snapshot{artifacts: result.Artifacts, identity: identity, files: files}, nil
+	return &Snapshot{artifacts: result.Artifacts, identity: identity, files: files, lexical: retrieval.NewBM25(result.Artifacts)}, nil
 }
 
 func (s *Snapshot) Identity() string { return s.identity }
@@ -105,7 +109,11 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 		return s.readSource(ctx, q)
 	}
 	if q.Name == "inspect_source" {
-		return s.inspectSource(ctx, q)
+		result, err := s.inspectSource(ctx, q)
+		if err == nil {
+			result = s.withCallLiterals(ctx, q, result)
+		}
+		return result, err
 	}
 	if q.Name != "search_source" && (!safeFile(q.File) || q.Symbol == "") {
 		return out, errors.New("exact relative file/function required")
@@ -126,13 +134,19 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 	}
 	type hit struct {
 		a                 domain.Artifact
-		score             int
+		score             float64
 		location, excerpt string
 	}
 	var hits []hit
 	tokens := strings.Fields(strings.ToLower(q.Query))
 	if q.Name == "search_source" && (len(tokens) == 0 || len(tokens) > 12) {
 		return out, errors.New("bounded nonempty search query required")
+	}
+	scores := map[string]float64{}
+	if q.Name == "search_source" {
+		for _, ranked := range s.lexical.Search(textutil.Tokenize(q.Query)) {
+			scores[ranked.Artifact.ID] = ranked.Score
+		}
 	}
 	for _, a := range s.artifacts {
 		if err := ctx.Err(); err != nil {
@@ -144,12 +158,7 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 		h := hit{a: a, location: fmt.Sprintf("%s:%d", a.File, max(1, a.Symbol.StartLine)), excerpt: a.Content}
 		switch q.Name {
 		case "search_source":
-			text := strings.ToLower(a.File + " " + a.Symbol.Name + " " + a.Content)
-			for _, token := range tokens {
-				if strings.Contains(text, token) {
-					h.score++
-				}
-			}
+			h.score = scores[a.ID]
 			if h.score == 0 {
 				continue
 			}
@@ -213,6 +222,12 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 	}
 	hits = filtered
 	sort.Slice(hits, func(i, j int) bool {
+		if q.Name == "search_source" {
+			leftDoc, rightDoc := sourceDocumentation(hits[i].a), sourceDocumentation(hits[j].a)
+			if leftDoc != rightDoc {
+				return !leftDoc
+			}
+		}
 		if hits[i].score != hits[j].score {
 			return hits[i].score > hits[j].score
 		}
@@ -242,6 +257,12 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 	if len(hits) > 3 {
 		hits = hits[:3]
 		out.Truncated = true
+		if q.Name == "search_source" {
+			out.NextOffset = q.Offset + len(hits)
+		}
+	}
+	if q.Name == "search_source" {
+		out.Note = "BM25 word retrieval over the approved source snapshot; matching implementation, configuration and test files are listed before documentation. Documentation remains available on later pages or by direct approved source reads. Text matches are discovery hints, not proven dependencies."
 	}
 	for _, h := range hits {
 		runes := []rune(strings.TrimSpace(h.excerpt))
@@ -251,9 +272,38 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 		}
 		e := planning.EvidenceItem{Type: "SOURCE_TOOL", Location: h.location, Excerpt: string(runes)}
 		e.ID = digest(e)[:24]
-		out.Candidates = append(out.Candidates, planning.Candidate{File: h.a.File, Symbol: h.a.Symbol.Name, Module: h.a.Module, Layer: h.a.Layer, SuggestedAction: domain.ActionVerify, Origin: "agent-source-tool", Evidence: []planning.EvidenceItem{e}})
+		evidence := []planning.EvidenceItem{e}
+		if q.Name != "find_callers" && h.a.Symbol.StartLine > 0 && (h.a.Symbol.Kind == "function" || h.a.Symbol.Kind == "method" || h.a.Symbol.Kind == "type") {
+			lines := strings.Split(s.files[h.a.File], "\n")
+			if h.a.Symbol.StartLine <= len(lines) {
+				text := []rune(strings.TrimSpace(lines[h.a.Symbol.StartLine-1]))
+				if len(text) > 240 {
+					text = text[:240]
+					out.Truncated = true
+				}
+				declaration := planning.EvidenceItem{Type: "SOURCE_DECLARATION", Location: fmt.Sprintf("%s:%d", h.a.File, h.a.Symbol.StartLine), Excerpt: string(text)}
+				declaration.ID = digest(declaration)[:24]
+				if declaration.Location == e.Location && declaration.Excerpt == e.Excerpt {
+					evidence = nil
+				}
+				evidence = append(evidence, declaration)
+			}
+		}
+		out.Candidates = append(out.Candidates, planning.Candidate{File: h.a.File, Symbol: h.a.Symbol.Name, Module: h.a.Module, Layer: h.a.Layer, SuggestedAction: domain.ActionVerify, Origin: "agent-source-tool", Evidence: evidence})
 	}
 	return out, nil
+}
+
+func sourceDocumentation(a domain.Artifact) bool {
+	if a.Layer == "documentation" {
+		return true
+	}
+	switch strings.ToLower(path.Ext(a.File)) {
+	case ".md", ".rst", ".adoc", ".bpmn":
+		return true
+	default:
+		return false
+	}
 }
 
 func matchesSourceName(a domain.Artifact, name string) bool {

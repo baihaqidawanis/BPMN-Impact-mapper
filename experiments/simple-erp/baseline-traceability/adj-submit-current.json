@@ -1,0 +1,527 @@
+{
+  "version": "1",
+  "date": "2026-11-05",
+  "purpose": "Research-only current BPMN to existing source mapping; excluded from inference",
+  "review_status": "provisional static source review; no runtime proof",
+  "repository_name": "Simple-ERP",
+  "bpmn_file": "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn",
+  "process_id": "Process_role_staff_l3_adj_submit",
+  "nodes": [
+    {
+      "id": "role_staff_l3_adj_submit_start",
+      "type": "startEvent",
+      "name": "Kebutuhan aksi",
+      "actor": "Staff",
+      "mapping_status": "Entry boundary; no standalone runtime event",
+      "mappings": [
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "function": "InventoryAdjustmentPanel",
+          "relationship": "user entry point; not a dedicated start-event function",
+          "evidence": [
+            {
+              "line": 19,
+              "excerpt": "{(canCreate(session?.role) || canApprove(session?.role)) && <form className=\"operation-card\" onSubmit={(event) => { event.preventDefault(); void action(\"submit\"); }}><strong>Kelola Stock Adjustment</strong><label>Adjustment ID<input value={adjustmentId} onChange={(event) => setAdjustmentId(event.target.value)} required /></label><label>Version<input type=\"number\" min=\"1\" value={version} onChange={(event) => setVersion(event.target.value)} required /></label><label>Alasan reject/cancel/reverse<input value={reason} onChange={(event) => setReason(event.target.value)} /></label><span className=\"row-actions\">{canCreate(session?.role) && <button className=\"button\">Submit</button>}{canApprove(session?.role) && selected?.status === \"SUBMITTED\" && (selected.creatorId !== session?.userId || session?.role === \"SUPER_ADMIN\") && <button type=\"button\" onClick={() => action(\"approve\")}>Approve</button>}{canCreate(session?.role) && <button type=\"button\" onClick={() => action(\"post\")}>Post</button>}{canApprove(session?.role) && selected?.status === \"SUBMITTED\" && (selected.creatorId !== session?.userId || session?.role === \"SUPER_ADMIN\") && <button type=\"button\" disabled={!reason} onClick={() => action(\"reject\")}>Reject</button>}{canCreate(session?.role) && (!selected || selected.status === \"DRAFT\" || selected.status === \"APPROVED\") && <button type=\"button\" disabled={!reason || Boolean(selected && selected.creatorId !== session?.userId && session?.role !== \"SUPER_ADMIN\")} onClick={() => action(\"cancel\")}>Cancel</button>}{canApprove(session?.role) && <button type=\"button\" disabled={!reason} onClick={() => action(\"reverse\")}>Reverse</button>}</span></form>}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_input",
+      "type": "userTask",
+      "name": "Kirim adjustment untuk review",
+      "actor": "Staff",
+      "mapping_status": "Direct user action",
+      "mappings": [
+        {
+          "file": "frontend/features/inventory/inventory-adjustment-panel.tsx",
+          "function": "InventoryAdjustmentPanel.action",
+          "relationship": "submit form and outgoing request",
+          "evidence": [
+            {
+              "line": 16,
+              "excerpt": "function action(name: string) { const actionReason = name === \"reject\" || name === \"cancel\" || name === \"reverse\" ? reason : \"\"; return run(`/inventory-adjustments/${adjustmentId}/${name}`, { version: Number(version), reason: actionReason }, `Aksi ${name} berhasil.`); }"
+            },
+            {
+              "line": 19,
+              "excerpt": "{(canCreate(session?.role) || canApprove(session?.role)) && <form className=\"operation-card\" onSubmit={(event) => { event.preventDefault(); void action(\"submit\"); }}><strong>Kelola Stock Adjustment</strong><label>Adjustment ID<input value={adjustmentId} onChange={(event) => setAdjustmentId(event.target.value)} required /></label><label>Version<input type=\"number\" min=\"1\" value={version} onChange={(event) => setVersion(event.target.value)} required /></label><label>Alasan reject/cancel/reverse<input value={reason} onChange={(event) => setReason(event.target.value)} /></label><span className=\"row-actions\">{canCreate(session?.role) && <button className=\"button\">Submit</button>}{canApprove(session?.role) && selected?.status === \"SUBMITTED\" && (selected.creatorId !== session?.userId || session?.role === \"SUPER_ADMIN\") && <button type=\"button\" onClick={() => action(\"approve\")}>Approve</button>}{canCreate(session?.role) && <button type=\"button\" onClick={() => action(\"post\")}>Post</button>}{canApprove(session?.role) && selected?.status === \"SUBMITTED\" && (selected.creatorId !== session?.userId || session?.role === \"SUPER_ADMIN\") && <button type=\"button\" disabled={!reason} onClick={() => action(\"reject\")}>Reject</button>}{canCreate(session?.role) && (!selected || selected.status === \"DRAFT\" || selected.status === \"APPROVED\") && <button type=\"button\" disabled={!reason || Boolean(selected && selected.creatorId !== session?.userId && session?.role !== \"SUPER_ADMIN\")} onClick={() => action(\"cancel\")}>Cancel</button>}{canApprove(session?.role) && <button type=\"button\" disabled={!reason} onClick={() => action(\"reverse\")}>Reverse</button>}</span></form>}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_check",
+      "type": "serviceTask",
+      "name": "Lock adjustment DRAFT; versi cocok",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "Direct validation",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "function": "Store.TransitionAdjustment",
+          "relationship": "transaction, row lock, version and DRAFT guards",
+          "evidence": [
+            {
+              "line": 121,
+              "excerpt": "tx, e := s.Pool.Begin(ctx)"
+            },
+            {
+              "line": 125,
+              "excerpt": "defer func() { _ = tx.Rollback(ctx) }()"
+            },
+            {
+              "line": 127,
+              "excerpt": "e = tx.QueryRow(ctx, `SELECT id,document_no,status,creator_id,version FROM inventory_adjustments WHERE id=$1 FOR UPDATE`, id).Scan(&d.ID, &d.DocumentNo, &d.Status, &d.CreatorID, &d.Version)"
+            },
+            {
+              "line": 128,
+              "excerpt": "if e != nil || d.Version != version {"
+            },
+            {
+              "line": 134,
+              "excerpt": "case \"submit\":"
+            },
+            {
+              "line": 135,
+              "excerpt": "if from != \"DRAFT\" {"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_valid",
+      "type": "exclusiveGateway",
+      "name": "Syarat terpenuhi?",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "Branch projection of imperative guards; not a gateway runtime",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "function": "Store.TransitionAdjustment",
+          "relationship": "success/failure predicates represented by the XOR branches",
+          "evidence": [
+            {
+              "line": 128,
+              "excerpt": "if e != nil || d.Version != version {"
+            },
+            {
+              "line": 129,
+              "excerpt": "return d, ErrConflict"
+            },
+            {
+              "line": 135,
+              "excerpt": "if from != \"DRAFT\" {"
+            },
+            {
+              "line": 136,
+              "excerpt": "return d, ErrConflict"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_effect0",
+      "type": "serviceTask",
+      "name": "Ubah adjustment SUBMITTED",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "Direct state effect",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "function": "Store.TransitionAdjustment",
+          "relationship": "set SUBMITTED and conditional persisted update",
+          "evidence": [
+            {
+              "line": 138,
+              "excerpt": "d.Status = \"SUBMITTED\""
+            },
+            {
+              "line": 183,
+              "excerpt": "tag, e := tx.Exec(ctx, `UPDATE inventory_adjustments SET status=$1,reviewer_id=CASE WHEN $2 IN('approve','reject')THEN $3::uuid ELSE reviewer_id END,reason=NULLIF($4,''),version=version+1,updated_at=now() WHERE id=$5 AND version=$6`, d.Status, action, actor, reason, id, version)"
+            },
+            {
+              "line": 184,
+              "excerpt": "if e != nil || tag.RowsAffected() != 1 {"
+            },
+            {
+              "line": 185,
+              "excerpt": "return d, ErrConflict"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_effect1",
+      "type": "serviceTask",
+      "name": "Audit INV-ADJ-002; commit",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "Direct audit and commit",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "function": "Store.TransitionAdjustment",
+          "relationship": "trace, audit, commit, version and result",
+          "evidence": [
+            {
+              "line": 132,
+              "excerpt": "trace := \"INV-ADJ-002\""
+            },
+            {
+              "line": 187,
+              "excerpt": "if e = audit(ctx, tx, actor, \"ADJUSTMENT_\"+action, trace, id, from, d.Status, reason, request); e != nil {"
+            },
+            {
+              "line": 190,
+              "excerpt": "if e = tx.Commit(ctx); e != nil {"
+            },
+            {
+              "line": 193,
+              "excerpt": "d.Version++"
+            },
+            {
+              "line": 194,
+              "excerpt": "return d, nil"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/inventory/adapter/postgres/store.go",
+          "function": "audit",
+          "relationship": "insert audit entry",
+          "evidence": [
+            {
+              "line": 24,
+              "excerpt": "func audit(ctx context.Context, tx pgx.Tx, actor, action, trace, id, from, to, reason, request string) error {"
+            },
+            {
+              "line": 25,
+              "excerpt": "_, e := tx.Exec(ctx, `INSERT INTO audit_entries(actor_id,action,trace_id,entity_type,entity_id,previous_state,new_state,reason,request_id)VALUES($1,$2,$3,'INVENTORY_ADJUSTMENT',$4,$5,$6,NULLIF($7,''),$8)`, actor, action, trace, id, from, to, reason, request)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_done",
+      "type": "endEvent",
+      "name": "Respons dikirim",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "End boundary; no extra business effect",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/http/handler.go",
+          "function": "Handler.action",
+          "relationship": "HTTP response and function exit",
+          "evidence": [
+            {
+              "line": 107,
+              "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+            },
+            {
+              "line": 108,
+              "excerpt": "return"
+            },
+            {
+              "line": 110,
+              "excerpt": "respond(w, 200, v)"
+            },
+            {
+              "line": 111,
+              "excerpt": "}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "role_staff_l3_adj_submit_result_activity",
+      "type": "sendTask",
+      "name": "Kirim respons hasil aksi (sukses atau gagal)",
+      "actor": "Sistem Simple ERP",
+      "mapping_status": "Presentation of existing HTTP response; not a message broker",
+      "mappings": [
+        {
+          "file": "backend/internal/inventory/adapter/http/handler.go",
+          "function": "Handler.action",
+          "relationship": "map service success/error to HTTP response",
+          "evidence": [
+            {
+              "line": 104,
+              "excerpt": "v, e = h.Service.Transition(r.Context(), chi.URLParam(r, \"id\"), a, actor.UserID, in.Reason, in.Version, middleware.GetReqID(r.Context()))"
+            },
+            {
+              "line": 106,
+              "excerpt": "if e != nil {"
+            },
+            {
+              "line": 107,
+              "excerpt": "respond(w, 409, map[string]string{\"message\": e.Error()})"
+            },
+            {
+              "line": 110,
+              "excerpt": "respond(w, 200, v)"
+            }
+          ]
+        },
+        {
+          "file": "backend/internal/inventory/adapter/http/handler.go",
+          "function": "respond",
+          "relationship": "encode response body",
+          "evidence": [
+            {
+              "line": 40,
+              "excerpt": "func respond(w http.ResponseWriter, s int, v any) {"
+            },
+            {
+              "line": 41,
+              "excerpt": "w.Header().Set(\"Content-Type\", \"application/json\")"
+            },
+            {
+              "line": 42,
+              "excerpt": "w.WriteHeader(s)"
+            },
+            {
+              "line": 43,
+              "excerpt": "_ = json.NewEncoder(w).Encode(v)"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "role_staff_l3_adj_submit_Flow_0",
+      "source": "role_staff_l3_adj_submit_start",
+      "target": "role_staff_l3_adj_submit_input",
+      "label": ""
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_1",
+      "source": "role_staff_l3_adj_submit_input",
+      "target": "role_staff_l3_adj_submit_check",
+      "label": ""
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_2",
+      "source": "role_staff_l3_adj_submit_check",
+      "target": "role_staff_l3_adj_submit_valid",
+      "label": ""
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_3",
+      "source": "role_staff_l3_adj_submit_valid",
+      "target": "role_staff_l3_adj_submit_effect0",
+      "label": "Ya"
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_4",
+      "source": "role_staff_l3_adj_submit_effect0",
+      "target": "role_staff_l3_adj_submit_effect1",
+      "label": ""
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_5",
+      "source": "role_staff_l3_adj_submit_effect1",
+      "target": "role_staff_l3_adj_submit_result_activity",
+      "label": "Aksi selesai; hasil diterima"
+    },
+    {
+      "id": "role_staff_l3_adj_submit_Flow_6",
+      "source": "role_staff_l3_adj_submit_valid",
+      "target": "role_staff_l3_adj_submit_result_activity",
+      "label": "Tidak; Ditolak / gagal; tidak commit"
+    },
+    {
+      "id": "role_staff_l3_adj_submit_result_to_end",
+      "source": "role_staff_l3_adj_submit_result_activity",
+      "target": "role_staff_l3_adj_submit_done",
+      "label": ""
+    }
+  ],
+  "supporting_links": [
+    {
+      "file": "backend/internal/inventory/adapter/http/handler.go",
+      "function": "Handler.Register",
+      "relationship": "existing create and transition routes are distinct",
+      "evidence": [
+        {
+          "line": 18,
+          "excerpt": "r.Post(\"/inventory-adjustments\", h.create)"
+        },
+        {
+          "line": 20,
+          "excerpt": "r.Post(\"/inventory-adjustments/{id}/{action}\", h.action)"
+        }
+      ]
+    },
+    {
+      "file": "backend/internal/inventory/adapter/http/handler.go",
+      "function": "Handler.action",
+      "relationship": "action routing, role gate and existing reason payload",
+      "evidence": [
+        {
+          "line": 81,
+          "excerpt": "a := chi.URLParam(r, \"action\")"
+        },
+        {
+          "line": 83,
+          "excerpt": "if (a == \"approve\" || a == \"reject\" || a == \"reverse\") && !domain.CanApprove(actor.Role) || (a != \"approve\" && a != \"reject\" && a != \"reverse\" && !domain.CanCreate(actor.Role)) {"
+        },
+        {
+          "line": 87,
+          "excerpt": "var in struct {"
+        },
+        {
+          "line": 88,
+          "excerpt": "Version int"
+        },
+        {
+          "line": 89,
+          "excerpt": "Reason  string"
+        },
+        {
+          "line": 104,
+          "excerpt": "v, e = h.Service.Transition(r.Context(), chi.URLParam(r, \"id\"), a, actor.UserID, in.Reason, in.Version, middleware.GetReqID(r.Context()))"
+        }
+      ]
+    },
+    {
+      "file": "backend/internal/inventory/application/service.go",
+      "function": "Service.Transition",
+      "relationship": "existing interface and forwarding; no new argument needed",
+      "evidence": [
+        {
+          "line": 35,
+          "excerpt": "TransitionAdjustment(context.Context, string, string, string, string, int, string) (Document, error)"
+        },
+        {
+          "line": 50,
+          "excerpt": "func (s Service) Transition(c context.Context, id, action, actor, reason string, v int, r string) (Document, error) {"
+        },
+        {
+          "line": 51,
+          "excerpt": "return s.store.TransitionAdjustment(c, id, action, actor, reason, v, r)"
+        }
+      ]
+    },
+    {
+      "file": "backend/internal/auth/domain/role.go",
+      "function": "CanCreate",
+      "relationship": "STAFF and SUPER_ADMIN may submit",
+      "evidence": [
+        {
+          "line": 13,
+          "excerpt": "func CanCreate(role string) bool {"
+        },
+        {
+          "line": 14,
+          "excerpt": "return role == RoleStaff || role == RoleSuperAdmin"
+        }
+      ]
+    },
+    {
+      "file": "backend/test/integration/operations_test.go",
+      "function": "TestInventoryApprovalRejectsChangedSnapshot",
+      "relationship": "existing successful submit with empty reason; tests not executed",
+      "evidence": [
+        {
+          "line": 253,
+          "excerpt": "func TestInventoryApprovalRejectsChangedSnapshot(t *testing.T) {"
+        },
+        {
+          "line": 262,
+          "excerpt": "if adjustment, e = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-snapshot-2\"); e != nil {"
+        }
+      ]
+    },
+    {
+      "file": "backend/test/integration/operations_test.go",
+      "function": "TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot",
+      "relationship": "existing inventory submit success paths; tests not executed",
+      "evidence": [
+        {
+          "line": 274,
+          "excerpt": "func TestApprovedInventoryAdjustmentCanRecoverFromStaleSnapshot(t *testing.T) {"
+        },
+        {
+          "line": 283,
+          "excerpt": "adjustment, err = s.Transition(ctx, adjustment.ID, \"submit\", operatorID, \"\", adjustment.Version, \"inventory-recovery-submit\")"
+        },
+        {
+          "line": 309,
+          "excerpt": "replacement, err = s.Transition(ctx, replacement.ID, \"submit\", operatorID, \"\", replacement.Version, \"inventory-recovery-resubmit\")"
+        }
+      ]
+    },
+    {
+      "file": "backend/migrations/000005_operations.up.sql",
+      "function": "inventory_adjustments table",
+      "relationship": "reason already nullable text; no new column needed",
+      "evidence": [
+        {
+          "line": 36,
+          "excerpt": "CREATE TABLE inventory_adjustments (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),document_no text NOT NULL UNIQUE,warehouse_id uuid NOT NULL REFERENCES warehouses(id),creator_id uuid NOT NULL REFERENCES users(id),reviewer_id uuid REFERENCES users(id),status text NOT NULL CHECK(status IN('DRAFT','SUBMITTED','APPROVED','REJECTED','COMPLETED','CANCELLED','REVERSED')),reason text,version integer NOT NULL DEFAULT 1,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now());"
+        }
+      ]
+    },
+    {
+      "file": "backend/internal/inventory/domain/adjustment.go",
+      "function": "Adjustment.Submit",
+      "relationship": "related domain model; not called on the traced Service.Transition -> PostgreSQL runtime path",
+      "evidence": [
+        {
+          "line": 14,
+          "excerpt": "type Adjustment struct {"
+        },
+        {
+          "line": 15,
+          "excerpt": "ID, CreatorID string"
+        },
+        {
+          "line": 16,
+          "excerpt": "Status        AdjustmentStatus"
+        },
+        {
+          "line": 17,
+          "excerpt": "Version       int"
+        },
+        {
+          "line": 23,
+          "excerpt": "func (a *Adjustment) Submit() error {"
+        },
+        {
+          "line": 24,
+          "excerpt": "if a.Status != AdjustmentDraft {"
+        },
+        {
+          "line": 27,
+          "excerpt": "a.Status = AdjustmentSubmitted"
+        }
+      ]
+    }
+  ],
+  "file_sha256": {
+    "frontend/features/inventory/inventory-adjustment-panel.tsx": "f7f3416abf3c9b7bda526dc2e339cf81a5d8d9185a19955596ea4867fcc49f61",
+    "backend/internal/inventory/adapter/postgres/store.go": "f8d015e104a9a50d3f38402a10d1337e9aeddf58cf8cade4e8e6afe865c03184",
+    "backend/internal/inventory/adapter/http/handler.go": "86362c005b25f953c2904f09e1e120221d61b3068c35369193bef311cea333a3",
+    "backend/internal/inventory/application/service.go": "fb9d72bf4e7d68f4bbd750822ae019055ad79121aa21dbcdae2b9448f6cd7783",
+    "backend/internal/auth/domain/role.go": "79a9076fa8f88e01656b0069e47b64368b07c97392edb32b285e46eb077d8158",
+    "backend/test/integration/operations_test.go": "7df3d774cfaab238a369a332245d60dfcbbbb8f1ae12a4b26708575cfe825101",
+    "backend/migrations/000005_operations.up.sql": "cf6ffb45600dcee577898994e370ed8a1a3d3a6d8921007a0d2fb418832f5e32",
+    "backend/internal/inventory/domain/adjustment.go": "e49d17db472b7462a44320026eb72d4238dd34415020da4969a7a649e2cafc90",
+    "docs/bpm-haqi/roles/staff/inventory/level-3/role-staff-l3-adj-submit.bpmn": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9"
+  },
+  "limitations": [
+    "Not a one-task/one-function bijection: a function implements multiple BPMN elements and shared guards.",
+    "All existing failure exits are not explicitly drawn as separate BPMN branches. Database, audit and commit errors can occur after the decision gateway.",
+    "Baseline mapping is not a required-change list. API, service and schema may be related yet need no edit for ReasonReview.",
+    "Reference is provisional; no ERP source, database or workflow was executed or modified.",
+    "The broader historical all-roles snapshot contains an obsolete result_merge for this process; this focused mapping uses current XML instead."
+  ]
+}

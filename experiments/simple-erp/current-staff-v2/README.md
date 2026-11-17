@@ -29,8 +29,9 @@ menyiapkan referensi master sebelum AND, sehingga tidak ada XOR langsung ke AND.
 - New BPMN: `after.bpmn` dari folder kasus yang sama.
 - Product / Hybrid, top candidates 10 jika embedding lokal tersedia. Untuk
   pemeriksaan alur tanpa embedding, Research / BM25, top candidates 10.
-- Rekomendasi pertama: **add-task**. Di Planning pilih **ADD_TASK ReasonReview**,
-  bukan perubahan sequence flow pendukung.
+- Rekomendasi pertama: **add-task** untuk tes singkat, atau **combined** untuk
+  XOR dan AND sekaligus. Di Planning pilih **Focused review** dan buat sesi baru;
+  semua perubahan diproses, bukan satu ADD_TASK pilihan manual.
 
 Contoh file baru pertama:
 `C:\BPMN-Impact-Mapper\experiments\simple-erp\current-staff-v2\add-task\after.bpmn`.
@@ -58,7 +59,7 @@ generalisasi ke berbagai repository.
 Validasi ulang sebelum eksperimen:
 
 ```powershell
-python experiments/simple-erp/verify_current_staff_pack.py --repo C:\Simple-ERP --pack experiments/simple-erp/current-staff-v2
+python experiments/tools/verify_current_staff_pack.py --repo C:\Simple-ERP --pack experiments/simple-erp/current-staff-v2
 ```
 
 Verifier gagal jika baseline/source/reference drift, flow menggantung, diagram
@@ -70,3 +71,36 @@ utama ditemukan, setiap kandidat memiliki evidence, kontrol nol perubahan.
 Ini pemeriksaan fungsi dan determinisme; bukan pengukuran kualitas Semantic,
 Hybrid atau Qwen. Laporan smoke ada di `outputs/pre-qwen-ready/` dan tidak
 di-commit. Hasil/matriks historis di Research tidak otomatis diganti.
+
+## Perapian diagram 2026-11-03
+
+Empat after aktif memakai jalur ortogonal yang menghindari shape task/gateway.
+Cabang split memakai port berbeda supaya tidak terlihat menyatu. AND join tetap
+memiliki dua masukan dan satu keluaran: itu penggabungan, bukan cabang yang hilang.
+XML proses, kondisi, ID dan lane tidak berubah. Baseline dan unchanged-control
+utuh. Hash diagram pada manifest/snapshot diperbarui karena byte XML berubah;
+laporan historis tetap mengacu pasangan lama. Backup sebelum routing ada di
+outputs lokal. Unggah ulang after untuk percobaan baru.
+
+Verifier juga memeriksa kardinalitas split/join dan memastikan garis diagram
+aktif tidak menembus node lain. Generator memakai router yang sama; regenerasi
+ke folder baru tetap dapat direproduksi. Paket historis belum dirapikan ulang.
+
+## Konfirmasi ulang 2026-11-04
+
+- Empat after aktif dirapikan pada posisi label alur, agar tidak menimpa task, nama gateway, atau batas lane. Alur, kondisi, ID dan tipe task tetap sama.
+- Sepuluh file before/after berhasil diimpor dan dirender dengan bpmn.io terpasang, tanpa warning dan tanpa elemen diagram hilang. Gambar hasil cek ada di `outputs/diagram-review/` (lokal, tidak di-commit).
+- Pemeriksaan 23 after di seluruh paket tidak menemukan gateway dengan masukan/keluaran hilang atau gateway satu-masuk-satu-keluar. Ini bukan klaim semua layout historis sudah dirapikan. Paket aktif untuk percobaan baru tetap folder ini.
+- Baseline masih byte-identik dengan ERP. Routing dapat dijalankan ulang tanpa perubahan byte lebih lanjut.
+
+Verifikasi render tanpa VPN:
+
+```powershell
+node scripts/verify-experiment-diagrams.cjs
+```
+
+Untuk percobaan lengkap: before dari ERP pada path di atas, after dari
+`experiments/simple-erp/current-staff-v2/combined/after.bpmn`. Upload ulang after
+karena layout XML dan fingerprint berubah. Jalankan Mapping lalu sesi AI baru
+sesudah restart backend dan koneksi tunnel tersedia. Gunakan Zoom in untuk
+membaca kasus combined yang lebar; seluruh diagram tetap ada.

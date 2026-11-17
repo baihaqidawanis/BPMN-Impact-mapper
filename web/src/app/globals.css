@@ -6,15 +6,19 @@
   --ink: #25292d;
   --charcoal: #434344;
   --muted: #656b70;
-  --canvas: #f4f4f2;
+  --canvas: #f6f7f9;
   --surface: #ffffff;
-  --surface-hover: #f0f1f4;
+  --surface-hover: #f0f2f5;
   --blue: #2463b5;
   --blue-hover: #194e94;
   --blue-soft: #edf3fb;
-  --line: rgba(0, 0, 0, 0.1);
-  --line-strong: rgba(0, 0, 0, 0.18);
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.025);
+  --line: rgba(32, 51, 72, 0.085);
+  --line-strong: rgba(32, 51, 72, 0.16);
+  --shadow: 0 4px 20px rgba(31, 50, 74, 0.045);
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --radius-inset: 12px;
+  --ease: cubic-bezier(.2,.7,.2,1);
 }
 
 * { box-sizing: border-box; }
@@ -32,7 +36,7 @@ body {
 }
 
 button, input, select { font: inherit; }
-button, a, input, select { transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease; }
+button, a, input, select { transition: background-color 180ms var(--ease), border-color 180ms var(--ease), color 180ms var(--ease), box-shadow 180ms var(--ease); }
 button, input, select, textarea { scroll-margin-block: 24px; }
 :where(button, a, input, select, textarea, summary):focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 button:disabled { cursor: not-allowed; }
@@ -40,6 +44,6 @@ button:disabled { cursor: not-allowed; }
 button, a { -webkit-tap-highlight-color: transparent; }
 ::selection { color: #ffffff; background: var(--blue); }
 
-:root { --radius: 8px; --code-font: ui-monospace, SFMono-Regular, Consolas, monospace; }
+:root { --radius: 10px; --code-font: ui-monospace, SFMono-Regular, Consolas, monospace; }
 button, textarea { font: inherit; }
 input::placeholder { color: #858b90; }

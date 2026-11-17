@@ -39,8 +39,22 @@ func run(arguments []string) error {
 	maxRequestBytes := flags.Int64("max-request-bytes", 20<<20, "maximum multipart request bytes")
 	maxBPMNBytes := flags.Int64("max-bpmn-bytes", 8<<20, "maximum bytes per uploaded BPMN file")
 	agentModel := flags.String("agent-model", "", "opt-in local Ollama model for Planning")
+	analystModel := flags.String("analyst-model", "", "optional fixed Analyst model; falls back to --agent-model")
+	plannerModel := flags.String("planner-model", "", "optional fixed Planner model; falls back to --agent-model")
+	reviewerModel := flags.String("reviewer-model", "", "optional fixed Reviewer model; falls back to --agent-model")
 	agentURL := flags.String("agent-url", "http://127.0.0.1:11435", "local Ollama tunnel URL")
 	agentContext := flags.Int("agent-context", 32768, "agent context tokens (maximum 32768; only used with --agent-model)")
+	agentThink := flags.Bool("agent-think", false, "opt-in thinking for a local model advertising thinking capability; requires a fresh agent session")
+	agentReviewComparisons := flags.Bool("agent-review-comparisons", false, "experimental evidence/implementation comparison audit; not validated for automatic sign-off")
+	agentReviewJSON := flags.Bool("agent-review-json", false, "experimental explicit-schema JSON Reviewer with file reviews plus final contract check")
+	agentOutput := flags.Int("agent-output", 4096, "maximum agent output tokens, including thinking (32-8192)")
+	agentProfile := flags.String("agent-profile", "baseline", "generation profile: baseline or coding (explicit sampling options)")
+	analystProfile := flags.String("analyst-profile", "", "optional Analyst profile; falls back to --agent-profile")
+	plannerProfile := flags.String("planner-profile", "", "optional Planner profile; falls back to --agent-profile")
+	reviewerProfile := flags.String("reviewer-profile", "", "optional Reviewer profile; falls back to --agent-profile")
+	analystThinking := flags.String("analyst-thinking", "inherit", "Analyst reasoning mode: inherit, on or off")
+	plannerThinking := flags.String("planner-thinking", "inherit", "Planner reasoning mode: inherit, on or off")
+	reviewerThinking := flags.String("reviewer-thinking", "inherit", "Reviewer reasoning mode: inherit, on or off")
 	if err := flags.Parse(arguments); err != nil {
 		return err
 	}
@@ -49,6 +63,18 @@ func run(arguments []string) error {
 	}
 	if *analysisTimeout <= 0 || *maxRequestBytes <= 0 || *maxBPMNBytes <= 0 {
 		return errors.New("timeouts and byte limits must be positive")
+	}
+	overrides, err := agentRoleOverrides(
+		map[planning.AgentRole]string{planning.Analyst: *analystModel, planning.Planner: *plannerModel, planning.Reviewer: *reviewerModel},
+		map[planning.AgentRole]string{planning.Analyst: *analystProfile, planning.Planner: *plannerProfile, planning.Reviewer: *reviewerProfile},
+		map[planning.AgentRole]string{planning.Analyst: *analystThinking, planning.Planner: *plannerThinking, planning.Reviewer: *reviewerThinking},
+	)
+	if err != nil {
+		return err
+	}
+	hasRoleOverrides := len(overrides) > 0
+	if *agentModel == "" && hasRoleOverrides {
+		return errors.New("role model overrides require an explicit --agent-model fallback")
 	}
 	root, err := filepath.Abs(*dataDirectory)
 	if err != nil {
@@ -62,11 +88,20 @@ func run(arguments []string) error {
 	defer stop()
 	var agents *agentjobs.Service
 	if *agentModel != "" {
-		model, err := llm.NewOllamaAgent(llm.OllamaAgentConfig{BaseURL: *agentURL, Model: *agentModel, ContextSize: *agentContext})
+		config := llm.OllamaAgentConfig{BaseURL: *agentURL, Model: *agentModel, ContextSize: *agentContext, Think: *agentThink, ReviewComparisons: *agentReviewComparisons, ReviewJSONMode: *agentReviewJSON, MaxOutput: *agentOutput, Profile: *agentProfile}
+		config.OnInference = func(m llm.InferenceMetric) {
+			log.Printf("agent inference role=%s model=%q profile=%s thinking=%t outcome=%s duration_ms=%d load_ms=%d input_tokens=%d generated_tokens=%d", m.Role, m.Model, m.Profile, m.Think, m.Outcome, m.Milliseconds, m.LoadMilliseconds, m.PromptTokens, m.GeneratedTokens)
+		}
+		var model llm.PreparedAgent
+		if hasRoleOverrides {
+			model, err = llm.NewOllamaRoleRouter(config, overrides)
+		} else {
+			model, err = llm.NewOllamaAgent(config)
+		}
 		if err != nil {
 			return err
 		}
-		agents = &agentjobs.Service{Model: model, Sessions: filestore.AgentSessionStore{Root: filepath.Join(root, "agent-sessions")}, Plans: filestore.PlanStore{Root: filepath.Join(root, "plans")}, Base: base, Source: func(ctx context.Context, repo string) (agentjobs.Snapshot, error) {
+		agents = &agentjobs.Service{Configuration: webAgentConfiguration(config, overrides), Model: model, Sessions: filestore.AgentSessionStore{Root: filepath.Join(root, "agent-sessions")}, Plans: filestore.PlanStore{Root: filepath.Join(root, "plans")}, Base: base, Source: func(ctx context.Context, repo string) (agentjobs.Snapshot, error) {
 			if err := agenttools.CheckOutputBoundary(repo, root); err != nil {
 				return nil, err
 			}

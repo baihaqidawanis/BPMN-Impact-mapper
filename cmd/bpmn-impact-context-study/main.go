@@ -45,7 +45,7 @@ type row struct {
 }
 
 func run() error {
-	manifestPath := flag.String("manifest", "experiments/simple-erp/staff-consolidated-2026-10-29-manifest.json", "frozen benchmark manifest; paths relative to cwd")
+	manifestPath := flag.String("manifest", "experiments/history/simple-erp/notes/staff-consolidated-2026-10-29-manifest.json", "frozen benchmark manifest; paths relative to cwd")
 	output := flag.String("output", "outputs/context-study", "new output directory")
 	timeout := flag.Duration("timeout", time.Hour, "whole study deadline")
 	variantList := flag.String("variants", "full,no-context,no-start-end,both-top10", "comma-separated experimental modes")

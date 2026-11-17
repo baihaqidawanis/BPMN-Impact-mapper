@@ -1,8 +1,8 @@
 import styles from "./InterpretationGuide.module.css";
 
-export function InterpretationGuide() {
+export function InterpretationGuide({expanded=false}:{expanded?:boolean}) {
   return (
-    <details className={styles.guide}>
+    <details className={styles.guide} open={expanded||undefined}>
       <summary><span>How to read the report</span><small>Actions, ranking scores, and evidence</small><b>+</b></summary>
       <div className={styles.content}>
         <div className={styles.group}>

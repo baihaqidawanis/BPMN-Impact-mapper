@@ -10,7 +10,7 @@ test("Staff P2P upload produces a persistent canonical report", async ({ page, r
   test.setTimeout(720_000);
 
   const oldBpmn = path.join(repoPath!, "docs", "bpm-haqi", "roles", "staff", "p2p", "level-3", "role-staff-l3-pr-create.bpmn");
-  const newBpmn = path.resolve(__dirname, "../../../experiments/simple-erp/staff-p2p/role-staff-l3-pr-create-add-document.bpmn");
+  const newBpmn = path.resolve(__dirname, "../../../experiments/history/simple-erp/staff-p2p/role-staff-l3-pr-create-add-document.bpmn");
   await page.goto("/?view=analysis");
   await page.locator('input[name="repo_path"]').fill(repoPath!);
   await page.getByLabel("Repository name").fill("Simple-ERP");
@@ -64,7 +64,7 @@ for (const scenario of [
     const repoPath = process.env.BPMN_IMPACT_STAFF_REPO;
     test.skip(!repoPath, "set BPMN_IMPACT_STAFF_REPO to the local case-study checkout");
     const oldBpmn = path.join(repoPath!, "docs", "bpm-haqi", "roles", "staff", "p2p", "level-3", "role-staff-l3-pr-create.bpmn");
-    const newBpmn = path.resolve(__dirname, "../../../experiments/simple-erp/staff-p2p", scenario.file);
+    const newBpmn = path.resolve(__dirname, "../../../experiments/history/simple-erp/staff-p2p", scenario.file);
     await page.goto("/?view=analysis");
     await page.locator('input[name="repo_path"]').fill(repoPath!);
     await page.getByLabel("Repository name").fill("Simple-ERP");

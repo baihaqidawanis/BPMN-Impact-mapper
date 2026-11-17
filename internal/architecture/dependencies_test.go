@@ -24,6 +24,9 @@ func TestInnerPackagesDoNotDependOnOuterAdapters(t *testing.T) {
 		"reviewpack":  {"domain": true, "evaluation": true},
 		"scenario":    {"bpmn": true},
 		"reportstore": {"domain": true},
+		"llm":         {"domain": true, "planning": true},
+		"agenttools":  {"domain": true, "index": true, "ingest": true, "planning": true, "retrieval": true, "textutil": true},
+		"filestore":   {"bpmn": true, "bpmnlib": true, "domain": true, "planning": true, "planstore": true, "report": true, "reportstore": true},
 	}
 	for packageName, allowedInternal := range allowed {
 		files, err := filepath.Glob(filepath.Join("..", packageName, "*.go"))
@@ -40,6 +43,13 @@ func TestInnerPackagesDoNotDependOnOuterAdapters(t *testing.T) {
 			}
 			for _, spec := range parsed.Imports {
 				path, _ := strconv.Unquote(spec.Path.Value)
+				if packageName == "domain" || packageName == "mapping" || packageName == "planning" || packageName == "agentjobs" {
+					for _, external := range []string{"os", "net", "database/sql", "syscall", "unsafe"} {
+						if path == external || strings.HasPrefix(path, external+"/") {
+							t.Errorf("core package %s imports I/O dependency %s in %s", packageName, path, file)
+						}
+					}
+				}
 				marker := "/internal/"
 				position := strings.Index(path, marker)
 				if position < 0 {

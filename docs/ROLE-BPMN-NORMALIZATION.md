@@ -39,7 +39,7 @@ Review dan backup:
 - `outputs/other-roles-review-2026-10-30/`
 - `outputs/all-role-generator-review-2026-10-30/`
 
-Normalisasi memakai `experiments/simple-erp/normalize_staff_bpmn.py` dengan
+Normalisasi memakai `experiments/tools/normalize_staff_bpmn.py` dengan
 `--role supervisor` atau `--role super-admin`; nama script lama dipertahankan
 agar workflow Staff yang sudah ada tetap berlaku. Verifier yang sama dipakai
 pada ketiga role. Generator dokumen dan helper konvensinya diperluas untuk

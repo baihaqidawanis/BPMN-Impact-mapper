@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +26,7 @@ import (
 // Exercises the actual Ollama HTTP adapter, async API, immutable source tools,
 // checkpoint store and canonical plan download. No lab/model/dependency needed.
 func TestAgentOfflineContractPipeline(t *testing.T) {
-	for _, mode := range []string{"full-success", "full-resume", "success", "forged-target", "forged-evidence", "incomplete-plan", "malformed-recovery", "malformed-stop", "disconnect"} {
+	for _, mode := range []string{"full-readme-multi", "full-success", "full-resume", "success", "forged-target", "forged-evidence", "incomplete-plan", "malformed-recovery", "malformed-stop", "disconnect"} {
 		t.Run(mode, func(t *testing.T) {
 			root := t.TempDir()
 			repo := filepath.Join(root, "repo")
@@ -36,6 +37,11 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 			source := []byte("package fixture\nfunc Submit(amount int) int { return amount }\n")
 			if err := os.WriteFile(filepath.Join(repo, "source.go"), source, 0600); err != nil {
 				t.Fatal(err)
+			}
+			if mode == "full-readme-multi" {
+				if err := os.WriteFile(filepath.Join(repo, "README.md"), []byte("Fixture application; source.go owns submission."), 0600); err != nil {
+					t.Fatal(err)
+				}
 			}
 			chats, plannerCalls, reviews := 0, 0, 0
 			local := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +79,12 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 				if err := json.Unmarshal([]byte(request.Messages[1].Content), &turn); err != nil {
 					t.Error(err)
 					w.WriteHeader(400)
+					return
+				}
+				if turn.Readme != nil {
+					reply := planning.AgentReply{Verification: &planning.VerificationResponse{RepositorySummary: "README describes a submission application; verify its claims in source."}}
+					content, _ := json.Marshal(reply)
+					json.NewEncoder(w).Encode(map[string]any{"model": "offline-fixture", "done": true, "done_reason": "stop", "message": map[string]string{"role": "assistant", "content": string(content)}})
 					return
 				}
 				instruction := request.Messages[0].Content
@@ -115,7 +127,7 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 					}
 				case planning.Planner:
 					plannerCalls++
-					p := planning.FilePlan{ChangeType: change.ChangeType, ElementID: change.ElementID, File: c.File, Symbol: c.Symbol, Module: c.Module, Layer: c.Layer, Action: c.SuggestedAction, Summary: "Reject non-positive amounts before submission.", Steps: []string{"Add the guard before the existing submit behavior."}, ProposedChanges: []string{"Reject zero or negative amounts while preserving positive-amount submission."}, AcceptanceChecks: []string{"Zero and negative amounts are rejected; positive amounts retain existing behavior."}, EvidenceIDs: refs}
+					p := planning.FilePlan{CurrentBehavior: "Submit returns input without a positive amount guard.", TargetBehavior: "Reject non-positive amounts before submission.", DesignRationale: "The inspected submit function owns this guard; the existing input contract can be reused.", ChangeType: change.ChangeType, ElementID: change.ElementID, File: c.File, Symbol: c.Symbol, Module: c.Module, Layer: c.Layer, Action: c.SuggestedAction, Summary: "Reject non-positive amounts before submission.", Steps: []string{"Add the guard before the existing submit behavior."}, ProposedChanges: []string{"Reject zero or negative amounts while preserving positive-amount submission."}, AcceptanceChecks: []string{"Zero and negative amounts are rejected; positive amounts retain existing behavior."}, EvidenceIDs: refs}
 					if (mode == "success" && plannerCalls == 1) || mode == "incomplete-plan" {
 						p.ProposedChanges = nil
 						p.AcceptanceChecks = nil
@@ -140,7 +152,72 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 						reply.Review = &planning.AgentReview{Issues: []string{"Keep the positive-amount acceptance check explicit."}, RevisionTarget: planning.Planner}
 					}
 				}
-				encoded, _ := json.Marshal(reply)
+				if mode == "full-readme-multi" {
+					if len(turn.Bundle.Changes) != 2 || turn.Bundle.RepositoryOverview == nil {
+						t.Error("all changes/README lost")
+					}
+					if reply.Verification != nil {
+						reply.Verification.Decisions = nil
+						for _, change := range turn.Bundle.Changes {
+							for _, candidate := range change.Candidates {
+								reply.Verification.Decisions = append(reply.Verification.Decisions, planning.CandidateDecision{ChangeType: change.ChangeType, ElementID: change.ElementID, File: candidate.File, Symbol: candidate.Symbol, Verdict: planning.VerdictRelevant, Rationale: "Fixture source requires validation", EvidenceIDs: []string{candidate.Evidence[0].ID}})
+							}
+						}
+					}
+					if reply.Plan != nil {
+						template := reply.Plan.Plans[0]
+						reply.Plan.Plans = nil
+						for _, change := range turn.Bundle.Changes {
+							for _, candidate := range change.Candidates {
+								item := template
+								item.ChangeType = change.ChangeType
+								item.ElementID = change.ElementID
+								item.File = candidate.File
+								item.Symbol = candidate.Symbol
+								item.Module = candidate.Module
+								item.Layer = candidate.Layer
+								item.EvidenceIDs = []string{candidate.Evidence[0].ID}
+								reply.Plan.Plans = append(reply.Plan.Plans, item)
+							}
+						}
+					}
+				}
+				var wire any = reply
+				if reply.Review != nil && len(turn.Draft) > 0 {
+					checks := map[string]any{}
+					for i, p := range turn.Draft {
+						refs := []int{}
+						for _, ch := range turn.Bundle.Changes {
+							for _, c := range ch.Candidates {
+								if ch.ChangeType == p.ChangeType && ch.ElementID == p.ElementID && c.File == p.File && c.Symbol == p.Symbol && len(c.Evidence) > 0 {
+									refs = []int{0}
+								}
+							}
+						}
+						item := map[string]any{"evidence_indices": refs}
+						for _, name := range []string{"requirement", "contracts", "scope", "failure_tests"} {
+							status, finding := "PASS", "Fixture proposal matches the supplied requirement and source."
+							if !reply.Review.Approved && name == "failure_tests" {
+								status, finding = "REVISE", reply.Review.Issues[0]
+							}
+							item[name] = map[string]any{"status": status, "finding": finding}
+						}
+						checks[strconv.Itoa(i)] = item
+					}
+					wire = map[string]any{"review": map[string]any{"checks": checks}}
+				}
+				if turn.RepositoryChunk != nil && reply.Verification != nil {
+					items := []map[string]any{}
+					for _, d := range reply.Verification.Decisions {
+						for i, c := range turn.Bundle.Changes {
+							if c.ElementID == d.ElementID && c.ChangeType == d.ChangeType {
+								items = append(items, map[string]any{"change_index": i, "verdict": d.Verdict, "rationale": d.Rationale})
+							}
+						}
+					}
+					wire = map[string]any{"verification": map[string]any{"decisions": items}}
+				}
+				encoded, _ := json.Marshal(wire)
 				json.NewEncoder(w).Encode(map[string]any{"model": "offline-fixture", "done": true, "done_reason": "stop", "message": map[string]string{"role": "assistant", "content": string(encoded)}})
 			}))
 			defer local.Close()
@@ -151,6 +228,12 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 			reports := filestore.ReportStore{Root: filepath.Join(data, "reports")}
 			plans := filestore.PlanStore{Root: filepath.Join(data, "plans")}
 			report := domain.Report{AnalysisID: strings.Repeat("a", 32), InputFingerprint: strings.Repeat("b", 32), Method: domain.MethodHybrid, Repository: domain.Repository{Name: "Offline fixture"}, Changes: []domain.Change{{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "positive-amount", Name: "Validate positive amount", Type: "userTask"}, Reason: "Reject non-positive input before submit.", Impacts: []domain.Impact{{File: "source.go", Symbol: "Submit", Module: "core", Layer: "application", RequiredAction: domain.ActionVerify, Evidence: []domain.Evidence{{Type: "SOURCE", Location: "source.go:2", Excerpt: "func Submit(amount int) int { return amount }"}}}}}}}
+			if mode == "full-readme-multi" {
+				second := report.Changes[0]
+				second.NewElement = &domain.Element{ID: "validation-decision", Type: "exclusiveGateway", Name: "Is amount valid?"}
+				second.ChangeType = domain.AddGateway
+				report.Changes = append(report.Changes, second)
+			}
 			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
 			if err := reports.Save(ctx, report); err != nil {
@@ -161,8 +244,11 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 			}}
 			handler := api.Handler{Agents: svc, Store: reports, PlanStore: plans}
 			input := map[string]any{"repository_path": repo, "change_index": 0}
-			if mode == "full-success" || mode == "full-resume" {
+			if strings.HasPrefix(mode, "full-") {
 				input["mode"] = "full"
+				if mode == "full-readme-multi" {
+					input["change_index"] = -1
+				}
 			}
 			body, _ := json.Marshal(input)
 			w := httptest.NewRecorder()
@@ -199,11 +285,11 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 				}
 			}
 			switch mode {
-			case "success", "malformed-recovery", "full-success", "full-resume":
+			case "success", "malformed-recovery", "full-success", "full-resume", "full-readme-multi":
 				if done.Status != "COMPLETE" || done.Plan == nil {
 					t.Fatalf("no complete plan: %+v", done)
 				}
-				if mode != "full-success" && mode != "full-resume" && done.Tools != 2 {
+				if !strings.HasPrefix(mode, "full-") && done.Tools != 2 {
 					t.Fatalf("source unnecessarily reread: %d", done.Tools)
 				}
 				w = httptest.NewRecorder()
@@ -211,10 +297,13 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 				if w.Code != 200 || !strings.Contains(w.Body.String(), "### Proposed changes") || !strings.Contains(w.Body.String(), "### Acceptance checks") {
 					t.Fatal("structured plan missing from download", w.Code)
 				}
-				if mode == "full-success" || mode == "full-resume" {
+				if strings.HasPrefix(mode, "full-") {
 					if done.Mode != "full" || done.FullReview == nil || done.FullReview.ChunksReviewed != done.FullReview.ChunksTotal || done.FullReview.FilesReviewed != 1 || !strings.Contains(w.Body.String(), "Full repository review coverage") {
 						t.Fatal("full coverage missing", done.FullReview)
 					}
+				}
+				if mode == "full-readme-multi" && (len(done.Plan.ChangeCoverage) != 2 || len(done.Plan.Plans) != 2 || done.FullReview.ConsistencyReview != "approved") {
+					t.Fatal("end to end coverage lost", done.Plan)
 				}
 				// Restart persistence path: getting a saved plan never repeats inference.
 				n := chats
@@ -224,7 +313,7 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 					t.Fatal("checkpoint restoration failed", e)
 				}
 			case "forged-target", "forged-evidence", "incomplete-plan":
-				if done.Status != "NEEDS_REVIEW" || done.Plan != nil {
+				if done.Status != "NEEDS_REVIEW" || (done.Plan != nil && len(done.Plan.Plans) != 0) {
 					t.Fatal("fabricated target accepted", done.Status)
 				}
 			case "malformed-stop":

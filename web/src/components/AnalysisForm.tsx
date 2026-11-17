@@ -34,15 +34,8 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
     setRepositoryName(completedRepository.name);
     setRevision(completedRepository.revision === "unspecified" ? "" : completedRepository.revision);
   }, [completedRepository]);
-	const [demoFiles, setDemoFiles] = useState<{ old: File; next: File } | null>(null);
-	const [demoLoading, setDemoLoading] = useState(false);
-	const [demoError, setDemoError] = useState("");
-	const [demoScenario, setDemoScenario] = useState("comprehensive");
 	const [semanticStatus, setSemanticStatus] = useState<SemanticCapability | null>(null);
 	const [semanticChecking, setSemanticChecking] = useState(false);
-	useEffect(() => {
-		if (demoFiles && baseline !== demoFiles.old) setDemoFiles(null);
-	}, [baseline, demoFiles]);
 
   async function verifySemanticRuntime() {
 		setSemanticChecking(true);
@@ -67,10 +60,6 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
 		for (const name of ["repo_path", "repository_name", "revision"]) {
 			formData.set(name, String(formData.get(name) ?? "").trim());
 		}
-		if (demoFiles) {
-			formData.set("old_bpmn", demoFiles.old);
-			formData.set("new_bpmn", demoFiles.next);
-		}
 		if (edited) formData.set("new_bpmn", edited);
 		if (baseline) formData.set("old_bpmn", baseline);
 		const needsSemantic = (researchMode && compareMethods) || !researchMode || method !== "bm25";
@@ -78,39 +67,13 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
 		await onSubmit(formData);
   }
 
-	async function loadSyntheticDemo() {
-		onEdited(null);
-		setDemoLoading(true);
-		setDemoError("");
-		try {
-			const prefix = demoScenario === "comprehensive" ? "/demo/" : `/demo/${demoScenario}-`;
-			const [oldResponse, newResponse] = await Promise.all([fetch(prefix + "old.bpmn"), fetch(prefix + "new.bpmn")]);
-			if (!oldResponse.ok || !newResponse.ok) throw new Error("Synthetic demo fixtures are unavailable.");
-			const files = {
-				old: new File([await oldResponse.blob()], "synthetic-old.bpmn", { type: "application/xml" }),
-				next: new File([await newResponse.blob()], "synthetic-new.bpmn", { type: "application/xml" }),
-			};
-			setDemoFiles(files);
-			onBaseline(files.old);
-			onEdited(files.next);
-			setRepositoryPath("testdata\\repository");
-			setRepositoryName(demoScenario === "comprehensive" ? "Synthetic Request Workflow" : `Synthetic ${demoScenario.replaceAll("-", " ")} workflow`);
-			setRevision("fixture-v1");
-			setMethod("hybrid");
-			setResearchMode(false);
-			setCompareMethods(false);
-		} catch (error) {
-			setDemoError(error instanceof Error ? error.message : "Synthetic demo could not be loaded.");
-		} finally {
-			setDemoLoading(false);
-		}
-	}
-
-	function useManualFiles(event: ChangeEvent<HTMLInputElement>) {
-		setDemoFiles(null);
-		onEdited(event.target.name === "new_bpmn" ? event.target.files?.[0] ?? null : null);
-		if (event.target.name === "old_bpmn") onBaseline(event.target.files?.[0] ?? null);
-	}
+  function useManualFiles(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    // Cancelling the picker preserves the process already in the workspace.
+    if (!file) return;
+    if (event.target.name === "old_bpmn") onBaseline(file);
+    else onEdited(file);
+  }
 
   return (
     <aside className={styles.panel}>
@@ -119,6 +82,7 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
         <div><h2>Configure analysis</h2><p>Repository and process versions.</p></div>
       </div>
       <form onSubmit={(event) => void submit(event)} className={styles.form}>
+        <fieldset className={styles.section} disabled={loading || semanticChecking}><legend><span>01</span> Repository</legend>
         <label className={styles.field}>
           <span>Repository path <b>*</b></span>
 					<input name="repo_path" value={repositoryPath} onChange={(event) => setRepositoryPath(event.target.value)} required placeholder="C:\path\to\repository" autoComplete="off" />
@@ -130,21 +94,16 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
 					<label className={styles.field}><span>Revision</span><input name="revision" value={revision} onChange={(event) => setRevision(event.target.value)} placeholder="commit or snapshot" /><small>Optional label; does not select a Git revision.</small></label>
         </div>
 
-        <div className={styles.divider}><span>Process versions</span></div>
-        <label className={styles.fileField}>
-          <span><b>Baseline BPMN</b><small>Old process specification</small></span>
-					<input key={`old-${baseline?.name}-${baseline?.lastModified}`} name="old_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!baseline} onChange={useManualFiles} />
-          {baseline && <small>Loaded: {baseline.name}</small>}
-        </label>
-        <label className={styles.fileField}>
-          <span><b>New BPMN</b><small>Changed process specification</small></span>
-					<input key={`new-${baseline?.name}-${baseline?.lastModified}`} name="new_bpmn" type="file" accept=".bpmn,.xml,text/xml,application/xml" required={!demoFiles && !edited} onChange={useManualFiles} />
-        </label>
-				<button className={styles.canvasLink} type="button" disabled={loading || !baseline} onClick={onOpenEditor}>Compare BPMN in canvas <span aria-hidden="true">&#8594;</span></button>
-				{edited && <p role="status">New BPMN ready: {edited.name}. Run analysis to update results.</p>}
-				{demoFiles && <div className={styles.demoActive}><b>Synthetic demo ready</b><span>Neutral BPMN fixtures will be submitted; no case-study data is used.</span></div>}
+        </fieldset>
+        <fieldset className={styles.section} disabled={loading || semanticChecking}><legend><span>02</span> Process versions</legend>
+        <BpmnFileField name="old_bpmn" label="Baseline BPMN" hint="Original process" file={baseline} onChange={useManualFiles} />
+        <BpmnFileField key={`${baseline?.name}-${baseline?.lastModified}`} name="new_bpmn" label="New BPMN" hint="Changed process" file={edited} onChange={useManualFiles} />
+        <button className={styles.canvasLink} type="button" disabled={loading || !baseline} onClick={onOpenEditor}>Compare BPMN in canvas <span aria-hidden="true">&#8594;</span></button>
+        {edited && <p className={styles.fileReady} role="status">New BPMN ready: {edited.name}. Run analysis to update results.</p>}
 
-				{enableResearch && <div className={styles.modeSwitch} role="group" aria-label="Analysis mode">
+				</fieldset>
+        <fieldset className={styles.section} disabled={loading || semanticChecking}><legend><span>03</span> Search settings</legend>
+        {enableResearch && <div className={styles.modeSwitch} role="group" aria-label="Analysis mode">
 					<button type="button" aria-pressed={!researchMode} onClick={() => { setResearchMode(false); setMethod("hybrid"); setCompareMethods(false); }}>Product</button>
 					<button type="button" aria-pressed={researchMode} onClick={() => setResearchMode(true)}>Research</button>
 				</div>}
@@ -178,19 +137,27 @@ export function AnalysisForm({ completedRepository, repositoryPath: sharedPath, 
 					</div>
 				)}
 
-				<button className={styles.submit} disabled={loading || semanticChecking} type="submit">
+				</fieldset>
+        <button className={styles.submit} disabled={loading || semanticChecking} type="submit">
           {loading ? "Analysis in progress..." : "Run impact analysis"}<span aria-hidden="true">&#8594;</span>
         </button>
         <p className={styles.note}>The mapper never executes or modifies repository source.</p>
       </form>
-      <div className={styles.demoSection}><p>Try a sample workflow</p>		<div className={styles.demoToolbar}>
-			<label className={styles.demoChoice}><span>Demo scenario</span><select value={demoScenario} disabled={loading || demoLoading} onChange={event => { setDemoScenario(event.target.value); setDemoFiles(null); }}><option value="comprehensive">Comprehensive changes</option><option value="insert-task">Insert task</option><option value="add-branch">Add gateway branch</option><option value="move-task">Move task</option><option value="remove-branch">Remove gateway branch</option><option value="unresolved">Ambiguous match</option></select></label>
-			<button className={styles.demoButton} type="button" disabled={loading || demoLoading} onClick={() => void loadSyntheticDemo()}>
-				<span aria-hidden="true">&#9654;</span>{demoLoading ? "Loading demo..." : "Load synthetic demo"}
-			</button>
-		</div>
-			{demoError && <p className={styles.demoError}>{demoError}</p>}
-</div>
     </aside>
   );
+}
+
+function BpmnFileField({ name, label, hint, file, onChange }: {
+  name: string; label: string; hint: string; file: File | null;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return <label className={styles.fileField}>
+    <span><b>{label}</b><small>{hint}</small></span>
+    <span className={styles.filePicker} data-loaded={!!file}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6m-6 4h4"/></svg>
+      <span className={styles.fileName}>{file?.name || "Choose a BPMN file"}</span>
+      <span className={styles.fileAction}>{file ? "Replace" : "Browse"}</span>
+      <input name={name} type="file" aria-label={label} accept=".bpmn,.xml,text/xml,application/xml" required={!file} onChange={onChange}/>
+    </span>
+  </label>;
 }

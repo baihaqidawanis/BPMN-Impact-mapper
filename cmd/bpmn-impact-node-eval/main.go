@@ -44,11 +44,11 @@ func main() {
 }
 func run() error {
 	reports := flag.String("reports", "outputs/current-staff-benchmark-final/normalized-staff-combined", "saved four-method prediction directory")
-	reference := flag.String("reference", "experiments/simple-erp/current-staff/combined/node-reference.json", "expanded frozen node reference")
+	reference := flag.String("reference", "experiments/history/simple-erp/current-staff/combined/node-reference.json", "expanded frozen node reference")
 	output := flag.String("output", "outputs/compound-node-evaluation", "new output directory")
-	reviewPath := flag.String("review", "experiments/simple-erp/current-staff/combined/node-reference-review.json", "reference/source/BPMN hash binding")
+	reviewPath := flag.String("review", "experiments/history/simple-erp/current-staff/combined/node-reference-review.json", "reference/source/BPMN hash binding")
 	benchmarkPath := flag.String("benchmark", "outputs/current-staff-benchmark-final/benchmark-report.json", "original saved benchmark binding")
-	manifestPath := flag.String("manifest", "experiments/simple-erp/current-staff/manifest.json", "original benchmark inputs")
+	manifestPath := flag.String("manifest", "experiments/history/simple-erp/current-staff/manifest.json", "original benchmark inputs")
 	caseID := flag.String("case-id", "normalized-staff-combined", "saved benchmark case id")
 	repo := flag.String("repo", "../Simple-ERP", "local source snapshot to verify, read only")
 	flag.Parse()

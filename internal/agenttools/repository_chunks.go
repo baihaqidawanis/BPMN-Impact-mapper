@@ -2,7 +2,9 @@ package agenttools
 
 import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
+	"path"
 	"sort"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -11,6 +13,9 @@ import (
 func (s *Snapshot) RepositoryChunks() []planning.RepositoryChunk {
 	names := make([]string, 0, len(s.files))
 	for name := range s.files {
+		if bulkReviewExcluded(name) {
+			continue
+		}
 		names = append(names, name)
 	}
 	sort.Strings(names)
@@ -42,4 +47,44 @@ func (s *Snapshot) RepositoryChunks() []planning.RepositoryChunk {
 		}
 	}
 	return out
+}
+
+// Skip prose and dependency manifests during exhaustive scanning. Approved
+// source tools still allow targeted investigation when planning needs it.
+func bulkReviewExcluded(file string) bool {
+	base := strings.ToLower(path.Base(file))
+	switch strings.ToLower(path.Ext(file)) {
+	case ".md", ".mdx", ".rst", ".adoc":
+		return true
+	}
+	switch base {
+	case "go.sum", "go.mod", "package-lock.json", "package.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", "poetry.lock", "uv.lock", "cargo.lock", "composer.lock", "packages.lock.json":
+		return true
+	}
+	return false
+}
+
+// Only a root README already admitted by secure ingestion. Never follow links.
+func (s *Snapshot) RootReadme() *planning.ReadmeInput {
+	names := []string{}
+	for name := range s.files {
+		if !strings.Contains(name, "/") && strings.EqualFold(name, "README.md") {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	if len(names) == 0 {
+		return nil
+	}
+	file := names[0]
+	text := s.files[file]
+	truncated := len(text) > 8192
+	if truncated {
+		end := 8192
+		for !utf8.RuneStart(text[end]) {
+			end--
+		}
+		text = text[:end]
+	}
+	return &planning.ReadmeInput{File: file, Content: text, Truncated: truncated}
 }

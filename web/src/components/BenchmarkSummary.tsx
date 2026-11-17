@@ -1,6 +1,8 @@
 import snapshot from "../../public/benchmarks/staff-2026-10-29.json";
 import experiments from "../../public/benchmarks/retrieval-studies-2026-10-30.json";
 import styles from "./BenchmarkSummary.module.css";
+import { AgentEvaluationSummary } from "./AgentEvaluationSummary";
+import { ModelSelectionSummary } from "./ModelSelectionSummary";
 
 const names: Record<string, string> = { bm25: "BM25", semantic: "Semantic", fusion: "BM25 + Semantic", hybrid: "Hybrid" };
 const percent = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -23,6 +25,8 @@ export function BenchmarkSummary() {
       <div><dt>MRR</dt><dd>How early the first expected file appears.</dd></div>
       <div><dt>R-precision</dt><dd>If a case has three expected files, check its first three results. This adapts the cutoff to the reference size.</dd></div>
     </dl><p>Each scenario/method ran twice. The full source tree was locally modified; the revision label alone does not freeze it. This is a development benchmark, not an independently verified accuracy claim. It does not measure live speed or Qwen performance.</p></details>
+    <AgentEvaluationSummary />
+    <ModelSelectionSummary />
     <details className={styles.experiments}>
       <summary>Latest retrieval experiments · {experiments.date}</summary>
       <section aria-label="Recent retrieval experiments">

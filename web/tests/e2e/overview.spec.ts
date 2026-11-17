@@ -1,3 +1,4 @@
+import { loadAnalysisFixture } from "./helpers/analysis-fixture";
 import {test,expect} from "@playwright/test";
 
 test("overview and sidebar support the analysis workflow on desktop and mobile",async({page})=>{
@@ -12,7 +13,7 @@ test("overview and sidebar support the analysis workflow on desktop and mobile",
   await desktopToggle.click();await expect(desktopToggle).toHaveAttribute("aria-expanded","true");
   await home.getByRole("button",{name:"New analysis",exact:false}).click();
   await expect(page.getByRole("heading",{name:"Configure analysis"})).toBeVisible();
-  await page.getByRole("button",{name:"Load synthetic demo"}).click();
+  await loadAnalysisFixture(page);
   await page.getByRole("group",{name:"Analysis mode"}).getByRole("button",{name:"Research",exact:true}).click();
   await page.getByLabel("Experimental method",{exact:true}).selectOption("bm25");
   await page.getByRole("button",{name:"Run impact analysis"}).click();
@@ -38,4 +39,8 @@ test("overview and sidebar support the analysis workflow on desktop and mobile",
   await expect(nav).not.toBeVisible();await expect(home).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   await page.screenshot({path:test.info().outputPath("overview-mobile.png"),fullPage:true});
+  await toggle.click();await nav.getByRole("button",{name:"Guide",exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Required action",exact:true})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath("guide-mobile.png"),fullPage:true});
 });

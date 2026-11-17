@@ -1,5 +1,14 @@
 # Acuan mapping before Simple-ERP
 
+**Review khusus terbaru (2026-11-05):** [Staff adjustment submit current](adj-submit-current.md),
+dengan [data JSON](adj-submit-current.json). Mencakup seluruh node/flow current,
+jalur API, bukti source dan perbandingan dengan acuan after add-task serta plan Qwen.
+Screening seluruh scope: [laporan 2026-11-05](../../../docs/BASELINE-SCREENING-2026-11-05.md). Hubungan aktivitas/source masih cocok; seluruh 72 tabel flow L3 lama memuat kontrol result_merge yang perlu diperbarui.
+
+Snapshot all-roles lama untuk proses ini masih memuat `result_merge` yang sudah
+tidak ada pada XML current. Gunakan review khusus ini untuk adjustment submit;
+ini bukan pembaruan atau validasi ulang seluruh proses/role.
+
 **Paket lengkap terbaru:** [tiga modul × tiga role](all-roles/README.md).
 Mencakup P2P, Inventory, Master Data/Konfigurasi untuk Staff, Supervisor dan
 Super Admin: 72 proses L3, 354 aktivitas, serta indeks 40 diagram L0–L2.
@@ -11,7 +20,7 @@ perilaku sudah diuji 1:1 pada runtime.
 Verifikasi paket baru:
 
 ```powershell
-python experiments/simple-erp/build_role_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability/all-roles --verify
+python experiments/tools/build_role_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability/all-roles --verify
 python -m unittest discover -s experiments/simple-erp -p test_role_traceability.py -v
 ```
 
@@ -49,7 +58,7 @@ detail kondisi/branch belum disimpulkan untuk elemen tersebut.
 Dari root Mapper:
 
 ```powershell
-python experiments/simple-erp/build_baseline_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability --verify
+python experiments/tools/build_baseline_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability --verify
 ```
 
 Pemeriksaan mencocokkan ulang hash dan bukti source, 50 aktivitas, data JSON serta

@@ -28,6 +28,7 @@ type RepositoryChunk struct {
 }
 
 type FullReviewProgress struct {
+	ConsistencyReview string `json:"consistency_review,omitempty"`
 	SourceFingerprint string `json:"source_fingerprint,omitempty"`
 	Phase             string `json:"phase"`
 	FilesTotal        int    `json:"files_total"`
@@ -57,11 +58,16 @@ type FullRepositoryEngine struct {
 
 func (e FullRepositoryEngine) Run(ctx context.Context, id string, original EvidenceBundle) (AgentSession, error) {
 	var s AgentSession
-	if e.Model == nil || e.Source == nil || e.Store == nil || !validAgentID(id) || len(id) > 40 || len(original.Changes) != 1 {
-		return s, errors.New("full review dependencies and one selected change required")
+	if e.Model == nil || e.Source == nil || e.Store == nil || !validAgentID(id) || len(id) > 40 || len(original.Changes) == 0 {
+		return s, errors.New("full review dependencies and BPMN changes required")
 	}
 	if err := validateBundle(original); err != nil {
 		return s, err
+	}
+	var orientationErr error
+	original, orientationErr = e.orient(ctx, id, original)
+	if orientationErr != nil {
+		return s, orientationErr
 	}
 	chunks := append([]RepositoryChunk(nil), e.Source.RepositoryChunks()...)
 	if len(chunks) == 0 {
@@ -69,10 +75,12 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 	}
 	leadRank := map[string]int{}
 	leads := []string{}
-	for _, candidate := range original.Changes[0].Candidates {
-		if _, ok := leadRank[candidate.File]; !ok {
-			leads = append(leads, candidate.File)
-			leadRank[candidate.File] = len(leads)
+	for _, change := range original.Changes {
+		for _, candidate := range change.Candidates {
+			if _, ok := leadRank[candidate.File]; !ok {
+				leads = append(leads, candidate.File)
+				leadRank[candidate.File] = len(leads)
+			}
 		}
 	}
 	for i := range chunks {
@@ -122,7 +130,11 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 	if identity.Provider == "" || identity.Model == "" || identity.PromptVersion == "" || e.Source.Identity() == "" {
 		return s, errors.New("full review identities required")
 	}
-	binding := agentDigest([]any{"full-repository-v1", original.ContextID, e.Source.Identity(), identity})
+	chunkIDs := make([]string, len(chunks))
+	for i, c := range chunks {
+		chunkIDs[i] = c.ID
+	}
+	binding := agentDigest([]any{"full-repository-v6", original.ContextID, e.Source.Identity(), identity, chunkIDs})
 	loaded, err := e.Store.Load(ctx, id)
 	if errors.Is(err, ErrAgentSessionMissing) {
 		s = AgentSession{Version: "1", ID: id, Binding: binding, Identity: identity, Bundle: original, Role: Analyst, Status: "RUNNING", FullReview: &FullReviewProgress{SourceFingerprint: e.Source.Identity(), Phase: "scanning", FilesTotal: len(files), ChunksTotal: len(chunks)}}
@@ -170,11 +182,12 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 			return pause("Chunk source binding mismatch.", errors.New("chunk binding mismatch"))
 		}
 		if loadErr != nil {
-			change := original.Changes[0]
-			evidence := EvidenceItem{ID: c.ID, Type: "FULL_SOURCE_CHUNK", Location: fmt.Sprintf("%s@bytes:%d-%d", c.File, c.StartByte, c.EndByte), Excerpt: truncateChunkExcerpt(c.Content)}
-			change.Candidates = []Candidate{{File: c.File, Module: c.Module, Layer: c.Layer, SuggestedAction: domain.ActionVerify, Origin: "full-repository-review", Evidence: []EvidenceItem{evidence}}}
 			bundle := original
-			bundle.Changes = []ChangeInput{change}
+			bundle.Changes = append([]ChangeInput(nil), original.Changes...)
+			for n := range bundle.Changes {
+				evidence := EvidenceItem{ID: fmt.Sprintf("%s-change-%d", c.ID, n), Type: "FULL_SOURCE_CHUNK", Location: fmt.Sprintf("%s@bytes:%d-%d", c.File, c.StartByte, c.EndByte), Excerpt: truncateChunkExcerpt(c.Content)}
+				bundle.Changes[n].Candidates = []Candidate{{File: c.File, Module: c.Module, Layer: c.Layer, SuggestedAction: domain.ActionVerify, Origin: "full-repository-review", Evidence: []EvidenceItem{evidence}}}
+			}
 			bundle.ContextID, _ = ComputeContextID(bundle)
 			receipt = AgentSession{Version: "1", ID: childID, Binding: chunkBinding, Identity: identity, Bundle: bundle, Role: Analyst, Status: "RUNNING", ReviewedChunk: &c}
 		}
@@ -208,8 +221,19 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 			if reply.Verification == nil || reply.Tool != nil || reply.Plan != nil || reply.Review != nil || reply.NeedEvidence != nil {
 				return pause("Invalid chunk classification; resume to retry.", ErrAgentModelOutput)
 			}
-			if err := validateDecisions(receipt.Bundle.Changes[0], reply.Verification.Decisions); err != nil {
-				return pause("Chunk evidence failed validation; resume to retry.", err)
+			if len(reply.Verification.Decisions) != len(receipt.Bundle.Changes) {
+				return pause("Every BPMN change needs a chunk decision.", ErrAgentModelOutput)
+			}
+			for _, change := range receipt.Bundle.Changes {
+				var matching []CandidateDecision
+				for _, d := range reply.Verification.Decisions {
+					if d.ChangeType == change.ChangeType && d.ElementID == change.ElementID {
+						matching = append(matching, d)
+					}
+				}
+				if err := validateDecisions(change, matching); err != nil {
+					return pause("Chunk evidence failed validation: "+err.Error(), err)
+				}
 			}
 			receipt.Decisions = reply.Verification.Decisions
 			receipt.Status = "COMPLETE"
@@ -217,20 +241,28 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 				return s, err
 			}
 		}
-		if len(receipt.Decisions) != 1 {
-			return pause("Invalid chunk receipt.", errors.New("missing chunk decision"))
+		if len(receipt.Decisions) != len(original.Changes) {
+			return pause("Invalid chunk receipt.", errors.New("missing chunk decisions"))
 		}
 		scanTurns += receipt.Turns
-		d := receipt.Decisions[0]
-		candidate := receipt.Bundle.Changes[0].Candidates[0]
-		prior, exists := decisions[c.File]
-		if !exists || verdictPriority(d.Verdict) > verdictPriority(prior.Verdict) {
-			decisions[c.File] = d
-			candidates[c.File] = candidate
-		} else if d.Verdict == prior.Verdict && len(candidates[c.File].Evidence) < 8 {
-			merged := candidates[c.File]
-			merged.Evidence = append(merged.Evidence, candidate.Evidence...)
-			candidates[c.File] = merged
+		for n, change := range receipt.Bundle.Changes {
+			var d CandidateDecision
+			for _, item := range receipt.Decisions {
+				if item.ChangeType == change.ChangeType && item.ElementID == change.ElementID {
+					d = item
+				}
+			}
+			candidate := change.Candidates[0]
+			key := fmt.Sprintf("%06d:%s", n, c.File)
+			prior, exists := decisions[key]
+			if !exists || verdictPriority(d.Verdict) > verdictPriority(prior.Verdict) {
+				decisions[key] = d
+				candidates[key] = candidate
+			} else if d.Verdict == prior.Verdict && len(candidates[key].Evidence) < 8 {
+				merged := candidates[key]
+				merged.Evidence = append(merged.Evidence, candidate.Evidence...)
+				candidates[key] = merged
+			}
 		}
 		if i >= s.FullReview.ChunksReviewed {
 			s.FullReview.ChunksReviewed = i + 1
@@ -248,8 +280,10 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 	}
 	sort.Strings(names)
 	finalBundle := original
-	change := original.Changes[0]
-	change.Candidates = nil
+	finalBundle.Changes = append([]ChangeInput(nil), original.Changes...)
+	for i := range finalBundle.Changes {
+		finalBundle.Changes[i].Candidates = nil
+	}
 	s.Decisions = nil
 	s.Draft = nil
 	s.Feedback = nil
@@ -261,7 +295,11 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 		d := decisions[name]
 		// Every retained evidence item is allowed; retain the strongest chunk's
 		// rationale while making its actual citations available to planning.
-		change.Candidates = append(change.Candidates, candidate)
+		for i, change := range finalBundle.Changes {
+			if change.ChangeType == d.ChangeType && change.ElementID == d.ElementID {
+				finalBundle.Changes[i].Candidates = append(finalBundle.Changes[i].Candidates, candidate)
+			}
+		}
 		s.Decisions = append(s.Decisions, d)
 		if d.Verdict != VerdictReject {
 			pending = append(pending, name)
@@ -273,7 +311,6 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 			s.FullReview.WeakFiles++
 		}
 	}
-	finalBundle.Changes = []ChangeInput{change}
 	finalBundle.ContextID, _ = ComputeContextID(finalBundle)
 	s.Bundle = finalBundle
 	s.Turns = scanTurns
@@ -285,18 +322,24 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 	for start := 0; start < len(pending); start += 3 {
 		batchIndex := start / 3
 		batchBundle := original
-		batchChange := original.Changes[0]
-		batchChange.Candidates = nil
+		batchBundle.Changes = append([]ChangeInput(nil), original.Changes...)
+		for i := range batchBundle.Changes {
+			batchBundle.Changes[i].Candidates = nil
+		}
 		var verified []CandidateDecision
 		for _, name := range pending[start:min(start+3, len(pending))] {
-			batchChange.Candidates = append(batchChange.Candidates, candidates[name])
+			for i, change := range batchBundle.Changes {
+				d := decisions[name]
+				if change.ChangeType == d.ChangeType && change.ElementID == d.ElementID {
+					batchBundle.Changes[i].Candidates = append(batchBundle.Changes[i].Candidates, candidates[name])
+				}
+			}
 			verified = append(verified, decisions[name])
 		}
-		batchBundle.Changes = []ChangeInput{batchChange}
 		batchBundle.ContextID, _ = ComputeContextID(batchBundle)
 		s.Role = Planner
 		s.Status = "RUNNING"
-		s.FullReview.CurrentFile = pending[start]
+		s.FullReview.CurrentFile = candidates[pending[start]].File
 		if err := save(); err != nil {
 			return s, err
 		}
@@ -314,18 +357,24 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 			_ = save()
 			return s, nil
 		}
-		s.Draft = append(s.Draft, batch.Draft...)
-		for _, candidate := range batch.Bundle.Changes[0].Candidates {
-			for i, existing := range s.Bundle.Changes[0].Candidates {
-				if existing.File == candidate.File {
-					s.Bundle.Changes[0].Candidates[i] = candidate
+		if batch.Status == "COMPLETE" {
+			s.Draft = append(s.Draft, batch.Draft...)
+		} else if len(batch.Draft) > 0 {
+			issues = append(issues, fmt.Sprintf("Planning batch %d draft withheld because reviewer approval is incomplete; inspect its checkpoint.", batchIndex+1))
+		}
+		for n, change := range batch.Bundle.Changes {
+			for _, candidate := range change.Candidates {
+				for i, existing := range s.Bundle.Changes[n].Candidates {
+					if existing.File == candidate.File {
+						s.Bundle.Changes[n].Candidates[i] = candidate
+					}
 				}
 			}
 		}
 		s.Bundle.ContextID, _ = ComputeContextID(s.Bundle)
 		for _, d := range batch.Decisions {
 			for i, existing := range s.Decisions {
-				if existing.File == d.File {
+				if existing.File == d.File && existing.ChangeType == d.ChangeType && existing.ElementID == d.ElementID {
 					s.Decisions[i] = d
 				}
 			}
@@ -339,6 +388,37 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 		s.FullReview.BatchesReviewed = batchIndex + 1
 		if err := save(); err != nil {
 			return s, err
+		}
+	}
+	s.Role = Reviewer
+	s.FullReview.Phase = "consistency_review"
+	s.FullReview.CurrentFile = ""
+	s.FullReview.ConsistencyReview = "pending"
+	if err := save(); err != nil {
+		return s, err
+	}
+	review, turns, err := e.reviewCombinedPlan(ctx, id, s)
+	s.Turns += turns
+	if err != nil {
+		if errors.Is(err, ErrAgentContextLimit) || errors.Is(err, errConsistencyAttempts) {
+			s.FullReview.ConsistencyReview = "incomplete"
+			issues = append(issues, "Final cross-batch review could not complete within the context or retry budget; inspect the combined plan.")
+		} else {
+			return pause("Final consistency review interrupted; completed scan and batches are preserved.", err)
+		}
+	} else {
+		s.ConsistencyReview = &review
+		if review.Approved {
+			s.FullReview.ConsistencyReview = "approved"
+		} else {
+			s.FullReview.ConsistencyReview = "needs_review"
+			issues = append(issues, review.Issues...)
+		}
+	}
+	issues = append(issues, implementationCoverageIssues(s.Bundle, s.Draft)...)
+	for _, coverage := range summarizeChangeCoverage(s.Bundle, s.Decisions, s.Draft) {
+		if coverage.Plans == 0 {
+			issues = append(issues, fmt.Sprintf("%s/%s: no evidence-backed file plan; absence of a recommendation does not prove no impact.", coverage.ChangeType, coverage.ElementID))
 		}
 	}
 	s.Status = "COMPLETE"

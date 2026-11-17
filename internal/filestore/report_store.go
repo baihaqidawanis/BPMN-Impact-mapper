@@ -95,6 +95,18 @@ func (store ReportStore) Get(ctx context.Context, analysisID string) (domain.Rep
 	if value.AnalysisID != analysisID {
 		return domain.Report{}, errors.New("stored analysis ID mismatch")
 	}
+	pair, pairErr := store.GetBPMN(ctx, analysisID)
+	if pairErr == nil {
+		if pair.InputFingerprint != value.InputFingerprint {
+			return domain.Report{}, errors.New("BPMN snapshot fingerprint mismatch")
+		}
+		value.ProcessContext, err = parsePair(pair)
+		if err != nil {
+			return domain.Report{}, err
+		}
+	} else if !errors.Is(pairErr, reportstore.ErrNotFound) {
+		return domain.Report{}, pairErr
+	}
 	return value, nil
 }
 

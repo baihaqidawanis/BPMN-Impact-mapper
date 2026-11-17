@@ -58,3 +58,58 @@ func TestInspectSourceFindsDistantAndCompressedBehavior(t *testing.T) {
 		t.Fatal("fallback must be readable with an explicit limitation", fallback, err)
 	}
 }
+
+func TestInspectSourcePrioritizesRequestedDispatchBlock(t *testing.T) {
+	root := t.TempDir()
+	code := `package flow
+func command(action, reason string) {
+ switch action {
+ case "archive":
+  if reason == "" { return }
+ case "publish":
+  state := "DRAFT"
+  if state != "DRAFT" { return }
+  state = "PUBLISHED"
+ case "erase":
+  if reason == "" { return }
+ }
+}
+`
+	if err := os.WriteFile(filepath.Join(root, "flow.go"), []byte(code), 0600); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := agenttools.New(context.Background(), root, ingest.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := snapshot.Execute(context.Background(), planning.ToolRequest{Name: "inspect_source", File: "flow.go", Query: "validate reason before publish"})
+	if err != nil || len(result.Candidates) != 1 || !strings.Contains(result.Note, "Action-label") {
+		t.Fatal(result, err)
+	}
+	evidence := result.Candidates[0].Evidence
+	if !strings.Contains(evidence[0].Excerpt, `case "publish"`) {
+		t.Fatal("wrong operation anchor", evidence)
+	}
+	found := false
+	for _, e := range evidence {
+		if strings.Contains(e.Excerpt, `state = "PUBLISHED"`) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("mutation context missing", evidence)
+	}
+	search, err := snapshot.Execute(context.Background(), planning.ToolRequest{Name: "search_source", Query: "publish"})
+	if err != nil || len(search.Candidates) == 0 {
+		t.Fatal(search, err)
+	}
+	contract := false
+	for _, e := range search.Candidates[0].Evidence {
+		if e.Type == "SOURCE_DECLARATION" && strings.Contains(e.Excerpt, "action, reason string") && e.Location == "flow.go:2" {
+			contract = true
+		}
+	}
+	if !contract {
+		t.Fatal("discovery lost function parameter contract", search)
+	}
+}

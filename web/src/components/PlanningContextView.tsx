@@ -61,7 +61,7 @@ export function PlanningContextView({ analysisID, repositoryPath = "", onReposit
     </div>
 		<div className={styles.notice}><b>Review is opt-in.</b><span>Review starts only when you choose Run. Full mode sends eligible source in chunks; focused mode uses selected evidence and source searches. Original mapping rankings stay unchanged.</span></div>
     <details className={styles.offline}><summary>Offline audit snapshots</summary><section className={styles.planBoundary}>
-      <div><span>Offline record</span><h4>{latestPlan ? "Context snapshot saved" : "Save context without a model"}</h4><p>This stores an immutable offline record. It does not call Qwen or generate a plan. Use Qwen review above for the lab model.</p></div>
+      <div><span>Offline record</span><h4>{latestPlan ? "Context snapshot saved" : "Save context without a model"}</h4><p>This stores an immutable offline record. It does not call the model or generate a plan. Use AI review above for the lab model.</p></div>
       <div className={styles.planActions}>
         <button type="button" onClick={preparePlan} disabled={planning}>{planning ? "Preparing…" : "Create planning record"}</button>
         {latestPlan && <><a href={planDownloadURL(latestPlan.plan_id, "json")}>Plan JSON</a><a href={planDownloadURL(latestPlan.plan_id, "md")}>Plan Markdown</a></>}

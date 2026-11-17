@@ -1,0 +1,725 @@
+{
+  "date": "2026-11-10",
+  "status": "Fixed-target recovery completed and exported a plan; technical correctness still needs review",
+  "case": "Inventory adjustment: require a reason before submit",
+  "roles": [
+    {
+      "role": "Analyst",
+      "model": "qwen3.5:35b-a3b-q4_K_M",
+      "reason": "Valid on both v18 inputs. In the five-target batch, retained backend/test relevance while treating three documents as weak leads.",
+      "limitation": "Only two fixed inputs; frontend coverage and full-case recall were not measured. Selectivity alone does not prove correctness."
+    },
+    {
+      "role": "Planner",
+      "model": "qwen3.5:35b-a3b-q4_K_M",
+      "reason": "The v20 input-tracing instructions produced an explicit change from the frontend empty fallback to forwarding the existing input for the affected action. Existing success-test inputs were also updated in the draft.",
+      "limitation": "One fixed-target draft, not full-case validation. Whitespace handling, error conventions and failure-state details remain incomplete. The same-model full pipeline has not been validated."
+    },
+    {
+      "role": "Reviewer",
+      "model": "qwen3.5:35b-a3b-q4_K_M",
+      "reason": "35B remains a candidate, not a qualified Reviewer. Under an experimental explicit-schema JSON, per-file reasoning setup, 5/7 expected verdicts matched, including the two earlier nil-type and missing-payload defects. These controls differ from the older 2/3 baseline suite.",
+      "limitation": "The seven-control setup accepted one unrelated-action change and produced one incomplete response. Only 6/7 decisions were valid. Extra failure-test findings were sometimes unsupported. Cold calls exceeded the production client timeout. No complete-case plan was validated under this policy. The v24 fixed-target Planner/Reviewer trial paused on repeated Reviewer output limits and exported no final plan; retry feedback forwarding was repaired afterward."
+    }
+  ],
+  "studies": [
+    {
+      "role": "Analyst",
+      "protocol": "v18 / baseline / thinking off",
+      "date": "2026-11-10",
+      "artifact": "20261110T013614",
+      "columns": [
+        "Valid responses",
+        "Single / batch time",
+        "Three documentation targets"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:9b-q8_0",
+          "cells": [
+            "2/2",
+            "20.25s / 12.26s",
+            "3/3 RELEVANT, 0/3 WEAK"
+          ]
+        },
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "2/2",
+            "44.14s / 14.52s",
+            "0/3 RELEVANT, 3/3 WEAK"
+          ]
+        }
+      ],
+      "note": "Two identical inputs per model: one backend target, then five targets. Format validity is not accuracy. First request may include model loading; these are single observed times."
+    },
+    {
+      "role": "Planner",
+      "protocol": "v16 / baseline / thinking off",
+      "date": "2026-11-09",
+      "artifact": "roles-20261109T141046",
+      "columns": [
+        "Valid draft format",
+        "Observed time",
+        "Manual source review"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:9b-q8_0",
+          "cells": [
+            "1/1",
+            "38.80s",
+            "Proposes an existing reason parameter again; includes unsupported persistence work."
+          ]
+        },
+        {
+          "model": "glm-4.7-flash:latest",
+          "cells": [
+            "1/1",
+            "46.58s",
+            "Reuses the reason contract and proposes a submit guard. Misdescribes an empty test argument as missing; failure checks need more detail."
+          ]
+        },
+        {
+          "model": "bpmn-qwen-coder:30b-q4_k_m",
+          "cells": [
+            "1/1",
+            "41.79s",
+            "Suggests a nil check for a Go string and confuses lock order and test entry points."
+          ]
+        },
+        {
+          "model": "qwen3:14b",
+          "cells": [
+            "1/1",
+            "38.33s",
+            "Backend collection step is vague; negative test cases are underspecified."
+          ]
+        }
+      ],
+      "note": "Same two-target partial case and Analyst decisions for every model. All drafts passed structural validation; none is independently approved by that fact. Not a comparison of complete plans."
+    },
+    {
+      "role": "Reviewer",
+      "protocol": "v17 clarified review prompt / coding / thinking off",
+      "date": "2026-11-09",
+      "artifact": "roles-20261109T143138",
+      "columns": [
+        "Accepted reasonable control",
+        "Rejected invalid control",
+        "Reasonable / invalid time"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Yes",
+            "Yes",
+            "46.12s / 8.99s"
+          ]
+        },
+        {
+          "model": "bpmn-qwen-coder:30b-q4_k_m",
+          "cells": [
+            "Yes",
+            "No",
+            "33.15s / 4.46s"
+          ]
+        },
+        {
+          "model": "glm-4.7-flash:latest",
+          "cells": [
+            "Yes",
+            "No",
+            "35.06s / 4.75s"
+          ]
+        }
+      ],
+      "note": "Two fixed controls per model, with matched inputs. 9B was not rerun under this exact prompt and is excluded. The 35B rejection explanation remains unreliable; do not interpret 2/2 verdicts as 100% real-world accuracy."
+    },
+    {
+      "role": "Reviewer v19",
+      "protocol": "v19 / coding / thinking off",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T022758",
+      "columns": [
+        "Accepted reasonable control",
+        "Rejected invalid control",
+        "Reasonable / invalid time"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Yes",
+            "Yes",
+            "9.76s / 10.08s"
+          ]
+        },
+        {
+          "model": "qwen3.5:9b-q8_0",
+          "cells": [
+            "Yes",
+            "No",
+            "30.96s / 17.66s"
+          ]
+        }
+      ],
+      "note": "Same two source-backed inputs for these installed configurations. 35B recognized the string-contract conflict; 9B accepted the invalid proposal. Only two controls, not general accuracy. 35B reused resident weights; 9B first-call time includes loading. Inputs differ from the older v17 study, so changes cannot be attributed only to the prompt."
+    },
+    {
+      "role": "Planner v19",
+      "protocol": "v19 / coding / thinking off / fixed three-target input",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T030153",
+      "columns": [
+        "Valid draft format",
+        "Observed time",
+        "Source-based technical assessment"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "1/1",
+            "29.40s",
+            "Concrete non-whitespace backend guard and existing success-test input update. Still omits the frontend payload-condition edit; error/persistence assumptions and failure-state checks remain incomplete."
+          ]
+        },
+        {
+          "model": "glm-4.7-flash:latest",
+          "cells": [
+            "1/1",
+            "47.96s",
+            "Concrete backend guard, but omits explicit existing success-fixture updates and assumes submit already forwards reason. Frontend validation scope needs clarification."
+          ]
+        },
+        {
+          "model": "qwen3:14b",
+          "cells": [
+            "1/1",
+            "54.09s",
+            "Incorrect NO_ACTION for all three targets; misses the new validation requirement."
+          ]
+        },
+        {
+          "model": "qwen3.5:9b-q8_0",
+          "cells": [
+            "1/1",
+            "60.94s",
+            "Invents TransitionSubmit, produces fragmented steps, and incorrectly gives frontend NO_ACTION. Also misstates unrelated action requirements."
+          ]
+        }
+      ],
+      "note": "One draft per installed configuration, with identical input/options/schema hashes. Targets were supplied, so this does not evaluate file selection. Technical assessment is a provisional assistant source review, not independent grading. None resolves every required change. 35B reused resident weights; loading differs. Coder was not rerun under this v19 setup. Do not pool these rows with v16 results."
+    },
+    {
+      "role": "Reviewer v20: extended controls",
+      "protocol": "v20 / coding / thinking off / output 4096",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T032101 + roles-20261110T033651",
+      "columns": [
+        "Accepted reasonable plan",
+        "Rejected invalid type",
+        "Rejected missing payload edit",
+        "Observed times in that order"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Yes",
+            "Yes",
+            "No",
+            "14.67s / 14.50s / 13.69s"
+          ]
+        },
+        {
+          "model": "glm-4.7-flash:latest",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "39.07s / 10.49s / 9.31s"
+          ]
+        },
+        {
+          "model": "bpmn-qwen-coder:30b-q4_k_m",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "36.82s / 6.42s / 6.40s"
+          ]
+        },
+        {
+          "model": "qwen3:14b",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "31.70s / 13.26s / 13.74s"
+          ]
+        }
+      ],
+      "note": "All three message/schema/options hashes matched across the four installed configurations. One result per control/model. 35B rejected the type control for an unreliable rationale; correct verdict counts do not establish correct reasoning. Every model missed the explicit missing payload edit. Loading differs; these are not repeated speed benchmarks."
+    },
+    {
+      "role": "Reasoning budget v20",
+      "protocol": "v20 / coding / thinking on / budgets shown per row",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T032525 + roles-20261110T033020",
+      "columns": [
+        "Valid final responses",
+        "Observed call times",
+        "Outcome"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M / thinking / 4096",
+          "cells": [
+            "0/3",
+            "102.02s, 55.08s, 51.22s",
+            "All final outputs truncated; no valid decisions."
+          ]
+        },
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M / thinking / 6144",
+          "cells": [
+            "2/2",
+            "135.97s, 76.88s",
+            "Accepted reasonable plan and incorrectly accepted the missing-payload plan. Nil-type control was not attempted in this run."
+          ]
+        }
+      ],
+      "note": "The 6144-token run attempted two of the three controls. Thinking/output budget are experimental settings, not production defaults. The first 6144 call took 135.97s including cold loading, above the current production turn/client limits. No quality improvement on the payload control was demonstrated. Hidden reasoning is not published."
+    },
+    {
+      "role": "Experimental comparison receipts",
+      "protocol": "Prototype five-check comparison audit / coding / thinking off / output 4096",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T041553",
+      "columns": [
+        "Accepted reasonable plan",
+        "Rejected invalid type",
+        "Rejected missing payload edit",
+        "Observed call times"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "65.63s / 17.82s / 16.43s"
+          ]
+        }
+      ],
+      "note": "The host now binds a selected source excerpt and actual proposed edit, and requests a valid-input-path check. The prototype still accepted both defective proposals (1/3 expected verdicts), so it was not adopted as default. Captures retain a legacy v20 version label with a different contract hash; the explicit opt-in policy is now labelled v21. This does not show an accuracy improvement. A literal quote is not proof of correct reasoning."
+    },
+    {
+      "role": "Reviewer per file (experimental)",
+      "protocol": "v20 / coding / thinking off / output 4096 / one file per request",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T061205",
+      "columns": [
+        "Accept reasonable file plans",
+        "Reject planted defects",
+        "Expected verdicts"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "3/3",
+            "0/2",
+            "3/5; full suite failed"
+          ]
+        }
+      ],
+      "note": "All five responses approved. Reducing each request to one file did not catch the nil-type or missing-payload defect. Full before/after graphs remained available. One observation per control; not general accuracy or a production policy change. First call included cold loading (44.57s); remaining calls took 4.29-7.53s."
+    },
+    {
+      "role": "Synthetic value flow / JSON diagnostic",
+      "protocol": "explicit-greedy / thinking off / context 8192 / output 512 / JSON mode",
+      "date": "2026-11-10",
+      "artifact": "flow-20261110T063745",
+      "columns": [
+        "Valid responses",
+        "Exact value + decision pairs"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "3/3",
+            "2/3"
+          ]
+        }
+      ],
+      "note": "The schema trials had 0/3 exact pairs; the JSON-mode trial had 2/3, but also added explicit field instructions. This is not a format-only causal comparison, repository retrieval, or general accuracy. Applying the explicit producer edit was still missed."
+    },
+    {
+      "role": "Reviewer JSON format trial",
+      "protocol": "v22 / coding / thinking off / output 4096",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T063950",
+      "columns": [
+        "Reasonable proposal",
+        "Nil defect",
+        "Payload defect",
+        "Expected verdicts"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Accepted",
+            "Rejected with correct type rationale",
+            "Incorrectly accepted",
+            "2/3"
+          ]
+        }
+      ],
+      "note": "JSON mode supplied the schema in the prompt and retained identical host validation. It did not resolve the payload defect."
+    },
+    {
+      "role": "Reviewer concrete-edit projection",
+      "protocol": "v23 / coding / thinking off / output 4096 / JSON mode",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T064333; roles-20261110T064548; roles-20261110T064822",
+      "columns": [
+        "Accept reasonable",
+        "Reject nil defect",
+        "Reject payload defect",
+        "Expected verdicts"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Yes",
+            "Yes; rationale still unreliable",
+            "No",
+            "2/3"
+          ]
+        },
+        {
+          "model": "qwen3.5:9b-q8_0",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "1/3"
+          ]
+        },
+        {
+          "model": "bpmn-qwen-coder:30b-q4_k_m",
+          "cells": [
+            "Yes",
+            "No",
+            "No",
+            "1/3"
+          ]
+        }
+      ],
+      "note": "The first three request hashes match across models. Planner summaries and self-reported behavior were omitted for change proposals; source, edits, checks and process graphs remained available. Two additional defects were tested on 9B/Coder: 9B rejected a global guard with an unreliable rationale but accepted lost forwarding; Coder accepted both. Extra-suite totals are 2/5 and 1/5 respectively, not directly comparable to the three-control counts."
+    },
+    {
+      "role": "Reviewer reasoning per file",
+      "protocol": "v23 / coding / thinking on / output 6144 / JSON mode / one file per call",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T065118; roles-20261110T065520",
+      "columns": [
+        "Accept reasonable file plans",
+        "Reject planted defects",
+        "Valid decisions",
+        "Expected verdicts"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "3/3",
+            "2/4 (one incomplete)",
+            "6/7",
+            "5/7; full suite failed"
+          ]
+        }
+      ],
+      "note": "Two runs used the same verified model identity and disjoint file-scoped controls, with raw sources preserved. The nil-type and missing-payload defects were rejected with correct primary reasons, though an extra failure-test finding was unsupported. An unrelated global guard was accepted; lost unrelated forwarding exhausted output. Cold calls took 111-113s, exceeding the current production client timeout; warm calls took 55-91s. This is a development diagnostic, not whole-pipeline accuracy, a new default, or evidence that all reasoning is correct."
+    },
+    {
+      "role": "Fixed-target Planner / reasoning Reviewer trial",
+      "protocol": "v24 / three captured source targets / Planner thinking off / Reviewer thinking on / output 6144",
+      "date": "2026-11-10",
+      "artifact": "draft-review-20261110T071105",
+      "columns": [
+        "Planner",
+        "Reviewer",
+        "Session / export"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "One structurally valid three-file draft; 64.82s including 36.57s loading",
+            "Two calls exhausted output at 6144; 78.10s / 75.69s",
+            "PAUSED; 5 orchestration turns, 3 inference calls, no final export"
+          ]
+        }
+      ],
+      "note": "Frozen Analyst decisions were reused; this is not a fresh Analyst or full repository review. Source inspection of the draft still found missing whitespace handling and incomplete success-test input updates. This run exposed repair feedback not reaching partitioned Reviewer calls; that path is now fixed with regression coverage. It does not establish a correct AI plan or an accuracy increase."
+    },
+    {
+      "role": "Output-repair feedback diagnostic",
+      "protocol": "v24 / one backend file / thinking on / output 6144 / real prior failure feedback",
+      "date": "2026-11-10",
+      "artifact": "draft-review-20261110T071931",
+      "columns": [
+        "Response",
+        "Inference / warm-up",
+        "Quality boundary"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "Structurally valid; model approved",
+            "64.34s review; 37.16s explicit load without source",
+            "One file only; no complete plan or independent correctness verdict"
+          ]
+        }
+      ],
+      "note": "The old failed session and consumed turns were preserved. A fresh diagnostic forwarded its actual output-repair feedback; a different file-review instruction was also used, so this does not isolate feedback as the sole cause of completion. Whitespace handling remains absent from the draft; model approval is not a correctness proof. Regression tests separately verify that live retry feedback is forwarded and bound to fresh receipts."
+    },
+    {
+      "role": "Coordinated per-file review follow-up",
+      "protocol": "v26 / compact related proposals / output 6144 / 35B coding",
+      "date": "2026-11-10",
+      "artifact": "roles-20261110T075605; draft-review-20261110T075833",
+      "columns": [
+        "Non-thinking controls",
+        "Actual Planner / thinking Reviewer trial",
+        "Boundary"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "3/7: accepted all proposals, including four defects",
+            "PAUSED; 6 turns, no final export",
+            "Checkpoint ID overflow fixed afterward; no live retry yet"
+          ]
+        }
+      ],
+      "note": "Related proposals improve available coordination context but did not qualify the non-thinking Reviewer. The actual trial approved a test proposal despite incorrect claims about existing inputs. Frontend output then exhausted budget; retry hit a compound-ID length bug, now covered by a real-filesystem regression test. This is not a validated plan or a full repository benchmark."
+    },
+    {
+      "role": "Successful checkpoint recovery and plan export",
+      "protocol": "v26 / frozen Analyst targets / resumed Reviewer / coding / thinking on / output 6144",
+      "date": "2026-11-10",
+      "artifact": "draft-review-20261110T111937",
+      "columns": [
+        "Recovery",
+        "Real calls this run",
+        "Artifact / audit"
+      ],
+      "rows": [
+        {
+          "model": "qwen3.5:35b-a3b-q4_K_M",
+          "cells": [
+            "PAUSED at 6 turns to COMPLETE at 11; no budget reset",
+            "4 Reviewer calls; 0 Planner repeats",
+            "3 file proposals; JSON + Markdown exported; test-fixture correction still required"
+          ]
+        }
+      ],
+      "note": "Observed run 285.31s, including explicit source-free model load 36.05s. Original failed checkpoints preserved. Source findings and proposal-only contract findings both survive export. Three implementation targets were supplied from a previous Analyst checkpoint; no fresh Analyst/retrieval or full repository scan was measured. The post-output assistant audit is not independent ground truth."
+    }
+  ],
+  "pipeline": {
+    "status": "NEEDS_REVIEW",
+    "date": "2026-11-10",
+    "artifact": "pipeline-20261110T024058",
+    "protocol": "v19 / agent-loop-v11 / focused v5",
+    "models": "35B Analyst / GLM Planner / 35B Reviewer",
+    "mode": "Focused; all 10 saved candidates processed across 3 changes, plus discovery",
+    "turns": 79,
+    "tools": 43,
+    "revisions": 4,
+    "inferences": 73,
+    "inference_seconds": 1208.7,
+    "loading_seconds": 675.2,
+    "result": "Context splitting retained all 10 seeds across 5 batches, but partition turn exhaustion and unsupported review judgments left RELEVANT targets without approved plans. Complete plan export failed. This is not a successful accuracy result. Latest focused v6 also splits capacity-exhausted multi-seed groups; that policy is regression-tested but not yet validated in a complete lab run."
+  },
+  "limitations": [
+    "Saved research results, not live model status or automatic routing. Viewing this report sends no inference request.",
+    "One inventory case; source-based assessment and controls are not independent human validation. No general model superiority is established.",
+    "Compare models within each study only: prompts, contracts and profiles differ between studies. Q8 dense and Q4 MoE are different installed configurations.",
+    "Latency includes loading where applicable. Model switching in the pipeline repeatedly loaded weights; it is not pure generation speed.",
+    "File-selection Precision/Recall require a reference set. Protocol validity, ranking scores and acceptance of controls are separate measurements."
+  ],
+  "past_runs": [
+    {
+      "artifact": "pipeline-20261110T020518",
+      "protocol": "v18 / focused v3",
+      "status": "NEEDS_REVIEW",
+      "calls": 69,
+      "model_seconds": 1286.6,
+      "loading_seconds": 750.9,
+      "result": "No complete export. Three reference files appeared in an ADD_TASK draft, but its technical quality and the full scenario were not approved."
+    },
+    {
+      "artifact": "pipeline-20261110T023111",
+      "protocol": "v19 / focused v4",
+      "status": "NEEDS_REVIEW",
+      "calls": 28,
+      "model_seconds": 449.4,
+      "loading_seconds": 231.0,
+      "result": "A draft export exists, but ADD_TASK hit the context guard. The faster run skipped a valid ADD_TASK plan, so it is not an improvement in complete-case performance."
+    }
+  ],
+  "conclusion": "The fixed-target inventory trial resumed from 6 consumed turns and reached COMPLETE at 11 without repeating Planner. Four real Reviewer calls produced a canonical plan and Markdown. This proves recovery/export on that captured case, not full-repository accuracy. A source audit still found a missed successful-test fixture update, so Reviewer approval is not reliable sign-off.",
+  "control_gate": {
+    "note": "A declared control suite must accept the reasonable proposal and reject both planted defects. Missing, truncated, duplicate or incorrect decisions fail the gate. This is a research qualification check, not a general accuracy score or automatic runtime model switch. Invalid/missing decisions are not counted as correct; the 6144 run did not attempt the nil-type control. No tested configuration passed the complete suite. Passing the decision checks would still not prove correct justifications or general accuracy.",
+    "results": [
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "roles-20261110T032101",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 3,
+          "correct_decisions": 2,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "thinking off / 4096"
+      },
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "roles-20261110T032525",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 0,
+          "correct_decisions": 0,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\" has no unique valid decision.",
+            "Control \"missing-producer-payload-edit\" has no unique valid decision.",
+            "Control \"source-authored-proposal\" has no unique valid decision."
+          ]
+        },
+        "configuration": "thinking on / 4096 (3 attempted)"
+      },
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "roles-20261110T033020",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 2,
+          "correct_decisions": 1,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\" has no unique valid decision.",
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "thinking on / 6144 (2 attempted)"
+      },
+      {
+        "model": "bpmn-qwen-coder:30b-q4_k_m",
+        "study": "roles-20261110T033651",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 3,
+          "correct_decisions": 1,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\": expected approval=false, received true.",
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "thinking off / 4096"
+      },
+      {
+        "model": "glm-4.7-flash:latest",
+        "study": "roles-20261110T033651",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 3,
+          "correct_decisions": 1,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\": expected approval=false, received true.",
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "thinking off / 4096"
+      },
+      {
+        "model": "qwen3:14b",
+        "study": "roles-20261110T033651",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 3,
+          "correct_decisions": 1,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\": expected approval=false, received true.",
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "thinking off / 4096"
+      },
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "roles-20261110T041553",
+        "summary": {
+          "expected_controls": 3,
+          "valid_decisions": 3,
+          "correct_decisions": 1,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard\": expected approval=false, received true.",
+            "Control \"missing-producer-payload-edit\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "experimental comparison receipts / thinking off / 4096"
+      },
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "roles-20261110T061205",
+        "summary": {
+          "expected_controls": 5,
+          "valid_decisions": 5,
+          "correct_decisions": 3,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"invalid-string-nil-guard@backend/internal/inventory/adapter/postgres/store.go\": expected approval=false, received true.",
+            "Control \"missing-producer-payload-edit@frontend/features/inventory/inventory-adjustment-panel.tsx\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "per-file review / thinking off / 4096 (five file-scoped controls)"
+      },
+      {
+        "model": "qwen3.5:35b-a3b-q4_K_M",
+        "study": "reviewer-json-v23-controls",
+        "summary": {
+          "expected_controls": 7,
+          "valid_decisions": 6,
+          "correct_decisions": 5,
+          "passed_all_controls": false,
+          "issues": [
+            "Control \"lost-unrelated-forwarding@frontend/features/inventory/inventory-adjustment-panel.tsx\" has no unique valid decision.",
+            "Control \"unrelated-global-validation@backend/internal/inventory/adapter/postgres/store.go\": expected approval=false, received true."
+          ]
+        },
+        "configuration": "experimental v23 / JSON / thinking on / 6144 / seven file-scoped controls across two runs"
+      }
+    ]
+  }
+}

@@ -3,7 +3,9 @@ package agentjobs_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -143,11 +145,14 @@ func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 	if paused.Status != "PAUSED" {
 		t.Fatal("not resumable", paused.Status)
 	}
+	if !strings.Contains(paused.Message, "checkpoint is saved") || strings.Contains(paused.Message, "Restore VPN/tunnel") {
+		t.Fatal("generic model failure misdiagnosed as VPN failure", paused.Message)
+	}
 	if _, err := s.Start(ctx, r, "repo", 0, v.SessionID); err != nil {
 		t.Fatal(err)
 	}
 	done := finish(t, s, v.SessionID)
-	if done.Status != "COMPLETE" || done.Turns != 4 {
+	if done.Status != "COMPLETE" || done.Turns != 5 {
 		t.Fatal("resume lost charged turns")
 	}
 	base, cancel := context.WithCancel(context.Background())
@@ -155,5 +160,53 @@ func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 	cancel()
 	if _, err := s.Start(ctx, r, "repo", 0, ""); err == nil {
 		t.Fatal("started after shutdown")
+	}
+}
+
+func TestStopCancelsActiveReviewAndReleasesWorker(t *testing.T) {
+	m := &model{gate: make(chan struct{})}
+	s := service(t, m)
+	v, err := s.Start(context.Background(), fixtureReport(), "repo", -1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(3 * time.Second)
+	for m.calls.Load() == 0 && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if err := s.Stop(v.SessionID); err != nil {
+		t.Fatal(err)
+	}
+	result := finish(t, s, v.SessionID)
+	if result.Status != "PAUSED" {
+		t.Fatalf("stop did not preserve paused session: %s", result.Status)
+	}
+	if len(result.Context.Changes) != 2 {
+		t.Fatal("all-change scope lost")
+	}
+	if err := s.Stop(v.SessionID); !errors.Is(err, agentjobs.ErrMissing) {
+		t.Fatal("stopped worker still active", err)
+	}
+}
+
+func TestFocusedServiceIncludesAllDisplayedCandidates(t *testing.T) {
+	s := service(t, &model{})
+	r := fixtureReport()
+	r.Changes = r.Changes[:1]
+	seed := r.Changes[0].Impacts[0]
+	r.Changes[0].Impacts = nil
+	for i := 0; i < 10; i++ {
+		c := seed
+		c.File = fmt.Sprintf("source%d.go", i)
+		c.Evidence = []domain.Evidence{{Type: "SOURCE", Location: c.File + ":1", Excerpt: "submit"}}
+		r.Changes[0].Impacts = append(r.Changes[0].Impacts, c)
+	}
+	v, err := s.Start(context.Background(), r, "repo", -1, "", "focused")
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := finish(t, s, v.SessionID)
+	if done.Status != "COMPLETE" || done.Plan == nil || len(done.Plan.Plans) != 10 || done.FocusedReview == nil || done.FocusedReview.CandidatesProcessed != 10 {
+		t.Fatal("service dropped displayed seeds", done.Status, done.Message)
 	}
 }

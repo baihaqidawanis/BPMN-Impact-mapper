@@ -1,0 +1,567 @@
+{
+  "files_checked": 112,
+  "files_with_findings": 0,
+  "finding_count": 0,
+  "files": [
+    {
+      "file": "staff/inventory/level-1/role-staff-l1-inventory.bpmn",
+      "sha256": "b3aa9ec882792d3f7acf5fb876364281f3685c5235349163e5cc223789e67a33",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-adjustment.bpmn",
+      "sha256": "e66422cf2c6c1976cd81fb34abc0aff2eb96b63b3f2c434091ee69b7ce65d3e0",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-correction.bpmn",
+      "sha256": "26b65c24b90efe0240452529c7ff699099687658f2233e92bddc786af19f7451",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-monitor.bpmn",
+      "sha256": "62a2fb06d5ff24635f9e6afc9438120bf75c933c74895410c9805dbee8ac4c00",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-2/role-staff-l2-inv-sources.bpmn",
+      "sha256": "258ac9e1075b1894d5c64a33c623a06163e9de259f7432f4ee08de48562d1ce9",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-cancel.bpmn",
+      "sha256": "55334124664c2d4af81d9fc9a1f93bb7aa03d50222874d3e090cb1a34d7d7c10",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-create.bpmn",
+      "sha256": "a63db472c832f5e0accb99c705f00d76bc5efd2f988b21a522131fd6d1ef8de8",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-post.bpmn",
+      "sha256": "1f7fc3960a8f0ebe28d367df0219163fdb6d4dcb9085de5a7bdc39e0d47e5849",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-adj-submit.bpmn",
+      "sha256": "ca66c389a69e929108d6e5dbca29ec1d1bb741fcb254f115b9a5e3f696de49d9",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-delivery-post.bpmn",
+      "sha256": "ebbce371d30a95fa31cf95bfb5d788e6699c0477dcc1bfa187f66600170c883a",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-adjustments.bpmn",
+      "sha256": "fa89b0a466d7b6e51bbf5e470db0bef676e6348c5d31e166ba7ce6111467e50a",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-balances.bpmn",
+      "sha256": "56dc381eec865503f71496a47d1000df9d255c1a3a4061fff8c89d20ab20b53d",
+      "issues": []
+    },
+    {
+      "file": "staff/inventory/level-3/role-staff-l3-inv-movements.bpmn",
+      "sha256": "e90405c20ffed7c18374c8a2ec3d25d8bd482c4b17c5b2e1bef3e98be8b94c9e",
+      "issues": []
+    },
+    {
+      "file": "staff/level-0/role-staff-l0.bpmn",
+      "sha256": "8d363c7440afe01b123ec4af7cb296b290a4710825ec1ed16c3eabc843851edf",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l1-master.bpmn",
+      "sha256": "ecc94fa77eb7faed94afcd2eced008f53f2850aa44a991d998bfdd04950a1b8f",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l2-master.bpmn",
+      "sha256": "c7fc0b650c041a6224668be7b1076ab2a0fc25e8209d2c1e8375b947ae21e490",
+      "issues": []
+    },
+    {
+      "file": "staff/master-data/role-staff-l3-master-list.bpmn",
+      "sha256": "cd34454b6b803ecfeab1c502308c43ac44b33599aafa3c5b4e8868c461e45df7",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-1/role-staff-l1-p2p.bpmn",
+      "sha256": "9137cf68af66580afd3216bcbd264c10ca7bb73607809642aaa48b63f2bbe18c",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-ap.bpmn",
+      "sha256": "84961650c867fe49c1401ab905f0b87759883b4de66b2a36220f8ba09a1c1ec6",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-correction.bpmn",
+      "sha256": "24c2dc413c2e40ddf155975c1433b082d30039a4fd86d89940f7d33891161993",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-po-gr.bpmn",
+      "sha256": "884a2b85e7cad8c56cdea3a1654bda8ba38ef162a79435e4ed9a99bdefe2e72d",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-2/role-staff-l2-pr.bpmn",
+      "sha256": "010bbad815c7a530a9e78a8d5d7a3d0fa53049ada18f1b83f6939004e7d0acbe",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-invoice.bpmn",
+      "sha256": "28e99dd327da30a872db22430e9498c9695ffeff7ca7cce2496cdd3ce7e45294",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-payment.bpmn",
+      "sha256": "a0c277142afe56ba4e83d9c75dee78a964675b895ce41a1c534d1c038be95ff5",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-ap-resolve.bpmn",
+      "sha256": "19e5f0bcaa8e47b746291e02b8f7e31a951c9eb3dc29c2ad541e37937d2787de",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-gr-cancel.bpmn",
+      "sha256": "2b41a2c23ba9271e761bc9c799c9aab6310a3ad28b82ea69dac7929b5a838381",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-gr-create.bpmn",
+      "sha256": "344308938b85de79a133e98e4881ce42135762627120cbebc202f22fe65bc782",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-po-convert.bpmn",
+      "sha256": "b0f9729f6a6a1ffea3bacc3012f28a80426555d87a394b363dc1f1d6ef202e72",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-cancel.bpmn",
+      "sha256": "5ff097c19577509afaabae1a3d6b204f9e3c3e36af12203229dd32055bb5fc10",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-copy.bpmn",
+      "sha256": "d0cf32f011c589792776e1fea95c794503a9ffd115b546f596555c64b21c8ffa",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-create.bpmn",
+      "sha256": "569c9394ab26eeac6701be7f8d2e88daf81c0ebad63a3d5a830c0cae98ca0d49",
+      "issues": []
+    },
+    {
+      "file": "staff/p2p/level-3/role-staff-l3-pr-submit.bpmn",
+      "sha256": "2f8ab618dbc892da795e9a2a6f28639524f3e77e3e030d343aa054674a277512",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-1/role-super-admin-l1-inventory.bpmn",
+      "sha256": "8815719e137f3d5b821abe639bccd95593582b5c9479d80cd635cb3292c2d039",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-adjustment.bpmn",
+      "sha256": "301828af92d519556d83cd7696b6f940944681622fdee9f914393cfc420d42da",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-correction.bpmn",
+      "sha256": "e851d17ad3acbec34a2067ab78bbedc85c3944abf29e4bd45c5740d27ac823e3",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-monitor.bpmn",
+      "sha256": "21f0e14219c6caf459ab3f0823c4fda31405190d453dd8d730cee74f62edbd29",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-2/role-super-admin-l2-inv-sources.bpmn",
+      "sha256": "98a75abb2e9c8e30490950ebe39b81f8f1fd8ef00fc7d1a9da8ce89aee7364d4",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-cancel.bpmn",
+      "sha256": "30aa95dde48f41d92fd50e49de46e6ce4ef896b7cd666f4523af2f86de0d37de",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-create.bpmn",
+      "sha256": "60e5f5ea9a400e714022aff9ac75d26a691c0008dfae23d347996234e7d89356",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-post.bpmn",
+      "sha256": "4ca3e9a1d98b961e556ed8da95e8730349167cb77da369842b78f73d2de32ff8",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-reverse.bpmn",
+      "sha256": "8761002679140d205b6ee94136a02dd22e072b279ee162738245b979838e45d4",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-review.bpmn",
+      "sha256": "77ec871e33e87e22f306f579d8fde79d29ec88634b40f22969914449e75fbf25",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-adj-submit.bpmn",
+      "sha256": "bb7aa5cb8f2887eed84aee2c2a3bd3651f505803edd60e057df93efad17c40e3",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-delivery-post.bpmn",
+      "sha256": "983c71d3b96efa9d9f86aa6d73bff063d7f888950bd9f77ca7db0599e495a8f4",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-delivery-reverse.bpmn",
+      "sha256": "10e8a9ecb1ab3b942ae87d51f70de985986b8746a549a4e59727d368aa95710e",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-adjustments.bpmn",
+      "sha256": "0ca58b181f0f102733caf502c5a6030ebe0e6a7da085200b3562b92ec90bb8e8",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-balances.bpmn",
+      "sha256": "b2a61a2cb3cbf56c9382989ce6c98194e9d66a57fc8cd15117802262c4e5b9f1",
+      "issues": []
+    },
+    {
+      "file": "super-admin/inventory/level-3/role-super-admin-l3-inv-movements.bpmn",
+      "sha256": "3c4461875f1569985919a4ea3b62f24b2845b98108fdf0d5a4fe231a2f6b1250",
+      "issues": []
+    },
+    {
+      "file": "super-admin/level-0/role-super-admin-l0.bpmn",
+      "sha256": "0f8f457a0630e124672d908aa4847bea83989c50c4eefff61879e8563844b754",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-1/role-super-admin-l1-master.bpmn",
+      "sha256": "a3978f7f3ef4fdca1ac7dd10820dd733ff82fccab03829c819ad86e5ab98a63b",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-master.bpmn",
+      "sha256": "3ff5f75c293725a8c4225ffcd48482d38d8b941526160676d9147d6d778a16da",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-2/role-super-admin-l2-settings.bpmn",
+      "sha256": "9756ab98cffe95b97cba79a151ac55a80e2e25a72b227aa21d7450eb08fcde6e",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-create.bpmn",
+      "sha256": "aa000e94c79f09684ab42e70d54bb7737b8567ed237343dd6c194569c8e951cc",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-list.bpmn",
+      "sha256": "057eb4cff6dd1e7db8ca00e4916f5b75c1711a02a9841b90e367a73f02186722",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-master-status.bpmn",
+      "sha256": "e5ad3d0a542f2ed89d39a54c3a6e6b960499a1bd312dc313c0ad866e323bc862",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-get.bpmn",
+      "sha256": "764c7913cebf03e37ac1dbf888f439fef506b0203ecdde64ba1b95b869c9a613",
+      "issues": []
+    },
+    {
+      "file": "super-admin/master-data-konfigurasi/level-3/role-super-admin-l3-settings-update.bpmn",
+      "sha256": "6e297f1f20cfeeb7204d3032b39335e270273c3bee2ac3d07186b13984e5cd40",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-1/role-super-admin-l1-p2p.bpmn",
+      "sha256": "2cce1f7b1f0bba650ce018c08ac823a15d8f859e779a4a4f5d0e95f53b85c846",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-ap.bpmn",
+      "sha256": "2c5539422fbf404e06f4702311232fdaa682b0640cca5fac4dea3537ae66c689",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-correction.bpmn",
+      "sha256": "88b047bd84be801a6d12e593a1b90f8c1c4b986d7de3692b1f10a88877ba5871",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-po-gr.bpmn",
+      "sha256": "93437d4df19d897f2318599a015ff484d4f0da595c40475967a60405be2fccd9",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-2/role-super-admin-l2-pr.bpmn",
+      "sha256": "0a5380c57f3830a07b01b608fcb2993805e9a28281cf8989466ec74af99b911a",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-invoice-void.bpmn",
+      "sha256": "23c94355caa08845d3036e3883a60e3e513b74997e05b745c67a2d0e2139b27e",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-invoice.bpmn",
+      "sha256": "95bf05bca67fc1e0e78b8186c3c6650445b466719f3fc1c05728a4fceaaa0f19",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-match.bpmn",
+      "sha256": "003c1de9b2bec214ec8b62008a4744c35bb74c59efee15b7c78ebd54dcffe496",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment-post.bpmn",
+      "sha256": "df137259acfa0d8c352ad041473d9e73ef21d0519350521b167c421d09b509ea",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment-void.bpmn",
+      "sha256": "ff7247240e2da2b4cf7fff7650cd5b88c7cf71342fba5c96853fbf8b28e2f061",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-payment.bpmn",
+      "sha256": "ee7b8cfe205e9fe854b5419979cd085b2f095f3f66ea7ce2041462c2dc4da54c",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-ap-resolve.bpmn",
+      "sha256": "5c970b92b96a6b7c55fdd057a1d24d93ab709a05b379cecfe52f0a4e3a1c27a1",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-cancel.bpmn",
+      "sha256": "39912fd41e5fc4bf327102e611b975f6d0a7d4df00745b90e8223328e2962bb1",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-create.bpmn",
+      "sha256": "6e0e1ad20533a3506a326811d2e0d546650e0149a8a7b82eef0044d3648fd6b7",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-post.bpmn",
+      "sha256": "8180d4024c4ea265093e06d4b7ab2d8feaadedb96da3a1cfbc7420b7cd569c17",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-gr-reverse.bpmn",
+      "sha256": "240d7b607668bac192d38d761c48d8bf9adf127750324b8f4e6e24501e2c64f9",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-cancel.bpmn",
+      "sha256": "11e120c14032f3e96bedf213ad5da32575b02517c34b9ae0a74d4bcab975b4b6",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-convert.bpmn",
+      "sha256": "89bc4a23dbc6cb70ea221d0d2fe44aa852b3cc9e60068970d8e098f5c3e34d90",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-po-issue.bpmn",
+      "sha256": "327134dd818577adcd5beedb22e9ddb2f7c8705de8399d23d23a18cd625224dc",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-cancel.bpmn",
+      "sha256": "4fe2bb97b4f487c30f7c58502a0ef49016a8d337a0c874d447c3d32b46962ad1",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-copy.bpmn",
+      "sha256": "3dd67f2b84788b009d9d5f2d168eb4bce0b487629e82a23dc02dd0a80656d4ba",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-create.bpmn",
+      "sha256": "460412df73a77e31dac8415b9b26a1ab4cccca056ad2fe95930452601fb2828d",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-review.bpmn",
+      "sha256": "1d50fdd9b2ded458d04acc4ac0354a974ee0612aa5b8381d6697c89c03854d79",
+      "issues": []
+    },
+    {
+      "file": "super-admin/p2p/level-3/role-super-admin-l3-pr-submit.bpmn",
+      "sha256": "4b82571c9b7dd60ffa212225ebffa3017518641e5e96fabdba4d9caf4c1954e4",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-1/role-supervisor-l1-inventory.bpmn",
+      "sha256": "42d8dae258fbdd90c64c2b720377f1b4e15bf944a3ab765020693de220135400",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-adjustment.bpmn",
+      "sha256": "a84d5f735a3cd588f724e3c353d318c427d86839f4fe48815f32e27175ffd9ca",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-correction.bpmn",
+      "sha256": "2d63ffac59ab603bd3db542e1418658b758884ae6f81c125d78dac56826b3c87",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-monitor.bpmn",
+      "sha256": "71618adcb7cb49f02c671427abe3cce97a139d0eca6d7bab5ac3227749f92dae",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-2/role-supervisor-l2-inv-sources.bpmn",
+      "sha256": "51da7a0bfcc7ba92dcc78774e5b84de08d7db4d030cbe23122cf17484189629e",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-adj-reverse.bpmn",
+      "sha256": "914d495d69c02e7d6d02b9bf18943e279546a423e363bbfe26144455417503a4",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-adj-review.bpmn",
+      "sha256": "81e85b1330051adad0e0958bca47272d8922317a6c1788ff60e18882a1388100",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-delivery-reverse.bpmn",
+      "sha256": "45f6027df14af8b7732a41d2c44494c4e8bee01d4048ee281897f6b2cc2e6e2c",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-adjustments.bpmn",
+      "sha256": "f5dd21833380fa4415051846d8c2addf22a44be1c49d750fff58cab5c5c8b7fc",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-balances.bpmn",
+      "sha256": "621495a236cefcf7a0fdd969037cd8f34fabe1d6afbdb3fd888459c7b67c5927",
+      "issues": []
+    },
+    {
+      "file": "supervisor/inventory/level-3/role-supervisor-l3-inv-movements.bpmn",
+      "sha256": "728f7d1a10a6b40f94b3f7100f53b8082bea915f14a6c4a7ec88a71f2d4c9efa",
+      "issues": []
+    },
+    {
+      "file": "supervisor/level-0/role-supervisor-l0.bpmn",
+      "sha256": "918008575e45c9f2c7b15534565fac8928b2f0d269523c2294b6df9b4007dccb",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-1/role-supervisor-l1-master.bpmn",
+      "sha256": "c918abc45c7e83e052006c8318baa357d90e565290b9a886684432e21e5cb9f5",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-2/role-supervisor-l2-master.bpmn",
+      "sha256": "3b33853ee5a9ded37fb9088f9abbfb135a82107f52857a126b2001536e9c8bfb",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-create.bpmn",
+      "sha256": "7afff9f1518981c37a3923859dffbcd1617cc82328108261403ab7e04c5d50b2",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-list.bpmn",
+      "sha256": "f6595de40bcde48b231c1fe2d0bd4e6c708214fd3e4c8cd7905fa0810c7a283e",
+      "issues": []
+    },
+    {
+      "file": "supervisor/master-data-konfigurasi/level-3/role-supervisor-l3-master-status.bpmn",
+      "sha256": "f04331929b659b2d4d1981c052fd45f5ff5ecbcee27b7a28247106a9a273079d",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-1/role-supervisor-l1-p2p.bpmn",
+      "sha256": "d78d118513b6bf3bf0c0ce7da3528cb6a3b9872653233a9d9e2cda0432d64923",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-ap.bpmn",
+      "sha256": "378952eacdd370619e46e44cb3f0d6b131a5c87e4711f128669792cc315be19b",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-correction.bpmn",
+      "sha256": "5b2a2a51a0f6fedd990b93c147664655a7b099e099fe4e9569993045196a5518",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-po-gr.bpmn",
+      "sha256": "b48b564f511bd5224e4d091f8edbe1ad6075e0269717f852906bb74d72d57fff",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-2/role-supervisor-l2-pr.bpmn",
+      "sha256": "6a056e617acf78b88b3fd21d3323e3ff49928117462a965435fa9b8f7ae60728",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-invoice-void.bpmn",
+      "sha256": "1cdca23de7ba795686a0d4cab4966a80e0da5992d87fc979701b7cc37a8470a2",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-match.bpmn",
+      "sha256": "2a4adb23a6c10bfef213f9a9c8d237b1e4d9f59150d678bf5023b93566bdea5b",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-payment-post.bpmn",
+      "sha256": "bf0e89231b8e4dd3a83efc70983e02a46ba45e471efee09be5b1456dd5f426ef",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-ap-payment-void.bpmn",
+      "sha256": "b8c0f9741d5f78db87692eafbe2978d41189a0345e57b918c0466919bea91da1",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-gr-post.bpmn",
+      "sha256": "339dc62de9442eca1e7a0bcfcc6091afdd8092efde013d5a6265af0a4245e4d0",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-gr-reverse.bpmn",
+      "sha256": "42183fc729111e6886c07cc6025870a534c87587343fdd867f499209c7af15e6",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-po-cancel.bpmn",
+      "sha256": "980f6eb3ebd0a6734950e0460a04847d470b103e15eca61a9da15e270a496729",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-po-issue.bpmn",
+      "sha256": "17607cc2b5dcc06b39027074ee6d5c7248cd3be6c03cb82c553c9136a7977192",
+      "issues": []
+    },
+    {
+      "file": "supervisor/p2p/level-3/role-supervisor-l3-pr-review.bpmn",
+      "sha256": "dbcd0ef560c4e6b1683b10f52d3833ac6068e7e6b436600f90697457c2b6a117",
+      "issues": []
+    }
+  ]
+}

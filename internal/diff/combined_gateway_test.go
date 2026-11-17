@@ -14,7 +14,7 @@ import (
 func TestCombinedXORANDTasksPreservesEveryPrimaryChange(t *testing.T) {
 	graphs := []*domain.Graph{}
 	for _, name := range []string{"before.bpmn", "after.bpmn"} {
-		data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "simple-erp", "staff-single-end", name))
+		data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "history", "simple-erp", "staff-single-end", name))
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -4,7 +4,7 @@ Mulai dari [README utama](../README.md) untuk menjalankan web.
 
 | Keperluan | Dokumen |
 |---|---|
-| Input demo Staff terbaru | [current-staff](../experiments/simple-erp/current-staff/README.md) |
+| Input demo Staff terbaru | [current-staff](../experiments/simple-erp/current-staff-v2/README.md) |
 | Mapping before task ke file/function | [Staff P2P L3](../experiments/simple-erp/baseline-traceability/README.md) |
 | Status perapian BPMN Staff | [normalisasi Staff](STAFF-BPMN-NORMALIZATION.md) |
 | Konvensi seluruh role | [Staff, Supervisor, Super Admin](ROLE-BPMN-NORMALIZATION.md) |
@@ -29,3 +29,5 @@ Dokumen lama tidak otomatis menjelaskan perilaku aplikasi versi sekarang.
 - [Prepared gateway cleanup](ROLE-BPMN-GATEWAY-CLEANUP-2026-11-02.md): user-approved canonical update and post-apply verification.
 - [Sidebar, Overview and result UX](WORKSPACE-REDESIGN-2026-11-02.md).
 - [Handoff sebelum Qwen](PRE-QWEN-HANDOFF.md): satu jalur percobaan dan paket aktif terbaru.
+
+- [Audit paket agent tanpa VPN](OFFLINE-AGENT-PAYLOAD-AUDIT-2026-11-09.md): pemeriksaan 21 variasi transport dan batas klaim pengujiannya.

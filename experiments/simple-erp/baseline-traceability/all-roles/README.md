@@ -74,7 +74,7 @@ Indeks berikut memakai calledElement yang benar-benar ada di XML. Task pemilihan
 - RELATED_TEST_NOT_EXECUTED: kaitan source test, tidak membuktikan runtime lulus.
 
 ```powershell
-python experiments/simple-erp/build_role_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability/all-roles --verify
+python experiments/tools/build_role_traceability.py --repo C:\Simple-ERP --output experiments/simple-erp/baseline-traceability/all-roles --verify
 ```
 
 Verifikasi membangun ulang reference dari keputusan review eksplisit, memeriksa bukti function, hash, cakupan dan byte JSON/Markdown. Drift harus ditinjau; jangan menyesuaikan referensi berdasarkan kandidat mapper.

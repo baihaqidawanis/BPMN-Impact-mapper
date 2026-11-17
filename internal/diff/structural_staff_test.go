@@ -28,7 +28,7 @@ func TestStructuralStaffPairsHaveExpectedChangesAndCompleteDiagrams(t *testing.T
 		t.Run(item.name, func(t *testing.T) {
 			graphs := []*domain.Graph{}
 			for _, file := range []string{"before.bpmn", "after.bpmn"} {
-				data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "simple-erp", "structural-staff", item.name, file))
+				data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "history", "simple-erp", "structural-staff", item.name, file))
 				if err != nil {
 					t.Fatal(err)
 				}

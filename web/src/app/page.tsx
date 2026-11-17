@@ -1,5 +1,7 @@
 "use client";
 
+import { MappingEmptyState } from "@/components/MappingEmptyState";
+
 import { useEffect, useState } from "react";
 import { AnalysisForm } from "@/components/AnalysisForm";
 import { BpmnEditor } from "@/components/BpmnEditor";
@@ -18,7 +20,7 @@ import { analysisRepository, rememberAnalysisRepository } from "@/lib/analysis-r
 import { WorkspaceShell, type WorkspaceView } from "@/components/WorkspaceShell";
 import { WorkspaceOverview } from "@/components/WorkspaceOverview";
 import { runAnalysis } from "@/features/analysis/run-analysis";
-import { createAnalysis } from "@/lib/api";
+import { createAnalysis, getAnalysisBPMN } from "@/lib/api";
 import { RND_ENABLED } from "@/lib/features";
 import { useSavedAnalysis } from "@/lib/useSavedAnalysis";
 import type { Report } from "@/lib/types";
@@ -44,6 +46,20 @@ export default function Home() {
   const [edited, setEdited] = useState<File | null>(null);
   const [editorInput, setEditorInput] = useState<File | null>(null);
   const [canvasDirty, setCanvasDirty] = useState(false);
+  const [bpmnNotice,setBpmnNotice]=useState("");
+  useEffect(()=>{
+    if(!report)return;
+    const controller=new AbortController();
+    setBpmnNotice("");
+    void getAnalysisBPMN(report.analysis_id,controller.signal).then(pair=>{
+      if(controller.signal.aborted)return;
+      if(!pair){setBpmnNotice("This older report has no saved BPMN files. Upload both versions and run analysis again to restore Canvas and complete process context.");return;}
+      const before=new File([pair.before_xml],"baseline.bpmn",{type:"application/xml"});
+      const after=new File([pair.after_xml],"changed-process.bpmn",{type:"application/xml"});
+      setBaseline(before);setEdited(after);setEditorInput(after);setCanvasDirty(false);
+    }).catch(()=>{if(!controller.signal.aborted)setBpmnNotice("Saved BPMN files could not be restored. Check the backend connection.");});
+    return()=>controller.abort();
+  },[report?.analysis_id]);
 
   const [repositoryPath, setRepositoryPath] = useState("");
   const [reportRepositoryPath, setReportRepositoryPath] = useState("");
@@ -114,8 +130,9 @@ export default function Home() {
         if(canvasDirty&&!window.confirm("Start a new analysis and discard the current canvas draft? Download it first if needed."))return;
         setReport(null);setComparison([]);setError("");changeBaseline(null);setRepositoryPath("");setPlanningAnalysis("");setInputGeneration(v=>v+1);navigate("mapping");
       }} onContinue={()=>navigate("mapping")} onOpen={saved=>{setReport(saved);setComparison([]);setError("");navigate("mapping");}} onLibrary={()=>navigate("library")} onHistory={()=>navigate("history")}/></div>
-      <div className={styles.sectionTitle} hidden={view==="overview"}><div><h1>{view === "mapping" ? "Analysis workspace" : view === "canvas" ? "BPMN comparison" : view === "library" ? "BPMN library" : view === "history" ? "Saved analyses" : view === "research" ? "Method evaluation" : "Reading the report"}</h1><p>{view === "mapping" ? "Compare BPMN versions, inspect affected files, then prepare a change plan." : view === "canvas" ? "Work on a copy of your baseline, then use it for impact mapping." : view === "library" ? "Keep process versions locally and reuse them in Mapping or Canvas." : view === "history" ? "Open a saved report without running the analysis again." : view === "research" ? "Compare saved test results, run scenarios, and check mapping against expected files." : "How methods, evidence and scores should be interpreted."}</p></div>{view === "mapping" && report && <span className={styles.reportBadge}>{report.changes.length} changes  |  {report.method}</span>}</div>
+      <div className={styles.sectionTitle} hidden={view==="overview"}><div><h1>{view === "mapping" ? "Impact analysis" : view === "canvas" ? "BPMN comparison" : view === "library" ? "BPMN library" : view === "history" ? "Saved analyses" : view === "research" ? "Method evaluation" : "Reading the report"}</h1><p>{view === "mapping" ? "Compare BPMN versions, inspect affected files, then prepare a change plan." : view === "canvas" ? "Work on a copy of your baseline, then use it for impact mapping." : view === "library" ? "Keep process versions locally and reuse them in Mapping or Canvas." : view === "history" ? "Open a saved report without running the analysis again." : view === "research" ? "Compare saved test results, run scenarios, and check mapping against expected files." : "How methods, evidence and scores should be interpreted."}</p></div>{view === "mapping" && report && <span className={styles.reportBadge}>{report.changes.length} changes  |  {report.method}</span>}</div>
 
+      {bpmnNotice && (view==="mapping"||view==="canvas") && <p role="status" className={styles.draftNotice}>{bpmnNotice}</p>}
       <div hidden={view !== "mapping"}>
       {restoreNotice && <div className={styles.draftNotice} role="status"><span>{restoreNotice}</span><button type="button" onClick={() => navigate("history")}>Saved analyses</button></div>}
       {canvasDirty && <div className={styles.draftNotice} role="status"><span>Canvas has unapplied edits. Mapping will use the previously selected BPMN.</span><button type="button" onClick={() => navigate("canvas")}>Review canvas draft</button></div>}
@@ -137,7 +154,7 @@ export default function Home() {
           {restoring && !loading && <div className={styles.stateCard} role="status"><h3>Reopening saved report</h3><p>Loading the completed analysis. Mapping is not being run again.</p></div>}
           {loading && <div className={styles.stateCard}><div className={styles.spinner} /><h3>Analyzing repository</h3><p>Parsing BPMN, indexing allowed files, and ranking evidence...</p></div>}
           {!loading && error && <div className={`${styles.stateCard} ${styles.error}`}><strong>Analysis could not be completed</strong><p>{error}</p></div>}
-          {!restoring && !loading && !error && !report && <div className={styles.stateCard}><span className={styles.kicker}>No analysis yet</span><h3>Your impact report will appear here</h3><p>Configure the repository and provide both BPMN versions to begin.</p></div>}
+          {!restoring && !loading && !error && !report && <MappingEmptyState repositoryPath={repositoryPath} baselineName={baseline?.name} editedName={edited?.name} />}
           {!loading && report && <>
 				{comparison.length > 1 && <ComparisonView reports={comparison} selectedMethod={report.method} onSelect={setReport} />}
 				<ReportView report={report} />
@@ -177,7 +194,7 @@ export default function Home() {
           <EvaluationDashboard key={`evaluation-${(comparison.length ? comparison : [report]).map(r => r.analysis_id).join("|")}`} reports={comparison.length ? comparison : [report]} />
         </>}
       </div>}
-      <div hidden={view !== "guide"} className={styles.guidePage}><InterpretationGuide /><section className={styles.stateCard}><h3>One baseline, two ways to compare</h3><p>Upload both BPMN files in Mapping, or open a baseline in BPMN Canvas and edit a copy. Canvas shows the original read-only above the editable new version; color outlines are a quick visual preview, while the backend report is the authoritative diff. Expand the editor for precise edits. Use edited BPMN transfers the current draft to Mapping. Changing the baseline starts a new canvas; switching tabs preserves edits and undo history.</p><p>Scores describe retrieval relevance or agreement, not certainty that a file needs changing. Inspect evidence before deciding on an action.</p></section></div>
+      <div hidden={view !== "guide"} className={styles.guidePage}><InterpretationGuide expanded /><section className={styles.stateCard}><h3>One baseline, two ways to compare</h3><p>Upload both BPMN files in Mapping, or open a baseline in BPMN Canvas and edit a copy. Canvas shows the original read-only above the editable new version; color outlines are a quick visual preview, while the backend report is the authoritative diff. Expand the editor for precise edits. Use edited BPMN transfers the current draft to Mapping. Changing the baseline starts a new canvas; switching tabs preserves edits and undo history.</p><p>Scores describe retrieval relevance or agreement, not certainty that a file needs changing. Inspect evidence before deciding on an action.</p></section></div>
     </WorkspaceShell>
   );
 }

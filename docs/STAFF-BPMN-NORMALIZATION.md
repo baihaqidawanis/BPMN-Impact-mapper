@@ -43,13 +43,13 @@ Ini pemeriksaan struktur dan source statis, bukan pembuktian seluruh jalur runti
 
 Backup lengkap, versi review, manifest hash serta audit sebelum/selepas apply:
 `outputs/staff-normalization-2026-10-29-final/` di Mapper. Folder ini di-ignore Git.
-Script: `experiments/simple-erp/normalize_staff_bpmn.py`; verifier:
-`experiments/simple-erp/verify_staff_normalization.py`.
+Script: `experiments/tools/normalize_staff_bpmn.py`; verifier:
+`experiments/tools/verify_staff_normalization.py`.
 
 ## Dampak ke eksperimen
 
 Baseline kanonis berubah secara notasi. Mutasi empat skenario lama tetap memakai
-baseline lama yang kini disimpan di `experiments/simple-erp/frozen-staff-baselines`.
+baseline lama yang kini disimpan di `experiments/history/simple-erp/frozen-staff-baselines`.
 Dua manifest Staff dan panduan empat skenario diarahkan ke salinan tersebut;
 hash input, ground truth dan skor tersimpan tidak diubah atau dihitung ulang.
 

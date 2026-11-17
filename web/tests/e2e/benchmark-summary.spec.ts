@@ -23,6 +23,10 @@ test("saved benchmark is dated, downloadable and independent of current mapping"
   const download = await downloadEvent;
   const saved = JSON.parse(await readFile((await download.path())!, "utf8"));
   expect(saved.positive_scenarios).toBe(4);
+  await page.screenshot({path:test.info().outputPath("research-desktop.png"),fullPage:false});
+  await page.setViewportSize({width:390,height:844});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath("research-mobile.png"),fullPage:false});
   expect(saved.results).toHaveLength(4);
   expect(saved.reference_status).toBe("provisional-source-review");
   expect(analysisPosts).toBe(0);
@@ -51,4 +55,33 @@ test("latest experimental metrics stay separate from the four-method benchmark",
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   await page.screenshot({ path: test.info().outputPath("recent-experiments-mobile.png"), fullPage: true });
+});
+
+test("AI draft evaluation separates selection metrics from unavailable ranking metrics", async ({ page }) => {
+  const inferenceRequests: string[] = [];
+  page.on("request", request => {
+    if (request.method() === "POST" && /agent|chat|generate/.test(request.url())) inferenceRequests.push(request.url());
+  });
+  await page.goto("/?view=analysis");
+  await page.getByRole("navigation", { name: "Workspace navigation" }).getByRole("button", { name: "Research", exact: true }).click();
+  const panel = page.getByRole("region", { name: "Saved AI review evaluation", exact: true });
+  await expect(panel).toContainText("NEEDS_REVIEW");
+  const row = panel.getByRole("row").filter({ hasText: "Hybrid + AI draft selection" });
+  await expect(row.getByRole("cell")).toHaveText(["6", "3", "50.0%", "100.0%", "66.7%"]);
+  await expect(panel).toContainText("not automatic confidence thresholds");
+  await panel.getByText("Ranking metrics and reference files", { exact: true }).click();
+  await expect(panel).toContainText("AI MAP / MRR / R-precision: unavailable");
+  await expect(panel).toContainText("Markdown order is not a ranking");
+  const downloadEvent = page.waitForEvent("download");
+  await panel.getByRole("link", { name: "Download AI evaluation JSON" }).click();
+  const saved = JSON.parse(await readFile((await (await downloadEvent).path())!, "utf8"));
+  expect(saved.cases).toHaveLength(1);
+  expect(saved.cases[0].agent.map).toBeNull();
+  expect(saved.cases[0].agent.precision).toBe(.5);
+  expect(saved.reference_status).toBe("provisional-source-review");
+  expect(JSON.stringify(saved)).not.toMatch(/C:\\\\|source_excerpt|api_key/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: test.info().outputPath("agent-evaluation-mobile.png"), fullPage: true });
+  expect(inferenceRequests).toEqual([]);
 });
