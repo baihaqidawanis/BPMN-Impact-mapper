@@ -6,28 +6,35 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
-func TestFocusedWithholdsReviewerRejectedDraft(t *testing.T) {
+func TestFocusedRetainsCombinedReviewerRejectedDraftAsUnapproved(t *testing.T) {
+	reviews := 0
 	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
-		if turn.Role == Reviewer && (len(turn.Feedback) == 0 || !strings.HasPrefix(turn.Feedback[0], "FINAL")) {
+		if turn.Role == Reviewer {
+			reviews++
+			if len(turn.Feedback) == 0 || !strings.HasPrefix(turn.Feedback[0], "FINAL") {
+				t.Fatal("unexpected per-batch review")
+			}
 			return AgentReply{Review: &AgentReview{Issues: []string{"Unsupported schema change."}}}, nil
 		}
 		return goodReply(turn)
 	}}
 	store := memorySessions{}
 	result, err := (FocusedEngine{Model: model, Tools: fixtureTools{"source"}, Store: store}).Run(context.Background(), "withhold", agentBundle())
-	if err != nil || result.Status != "NEEDS_REVIEW" || len(result.Draft) != 0 {
-		t.Fatal("rejected draft promoted", result.Status, result.Draft, err)
+	if err != nil || result.Status != "NEEDS_REVIEW" || len(result.Draft) != 1 || reviews != 1 {
+		t.Fatal("rejected draft approved or lost", result.Status, result.Draft, err)
 	}
 	child, err := store.Load(context.Background(), focusedChildID("withhold", 0, agentBundle().Changes[0].Candidates))
 	if err != nil || len(child.Draft) == 0 {
 		t.Fatal("lost diagnostic draft", err)
 	}
-	if !result.FocusedReview.OutcomeCountsAvailable || result.FocusedReview.BatchesApproved != 0 || result.FocusedReview.BatchesNeedingReview != 1 {
+	if !result.FocusedReview.OutcomeCountsAvailable || result.FocusedReview.BatchesApproved != 0 || result.FocusedReview.BatchesPrepared != 1 || !child.AwaitingCombinedReview {
 		t.Fatal("processed batch mislabeled as approved", result.FocusedReview)
 	}
-	if !strings.Contains(strings.Join(result.Feedback, " "), "withheld") {
+	if !strings.Contains(strings.Join(result.Feedback, " "), "Unsupported schema change") {
 		t.Fatal("missing diagnostic", result.Feedback)
 	}
 }
@@ -91,6 +98,148 @@ func TestFocusedSeedPayloadBudgetPreservesLargeAndEmptyInputs(t *testing.T) {
 	}
 	if empty := focusedSeedBatches(nil); len(empty) != 1 || len(empty[0]) != 0 {
 		t.Fatal("unseeded change lost discovery batch", empty)
+	}
+}
+
+func TestLightDoesNotCountVerifyAsAnEdit(t *testing.T) {
+	candidates := []Candidate{{File: "backend/store.go"}, {File: "backend/store_test.go"}}
+	plans := []FilePlan{{File: candidates[0].File, Action: domain.ActionModify}, {File: candidates[1].File, Action: domain.ActionVerify}}
+	if !lightNeedsMoreSource(candidates, plans) {
+		t.Fatal("a test marked VERIFY was counted as a concrete edit")
+	}
+}
+
+func TestUltraLightChecksOnlyWeakTestsWithSourceEvidence(t *testing.T) {
+	const testFile = "backend/test/integration/operations_test.go"
+	decisions := []CandidateDecision{
+		{File: "backend/store.go", Verdict: VerdictRelevant},
+		{File: testFile, Verdict: VerdictWeak},
+	}
+	observations := []ToolObservation{{
+		Request: ToolRequest{Name: "inspect_source", File: testFile},
+		Result:  ToolResult{Candidates: []Candidate{{File: testFile, Evidence: []EvidenceItem{{ID: "submit-call"}}}}},
+	}}
+	if !hasInspectedWeakTest(decisions, observations) {
+		t.Fatal("inspected test with an affected implementation should get a second assessment")
+	}
+	observations[0].Result.Candidates[0].File = "backend/test/other_test.go"
+	if hasInspectedWeakTest(decisions, observations) {
+		t.Fatal("evidence from a different file triggered the test assessment")
+	}
+}
+
+func TestUltraLightReassessesWeakImplementationAndTestTogether(t *testing.T) {
+	bundle := agentBundle()
+	base := bundle.Changes[0].Candidates[0]
+	for _, file := range []string{"backend/helper.go", "backend/test/operations_test.go"} {
+		c := base
+		c.File = file
+		bundle.Changes[0].Candidates = append(bundle.Changes[0].Candidates, c)
+	}
+	bundle.ContextID, _ = ComputeContextID(bundle)
+	analystTurns := 0
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		reply, err := goodReply(turn)
+		if turn.Role == Analyst {
+			analystTurns++
+			if analystTurns == 1 {
+				for i := range reply.Verification.Decisions {
+					reply.Verification.Decisions[i].Verdict = VerdictWeak
+				}
+			} else if len(turn.Observations) != 2 || turn.Observations[0].Request.File != base.File || turn.Observations[1].Request.File != "backend/test/operations_test.go" {
+				t.Fatalf("expected both targeted inspections before reassessment: %+v", turn.Observations)
+			}
+		}
+		return reply, err
+	}}
+	engine := AgentEngine{InspectWeak: true, Model: model, Tools: fixtureTools{"source"}, Store: memorySessions{}, DeferReview: true, Budget: AgentBudget{MaxTools: 2, MaxTurns: 8, MaxDiscoveries: 2}}
+	session, err := engine.Run(context.Background(), "weak-recheck", bundle)
+	if err != nil || analystTurns != 2 || session.Tools != 2 {
+		t.Fatalf("unexpected reassessment: turns=%d tools=%d err=%v", analystTurns, session.Tools, err)
+	}
+}
+
+type emptyFocusedTools struct{}
+
+func (emptyFocusedTools) Identity() string { return "empty focused source" }
+
+func (emptyFocusedTools) Execute(context.Context, ToolRequest) (ToolResult, error) {
+	return ToolResult{}, nil
+}
+
+func TestLightFocusedIncludesLowerRankedTestAndExpandsForMissingCoverage(t *testing.T) {
+	for _, tc := range []struct {
+		name                                string
+		weakTest, verifyOnly, ultra, expand bool
+		wantProcessed                       int
+	}{
+		{name: "light-covered", wantProcessed: 4},
+		{name: "light-expands", weakTest: true, expand: true, wantProcessed: 8},
+		{name: "light-expands-verify-only", verifyOnly: true, expand: true, wantProcessed: 8},
+		{name: "ultra-flags-verify-only", verifyOnly: true, ultra: true, expand: true, wantProcessed: 6},
+		{name: "ultra-expands-only-missing-test", weakTest: true, ultra: true, expand: true, wantProcessed: 5},
+		{name: "ultra-covered", ultra: true, wantProcessed: 4},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bundle := agentBundle()
+			files := []string{"frontend/panel.tsx", "backend/store.go", "docs/readme.md", "docs/api.md", "docs/dev.md", "scripts/util.py", "backend/operations_test.go", "backend/another_test.go"}
+			seed := bundle.Changes[0].Candidates[0]
+			if !tc.verifyOnly {
+				seed.SuggestedAction = domain.ActionModify
+			}
+			bundle.Changes[0].Candidates = nil
+			for _, file := range files {
+				candidate := seed
+				candidate.File = file
+				candidate.Evidence = []EvidenceItem{{ID: file, Type: "TEXT", Location: file + ":1", Excerpt: "submit"}}
+				bundle.Changes[0].Candidates = append(bundle.Changes[0].Candidates, candidate)
+			}
+			bundle.ContextID, _ = ComputeContextID(bundle)
+			seen := map[string]bool{}
+			model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+				if tc.ultra && turn.Role == Analyst && turn.RemainingTools > 2 {
+					t.Fatal("Ultra Light exceeded the lookup budget")
+				}
+				reply, err := goodReply(turn)
+				if reply.Verification != nil {
+					for i := range reply.Verification.Decisions {
+						decision := &reply.Verification.Decisions[i]
+						seen[decision.File] = true
+						if tc.weakTest && decision.File == "backend/operations_test.go" {
+							decision.Verdict = VerdictWeak
+						}
+					}
+				}
+				if reply.Plan != nil && !tc.verifyOnly {
+					for i := range reply.Plan.Plans {
+						reply.Plan.Plans[i].Action = domain.ActionModify
+					}
+				}
+				if reply.Plan != nil && tc.weakTest {
+					for i, plan := range reply.Plan.Plans {
+						if plan.File == "backend/operations_test.go" {
+							reply.Plan.Plans = append(reply.Plan.Plans[:i], reply.Plan.Plans[i+1:]...)
+							break
+						}
+					}
+				}
+				return reply, err
+			}}
+			engine := FocusedEngine{Model: model, Tools: emptyFocusedTools{}, Store: memorySessions{}, Light: !tc.ultra, UltraLight: tc.ultra}
+			result, err := engine.Run(context.Background(), "light-review", bundle)
+			if err != nil || result.FocusedReview.UltraLight != tc.ultra || !seen["backend/operations_test.go"] {
+				t.Fatalf("Light lost the test candidate: %v %+v", err, result.FocusedReview)
+			}
+			if seen["backend/another_test.go"] != tc.expand {
+				t.Fatalf("Unexpected reserve coverage: %v", seen)
+			}
+			if tc.ultra && tc.verifyOnly && (!strings.Contains(strings.Join(result.Feedback, " "), "Ultra Light left source coverage unresolved") || result.Status != "NEEDS_REVIEW") {
+				t.Fatalf("verify-only draft was cleared without warning: %+v", result)
+			}
+			if result.FocusedReview.CandidatesProcessed != tc.wantProcessed || result.FocusedReview.CandidatesTotal != len(files) {
+				t.Fatalf("Invalid reported coverage: %+v", result.FocusedReview)
+			}
+		})
 	}
 }
 

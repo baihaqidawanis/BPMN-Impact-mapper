@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 func JSON(plan ChangePlan) ([]byte, error) {
@@ -27,122 +29,213 @@ func BundleJSON(bundle EvidenceBundle) ([]byte, error) {
 	return append(encoded, '\n'), nil
 }
 
+// Markdown is the developer handoff. The JSON export retains the full review record.
 func Markdown(plan ChangePlan) []byte {
-	var output bytes.Buffer
-	fmt.Fprintf(&output, "# BPMN change plan\n\n- Plan ID: `%s`\n- Context ID: `%s`\n- Analysis ID: `%s`\n- Provider: `%s`\n- Model: `%s`\n- Prompt: `%s`\n- Status: **%s**\n\n", plan.PlanID, plan.ContextID, plan.AnalysisID, plan.Provider.Provider, plan.Provider.Model, plan.Provider.PromptVersion, plan.Status)
-	if plan.Status != StatusComplete {
-		output.WriteString("> Unapproved draft. Resolve review issues before implementation. Any recommendations below remain provisional; their presence does not mean the combined plan passed review.\n\n")
+	var out bytes.Buffer
+	out.WriteString("# BPMN change plan\n\n")
+	switch plan.Status {
+	case StatusComplete:
+		out.WriteString("The agent review is complete. The following changes are proposed for implementation.\n\n")
+	case StatusDisabled:
+		out.WriteString("Agent review was disabled for this analysis.\n\n")
+	default:
+		out.WriteString("This draft is awaiting review. Resolve the open questions before implementing it.\n\n")
 	}
 	if p := plan.FullReview; p != nil {
-		fmt.Fprintf(&output, "## Full repository review coverage\n\n- Eligible files reviewed: %d/%d\n- Source chunks reviewed: %d/%d\n- Planning batches reviewed: %d/%d\n- Coverage records successful chunk classifications, not guaranteed correctness. Excluded files are outside this count.\n\n", p.FilesReviewed, p.FilesTotal, p.ChunksReviewed, p.ChunksTotal, p.BatchesReviewed, p.BatchesTotal)
-		fmt.Fprintf(&output, "- Source snapshot: `%s`\n- Final consistency review: %s\n\n", p.SourceFingerprint, p.ConsistencyReview)
+		fmt.Fprintf(&out, "Full repository review coverage. Source chunks reviewed: %d/%d - Files reviewed: %d/%d - Planning batches: %d/%d\n\n", p.ChunksReviewed, p.ChunksTotal, p.FilesReviewed, p.FilesTotal, p.BatchesReviewed, p.BatchesTotal)
 	}
-	if len(plan.ReviewIssues) > 0 {
-		output.WriteString("## Review issues\n\n")
-		for _, issue := range plan.ReviewIssues {
-			fmt.Fprintf(&output, "- %s\n", singleLine(issue))
-		}
-		output.WriteByte('\n')
-
-	}
-	if len(plan.ReviewFindings) > 0 {
-		output.WriteString("## Reviewer checks\n\nThese are model conclusions, not independent proof of correctness. Proposal-only checks do not revalidate source.\n\n")
-		for _, f := range plan.ReviewFindings {
-			fmt.Fprintf(&output, "### `%s` / `%s`\n\n- Basis: `%s`\n- Evidence: `%s`\n\n| Check | Result | Finding |\n|---|---|---|\n", singleLine(f.File), singleLine(f.ElementID), singleLine(f.Basis), strings.Join(f.EvidenceIDs, "`, `"))
-			for _, c := range f.Checks {
-				fmt.Fprintf(&output, "| %s | %s | %s |\n", tableText(c.Criterion), tableText(c.Status), tableText(c.Finding))
-			}
-			output.WriteByte('\n')
-			if f.SourceExcerpt != "" {
-				fmt.Fprintf(&output, "Compared source: %s\n\n", reviewCodeSpan(f.SourceExcerpt))
-			}
-			if f.ImplementationExcerpt != "" {
-				fmt.Fprintf(&output, "Compared plan item: %s\n\n", reviewCodeSpan(f.ImplementationExcerpt))
-			}
-		}
-	}
+	type changeKey struct{ kind, id string }
+	changeTitles := map[changeKey]string{}
 	if len(plan.ChangeCoverage) > 0 {
-		output.WriteString("## BPMN change coverage\n\nA plan is a proposal. UNRESOLVED means no evidence-backed file plan was produced; it does not mean no impact.\n\n| Change | Element | File plans | Status |\n|---|---|---:|---|\n")
-		for _, c := range plan.ChangeCoverage {
-			fmt.Fprintf(&output, "| %s | %s | %d | %s |\n", tableText(string(c.ChangeType)), tableText(c.ElementID), c.Plans, c.Status)
+		out.WriteString("## Process changes\n\n")
+		for i, c := range plan.ChangeCoverage {
+			title := readableName(string(c.ChangeType))
+			label := singleLine(c.ElementName)
+			if label == "" || label == c.ElementID {
+				label = readableName(c.ElementID)
+			}
+			title += " (" + label + ")"
+			changeTitles[changeKey{string(c.ChangeType), c.ElementID}] = title
+			outcome := map[string]string{"UNRESOLVED": "The affected code still needs to be identified.", "PLANNED": "A file change is proposed.", "NO_CHANGE_PROPOSED": "No edit was proposed."}[c.Status]
+			if outcome == "" {
+				outcome = readableName(c.Status)
+			}
+			fmt.Fprintf(&out, "%d. **%s.** %s\n", i+1, title, outcome)
 		}
-		output.WriteByte('\n')
+		out.WriteByte('\n')
 	}
-	if len(plan.Plans) == 0 {
-		output.WriteString("No evidence-grounded file plan was produced.\n")
-		return output.Bytes()
+
+	type target struct{ file, symbol, change, element string }
+	contested := map[target]string{}
+	for _, finding := range plan.ReviewFindings {
+		for _, check := range finding.Checks {
+			if check.Criterion == "scope" && check.Status == "REVISE" {
+				contested[target{finding.File, finding.Symbol, finding.ChangeType, finding.ElementID}] = check.Finding
+			}
+		}
 	}
 	groups := map[string][]FilePlan{}
+	var held []string
 	for _, item := range plan.Plans {
+		if item.Action == "NO_ACTION" {
+			continue
+		}
+		reason := contested[target{item.File, item.Symbol, string(item.ChangeType), item.ElementID}]
+		if validatePlanScope(item) != nil {
+			reason = "The proposal edits the diagram. A change to this file still needs supporting evidence."
+		}
+		if reason != "" {
+			label := changeTitles[changeKey{string(item.ChangeType), item.ElementID}]
+			if label == "" {
+				label = readableName(item.ElementID)
+			}
+			name := fmt.Sprintf("`%s`", item.File)
+			if item.Symbol != "" {
+				name += " (`" + singleLine(item.Symbol) + "`)"
+			}
+			held = append(held, fmt.Sprintf("%s. %s. %s", name, label, reason))
+			continue
+		}
 		groups[item.File] = append(groups[item.File], item)
 	}
-	files := make([]string, 0, len(groups))
+	if len(groups) > 0 {
+		out.WriteString("## Proposed implementation\n\n")
+	} else if len(held) > 0 {
+		out.WriteString("All proposed edits still have open questions about scope.\n\n")
+	} else {
+		out.WriteString("No source edits are proposed in this export.\n\n")
+	}
+	var files []string
 	for file := range groups {
 		files = append(files, file)
 	}
 	sort.Strings(files)
-	fmt.Fprintf(&output, "## File overview\n\n%d files reviewed / %d files with proposed edits / %d scoped assessments. NO_ACTION assessments are excluded from the proposed edit count. Sections preserve each BPMN change and its evidence; do not apply duplicate steps blindly.\n\n", len(files), len(ProposedFiles(plan.Plans)), len(plan.Plans))
-	for index, file := range files {
-		fmt.Fprintf(&output, "## %d. `%s`\n\n", index+1, singleLine(file))
-		for n, item := range groups[file] {
-			fmt.Fprintf(&output, "### Requirement %d: %s / %s\n\n", n+1, singleLine(string(item.ChangeType)), singleLine(item.ElementID))
-			fmt.Fprintf(&output, "- Change: `%s` / `%s`\n- Layer: `%s`\n- Module: `%s`\n- Action: **%s**\n", item.ChangeType, item.ElementID, item.Layer, item.Module, item.Action)
+	for i, file := range files {
+		fmt.Fprintf(&out, "### %d. `%s`\n\n", i+1, singleLine(file))
+		for _, item := range groups[file] {
+			title := changeTitles[changeKey{string(item.ChangeType), item.ElementID}]
+			if title == "" {
+				title = readableName(item.ElementID)
+			}
+			if title != "" {
+				fmt.Fprintf(&out, "**%s.** ", title)
+			}
 			if item.Symbol != "" {
-				fmt.Fprintf(&output, "- Symbol: `%s`\n", item.Symbol)
+				fmt.Fprintf(&out, "`%s`. ", singleLine(item.Symbol))
 			}
-			fmt.Fprintf(&output, "- Evidence: `%s`\n\n%s\n\n", strings.Join(item.EvidenceIDs, "`, `"), singleLine(item.Summary))
-			if item.Action == "NO_ACTION" {
-				output.WriteString("No source edits are proposed for this target. The existing-contract conclusion remains subject to the cited source and model review.\n\n")
+			fmt.Fprintf(&out, "%s\n\n", singleLine(item.Summary))
+			if item.CurrentBehavior != "" {
+				fmt.Fprintf(&out, "Today: %s\n\n", singleLine(item.CurrentBehavior))
 			}
-			for _, section := range []struct{ title, value string }{{"Current behavior", item.CurrentBehavior}, {"Required behavior", item.TargetBehavior}, {"Design rationale", item.DesignRationale}} {
-				if section.value != "" {
-					fmt.Fprintf(&output, "#### %s\n\n%s\n\n", section.title, singleLine(section.value))
+			if item.TargetBehavior != "" && singleLine(item.TargetBehavior) != singleLine(item.Summary) {
+				fmt.Fprintf(&out, "Required: %s\n\n", singleLine(item.TargetBehavior))
+			}
+			edits := item.ProposedChanges
+			if len(edits) == 0 {
+				edits = item.Steps
+			}
+			for index, edit := range edits {
+				fmt.Fprintf(&out, "%d. %s\n", index+1, singleLine(edit))
+			}
+			if len(item.AcceptanceChecks) > 0 {
+				out.WriteString("\n**Acceptance checks**\n\n")
+				for _, check := range item.AcceptanceChecks {
+					fmt.Fprintf(&out, "- %s\n", singleLine(check))
 				}
 			}
-			if len(item.Assumptions) > 0 {
-				output.WriteString("#### Assumptions and open decisions\n\n")
-				for _, v := range item.Assumptions {
-					fmt.Fprintf(&output, "- %s\n", singleLine(v))
-				}
-				output.WriteByte('\n')
+			for _, a := range item.Assumptions {
+				fmt.Fprintf(&out, "- Confirm: %s\n", singleLine(a))
 			}
-			if len(item.Steps) > 0 {
-				output.WriteString("#### Implementation steps\n\n")
+			if len(item.EvidenceIDs) > 0 {
+				fmt.Fprintf(&out, "\nEvidence: `%s`\n", singleLine(item.EvidenceIDs[0]))
 			}
-			for stepIndex, step := range item.Steps {
-				fmt.Fprintf(&output, "%d. %s\n", stepIndex+1, singleLine(step))
-			}
-			for _, group := range []struct {
-				title string
-				items []string
-			}{{"Proposed changes", item.ProposedChanges}, {"Acceptance checks", item.AcceptanceChecks}} {
-				if len(group.items) == 0 {
-					continue
-				}
-				fmt.Fprintf(&output, "#### %s\n\n", group.title)
-				for _, line := range group.items {
-					fmt.Fprintf(&output, "- %s\n", singleLine(line))
-				}
-				output.WriteByte('\n')
-			}
-			output.WriteByte('\n')
+			out.WriteByte('\n')
 		}
 	}
-
-	return output.Bytes()
+	if len(held) > 0 || len(plan.ReviewIssues) > 0 || len(plan.ReviewFindings) > 0 {
+		out.WriteString("## Open review items\n\n")
+		seen := map[string]bool{}
+		writeIssue := func(issue string) {
+			line := strings.NewReplacer("NO_ACTION", "leave the file unchanged", "NEED_EVIDENCE", "more evidence required", "NEEDS_REVIEW", "awaiting review").Replace(singleLine(issue))
+			if line != "" && !seen[line] {
+				fmt.Fprintf(&out, "- %s\n", line)
+				seen[line] = true
+			}
+		}
+		for _, concern := range held {
+			writeIssue(concern)
+		}
+		// Ollama can also serialize the structured findings into ReviewIssues.
+		// Drop only exact copies; keep standalone feedback from older providers.
+		summaries := map[string]bool{}
+		for _, f := range plan.ReviewFindings {
+			var joined []string
+			for _, c := range f.Checks {
+				if c.Status == "PASS" {
+					continue
+				}
+				if len(joined) == 0 {
+					writeIssue(fmt.Sprintf("`%s`. %s", f.File, c.Finding))
+				}
+				joined = append(joined, c.Criterion+": "+c.Finding)
+			}
+			if len(joined) > 0 {
+				summaries[singleLine(strings.Join(joined, "; "))] = true
+			}
+		}
+		for _, issue := range plan.ReviewIssues {
+			prefix, body, ok := strings.Cut(issue, ": ")
+			if ok && strings.HasPrefix(prefix, "Plan ") {
+				if _, err := strconv.Atoi(strings.TrimPrefix(prefix, "Plan ")); err == nil && summaries[singleLine(body)] {
+					continue
+				}
+			}
+			issue = strings.Replace(issue, "PARTIAL CHECKPOINT EXPORT:", "Partial export:", 1)
+			for _, c := range plan.ChangeCoverage {
+				issue = strings.ReplaceAll(issue, string(c.ChangeType)+"/"+c.ElementID, changeTitles[changeKey{string(c.ChangeType), c.ElementID}])
+			}
+			writeIssue(strings.ReplaceAll(issue, " ()", ""))
+		}
+		if len(seen) == 0 {
+			out.WriteString("The model reviewer reported no open findings.\n")
+		}
+		out.WriteByte('\n')
+	}
+	if plan.PlanID != "" {
+		fmt.Fprintf(&out, "Plan `%s`", plan.PlanID)
+		if plan.AnalysisID != "" {
+			fmt.Fprintf(&out, " from analysis `%s`", plan.AnalysisID)
+		}
+		out.WriteString(". ")
+	}
+	out.WriteString("The JSON export contains all assessments, source references and reviewer checks.\n")
+	return out.Bytes()
 }
 
 func singleLine(value string) string {
 	return strings.Join(strings.Fields(value), " ")
 }
 
-func tableText(s string) string { return strings.ReplaceAll(singleLine(s), "|", "\\|") }
-
-func reviewCodeSpan(s string) string {
-	s = singleLine(s)
-	fence := "`"
-	for strings.Contains(s, fence) {
-		fence += "`"
+// Display system enums and legacy element IDs as words. Preserve real code paths
+// and function names wherever a developer needs them to locate the edit.
+func readableName(s string) string {
+	var out strings.Builder
+	var prev rune
+	for _, r := range s {
+		if r == '_' || r == '-' {
+			out.WriteByte(' ')
+		} else {
+			if unicode.IsLower(prev) && unicode.IsUpper(r) {
+				out.WriteByte(' ')
+			}
+			out.WriteRune(unicode.ToLower(r))
+		}
+		prev = r
 	}
-	return fence + " " + s + " " + fence
+	words := []rune(singleLine(out.String()))
+	if len(words) == 0 {
+		return ""
+	}
+	words[0] = unicode.ToUpper(words[0])
+	return string(words)
 }

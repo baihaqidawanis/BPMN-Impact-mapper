@@ -39,7 +39,7 @@ func TestRelevantTargetMayBeReviewedWithoutInventingEdits(t *testing.T) {
 		t.Fatal("no-change counted as an edit", coverage)
 	}
 	md := string(Markdown(ChangePlan{Plans: []FilePlan{p}}))
-	if !strings.Contains(md, "No source edits are proposed") || strings.Contains(md, "#### Implementation steps") {
+	if !strings.Contains(md, "No source edits are proposed") || strings.Contains(md, "## Proposed implementation") {
 		t.Fatal("misleading no-change export", md)
 	}
 	if Summarize(ChangePlan{Plans: []FilePlan{p}}).Files != 0 {

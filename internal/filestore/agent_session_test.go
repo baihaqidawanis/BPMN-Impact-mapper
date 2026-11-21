@@ -4,10 +4,28 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 )
+
+func TestFocusedAggregateCanResumeBeyondChildCheckpointLimit(t *testing.T) {
+	store := AgentSessionStore{Root: t.TempDir()}
+	ctx := context.Background()
+	s := planning.AgentSession{ID: "large", Feedback: []string{strings.Repeat("x", 2<<20)}}
+	if err := store.Save(ctx, s); err == nil {
+		t.Fatal("oversized ordinary checkpoint accepted")
+	}
+	s.FocusedReview = &planning.FocusedReviewProgress{BatchesReviewed: 49}
+	if err := store.Save(ctx, s); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := store.Load(ctx, s.ID)
+	if err != nil || loaded.FocusedReview == nil || loaded.FocusedReview.BatchesReviewed != 49 {
+		t.Fatal("focused progress could not be restored", err)
+	}
+}
 
 func TestAgentCheckpointUpdateAndIntegrity(t *testing.T) {
 	store := AgentSessionStore{Root: t.TempDir()}

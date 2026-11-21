@@ -10,6 +10,10 @@ import (
 var diagramTaskEdit = regexp.MustCompile(`(?i)\b(add|insert|create)\s+(a\s+)?(new\s+)?(user|service|manual|send|receive|script|business rule)\s+task\b`)
 var diagramModelEdit = regexp.MustCompile(`(?i)\b(edit|modify|update)\s+(the\s+)?(bpmn|workflow xml)\b`)
 
+// Match an instruction to author diagram nodes, not a description of what a
+// developer should document or implement in service code.
+var diagramNodeEdit = regexp.MustCompile(`(?i)^(add|insert|create)\s+(a\s+|an\s+|the\s+)?(new\s+)?(BPMN\s+(element|gateway|sequence flow)|gateway element)\b`)
+
 // A diagram-edit recipe assigned to an implementation/doc file cannot implement
 // a blueprint change. This guard only catches explicit, high-confidence cases;
 // semantic source correctness still requires review.
@@ -18,9 +22,17 @@ func validatePlanScope(p FilePlan) error {
 	if ext == ".bpmn" || ext == ".xml" {
 		return nil
 	}
-	text := strings.Join(append(append([]string{}, p.Steps...), p.ProposedChanges...), " ")
+	steps := append(append([]string{}, p.Steps...), p.ProposedChanges...)
+	authoring := false
+	for _, step := range steps {
+		if diagramNodeEdit.MatchString(strings.TrimSpace(step)) {
+			authoring = true
+			break
+		}
+	}
+	text := strings.Join(steps, " ")
 	lower := strings.ToLower(text)
-	if diagramModelEdit.MatchString(text) || (diagramTaskEdit.MatchString(text) && (strings.Contains(lower, "bpmn") || strings.Contains(lower, "flow connections"))) {
+	if authoring || diagramModelEdit.MatchString(text) || (diagramTaskEdit.MatchString(text) && (strings.Contains(lower, "bpmn") || strings.Contains(lower, "flow connections"))) {
 		return fmt.Errorf("%w: diagram-edit steps are assigned to non-diagram file %q; plan its software or documentation changes instead of modifying the supplied BPMN", ErrAgentPlanIncomplete, p.File)
 	}
 	return nil

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 	"reflect"
 	"sort"
 	"strconv"
@@ -38,6 +39,21 @@ func annotateAgentInput(input []byte, t planning.AgentTurn) ([]byte, error) {
 	bundle, ok := wire["bundle"].(map[string]any)
 	if !ok {
 		return input, nil
+	}
+	if t.Role == planning.Reviewer && len(t.Draft) > 0 {
+		roles := map[string]string{}
+		for i, proposal := range t.Draft {
+			file := strings.ToLower(proposal.File)
+			role := "implementation/configuration"
+			switch {
+			case path.Ext(file) == ".md" || path.Ext(file) == ".rst" || path.Ext(file) == ".adoc":
+				role = "documentation: propose edits to this document's rules/text"
+			case strings.HasSuffix(file, "_test.go") || strings.Contains(path.Base(file), ".test.") || strings.Contains(path.Base(file), ".spec."):
+				role = "test: propose assertions/fixtures; new tests need not exist yet"
+			}
+			roles[strconv.Itoa(i)] = role
+		}
+		wire["review_frame"] = map[string]any{"source_time": "BEFORE", "draft_time": "PROPOSED_AFTER, not implemented", "current_behavior": "untrusted claims to verify against source", "file_responsibilities": roles}
 	}
 	indices := map[string]int{}
 	for i, target := range turnTargets(t) {
@@ -81,7 +97,14 @@ func annotateAgentInput(input []byte, t planning.AgentTurn) ([]byte, error) {
 		}
 		for i, c := range t.Bundle.Changes {
 			before, after := lookup(pc.Before, c.ElementID), lookup(pc.After, c.ElementID)
-			facts = append(facts, map[string]any{"change_index": i, "change_type": c.ChangeType, "element_id": c.ElementID, "before_present": before != nil, "after_present": after != nil, "before": before, "after": after})
+			fact := map[string]any{"change_index": i, "change_type": c.ChangeType, "element_id": c.ElementID, "before_present": before != nil, "after_present": after != nil, "before": before, "after": after}
+			if name := processNameForChange(pc.After, c.ElementID); name != "" {
+				fact["process_after"] = name
+			}
+			if name := processNameForChange(pc.Before, c.ElementID); name != "" {
+				fact["process_before"] = name
+			}
+			facts = append(facts, fact)
 		}
 		wire["change_facts"] = facts
 	}
@@ -90,7 +113,24 @@ func annotateAgentInput(input []byte, t planning.AgentTurn) ([]byte, error) {
 		for i, target := range turnTargets(t) {
 			for _, d := range t.Decisions {
 				if d.ChangeType == target.change.ChangeType && d.ElementID == target.change.ElementID && d.File == target.candidate.File && d.Symbol == target.candidate.Symbol && d.Verdict == planning.VerdictRelevant {
-					slots = append(slots, map[string]any{"key": strconv.Itoa(i), "file": d.File, "symbol": d.Symbol, "required": d.Verdict == planning.VerdictRelevant})
+					var cited []int
+					for j, e := range target.candidate.Evidence {
+						for _, id := range d.EvidenceIDs {
+							if id == e.ID {
+								cited = append(cited, j)
+								break
+							}
+						}
+					}
+					slot := map[string]any{"key": strconv.Itoa(i), "file": d.File, "symbol": d.Symbol, "required": true, "analyst_evidence_indices": cited}
+					// Always forward source references. A lengthy model rationale
+					// should not displace that source or be cut mid-claim.
+					if len(d.Rationale) <= 480 {
+						slot["analyst_hypothesis"] = d.Rationale
+					} else if end := strings.LastIndex(d.Rationale[:480], ". "); end >= 0 {
+						slot["analyst_hypothesis"] = d.Rationale[:end+1]
+					}
+					slots = append(slots, slot)
 				}
 			}
 		}
@@ -114,12 +154,12 @@ func annotateAgentInput(input []byte, t planning.AgentTurn) ([]byte, error) {
 }
 
 func hostTransportInstruction(role planning.AgentRole) string {
-	common := " change_facts are host-derived before/after facts with original IDs. New elements normally exist only in after; removed elements only in before. Shared graph entries belong to BOTH versions, not missing before data. Indices are scoped to THIS request only. Source-tool requests use exact approved paths. "
+	common := " change_facts are host-derived before/after facts with original IDs. New elements normally exist only in after; removed elements only in before. Shared graph entries belong to BOTH versions, not missing before data. supporting_flow_ids describe wiring for their owning requirement. Use the graph to locate the affected branch. Indices are scoped to THIS request only. Source-tool requests use exact approved paths. "
 	switch role {
 	case planning.Analyst:
 		return common + "Return verification.decisions as an object keyed by each exact target_index string. Every candidate key is required exactly once; each value contains verdict, rationale and evidence_indices from that candidate. Do not emit target_index inside a keyed decision or file/function/change/evidence-ID identity fields; the host binds them."
 	case planning.Planner:
-		return common + "planning_targets lists the Analyst-validated RELEVANT targets. Return plan.plans as an object keyed by the exact target_index string, one assessment per required key. Set disposition CHANGE for intended edits or NO_CHANGE for an evidence-backed already adequate file; NO_CHANGE has empty steps and proposed_changes. Use that candidate's evidence_indices. Do not emit target_index inside a keyed proposal or file/function/change/module/layer/action/evidence-ID identity fields. The host preserves the candidate action; describe intended edits in proposed_changes."
+		return common + "planning_targets lists the Analyst-validated RELEVANT targets. Return plan.plans as an object keyed by the exact target_index string, one assessment per required key. Set disposition CHANGE for intended edits or NO_CHANGE for an evidence-backed already adequate file; NO_CHANGE has empty steps and proposed_changes. Use that candidate's evidence_indices. Do not emit target_index inside a keyed proposal or file/function/change/module/layer/action/evidence-ID identity fields. For CHANGE, cite inspected source that shows the behavior gap and specify the edit and acceptance check. The host assigns the action."
 	case planning.Reviewer:
 		return common + "review_targets maps each required draft key to its matching source candidate. Draft indices and candidate_target_index are different namespaces. Key review.checks by the draft key and cite evidence_indices from its matching candidate. The host restores all identities."
 	default:
@@ -266,6 +306,16 @@ func restoreTargetReferences(content string, t planning.AgentTurn) (string, erro
 				}
 				if disposition == "NO_CHANGE" {
 					expected = domain.ActionNoAction
+				} else if _, explicit := item["disposition"]; explicit && c.SuggestedAction == domain.ActionVerify {
+					data, err := json.Marshal(item)
+					var proposal planning.FilePlan
+					if err != nil || json.Unmarshal(data, &proposal) != nil {
+						return "", errors.New("invalid indexed proposal")
+					}
+					proposal.EvidenceIDs = ids
+					if planning.SupportsVerifiedEdit(c, proposal) {
+						expected = domain.ActionModify
+					}
 				}
 				// New indexed schemas omit action. Legacy explicit values are checked,
 				// never normalized from BPMN taxonomy or arbitrary free text.

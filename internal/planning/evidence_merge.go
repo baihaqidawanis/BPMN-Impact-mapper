@@ -19,13 +19,17 @@ func MergeAgentEvidence(existing, incoming []EvidenceItem, sourceRead bool) []Ev
 		return out
 	}
 	anchors := []EvidenceItem{}
+	hasCall := false
+	for _, e := range incoming {
+		hasCall = hasCall || e.Type == "AST_CALL_LITERALS"
+	}
 	for _, e := range existing {
 		if (e.Type == "SOURCE_DECLARATION" || e.Type == "SYMBOL") && len(anchors) < 2 {
 			anchors = append(anchors, e)
 		}
 	}
 	for _, e := range existing {
-		if e.Type != "SOURCE_TOOL" && e.Type != "SOURCE_DECLARATION" && e.Type != "SYMBOL" && len(anchors) < 2 {
+		if !hasCall && e.Type != "SOURCE_TOOL" && e.Type != "SOURCE_DECLARATION" && e.Type != "SYMBOL" && len(anchors) < 2 {
 			anchors = append(anchors, e)
 		}
 	}

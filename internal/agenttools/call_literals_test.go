@@ -105,3 +105,44 @@ func TestCallFactsAbstainOnMalformedGoAndOtherLanguages(t *testing.T) {
 		})
 	}
 }
+
+func TestInspectedTestCallKeepsEvidenceInMatchingOperation(t *testing.T) {
+	root := t.TempDir()
+	const file = "operations_test.go"
+	code := `package sample
+func TestSalesOrder(t *testing.T) {
+ if err := service.Submit(ctx, order.ID, "submit", actor, "", order.Version, "sales-submit"); err != nil {
+  t.Fatal(err)
+ }
+}
+func TestStockAdjustment(t *testing.T) {
+ if err := service.Transition(ctx, adjustment.ID, "submit", actor, "", adjustment.Version, "inventory-submit"); err != nil {
+  t.Fatal(err)
+ }
+ if adjustment.Status != "SUBMITTED" { t.Fatal(adjustment.Status) }
+}
+`
+	if err := os.WriteFile(filepath.Join(root, file), []byte(code), 0600); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	snapshot, err := agenttools.New(ctx, root, ingest.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := snapshot.Execute(ctx, planning.ToolRequest{Name: "inspect_source", File: file, Query: "submit stock adjustment"})
+	if err != nil || len(result.Candidates) != 1 {
+		t.Fatal(result, err)
+	}
+	var call, outcome bool
+	for _, evidence := range result.Candidates[0].Evidence {
+		if strings.Contains(evidence.Excerpt, "sales-submit") || strings.Contains(evidence.Excerpt, "TestSalesOrder") {
+			t.Fatal("evidence from unrelated operation", evidence)
+		}
+		call = call || (evidence.Type == "AST_CALL_LITERALS" && strings.Contains(evidence.Excerpt, `5="", 7="inventory-submit"`))
+		outcome = outcome || strings.Contains(evidence.Excerpt, `adjustment.Status != "SUBMITTED"`)
+	}
+	if !call || !outcome {
+		t.Fatal("missing call or expected outcome", result)
+	}
+}

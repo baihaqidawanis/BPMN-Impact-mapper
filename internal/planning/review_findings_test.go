@@ -27,14 +27,18 @@ func TestReviewFindingsSurviveExportAndAreInvalidatedByNewDraft(t *testing.T) {
 		t.Fatal(p, err)
 	}
 	md := string(Markdown(p))
-	if !strings.Contains(md, "Reviewer checks") || !strings.Contains(md, "Existing signature is retained.") || !strings.Contains(md, "not independent proof") {
+	if strings.Contains(md, "Existing signature is retained.") || !strings.Contains(md, "JSON export") {
 		t.Fatal("review conclusions missing from Markdown", md)
 	}
 	p.ReviewFindings[0].SourceExcerpt = "return `literal` <input>"
 	p.ReviewFindings[0].ImplementationExcerpt = "Preserve `literal` and change only dispatch."
-	md = string(Markdown(p))
-	if !strings.Contains(md, "Compared source: `` return `literal` <input> ``") || !strings.Contains(md, "Compared plan item:") {
-		t.Fatal("comparison receipts missing or malformed", md)
+	archive, err := JSON(p)
+	if err != nil || !strings.Contains(string(archive), "Existing signature is retained.") || !strings.Contains(string(archive), "Preserve `literal`") {
+		t.Fatal("full review receipts missing from JSON")
+	}
+	p.ReviewFindings[0].Checks = append(p.ReviewFindings[0].Checks, ReviewCriterion{Criterion: "scope", Status: "REVISE", Finding: "Unrelated file."})
+	if !strings.Contains(string(Markdown(p)), "Unrelated file.") {
+		t.Fatal("open finding omitted")
 	}
 	s.Role = Analyst
 	if err := e.apply(context.Background(), &s, verified, b); err != nil || s.LastReview != nil {

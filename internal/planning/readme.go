@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 )
 
 type readmeSource interface{ RootReadme() *ReadmeInput }
@@ -50,7 +49,7 @@ func (e FullRepositoryEngine) orient(ctx context.Context, id string, bundle Evid
 		input.Warnings = nil
 
 		input.ContextID, _ = ComputeContextID(input)
-		callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+		callCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 		reply, err := e.Model.Turn(callCtx, AgentTurn{Role: Analyst, Bundle: input, Readme: readme, RemainingTools: 0})
 		cancel()
 		if err != nil {

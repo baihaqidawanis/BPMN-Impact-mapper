@@ -70,7 +70,11 @@ func (h Handler) agentSettings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err != nil {
-			writeAPIError(w, 422, "SETTINGS_REJECTED", "Settings were not applied. Check token limits, installed local models, thinking support and tunnel. Previous settings remain active.")
+			message := agentjobs.ModelCheckMessage(err)
+			if errors.Is(err, agentjobs.ErrConfiguration) {
+				message = "Check token limits, model names and generation profiles."
+			}
+			writeAPIError(w, 422, "SETTINGS_REJECTED", "Settings were not applied. "+message+" Previous settings remain active.")
 			return
 		}
 	}

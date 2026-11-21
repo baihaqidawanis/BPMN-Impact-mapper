@@ -30,6 +30,8 @@ type Snapshot interface {
 }
 
 type View struct {
+	ActiveMillis   *int64 `json:"active_ms,omitempty"`
+	runStarted     time.Time
 	SourceActivity []SourceActivity                `json:"source_activity,omitempty"`
 	Mode           string                          `json:"mode"`
 	FocusedReview  *planning.FocusedReviewProgress `json:"focused_review,omitempty"`
@@ -80,7 +82,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	if len(modes) > 0 && modes[0] != "" {
 		mode = modes[0]
 	}
-	if mode != "focused" && mode != "full" {
+	if mode != "focused" && mode != "full" && mode != "light" && mode != "ultra-light" {
 		return View{}, ErrBinding
 	}
 	if s.Sessions == nil || s.Plans == nil || s.Source == nil {
@@ -103,7 +105,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	}
 	limit := 3
 	related := 1
-	if mode == "focused" {
+	if mode != "full" {
 		limit = 1
 		related = -1
 		for _, c := range selected.Changes {
@@ -112,22 +114,38 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 			}
 		}
 	}
-	bundle := planning.BuildEvidenceBundle(selected, planning.Limits{CandidatesPerChange: limit, RelatedPerChange: related, EvidencePerCandidate: 2, ExcerptRunes: 120})
+	limits := planning.Limits{CandidatesPerChange: limit, RelatedPerChange: related, EvidencePerCandidate: 2, ExcerptRunes: 320}
+	limits.GroupGatewayChanges = mode != "full"
+	limits.GroupGatewayBranches = mode != "full"
+	bundle := planning.BuildAgentBundle(selected, limits)
 	var resumeIdentity *planning.ProviderIdentity
+	var elapsedAtStart int64
+	previousMillis := &elapsedAtStart
 	if id != "" {
 		stored, err := s.Sessions.Load(ctx, id)
 		if err != nil {
 			return View{}, err
 		}
+		// Rebuild older bundle shapes for resume. The engine still verifies
+		// the exact source, context and model binding before using a checkpoint.
+		if !sameChanges(stored.Bundle.Changes, bundle.Changes) {
+			limits.GroupGatewayBranches = false
+			bundle = planning.BuildAgentBundle(selected, limits)
+		}
+		if !sameChanges(stored.Bundle.Changes, bundle.Changes) {
+			limits.GroupGatewayChanges = false
+			bundle = planning.BuildAgentBundle(selected, limits)
+		}
+		if !sameChanges(stored.Bundle.Changes, bundle.Changes) {
+			bundle = planning.BuildEvidenceBundle(selected, limits)
+		}
 		if stored.Bundle.AnalysisID != report.AnalysisID || stored.Bundle.InputFingerprint != bundle.InputFingerprint || stored.Bundle.Method != bundle.Method || !sameChanges(stored.Bundle.Changes, bundle.Changes) {
 			return View{}, ErrBinding
 		}
 		identity := stored.Identity
+		previousMillis = stored.ActiveMillis
 		resumeIdentity = &identity
-		storedMode := "focused"
-		if stored.FullReview != nil {
-			storedMode = "full"
-		}
+		storedMode := sessionMode(stored)
 		if len(modes) == 0 || modes[0] == "" {
 			mode = storedMode
 		} else if mode != storedMode {
@@ -163,6 +181,8 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	}
 	v := View{SessionID: id, AnalysisID: report.AnalysisID, Status: "STARTING", Role: planning.Analyst, Provider: s.Model.Identity(), Message: "Preparing approved source and model metadata."}
 	v.Mode = mode
+	v.ActiveMillis = previousMillis
+	v.runStarted = time.Now()
 	s.views[id] = v
 	s.active = true
 	runBase, runCancel := context.WithCancel(safeBase(s.Base))
@@ -196,6 +216,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 }
 
 func (s *Service) execute(ctx context.Context, v View, repo string, bundle planning.EvidenceBundle) {
+	clock := timedCheckpoints{AgentSessionStore: s.Sessions, id: v.SessionID, start: v.runStarted, previousMillis: v.ActiveMillis}
 	fail := func(status, message string) { v.Status = status; v.Message = message; s.put(v) }
 	source, err := s.Source(ctx, repo)
 	if err != nil {
@@ -221,18 +242,21 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 			fail("FAILED", "Source adapter does not support full repository review.")
 			return
 		}
-		session, runErr = (planning.FullRepositoryEngine{Model: s.Model, Source: fullSource, Store: s.Sessions}).Run(ctx, v.SessionID, bundle)
+		session, runErr = (planning.FullRepositoryEngine{Model: s.Model, Source: fullSource, Store: clock}).Run(ctx, v.SessionID, bundle)
 	} else {
-		session, runErr = (planning.FocusedEngine{Model: s.Model, Tools: source, Store: s.Sessions}).Run(ctx, v.SessionID, bundle)
+		session, runErr = (planning.FocusedEngine{Model: s.Model, Tools: source, Store: clock, Light: v.Mode == "light", UltraLight: v.Mode == "ultra-light"}).Run(ctx, v.SessionID, bundle)
 	}
 	if session.ID != "" {
 		v = viewSession(session)
+		v.ActiveMillis = clock.elapsed()
 	}
 	if runErr != nil {
 		if s.LogError != nil {
 			s.LogError(runErr)
 		}
-		if errors.Is(runErr, planning.ErrAgentContextLimit) {
+		if errors.Is(runErr, planning.ErrAgentOutputLimit) {
+			v.Message = "Model output budget was exhausted before JSON completed. The incomplete response was not accepted. Try Thinking Off or a larger output budget in a new session."
+		} else if errors.Is(runErr, planning.ErrAgentContextLimit) {
 			v.Message = "Evidence exceeds the configured model context. Use a smaller candidate report or increase --agent-context, then start a new session. Source was not silently truncated."
 		} else if errors.Is(runErr, planning.ErrAgentModelOutput) {
 			v.Message = "Model response could not be validated. Inspect Session issues for the failed role and reason before retrying; consumed turns remain charged."
@@ -278,15 +302,33 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 	s.put(v)
 }
 
-func (s *Service) put(v View) { s.mu.Lock(); s.views[v.SessionID] = v; s.mu.Unlock() }
+func (s *Service) put(v View) {
+	if v.Status != "RUNNING" && v.Status != "STARTING" {
+		v = v.withLiveElapsed()
+	}
+	s.mu.Lock()
+	s.views[v.SessionID] = v
+	s.mu.Unlock()
+}
 
 func viewSession(session planning.AgentSession) View {
 	b := session.Bundle
-	mode := "focused"
+	return View{ActiveMillis: session.ActiveMillis, FocusedReview: session.FocusedReview, SourceActivity: sourceActivity(session.Observations), Message: session.ProgressMessage, Mode: sessionMode(session), FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
+}
+
+func sessionMode(session planning.AgentSession) string {
 	if session.FullReview != nil {
-		mode = "full"
+		return "full"
 	}
-	return View{FocusedReview: session.FocusedReview, SourceActivity: sourceActivity(session.Observations), Message: session.ProgressMessage, Mode: mode, FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
+	if progress := session.FocusedReview; progress != nil {
+		if progress.UltraLight {
+			return "ultra-light"
+		}
+		if progress.Light {
+			return "light"
+		}
+	}
+	return "focused"
 }
 
 func (s *Service) Get(ctx context.Context, id string) (View, error) {
@@ -295,7 +337,7 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 	active := s.activeID == id
 	s.mu.Unlock()
 	if known && v.Status == "STARTING" {
-		return v, nil
+		return v.withLiveElapsed(), nil
 	}
 	if known && v.Status != "RUNNING" && v.Status != "STARTING" {
 		return v, nil
@@ -303,7 +345,7 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 	session, err := s.Sessions.Load(ctx, id)
 	if errors.Is(err, planning.ErrAgentSessionMissing) {
 		if known {
-			return v, nil
+			return v.withLiveElapsed(), nil
 		}
 		return View{}, ErrMissing
 	}
@@ -311,11 +353,9 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 		return View{}, err
 	}
 	result := viewSession(session)
-	result.SourceActivity = sourceActivity(session.Observations)
-	// Older focused parents did not aggregate child observations. Restore the
-	// trace from their immutable checkpoints, including the active child.
-	if session.FullReview == nil && (len(session.Bundle.Changes) > 1 || session.FocusedReview != nil) {
-		result.SourceActivity = nil
+	// Current parents already store observations with parent change indices.
+	// Only older sessions need reconstruction from numbered child checkpoints.
+	if session.FullReview == nil && len(session.Observations) == 0 && (session.FocusedReview == nil || !session.FocusedReview.CombinedReviewOnly) && (len(session.Bundle.Changes) > 1 || session.FocusedReview != nil) {
 		batches := len(session.Bundle.Changes)
 		if session.FocusedReview != nil {
 			batches = session.FocusedReview.BatchesTotal
@@ -325,18 +365,7 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 			if err != nil {
 				continue
 			}
-			for _, item := range sourceActivity(child.Observations) {
-				item.ChangeIndex = i
-				if len(child.Bundle.Changes) == 1 {
-					for index, c := range session.Bundle.Changes {
-						if c.ChangeType == child.Bundle.Changes[0].ChangeType && c.ElementID == child.Bundle.Changes[0].ElementID {
-							item.ChangeIndex = index
-							break
-						}
-					}
-				}
-				result.SourceActivity = append(result.SourceActivity, item)
-			}
+			result.SourceActivity = append(result.SourceActivity, childActivity(session, child, i)...)
 		}
 	}
 	if active && session.Status == "RUNNING" && session.ActiveChildID != "" {
@@ -345,10 +374,16 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 			result.Turns += child.Turns
 			result.Tools += child.Tools
 			result.Revisions += child.Revisions
+			if session.FocusedReview != nil && session.FocusedReview.CombinedReviewOnly {
+				result.SourceActivity = append(result.SourceActivity, childActivity(session, child, 0)...)
+			}
 		}
 	}
 	if active && (result.Status == "PAUSED" || result.Status == "RUNNING") {
 		result.Status = "RUNNING"
+		if known {
+			result.ActiveMillis = v.withLiveElapsed().ActiveMillis
+		}
 	}
 	if result.Status == "RUNNING" && !active {
 		result.Status = "PAUSED"

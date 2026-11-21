@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
@@ -73,7 +72,7 @@ func (e AgentEngine) planOversizedBatch(ctx context.Context, s *AgentSession) (A
 			if err := e.Store.Save(ctx, receipt); err != nil {
 				return AgentReply{}, err
 			}
-			callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+			callCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 			reply, err := (batchReviewModel{e, s}).Turn(callCtx, AgentTurn{Role: Planner, Bundle: part, Decisions: selected, Draft: draft, RelatedProposals: related, Feedback: s.Feedback})
 			cancel()
 			if err != nil {

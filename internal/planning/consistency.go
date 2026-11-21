@@ -10,6 +10,10 @@ import (
 
 var errConsistencyAttempts = errors.New("final consistency review attempts exhausted")
 
+func canPartitionReview(err error) bool {
+	return errors.Is(err, ErrAgentContextLimit) || errors.Is(err, ErrAgentOutputLimit) || errors.Is(err, errConsistencyAttempts)
+}
+
 // Try the full proposal first. On context overflow, review detailed file groups
 // followed by an explicit compact cross-file contract review. No file is omitted.
 func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string, s AgentSession) (AgentReview, int, error) {
@@ -17,11 +21,15 @@ func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string,
 		return AgentReview{Issues: []string{"No validated file proposals are available for final consistency review; resolve planning failures first."}}, 0, nil
 	}
 	var review AgentReview
+	// Review the proposed targets, not the entire retrieval inventory again.
+	// Keep every BPMN requirement and all evidence for those exact targets.
+	s.Bundle = consistencyBundle(s.Bundle, s.Draft, false)
+	s.Decisions = consistencyDecisions(s.Decisions, s.Draft)
 	var turns int
 	var err error
 	if !prefersFileReview(e.Model, s.Draft) {
 		review, turns, err = e.reviewConsistencyPart(ctx, id+"-consistency", s, "FINAL CROSS-BATCH REVIEW: inspect the entire assembled plan across all changes and files. Detect contradictory requirements, duplicate or incompatible proposals for the same file, missing BPMN change coverage, and unsupported evidence. Approve only if these are consistent. Return actionable issues when not approved. No source modification or test execution is permitted.")
-		if !errors.Is(err, ErrAgentContextLimit) {
+		if !canPartitionReview(err) {
 			return review, turns, err
 		}
 	}
@@ -48,7 +56,44 @@ func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string,
 		contracts := BuildProposalContracts(s.Draft, part.Draft)
 		r, n, partErr := e.reviewConsistencyPart(ctx, fmt.Sprintf("%s-cf-%d", id, i), part, "FINAL FILE REVIEW: all proposals for this file are supplied together with their source evidence and process graphs. Check this file's responsibility within the coordinated proposal, action scope and interfaces. Related proposals are planned contracts only, not source proof. Do not require a test file to implement the backend behavior it tests. No source tools are available. Return review only.", contracts)
 		turns += n
-		if partErr != nil {
+		if canPartitionReview(partErr) && len(part.Draft) > 1 {
+			// A single file can have many change/function proposals. Review
+			// each in full before the mandatory cross-file contract pass.
+			r = AgentReview{Approved: true}
+			partErr = nil
+			for j, proposal := range part.Draft {
+				one := part
+				one.Draft = []FilePlan{proposal}
+				one.Bundle = consistencyBundle(s.Bundle, one.Draft, false)
+				one.Decisions = nil
+				check, count, checkErr := e.reviewConsistencyPart(ctx, fmt.Sprintf("%s-target-%d-%d", id, i, j), one, "FINAL TARGET SOURCE REVIEW: inspect this complete proposal against its source and all BPMN requirements. Cross-file coordination is checked separately afterward. Do not require this file to implement another file's responsibility. Verify function owner, exact operation, existing types and schema constraints. A missing excerpt is NEED_EVIDENCE, never proof of existing behavior. Check current behavior, proposed edits and acceptance checks for contradictions. Return review only.")
+				turns += count
+				if canPartitionReview(checkErr) {
+					r.Approved = false
+					r.Issues = append(r.Issues, fmt.Sprintf("Final review could not validate proposal %d for %s.", j+1, file))
+					if errors.Is(checkErr, ErrAgentModelOutput) {
+						r.Issues = append(r.Issues, modelOutputFeedback(Reviewer, checkErr))
+					}
+					continue
+				}
+				if checkErr != nil {
+					partErr = checkErr
+					break
+				}
+				r.Approved = r.Approved && check.Approved
+				r.Issues = append(r.Issues, check.Issues...)
+				r.Findings = append(r.Findings, check.Findings...)
+				if check.RevisionTarget == Analyst || (r.RevisionTarget == "" && check.RevisionTarget == Planner) {
+					r.RevisionTarget = check.RevisionTarget
+				}
+			}
+		}
+		if canPartitionReview(partErr) {
+			issues = append(issues, fmt.Sprintf("Final review could not validate every proposal for %s. Inspect this file before applying the plan.", file))
+			if errors.Is(partErr, ErrAgentModelOutput) {
+				issues = append(issues, modelOutputFeedback(Reviewer, partErr))
+			}
+		} else if partErr != nil {
 			return AgentReview{}, turns, partErr
 		}
 		issues = append(issues, r.Issues...)
@@ -74,13 +119,17 @@ func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string,
 	}
 	compact.Bundle = consistencyBundle(s.Bundle, s.Draft, true)
 	compact.Decisions = nil
-	r, n, finalErr := e.reviewConsistencyPart(ctx, id+"-contracts", compact, "FINAL CONTRACT REVIEW: every file proposal is present with target behavior, summary, proposed edits and assumptions. Detailed steps and source evidence passed separate per-file review; those fields are deliberately omitted here. Check cross-file API/function contracts, incompatible requirements and BPMN change coverage. Do not infer new source facts. Reject unresolved contradictions; return review only.")
+	r, n, finalErr := e.reviewConsistencyPart(ctx, id+"-contracts", compact, "FINAL CONTRACT REVIEW: every file proposal is present with target behavior, summary, proposed edits and assumptions. Detailed steps and source evidence passed separate per-file review; those fields are deliberately omitted here. Check cross-file contracts and BPMN coverage. If a proposal makes a value required on every write but BPMN requires it at one transition, mark scope REVISE. Check that proposed tests exercise the entry point that implements the rule. Do not infer source facts. Return review only.")
 	r.Findings = append(findings, r.Findings...)
+	if canPartitionReview(finalErr) {
+		r.Issues = []string{"File reviews finished, but the combined contract review could not be validated. Check consistency across files before applying the plan."}
+		return r, turns + n, nil
+	}
 	return r, turns + n, finalErr
 }
 
 func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID string, s AgentSession, instruction string, related ...[]ProposalContract) (AgentReview, int, error) {
-	parts := []any{"consistency-v2", instruction, s.Binding, s.Bundle.ContextID, s.Draft, s.Decisions}
+	parts := []any{"consistency-v4-target-partitions", instruction, s.Binding, s.Bundle.ContextID, s.Draft, s.Decisions}
 	var contracts []ProposalContract
 	if len(related) > 0 && len(related[0]) > 0 {
 		contracts = related[0]
@@ -111,6 +160,9 @@ func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID
 	if receipt.Status == "CONTEXT_LIMIT" {
 		return AgentReview{}, receipt.Turns, ErrAgentContextLimit
 	}
+	if receipt.Status == "OUTPUT_LIMIT" {
+		return AgentReview{}, receipt.Turns, ErrAgentOutputLimit
+	}
 	if receipt.Status == "COMPLETE" && receipt.ConsistencyReview != nil {
 		return *receipt.ConsistencyReview, receipt.Turns, nil
 	}
@@ -119,7 +171,7 @@ func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID
 		if err := e.Store.Save(ctx, receipt); err != nil {
 			return AgentReview{}, receipt.Turns, err
 		}
-		callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+		callCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 		feedback := append(append([]string{instruction}, s.Feedback...), receipt.Feedback...)
 		reply, callErr := e.Model.Turn(callCtx, AgentTurn{Role: Reviewer, Bundle: s.Bundle, Draft: s.Draft, Decisions: s.Decisions, RelatedProposals: contracts, RemainingTools: 0, Feedback: feedback})
 		cancel()
@@ -150,7 +202,7 @@ func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID
 		}
 		receipt.Status = "PAUSED"
 		receipt.Feedback = []string{"Final review request interrupted; no approval was inferred."}
-		invalid := errors.Is(callErr, ErrAgentModelOutput) || errors.Is(callErr, ErrAgentPlanIncomplete)
+		invalid := !errors.Is(callErr, ErrAgentOutputLimit) && (errors.Is(callErr, ErrAgentModelOutput) || errors.Is(callErr, ErrAgentPlanIncomplete))
 		if invalid {
 			receipt.Feedback = []string{modelOutputFeedback(Reviewer, callErr)}
 			if receipt.Turns >= 3 {
@@ -160,6 +212,10 @@ func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID
 		if errors.Is(callErr, ErrAgentContextLimit) {
 			receipt.Status = "CONTEXT_LIMIT"
 			receipt.Feedback = []string{"Final review exceeded model context; source was not silently truncated."}
+		}
+		if errors.Is(callErr, ErrAgentOutputLimit) {
+			receipt.Status = "OUTPUT_LIMIT"
+			receipt.Feedback = []string{"Output budget exhausted; the incomplete response was not accepted."}
 		}
 		checkpoint, stop := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 		saveErr := e.Store.Save(checkpoint, receipt)
@@ -188,7 +244,7 @@ func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID
 func summarizeChangeCoverage(bundle EvidenceBundle, decisions []CandidateDecision, plans []FilePlan) []ChangeCoverage {
 	result := make([]ChangeCoverage, 0, len(bundle.Changes))
 	for _, change := range bundle.Changes {
-		item := ChangeCoverage{ChangeType: change.ChangeType, ElementID: change.ElementID, Status: "UNRESOLVED"}
+		item := ChangeCoverage{ElementName: change.ElementName, ChangeType: change.ChangeType, ElementID: change.ElementID, Status: "UNRESOLVED"}
 		noChange := 0
 		for _, d := range decisions {
 			if d.ChangeType == change.ChangeType && d.ElementID == change.ElementID {

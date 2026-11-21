@@ -131,6 +131,41 @@ func TestWorkerSelectionBusyPersistenceAndNoReplay(t *testing.T) {
 	}
 }
 
+func TestReviewGroupsOnlyExplicitSupportingFlowsWithoutSourceLeads(t *testing.T) {
+	r := fixtureReport()
+	task := r.Changes[0]
+	for _, kind := range []domain.ChangeType{domain.AddTask, domain.ModifyGatewayCondition} {
+		task.ChangeType = kind
+		flow := domain.Change{ChangeType: domain.ModifySequenceFlow, PartOf: task.NewElement.ID, NewElement: &domain.Element{ID: "edge"}}
+		independent := flow
+		independent.NewElement = &domain.Element{ID: "coded-edge"}
+		independent.Impacts = task.Impacts
+		orphan := flow
+		orphan.PartOf = "unknown"
+		orphan.NewElement = &domain.Element{ID: "orphan"}
+		r.Changes = []domain.Change{flow, task, independent, orphan}
+		b := planning.BuildAgentBundle(r, planning.DefaultLimits())
+		raw := planning.BuildEvidenceBundle(r, planning.DefaultLimits())
+		if len(b.Changes) != 3 || len(b.Changes[0].SupportingFlowIDs) != 1 || b.Changes[0].SupportingFlowIDs[0] != "edge" ||
+			b.Changes[1].ElementID != "coded-edge" || b.Changes[2].ElementID != "orphan" ||
+			b.Changes[0].Candidates[0].Evidence[0].ID != raw.Changes[1].Candidates[0].Evidence[0].ID {
+			t.Fatalf("incorrect planning units for %s: %+v", kind, b.Changes)
+		}
+	}
+	// Exercise the web worker's normal all-changes entry point.
+	task.ChangeType = domain.AddTask
+	r.Changes = []domain.Change{r.Changes[0], task}
+	s := service(t, &model{})
+	v, err := s.Start(context.Background(), r, "repo", -1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := finish(t, s, v.SessionID)
+	if done.Status != "COMPLETE" || done.Plan == nil || len(done.Plan.ChangeCoverage) != 1 || done.FocusedReview.BatchesTotal != 1 {
+		t.Fatalf("supporting flow received a separate session: %+v", done)
+	}
+}
+
 func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 	m := &model{}
 	m.fail.Store(true)
@@ -152,7 +187,8 @@ func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	done := finish(t, s, v.SessionID)
-	if done.Status != "COMPLETE" || done.Turns != 5 {
+	// Failed Analyst + successful Analyst/Planner + one combined Reviewer.
+	if done.Status != "COMPLETE" || done.Turns != 4 {
 		t.Fatal("resume lost charged turns")
 	}
 	base, cancel := context.WithCancel(context.Background())

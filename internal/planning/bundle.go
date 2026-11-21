@@ -11,6 +11,10 @@ import (
 )
 
 func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
+	return buildEvidenceBundle(report, limits, false)
+}
+
+func buildEvidenceBundle(report domain.Report, limits Limits, agent bool) EvidenceBundle {
 	defaults := DefaultLimits()
 	if limits.CandidatesPerChange <= 0 {
 		limits.CandidatesPerChange = defaults.CandidatesPerChange
@@ -94,11 +98,28 @@ func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
 				File: impact.File, Symbol: impact.Symbol, Module: impact.Module, Layer: impact.Layer,
 				SuggestedAction: impact.RequiredAction, RetrievalScore: &score, Evidence: []EvidenceItem{},
 			}
-			evidence := append([]domain.Evidence(nil), impact.Evidence...)
-			if len(evidence) > limits.EvidencePerCandidate {
-				evidence = evidence[:limits.EvidencePerCandidate]
+			seenExcerpt := map[[2]string]bool{}
+			// A metadata-only candidate remains available as a search lead.
+			hasExcerpt := false
+			if agent {
+				for _, item := range impact.Evidence {
+					if item.Type != "PATH" && item.Type != "RRF_FUSION" && item.Excerpt != "" {
+						hasExcerpt = true
+						break
+					}
+				}
 			}
-			for evidenceIndex, item := range evidence {
+			for evidenceIndex, item := range impact.Evidence {
+				if len(candidate.Evidence) == limits.EvidencePerCandidate {
+					break
+				}
+				if agent {
+					key := [2]string{item.Location, item.Excerpt}
+					if seenExcerpt[key] || (hasExcerpt && (item.Type == "PATH" || item.Type == "RRF_FUSION" || item.Excerpt == "")) {
+						continue
+					}
+					seenExcerpt[key] = true
+				}
 				candidate.Evidence = append(candidate.Evidence, EvidenceItem{
 					ID:   fmt.Sprintf("CH%02d-C%02d-E%02d", changeIndex+1, candidateIndex+1, evidenceIndex+1),
 					Type: item.Type, Location: item.Location, Excerpt: boundedRunes(item.Excerpt, limits.ExcerptRunes),
@@ -133,6 +154,174 @@ func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
 	}
 	bundle.ContextID, _ = ComputeContextID(bundle)
 	return bundle
+}
+
+// BuildAgentBundle preserves the report's evidence IDs while assigning an
+// explicitly subordinate flow to its owning requirement. Gateway grouping
+// carries the branch details and source leads into the owner.
+func BuildAgentBundle(report domain.Report, limits Limits) EvidenceBundle {
+	b := buildEvidenceBundle(report, limits, true)
+	owners := map[string][]int{}
+	for i, c := range report.Changes {
+		if c.PartOf == "" && b.Changes[i].ElementID != "" {
+			id := b.Changes[i].ElementID
+			owners[id] = append(owners[id], i)
+		}
+	}
+	grouped := make(map[int]bool)
+	for i, c := range report.Changes {
+		parent := owners[c.PartOf]
+		if c.ChangeType != domain.ModifySequenceFlow || len(parent) != 1 || b.Changes[i].ElementID == "" || len(c.Impacts) != 0 || len(c.RelatedFiles) != 0 {
+			continue
+		}
+		owner := &b.Changes[parent[0]]
+		owner.SupportingFlowIDs = append(owner.SupportingFlowIDs, b.Changes[i].ElementID)
+		grouped[i] = true
+	}
+	if limits.GroupGatewayChanges && report.ProcessContext != nil && report.ProcessContext.Before != nil && report.ProcessContext.After != nil {
+		groupJoinWiring(report, &b, grouped)
+		groupGatewayLabels(report, &b, grouped)
+		if limits.GroupGatewayBranches {
+			groupGatewayBranches(report, &b, grouped)
+		}
+	}
+	if len(grouped) > 0 {
+		units := make([]ChangeInput, 0, len(b.Changes)-len(grouped))
+		for i, c := range b.Changes {
+			if !grouped[i] {
+				units = append(units, c)
+			}
+		}
+		b.Changes = units
+		b.ContextID, _ = ComputeContextID(b)
+	}
+	return b
+}
+
+// A branch already described by a condition change shares that review unit.
+// A flow moved between gateways or absent from either version stays separate.
+func groupGatewayBranches(report domain.Report, bundle *EvidenceBundle, grouped map[int]bool) {
+	before, after := report.ProcessContext.Before, report.ProcessContext.After
+	owners := make(map[string]int)
+	for i, change := range bundle.Changes {
+		if change.ChangeType != domain.ModifyGatewayCondition || change.ContextTruncated || change.ContextIncomplete {
+			continue
+		}
+		for _, branch := range change.BranchChanges {
+			old, next := before.Flows[branch.FlowID], after.Flows[branch.FlowID]
+			if old != nil && next != nil && old.SourceRef == change.ElementID && next.SourceRef == change.ElementID {
+				owners[branch.FlowID] = i
+			}
+		}
+	}
+	for i, change := range report.Changes {
+		if grouped[i] || change.ChangeType != domain.ModifySequenceFlow || change.NewElement == nil {
+			continue
+		}
+		id := change.NewElement.ID
+		parent, ok := owners[id]
+		if !ok || (change.PartOf != "" && change.PartOf != bundle.Changes[parent].ElementID) {
+			continue
+		}
+		unit := &bundle.Changes[parent]
+		unit.SupportingFlowIDs = append(unit.SupportingFlowIDs, id)
+		for _, lead := range bundle.Changes[i].Candidates {
+			mergeAgentLead(unit, lead)
+		}
+		grouped[i] = true
+	}
+}
+
+// The condition review already has the before and after gateway labels.
+func groupGatewayLabels(report domain.Report, bundle *EvidenceBundle, grouped map[int]bool) {
+	conditions := map[string]int{}
+	for i, change := range report.Changes {
+		if change.ChangeType == domain.ModifyGatewayCondition && change.NewElement != nil {
+			conditions[change.NewElement.ID] = i
+		}
+	}
+	for i, change := range report.Changes {
+		if grouped[i] || change.PartOf != "" || change.ChangeType != domain.ModifyTaskLabel || change.NewElement == nil {
+			continue
+		}
+		owner, ok := conditions[change.NewElement.ID]
+		if !ok {
+			continue
+		}
+		unit := &bundle.Changes[owner]
+		for _, lead := range bundle.Changes[i].Candidates {
+			mergeAgentLead(unit, lead)
+		}
+		grouped[i] = true
+	}
+}
+
+// Group only unconditional sequence flows incident to a newly added XOR join.
+// Conditional flows and distinct activity changes retain their own review.
+func groupJoinWiring(report domain.Report, bundle *EvidenceBundle, grouped map[int]bool) {
+	before, after := report.ProcessContext.Before, report.ProcessContext.After
+	joins := map[string]int{}
+	for i, change := range report.Changes {
+		e := change.NewElement
+		if change.ChangeType == domain.AddGateway && e != nil && e.Type == "exclusiveGateway" &&
+			len(after.Incoming[e.ID]) >= 2 && len(after.Outgoing[e.ID]) == 1 {
+			joins[e.ID] = i
+		}
+	}
+	for i, change := range report.Changes {
+		if grouped[i] || change.PartOf != "" || change.ChangeType != domain.ModifySequenceFlow || change.NewElement == nil {
+			continue
+		}
+		id := change.NewElement.ID
+		flow := after.Flows[id]
+		if flow == nil || flow.Name != "" || flow.Condition != "" {
+			continue
+		}
+		if old := before.Flows[id]; old != nil && (old.Name != "" || old.Condition != "") {
+			continue
+		}
+		source, fromJoin := joins[flow.SourceRef]
+		target, toJoin := joins[flow.TargetRef]
+		if fromJoin == toJoin {
+			continue
+		}
+		owner := source
+		if toJoin {
+			owner = target
+		}
+		unit := &bundle.Changes[owner]
+		unit.SupportingFlowIDs = append(unit.SupportingFlowIDs, id)
+		for _, lead := range bundle.Changes[i].Candidates {
+			mergeAgentLead(unit, lead)
+		}
+		grouped[i] = true
+	}
+}
+
+func mergeAgentLead(unit *ChangeInput, lead Candidate) {
+	for i := range unit.Candidates {
+		c := &unit.Candidates[i]
+		if c.File != lead.File || c.Symbol != lead.Symbol {
+			continue
+		}
+		if c.SuggestedAction != lead.SuggestedAction {
+			c.SuggestedAction = domain.ActionVerify
+		}
+		for _, evidence := range lead.Evidence {
+			duplicate := false
+			for _, prior := range c.Evidence {
+				if prior.Location == evidence.Location && prior.Excerpt == evidence.Excerpt {
+					duplicate = true
+					break
+				}
+			}
+			if !duplicate {
+				c.Evidence = append(c.Evidence, evidence)
+			}
+		}
+		return
+	}
+	unit.Candidates = append(unit.Candidates, lead)
 }
 
 func boundedContext(value string, limit int, truncated *bool) string {

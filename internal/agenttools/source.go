@@ -54,7 +54,7 @@ func New(ctx context.Context, repo string, options ingest.Options) (*Snapshot, e
 		Registry    string
 		Artifacts   []domain.Artifact
 		Warnings    []string
-	}{"agent-source-tools-v11-call-literals", registry.Identity(), result.Artifacts, result.Warnings})
+	}{"agent-source-tools-v15-test-call-scope", registry.Identity(), result.Artifacts, result.Warnings})
 	files := make(map[string]string, len(inv.Files))
 	for _, file := range inv.Files {
 		files[file.RelativePath] = string(file.Content)
@@ -106,12 +106,17 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 		return out, errors.New("search offset outside bounds")
 	}
 	if q.Name == "read_source" {
-		return s.readSource(ctx, q)
+		result, err := s.readSource(ctx, q)
+		if err == nil {
+			result = s.withFunctionScopes(q, result)
+		}
+		return result, err
 	}
 	if q.Name == "inspect_source" {
 		result, err := s.inspectSource(ctx, q)
 		if err == nil {
 			result = s.withCallLiterals(ctx, q, result)
+			result = s.withFunctionScopes(q, result)
 		}
 		return result, err
 	}
@@ -291,7 +296,7 @@ func (s *Snapshot) Execute(ctx context.Context, q planning.ToolRequest) (plannin
 		}
 		out.Candidates = append(out.Candidates, planning.Candidate{File: h.a.File, Symbol: h.a.Symbol.Name, Module: h.a.Module, Layer: h.a.Layer, SuggestedAction: domain.ActionVerify, Origin: "agent-source-tool", Evidence: evidence})
 	}
-	return out, nil
+	return s.withDeclarationFacts(out), nil
 }
 
 func sourceDocumentation(a domain.Artifact) bool {

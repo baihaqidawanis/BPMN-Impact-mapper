@@ -28,7 +28,7 @@ func TestInvalidReviewerAtTurnLimitIsNotOfferedEndlessResume(t *testing.T) {
 	}
 }
 
-func TestFocusedPauseExposesActualReviewerAndChildValidationIssue(t *testing.T) {
+func TestFocusedFinalReviewStopsAfterBoundedInvalidOutputAndExposesIssue(t *testing.T) {
 	m := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
 		if turn.Role == Reviewer {
 			return AgentReply{}, errors.Join(ErrAgentModelOutput, errors.New("proposal-only evidence must be empty"))
@@ -36,7 +36,7 @@ func TestFocusedPauseExposesActualReviewerAndChildValidationIssue(t *testing.T) 
 		return goodReply(turn)
 	}}
 	s, err := (FocusedEngine{Model: m, Tools: fixtureTools{"fixed"}, Store: memorySessions{}}).Run(context.Background(), "reviewer-feedback", agentBundle())
-	if err == nil || s.Status != "PAUSED" || s.Role != Reviewer || !strings.Contains(strings.Join(s.Feedback, " "), "proposal-only evidence must be empty") {
+	if err != nil || s.Status != "NEEDS_REVIEW" || s.Role != Reviewer || len(s.Draft) == 0 || !strings.Contains(strings.Join(s.Feedback, " "), "proposal-only evidence must be empty") {
 		t.Fatal(s.Role, s.Status, s.Feedback, err)
 	}
 }

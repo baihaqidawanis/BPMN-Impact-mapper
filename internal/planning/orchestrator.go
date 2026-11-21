@@ -207,7 +207,8 @@ func validatePlans(bundle EvidenceBundle, decisions []CandidateDecision, require
 		if plan.Layer != candidate.Layer || plan.Module != candidate.Module {
 			return fmt.Errorf("provider changed module/layer for %q", key)
 		}
-		if !validAction(plan.Action) || !allowedPlannedAction(candidate.SuggestedAction, plan.Action) {
+		promoted := plan.Action == domain.ActionModify && SupportsVerifiedEdit(candidate, plan)
+		if !validAction(plan.Action) || (!promoted && !allowedPlannedAction(candidate.SuggestedAction, plan.Action)) {
 			return fmt.Errorf("target %q cannot change suggested action %q to %q", key, candidate.SuggestedAction, plan.Action)
 		}
 		if err := validatePlanScope(plan); err != nil {
@@ -241,6 +242,24 @@ func validatePlans(bundle EvidenceBundle, decisions []CandidateDecision, require
 		}
 	}
 	return nil
+}
+
+// SupportsVerifiedEdit binds a proposed edit to cited implementation evidence.
+func SupportsVerifiedEdit(c Candidate, p FilePlan) bool {
+	if c.SuggestedAction != domain.ActionVerify || strings.TrimSpace(p.CurrentBehavior) == "" || strings.TrimSpace(p.TargetBehavior) == "" || strings.TrimSpace(p.DesignRationale) == "" || len(cleanStrings(p.ProposedChanges)) == 0 || len(cleanStrings(p.AcceptanceChecks)) == 0 {
+		return false
+	}
+	for _, e := range c.Evidence {
+		switch e.Type {
+		case "SOURCE_TOOL", "FULL_SOURCE_CHUNK", "AST_SOURCE_SCOPE", "AST_CALL_LITERALS", "SOURCE_DECLARATION", "AST_DECLARATION_FACT":
+			for _, id := range p.EvidenceIDs {
+				if e.ID == id && strings.TrimSpace(e.Excerpt) != "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func allowedPlannedAction(suggested, planned domain.RequiredAction) bool {

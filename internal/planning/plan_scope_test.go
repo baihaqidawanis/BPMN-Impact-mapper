@@ -12,6 +12,14 @@ func TestMisplacedDiagramRecipeIsRejectedWithoutBanningDocumentation(t *testing.
 	if err := validatePlanScope(bad); !errors.Is(err, ErrAgentPlanIncomplete) {
 		t.Fatal("uploaded failed plan was accepted", err)
 	}
+	gateway := FilePlan{File: "docs/api.md", ElementID: "Join", Steps: []string{"Insert the new gateway element into the process definition."}, ProposedChanges: []string{"Add a new BPMN element of type exclusiveGateway."}}
+	if !errors.Is(validatePlanScope(gateway), ErrAgentPlanIncomplete) {
+		t.Fatal("XML gateway edits accepted for docs")
+	}
+	md := string(Markdown(ChangePlan{Status: StatusNeedsReview, Plans: []FilePlan{gateway}}))
+	if !strings.Contains(md, "still needs supporting evidence") || strings.Contains(md, "Add a new BPMN element") || strings.Contains(md, "NEEDS_REVIEW") {
+		t.Fatal(md)
+	}
 	for _, p := range []FilePlan{
 		{File: "service.go", Steps: []string{"Add validation in Submit before state mutation to implement the new BPMN task."}},
 		{File: "docs/API-CONTRACT.md", Steps: []string{"Document the reason request field and invalid-input response for submit."}},

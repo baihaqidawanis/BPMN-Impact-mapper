@@ -124,6 +124,11 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 						reply.Tool = &planning.ToolRequest{Name: "inspect_source", File: c.File, Query: change.ElementName}
 					} else {
 						reply.Verification = &planning.VerificationResponse{Decisions: []planning.CandidateDecision{{ChangeType: change.ChangeType, ElementID: change.ElementID, File: c.File, Symbol: c.Symbol, Verdict: planning.VerdictRelevant, Rationale: "Submit currently returns its input without a positive amount guard.", EvidenceIDs: refs}}}
+						// File-level reads stay separate from named function targets.
+						// A model must assess all of them, even when only one needs a plan.
+						for _, other := range change.Candidates[1:] {
+							reply.Verification.Decisions = append(reply.Verification.Decisions, planning.CandidateDecision{ChangeType: change.ChangeType, ElementID: change.ElementID, File: other.File, Symbol: other.Symbol, Verdict: planning.VerdictWeak, Rationale: "File context does not establish a separate edit beyond the named function.", EvidenceIDs: []string{other.Evidence[0].ID}})
+						}
 					}
 				case planning.Planner:
 					plannerCalls++
@@ -294,7 +299,7 @@ func TestAgentOfflineContractPipeline(t *testing.T) {
 				}
 				w = httptest.NewRecorder()
 				handler.ServeHTTP(w, httptest.NewRequest("GET", "/api/v1/plans/"+done.Plan.PlanID+"/change-plan.md", nil))
-				if w.Code != 200 || !strings.Contains(w.Body.String(), "### Proposed changes") || !strings.Contains(w.Body.String(), "### Acceptance checks") {
+				if w.Code != 200 || !strings.Contains(w.Body.String(), "## Proposed implementation") || !strings.Contains(w.Body.String(), "**Acceptance checks**") {
 					t.Fatal("structured plan missing from download", w.Code)
 				}
 				if strings.HasPrefix(mode, "full-") {

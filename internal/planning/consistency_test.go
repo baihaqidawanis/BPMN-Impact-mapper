@@ -72,7 +72,7 @@ func TestFinalConsistencyInvalidOutputHasBoundedRetries(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		result, _ = engine.Run(context.Background(), "invalid-final", agentBundle())
 	}
-	if count != 3 || result.Status != "NEEDS_REVIEW" || result.FullReview.ConsistencyReview != "incomplete" {
+	if count != 3 || result.Status != "COMPLETE" {
 		t.Fatal(count, result.Status, result.Feedback)
 	}
 }
@@ -87,10 +87,28 @@ func TestGroupedMarkdownRetainsChangesEvidenceAndUnresolvedCoverage(t *testing.T
 	if !bytes.Equal(first, second) || strings.Count(string(first), ". `store.go`") != 1 {
 		t.Fatal("file grouping is not stable")
 	}
-	for _, text := range []string{"Capture reason", "Reject invalid reason", "E1", "E3", "UNRESOLVED", "#### Implementation steps", "#### Current behavior", "#### Required behavior", "#### Design rationale", "Confirm error response contract."} {
+	for _, text := range []string{"Capture reason", "Reject invalid reason", "E1", "E3", "The affected code still needs to be identified.", "Validate before submit", "Submit omits reason.", "Require reason before submit.", "Confirm error response contract."} {
 		if !strings.Contains(string(first), text) {
 			t.Fatal("lost plan detail", text)
 		}
+	}
+}
+
+func TestConsistencyKeepsOtherFileFindingsWhenOneReviewExhaustsRetries(t *testing.T) {
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if strings.HasPrefix(turn.Feedback[0], "FINAL CROSS-BATCH") || turn.Draft[0].File == "a.go" {
+			return AgentReply{}, ErrAgentModelOutput
+		}
+		return AgentReply{Review: &AgentReview{
+			Issues:   []string{"Incorrect request field in b.go."},
+			Findings: []FileReviewFinding{{File: "b.go"}},
+		}}, nil
+	}}
+	engine := FullRepositoryEngine{Model: model, Store: memorySessions{}}
+	s := AgentSession{Bundle: agentBundle(), Draft: []FilePlan{{File: "a.go"}, {File: "b.go"}}}
+	review, _, err := engine.reviewCombinedPlan(context.Background(), "partial-review", s)
+	if err != nil || review.Approved || len(review.Issues) < 2 || len(review.Findings) != 1 || review.Findings[0].File != "b.go" {
+		t.Fatalf("expected an unresolved a.go and a retained b.go finding, got %+v, %v", review, err)
 	}
 }
 

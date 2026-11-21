@@ -25,6 +25,15 @@ type agentEnvelope struct {
 	Session planning.AgentSession `json:"session"`
 }
 
+const maxAggregateCheckpoint = 64 << 20
+
+func checkpointLimit(s planning.AgentSession) int {
+	if s.FullReview != nil || s.FocusedReview != nil {
+		return maxAggregateCheckpoint
+	}
+	return 2 << 20
+}
+
 func (store AgentSessionStore) sessionPath(id string, create bool) (string, error) {
 	if !agentSessionID.MatchString(id) {
 		return "", errors.New("invalid agent session ID")
@@ -78,11 +87,7 @@ func (store AgentSessionStore) Save(ctx context.Context, s planning.AgentSession
 	if err != nil {
 		return err
 	}
-	limit := 2 << 20
-	if s.FullReview != nil {
-		limit = 64 << 20
-	}
-	if len(wrapped) > limit {
+	if len(wrapped)+1 > checkpointLimit(s) {
 		return errors.New("agent checkpoint exceeds size limit")
 	}
 	// Reports are immutable, but a session is a mutable checkpoint. Write a
@@ -148,7 +153,7 @@ func (store AgentSessionStore) Load(ctx context.Context, id string) (planning.Ag
 	if err != nil {
 		return out, err
 	}
-	if info.Size() > 64<<20 {
+	if info.Size() > maxAggregateCheckpoint {
 		return out, errors.New("agent checkpoint too large")
 	}
 	data, err := os.ReadFile(path)
@@ -159,8 +164,8 @@ func (store AgentSessionStore) Load(ctx context.Context, id string) (planning.Ag
 	if err := json.Unmarshal(data, &envelope); err != nil {
 		return out, errors.New("invalid agent checkpoint JSON")
 	}
-	if envelope.Session.FullReview == nil && len(data) > 2<<20 {
-		return out, errors.New("focused checkpoint too large")
+	if len(data) > checkpointLimit(envelope.Session) {
+		return out, errors.New("agent checkpoint too large")
 	}
 	canonical, err := json.Marshal(envelope.Session)
 	if err != nil {

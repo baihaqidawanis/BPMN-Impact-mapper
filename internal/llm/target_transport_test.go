@@ -17,7 +17,7 @@ import (
 func targetFixture() planning.AgentTurn {
 	return planning.AgentTurn{Role: planning.Analyst, Bundle: planning.EvidenceBundle{Changes: []planning.ChangeInput{{ChangeType: domain.AddTask, ElementID: "new-task", Candidates: []planning.Candidate{
 		{File: "ui.ts", Symbol: "Panel", Module: "frontend", Layer: "frontend", Evidence: []planning.EvidenceItem{{ID: "UI-proof", Excerpt: "submit"}}},
-		{File: "store.go", Symbol: "Store.Submit", Module: "backend", Layer: "adapter", Evidence: []planning.EvidenceItem{{ID: "Store-proof", Excerpt: "DRAFT"}}},
+		{File: "store.go", SuggestedAction: domain.ActionVerify, Symbol: "Store.Submit", Module: "backend", Layer: "adapter", Evidence: []planning.EvidenceItem{{ID: "Store-proof", Type: "SOURCE_TOOL", Excerpt: "DRAFT"}}},
 	}}}}}
 }
 
@@ -57,6 +57,8 @@ func TestIndexedReferencesBindOriginalCandidateAndEvidence(t *testing.T) {
 func TestIndexedInputKeepsOriginalDeltaFactsAndDoesNotMutate(t *testing.T) {
 	turn := targetFixture()
 	turn.Bundle.ProcessContext = &domain.ProcessContext{Before: &domain.Graph{Elements: map[string]*domain.Element{}, Flows: map[string]*domain.Flow{}}, After: &domain.Graph{Elements: map[string]*domain.Element{"new-task": {ID: "new-task", Name: "Validate reason", Type: "userTask"}}, Flows: map[string]*domain.Flow{}}}
+	turn.Bundle.ProcessContext.After.ProcessNames = map[string]string{"stock": "Stock adjustment"}
+	turn.Bundle.ProcessContext.After.Elements["new-task"].ProcessID = "stock"
 	data, _ := json.Marshal(turn)
 	annotated, err := annotateAgentInput(data, turn)
 	if err != nil {
@@ -71,6 +73,9 @@ func TestIndexedInputKeepsOriginalDeltaFactsAndDoesNotMutate(t *testing.T) {
 	}
 	if json.Unmarshal(annotated, &wire) != nil || len(wire.ChangeFacts) != 1 || wire.ChangeFacts[0].BeforePresent || !wire.ChangeFacts[0].AfterPresent || wire.ChangeFacts[0].ElementID != "new-task" {
 		t.Fatal(string(annotated))
+	}
+	if !strings.Contains(string(annotated), `"process_after":"Stock adjustment"`) || !strings.HasPrefix(agentInspectionQuery(turn, 0), "Stock adjustment ") {
+		t.Fatal("source inspection lost the affected entity", string(annotated))
 	}
 	if !strings.Contains(string(annotated), `"target_index":1`) || !strings.Contains(string(annotated), `"evidence_index":0`) {
 		t.Fatal("indices absent")
@@ -110,7 +115,7 @@ func TestOllamaIndexedDecisionRoundTrip(t *testing.T) {
 			}
 			var content string
 			if turn.Role == planning.Planner {
-				content = `{"plan":{"plans":{"1":{"evidence_indices":[0],"summary":"Require reason at submit","current_behavior":"Submit checks status","target_behavior":"Submit validates reason","design_rationale":"Existing guard location","steps":["Add action-specific validation"],"proposed_changes":["Reject empty submit reason"],"acceptance_checks":["Empty reason leaves state unchanged"]}}}}`
+				content = `{"plan":{"plans":{"1":{"evidence_indices":[0],"disposition":"CHANGE","summary":"Require reason at submit","current_behavior":"Submit checks status","target_behavior":"Submit validates reason","design_rationale":"Existing guard location","steps":["Add action-specific validation"],"proposed_changes":["Reject empty submit reason"],"acceptance_checks":["Empty reason leaves state unchanged"]}}}}`
 			} else {
 				content = `{"verification":{"decisions":[{"target_index":1,"evidence_indices":[0],"verdict":"RELEVANT","rationale":"Existing submit guard"}]}}`
 			}
@@ -136,7 +141,7 @@ func TestOllamaIndexedDecisionRoundTrip(t *testing.T) {
 		t.Fatal(result, err)
 	}
 	p := result.Plan.Plans[0]
-	if chats != 2 || p.File != "store.go" || p.Symbol != "Store.Submit" || p.Module != "backend" || p.Layer != "adapter" || p.EvidenceIDs[0] != "Store-proof" || p.Action != domain.ActionVerify {
+	if chats != 2 || p.File != "store.go" || p.Symbol != "Store.Submit" || p.Module != "backend" || p.Layer != "adapter" || p.EvidenceIDs[0] != "Store-proof" || p.Action != domain.ActionModify {
 		t.Fatal("indexed plan incorrectly bound", p)
 	}
 }
@@ -420,6 +425,8 @@ func TestPlannerContextPrunesIneligibleEvidenceWithoutRenumberingTargets(t *test
 	target := turnTargets(turn)[1]
 	turn.Decisions = []planning.CandidateDecision{{ChangeType: target.change.ChangeType, ElementID: target.change.ElementID, File: target.candidate.File, Symbol: target.candidate.Symbol, Verdict: planning.VerdictRelevant}}
 	pruned := turn
+	turn.Decisions[0].EvidenceIDs = []string{"Store-proof"}
+	turn.Decisions[0].Rationale = "Submit lacks an amount check."
 	pruned.Bundle = plannerEvidenceBundle(turn.Bundle, turn.Decisions)
 	if len(pruned.Bundle.Changes[0].Candidates) != 1 || len(turn.Bundle.Changes[0].Candidates) != 2 {
 		t.Fatal("planner pruning mutated source")
@@ -431,6 +438,14 @@ func TestPlannerContextPrunesIneligibleEvidenceWithoutRenumberingTargets(t *test
 	}
 	if !strings.Contains(string(wire), "Store-proof") || strings.Contains(string(wire), "UI-proof") {
 		t.Fatal("wrong source evidence retained")
+	}
+	if !strings.Contains(string(wire), `"analyst_evidence_indices":[0]`) || !strings.Contains(string(wire), `"analyst_hypothesis":"Submit lacks an amount check."`) {
+		t.Fatal("planner lost the analyst's target-specific evidence", string(wire))
+	}
+	turn.Decisions[0].Rationale = "Checkout setup expects the expired voucher to succeed. " + strings.Repeat("detail ", 90)
+	wire, err = annotateAgentInput(raw, turn)
+	if err != nil || !strings.Contains(string(wire), `"analyst_hypothesis":"Checkout setup expects the expired voucher to succeed."`) {
+		t.Fatal("planner lost the complete observation in a long rationale", string(wire), err)
 	}
 }
 
