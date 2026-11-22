@@ -10,6 +10,97 @@ import (
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
+func TestUltraLightNewSplitUsesSpareLookupForCallers(t *testing.T) {
+	bundle := agentBundle()
+	change := &bundle.Changes[0]
+	change.ChangeType = domain.AddGateway
+	change.BranchChanges = []domain.BranchChange{{FlowID: "continue"}, {FlowID: "bypass"}}
+	change.Candidates = []Candidate{
+		{File: "backend/domain.go", Symbol: "Adjustment.Submit"},
+		{File: "frontend/panel.tsx"},
+		{File: "backend/operations_test.go"},
+		{File: "backend/other.go", Symbol: "Other"},
+	}
+	decisions := []CandidateDecision{
+		{File: "backend/domain.go", Symbol: "Adjustment.Submit", Verdict: VerdictRelevant},
+		{File: "backend/other.go", Symbol: "Other", Verdict: VerdictWeak},
+	}
+	requests := weakSourceRequests(bundle, decisions, 4)
+	if len(requests) != 4 {
+		t.Fatalf("expected four lookups, got %+v", requests)
+	}
+	last := requests[3]
+	if last.Name != "find_callers" || last.File != "backend/domain.go" || last.Symbol != "Adjustment.Submit" {
+		t.Fatalf("expected the named Go candidate's caller lookup, got %+v", last)
+	}
+}
+
+func TestWeakSourceInspectionUsesFlowGuardAndDestination(t *testing.T) {
+	bundle := agentBundle()
+	c := &bundle.Changes[0]
+	c.ElementID = "f"
+	c.ElementName = ""
+	c.Candidates = []Candidate{{File: "backend/review.go", Module: "backend"}}
+	g := &domain.Graph{
+		ProcessNames: map[string]string{"P": "Claim approval"},
+		Elements: map[string]*domain.Element{
+			"x": {Name: "Choose route", ProcessID: "P"},
+			"y": {Name: "Return to owner", ProcessID: "P"},
+		},
+		Flows: map[string]*domain.Flow{"f": {SourceRef: "x", TargetRef: "y", Condition: "amount exceeds limit"}},
+	}
+	for _, pc := range []*domain.ProcessContext{{After: g}, {Before: g}} {
+		bundle.ProcessContext = pc
+		requests := weakSourceRequests(bundle, nil, 1)
+		if len(requests) != 1 {
+			t.Fatal(requests)
+		}
+		for _, term := range []string{"amount exceeds limit", "Return to owner", "Claim approval"} {
+			if !strings.Contains(requests[0].Query, term) {
+				t.Fatalf("lost %q from %q", term, requests[0].Query)
+			}
+		}
+	}
+}
+
+func TestUltraLightKeepsBackendTestAndForwardSchemaEvidence(t *testing.T) {
+	bundle := agentBundle()
+	change := &bundle.Changes[0]
+	change.ElementName = "Submit stock adjustment"
+	change.Candidates = []Candidate{
+		{File: "frontend/first.tsx"}, {File: "frontend/second.tsx"}, {File: "frontend/third.tsx"},
+		{File: "frontend/tests/stock.test.tsx"}, {File: "backend/adjustment/store.go"},
+		{File: "backend/migrations/001_operations.down.sql"}, {File: "backend/test/integration/operations_test.go"},
+		{File: "backend/migrations/001_operations.up.sql"},
+	}
+	engine := FocusedEngine{UltraLight: true}
+	for _, rollbackOnly := range []bool{false, true} {
+		if rollbackOnly {
+			change.Candidates = change.Candidates[:len(change.Candidates)-1]
+		}
+		initial, _ := engine.seedCandidates(change.Candidates)
+		input := bundle
+		input.Changes = []ChangeInput{*change}
+		input.Changes[0].Candidates = initial
+		reads := weakSourceRequests(input, nil, 4)
+		files := make(map[string]bool, len(reads))
+		for _, read := range reads {
+			files[read.File] = true
+			if strings.HasSuffix(read.File, ".up.sql") && !strings.Contains(read.Query, "constraint check status") {
+				t.Fatalf("schema inspection lost its constraint query: %+v", read)
+			}
+		}
+		for _, want := range []string{"backend/adjustment/store.go", "backend/test/integration/operations_test.go", "backend/migrations/001_operations.up.sql"} {
+			if !files[want] {
+				t.Fatalf("missing %s in %+v (rollback only: %v)", want, reads, rollbackOnly)
+			}
+		}
+		if files["backend/migrations/001_operations.down.sql"] || len(reads) > 4 {
+			t.Fatalf("unexpected lookups: %+v", reads)
+		}
+	}
+}
+
 func TestFocusedRetainsCombinedReviewerRejectedDraftAsUnapproved(t *testing.T) {
 	reviews := 0
 	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {

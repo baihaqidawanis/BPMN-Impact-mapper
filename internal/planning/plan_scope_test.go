@@ -5,7 +5,58 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
+
+func TestNumberedMigrationIsEvidenceWithoutEditingHistory(t *testing.T) {
+	file := "backend/migrations/000005_operations.up.sql"
+	for _, action := range []domain.RequiredAction{domain.ActionModify, domain.ActionRemove} {
+		err := validateMigrationEdit(FilePlan{File: file, Action: action})
+		if !errors.Is(err, ErrAgentPlanIncomplete) || !strings.Contains(err.Error(), "new forward migration") {
+			t.Fatalf("expected actionable repair for %s: %v", action, err)
+		}
+	}
+	for _, plan := range []FilePlan{
+		{File: file, Action: domain.ActionNoAction},
+		{File: "backend/migrations/000006_next.up.sql", Action: domain.ActionAdd},
+		{File: "backend/schema.sql", Action: domain.ActionModify},
+	} {
+		if err := validateMigrationEdit(plan); err != nil {
+			t.Fatalf("rejected %s for %s: %v", plan.Action, plan.File, err)
+		}
+	}
+}
+
+func TestRoutingGuardRejectsExplicitBusinessContradictions(t *testing.T) {
+	change := ChangeInput{BranchChanges: []domain.BranchChange{{NewCondition: "semua selisih nol"}}}
+	for _, step := range []string{
+		"Calculate the sum of deltas for all lines before choosing the zero path.",
+		"If the calculated delta sum is zero, set terminal status.",
+		"Return success without writing the new status.",
+		"Set d.Status = \"NO_ADJUSTMENT\" and return immediately without executing the stock mutation logic.",
+	} {
+		plan := FilePlan{File: "store.go", Steps: []string{step}}
+		if err := validateRoutingPlan(change, plan); !errors.Is(err, ErrAgentPlanIncomplete) {
+			t.Errorf("accepted conflicting step %q: %v", step, err)
+		}
+	}
+	for _, step := range []string{
+		"Compare the snapshot and counted quantity for every line, then persist the selected status and commit.",
+		"Return HTTP 409 without writing the new status when the version is stale.",
+		"Set d.Status = \"NO_ADJUSTMENT\", persist it, and return immediately after commit.",
+		"Use a count of nonzero differences to select the zero path.",
+	} {
+		plan := FilePlan{File: "store.go", ProposedChanges: []string{step}}
+		if err := validateRoutingPlan(change, plan); err != nil {
+			t.Errorf("rejected valid step %q: %v", step, err)
+		}
+	}
+	aggregate := ChangeInput{BranchChanges: []domain.BranchChange{{NewCondition: "net balance == 0"}}}
+	if err := validateRoutingPlan(aggregate, FilePlan{Steps: []string{"Calculate the sum of deltas."}}); err != nil {
+		t.Fatal("a true aggregate requirement may use an aggregate", err)
+	}
+}
 
 func TestMisplacedDiagramRecipeIsRejectedWithoutBanningDocumentation(t *testing.T) {
 	bad := FilePlan{File: "docs/API-CONTRACT.md", Steps: []string{"Identify the current BPMN process.", "Add a new user task ReasonReview.", "Update the flow connections."}, ProposedChanges: []string{"Insert a new user task in the BPMN process."}}

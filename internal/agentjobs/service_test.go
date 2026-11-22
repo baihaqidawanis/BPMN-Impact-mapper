@@ -131,6 +131,62 @@ func TestWorkerSelectionBusyPersistenceAndNoReplay(t *testing.T) {
 	}
 }
 
+func TestReopensArchivedPlanAfterValidationPolicyChanges(t *testing.T) {
+	ctx := context.Background()
+	s := service(t, &model{})
+	report := fixtureReport()
+	report.Changes = report.Changes[:1]
+	report.Changes[0].Impacts[0].File = "backend/migrations/000001_stock.up.sql"
+	report.Changes[0].Impacts[0].RequiredAction = domain.ActionModify
+	bundle := planning.BuildEvidenceBundle(report, planning.DefaultLimits())
+	change := bundle.Changes[0]
+	candidate := change.Candidates[0]
+	proposal := planning.FilePlan{
+		ChangeType: change.ChangeType, ElementID: change.ElementID, File: candidate.File,
+		Symbol: candidate.Symbol, Module: candidate.Module, Layer: candidate.Layer,
+		Action: domain.ActionModify, Summary: "Extend allowed status values.",
+		Steps: []string{"Update the existing status constraint."}, EvidenceIDs: []string{candidate.Evidence[0].ID},
+	}
+	checkpoint := planning.AgentSession{
+		ID: "legacy-session", Version: "1", Status: "NEEDS_REVIEW", Bundle: bundle,
+		Draft: []planning.FilePlan{proposal},
+		Decisions: []planning.CandidateDecision{{
+			ChangeType: change.ChangeType, ElementID: change.ElementID, File: candidate.File, Symbol: candidate.Symbol,
+			Verdict: planning.VerdictRelevant, EvidenceIDs: proposal.EvidenceIDs,
+		}},
+	}
+	if _, err := checkpoint.ChangePlan(); !errors.Is(err, planning.ErrAgentPlanIncomplete) {
+		t.Fatalf("fresh validation accepted a legacy edit: %v", err)
+	}
+	if err := s.Sessions.Save(ctx, checkpoint); err != nil {
+		t.Fatal(err)
+	}
+	if view, err := s.Get(ctx, checkpoint.ID); err != nil || view.Plan != nil {
+		t.Fatalf("unarchived invalid proposal was exposed: %+v, %v", view.Plan, err)
+	}
+	archive := planning.ChangePlan{
+		Version: planning.BundleVersion, AnalysisID: bundle.AnalysisID, InputFingerprint: bundle.InputFingerprint,
+		ContextID: bundle.ContextID, Status: planning.StatusNeedsReview, Plans: checkpoint.Draft,
+		ReviewIssues: []string{},
+		ChangeCoverage: []planning.ChangeCoverage{{
+			ChangeType: change.ChangeType, ElementID: change.ElementID, ElementName: change.ElementName,
+			Status: "PLANNED", Relevant: 1, Plans: 1,
+		}},
+	}
+	var err error
+	archive.PlanID, err = planning.ComputePlanID(archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Plans.Save(ctx, archive); err != nil {
+		t.Fatal(err)
+	}
+	view, err := s.Get(ctx, checkpoint.ID)
+	if err != nil || view.Plan == nil || view.Plan.PlanID != archive.PlanID || view.Plan.Status != planning.StatusNeedsReview {
+		t.Fatalf("archive was not restored by its original ID: %+v, %v", view.Plan, err)
+	}
+}
+
 func TestReviewGroupsOnlyExplicitSupportingFlowsWithoutSourceLeads(t *testing.T) {
 	r := fixtureReport()
 	task := r.Changes[0]

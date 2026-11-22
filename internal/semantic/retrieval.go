@@ -233,6 +233,9 @@ func queryText(change domain.Change) string {
 		return strings.Join(nonEmpty(parts), " ")
 	}
 	parts := []string{}
+	if change.ChangeType == domain.ModifyTaskType && change.OldElement != nil && change.NewElement != nil {
+		parts = append(parts, "activity type changed from "+change.OldElement.Type+" to "+change.NewElement.Type)
+	}
 	hasElementMeaning := false
 	for _, element := range queryElements(change) {
 		if element == nil {

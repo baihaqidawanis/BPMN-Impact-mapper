@@ -167,6 +167,7 @@ type FocusedReviewProgress struct {
 
 type AgentSession struct {
 	ActiveMillis           *int64                 `json:"active_ms,omitempty"`
+	ChangeIndex            *int                   `json:"change_index,omitempty"`
 	AwaitingCombinedReview bool                   `json:"awaiting_combined_review,omitempty"`
 	LastReview             *AgentReview           `json:"last_review,omitempty"`
 	FocusedReview          *FocusedReviewProgress `json:"focused_review,omitempty"`
@@ -616,7 +617,7 @@ func (engine AgentEngine) apply(ctx context.Context, s *AgentSession, r AgentRep
 		}
 		if engine.InspectWeak && s.TestImpactRecheck {
 			for _, prior := range s.Decisions {
-				if lightFileRole(prior.File, "", "") != "test" || prior.Verdict != VerdictWeak {
+				if !lightTestRole(lightFileRole(prior.File, "", "")) || prior.Verdict != VerdictWeak {
 					for i, next := range r.Verification.Decisions {
 						if prior.ChangeType == next.ChangeType && prior.ElementID == next.ElementID && prior.File == next.File && prior.Symbol == next.Symbol {
 							r.Verification.Decisions[i] = prior
@@ -722,11 +723,24 @@ func agentRelativeFile(file string) bool {
 // ChangePlan exports the reviewed session through the existing canonical plan
 // renderer/store contract. A paused/running session cannot masquerade as final.
 func (s AgentSession) ChangePlan() (ChangePlan, error) {
+	return s.finalPlan(true)
+}
+
+// ArchivedPlanID identifies the immutable export created by an older
+// validator. The caller still has to load that exact plan from the store.
+func (s AgentSession) ArchivedPlanID() (string, error) {
+	plan, err := s.finalPlan(false)
+	return plan.PlanID, err
+}
+
+func (s AgentSession) finalPlan(validate bool) (ChangePlan, error) {
 	if s.Status != "COMPLETE" && s.Status != "NEEDS_REVIEW" {
 		return ChangePlan{}, errors.New("agent session is not final")
 	}
-	if err := validatePlans(s.Bundle, s.Decisions, "", s.Draft); err != nil {
-		return ChangePlan{}, err
+	if validate {
+		if err := validatePlans(s.Bundle, s.Decisions, "", s.Draft); err != nil {
+			return ChangePlan{}, err
+		}
 	}
 	p := ChangePlan{Version: BundleVersion, AnalysisID: s.Bundle.AnalysisID, InputFingerprint: s.Bundle.InputFingerprint, ContextID: s.Bundle.ContextID, Provider: s.Identity, Status: Status(s.Status), Plans: append([]FilePlan{}, s.Draft...), ReviewIssues: s.Feedback}
 	p.FullReview = s.FullReview

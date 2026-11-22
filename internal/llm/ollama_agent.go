@@ -245,6 +245,7 @@ func (m *OllamaAgent) Identity() planning.ProviderIdentity {
 		version = "ollama-agent-json-v28"
 	}
 	parts := []any{version, contracts, routingImpactInstruction, fullChunkInstructions, readmeOrientationInstructions, sharedProcessInstructions, evidencePoolInstruction, reviewInstructions(m.reviewComparisons), impactSelectionInstruction, futureReviewInstruction, "review-frame-v1"}
+	parts = append(parts, "expanded-decision-v2-reserved-lookups", routingAnalystInstruction, routingPlannerInstruction, routingReviewerInstruction)
 	parts = append(parts, m.digest, m.version, m.contextSize, m.maxOutput, m.think, m.generationOptions())
 	if m.reviewJSONMode {
 		parts = append(parts, true, implementationReviewInstruction, proposedReviewInstruction, proposalContractInstruction, operationEvidenceInstruction, "source-projection-v3-local-obligations", "related-proposals-v1", "json-file-review-v4-bounded-format-repair")
@@ -361,7 +362,13 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (out plann
 	if t.Role == planning.Analyst && t.RemainingTools <= 0 {
 		schema = map[string]any{"type": "object", "properties": map[string]any{"verification": schemaType(reflect.TypeOf(planning.VerificationResponse{}))}, "required": []string{"verification"}, "additionalProperties": false}
 	}
-	if t.Role == planning.Analyst && t.RemainingTools > 0 {
+	decisionGuidance := expandedDecisionInstruction(t)
+	minimumForForcedInspection := 1
+	if t.Role == planning.Analyst && decisionGuidance != "" {
+		// Leave room to trace the runtime caller and persistence contract.
+		minimumForForcedInspection = 3
+	}
+	if t.Role == planning.Analyst && t.RemainingTools >= minimumForForcedInspection {
 		if file, changeIndex := unreadAgentSource(t); file != "" {
 			// A search hit cannot establish what a handler does. Require one
 			// real source window per candidate file before final decisions,
@@ -489,6 +496,7 @@ func (m *OllamaAgent) Turn(ctx context.Context, t planning.AgentTurn) (out plann
 	}
 	if t.Readme == nil && hasRoutingContext(t.Bundle.ProcessContext) {
 		instruction += routingImpactInstruction
+		instruction += decisionGuidance
 	}
 	schemaBytes, _ := json.Marshal(schema)
 	var format any = schema
@@ -1022,6 +1030,43 @@ func hasRoutingContext(pc *domain.ProcessContext) bool {
 		}
 	}
 	return false
+}
+
+// A new alternative can affect a later task in the same process. Use actual
+// outgoing edges so a join, a renamed gateway or a fixture name cannot opt in.
+func expandedDecisionInstruction(t planning.AgentTurn) string {
+	pc := t.Bundle.ProcessContext
+	if pc == nil || pc.Before == nil || pc.After == nil {
+		return ""
+	}
+	scopes := make(map[string]bool)
+	for _, change := range t.Bundle.Changes {
+		id := change.ElementID
+		if flow := pc.After.Flows[id]; flow != nil {
+			id = flow.SourceRef
+		}
+		if node := pc.After.Elements[id]; node != nil && node.ProcessID != "" {
+			scopes[node.ProcessID] = true
+		}
+	}
+	for id, node := range pc.After.Elements {
+		if node == nil || !scopes[node.ProcessID] || !strings.HasSuffix(node.Type, "Gateway") {
+			continue
+		}
+		count := len(pc.After.Outgoing[id])
+		if count < 2 || count <= len(pc.Before.Outgoing[id]) {
+			continue
+		}
+		switch t.Role {
+		case planning.Analyst:
+			return routingAnalystInstruction
+		case planning.Planner:
+			return routingPlannerInstruction
+		case planning.Reviewer:
+			return routingReviewerInstruction
+		}
+	}
+	return ""
 }
 
 func processNameForChange(g *domain.Graph, id string) string {

@@ -130,6 +130,9 @@ func Markdown(plan ChangePlan) []byte {
 			if item.TargetBehavior != "" && singleLine(item.TargetBehavior) != singleLine(item.Summary) {
 				fmt.Fprintf(&out, "Required: %s\n\n", singleLine(item.TargetBehavior))
 			}
+			if item.DesignRationale != "" {
+				fmt.Fprintf(&out, "**Why this edit**\n\n%s\n\n", singleLine(item.DesignRationale))
+			}
 			edits := item.ProposedChanges
 			if len(edits) == 0 {
 				edits = item.Steps
@@ -147,7 +150,7 @@ func Markdown(plan ChangePlan) []byte {
 				fmt.Fprintf(&out, "- Confirm: %s\n", singleLine(a))
 			}
 			if len(item.EvidenceIDs) > 0 {
-				fmt.Fprintf(&out, "\nEvidence: `%s`\n", singleLine(item.EvidenceIDs[0]))
+				fmt.Fprintf(&out, "\nEvidence: `%s`\n", strings.Join(cleanStrings(item.EvidenceIDs), "`, `"))
 			}
 			out.WriteByte('\n')
 		}

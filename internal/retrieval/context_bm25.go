@@ -20,7 +20,7 @@ type ContextBM25 struct {
 func (ContextBM25) Method() domain.AnalysisMethod { return domain.MethodHybrid }
 
 func (strategy ContextBM25) MethodMetadata() map[string]string {
-	metadata := map[string]string{"ranking_version": "context-bm25-v3-gateway-branch", "evidence_version": "non-ranking-clues-v1"}
+	metadata := map[string]string{"ranking_version": "context-bm25-v3-gateway-branch", "evidence_version": "non-ranking-clues-v1", "query_profile": bm25QueryProfile}
 	if strategy.OmitStartEndLabels {
 		metadata["query_ablation"] = "omit-neighbour-start-end-labels-v1"
 	}
@@ -53,8 +53,8 @@ func (strategy ContextBM25) Attach(_ context.Context, changes []domain.Change, a
 			for _, anchor := range change.Context.BaselineAnchors {
 				query = append(query, textutil.Tokenize(anchor.Name)...)
 			}
-			query = textutil.UniqueSorted(query)
 		}
+		query = mappingBM25Query(query)
 		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
 			change.UnresolvedImpact = append(change.UnresolvedImpact, "context BM25 found no lexical candidate")

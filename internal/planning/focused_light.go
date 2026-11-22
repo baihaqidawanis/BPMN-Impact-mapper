@@ -15,33 +15,93 @@ func weakSourceRequests(bundle EvidenceBundle, decisions []CandidateDecision, li
 	}
 	change := bundle.Changes[0]
 	processName := ""
+	behavior := change.ElementName
 	if context := bundle.ProcessContext; context != nil {
 		for _, graph := range []*domain.Graph{context.After, context.Before} {
 			if graph != nil {
-				if element := graph.Elements[change.ElementID]; element != nil {
-					processName = graph.ProcessNames[element.ProcessID]
-					if processName != "" {
-						break
+				element := graph.Elements[change.ElementID]
+				if flow := graph.Flows[change.ElementID]; flow != nil {
+					element = graph.Elements[flow.SourceRef]
+					var terms []string
+					for _, term := range []string{flow.Condition, flow.Name} {
+						if term != "" && (len(terms) == 0 || terms[0] != term) {
+							terms = append(terms, term)
+						}
 					}
+					for _, id := range []string{flow.SourceRef, flow.TargetRef} {
+						if node := graph.Elements[id]; node != nil && node.Name != "" {
+							terms = append(terms, node.Name)
+						}
+					}
+					if len(terms) > 0 {
+						behavior = strings.Join(terms, " ")
+					}
+				}
+				if element != nil {
+					processName = graph.ProcessNames[element.ProcessID]
+					break
 				}
 			}
 		}
 	}
 	weak := map[string]bool{}
+	eligibleCaller := map[string]bool{}
 	for _, d := range decisions {
+		if d.Verdict == VerdictRelevant || d.Verdict == VerdictWeak {
+			eligibleCaller[candidateKey(d.File, d.Symbol)] = true
+		}
 		if d.Verdict == VerdictWeak {
 			weak[candidateKey(d.File, d.Symbol)] = true
 		}
 	}
 	roles, files := map[string]bool{}, map[string]bool{}
 	var requests []ToolRequest
+	candidates := change.Candidates
+	if migration := preferredMigration(candidates); migration >= 0 {
+		// A schema lookup must survive a limited budget even when UI or
+		// unrelated test candidates rank higher.
+		prioritized := []Candidate{candidates[migration]}
+		for _, role := range []string{"backend", "test"} {
+			for _, candidate := range candidates {
+				if lightFileRole(candidate.File, candidate.Module, candidate.Layer) == role {
+					prioritized = append(prioritized, candidate)
+					break
+				}
+			}
+		}
+		candidates = append(prioritized, candidates...)
+	}
 	for _, allowRepeatedRole := range []bool{false, true} {
-		for _, c := range change.Candidates {
+		// Use a spare lookup before inspecting another file with the same role.
+		// A call-graph result helps distinguish an owner from a test-only helper.
+		if allowRepeatedRole && change.ChangeType == domain.AddGateway && len(change.BranchChanges) >= 2 {
+			for _, c := range change.Candidates {
+				if c.Symbol != "" && path.Ext(c.File) == ".go" && lightFileRole(c.File, c.Module, c.Layer) == "backend" &&
+					eligibleCaller[candidateKey(c.File, c.Symbol)] {
+					requests = append(requests, ToolRequest{Name: "find_callers", File: c.File, Symbol: c.Symbol})
+					if len(requests) == limit {
+						return requests
+					}
+					break
+				}
+			}
+		}
+		for _, c := range candidates {
 			role := lightFileRole(c.File, c.Module, c.Layer)
-			if role == "" || files[c.File] || (!allowRepeatedRole && roles[role]) || (allowRepeatedRole && !weak[candidateKey(c.File, c.Symbol)]) {
+			if role == "" || files[c.File] || (!allowRepeatedRole && roles[role]) ||
+				(allowRepeatedRole && (role == "migration" || !weak[candidateKey(c.File, c.Symbol)])) {
 				continue
 			}
-			parts := []string{c.Symbol, change.ElementName, processName}
+			file := c.File
+			parts := []string{c.Symbol, behavior, processName}
+			if role == "migration" {
+				parts = []string{processName, behavior, "create table alter constraint check status"}
+				// Paired rollback filenames are leads to the forward
+				// definition. The source tool still verifies the file.
+				if strings.HasSuffix(strings.ToLower(file), ".down.sql") {
+					file = file[:len(file)-len(".down.sql")] + ".up.sql"
+				}
+			}
 			for _, branch := range change.BranchChanges {
 				parts = append(parts, branch.NewCondition, branch.NewLabel)
 			}
@@ -55,7 +115,7 @@ func weakSourceRequests(bundle EvidenceBundle, decisions []CandidateDecision, li
 			if query == "" {
 				continue
 			}
-			requests = append(requests, ToolRequest{Name: "inspect_source", File: c.File, Query: query})
+			requests = append(requests, ToolRequest{Name: "inspect_source", File: file, Query: query})
 			roles[role], files[c.File] = true, true
 			if len(requests) == limit {
 				return requests
@@ -70,7 +130,7 @@ func hasInspectedWeakTest(decisions []CandidateDecision, observations []ToolObse
 	weakTests := map[string]bool{}
 	for _, decision := range decisions {
 		switch lightFileRole(decision.File, "", "") {
-		case "test":
+		case "test", "frontend_test":
 			if decision.Verdict == VerdictWeak {
 				weakTests[decision.File] = true
 			}
@@ -103,8 +163,12 @@ func (e FocusedEngine) seedCandidates(candidates []Candidate) (initial, reserve 
 	files := map[string]bool{}
 	roles := map[string]bool{}
 	selected := make([]bool, len(candidates))
+	migration := preferredMigration(candidates)
 	for i, c := range candidates {
 		role := lightFileRole(c.File, c.Module, c.Layer)
+		if role == "migration" && i != migration {
+			continue
+		}
 		if !files[c.File] && (len(files) < 3 || role != "" && !roles[role]) {
 			selected[i] = true
 			files[c.File] = true
@@ -147,7 +211,7 @@ func ultraLightReserve(initial, reserve []Candidate, plans []FilePlan) []Candida
 	var fallback *Candidate
 	for _, candidate := range reserve {
 		role := lightFileRole(candidate.File, candidate.Module, candidate.Layer)
-		if seen[candidate.File] || roles[role] {
+		if seen[candidate.File] || roles[role] || role == "migration" {
 			continue
 		}
 		if role == "" {
@@ -175,18 +239,47 @@ func lightNeedsMoreSource(candidates []Candidate, plans []FilePlan) bool {
 	}
 	for _, c := range candidates {
 		role := lightFileRole(c.File, c.Module, c.Layer)
-		if role != "" && !roles[role] {
+		if role != "" && role != "migration" && !roles[role] {
 			return true
 		}
 	}
 	return false
 }
 
+func preferredMigration(candidates []Candidate) int {
+	rollback := -1
+	for i, candidate := range candidates {
+		if lightFileRole(candidate.File, candidate.Module, candidate.Layer) != "migration" {
+			continue
+		}
+		if !strings.HasSuffix(strings.ToLower(candidate.File), ".down.sql") {
+			return i
+		}
+		if rollback < 0 {
+			rollback = i
+		}
+	}
+	return rollback
+}
+
+func lightTestRole(role string) bool {
+	return role == "test" || role == "frontend_test"
+}
+
 func lightFileRole(file, module, layer string) string {
 	file = strings.ToLower(strings.ReplaceAll(file, "\\", "/"))
 	name := path.Base(file)
 	switch {
-	case layer == "test" || strings.HasSuffix(name, "_test.go") ||
+	case path.Ext(file) == ".sql" && (strings.Contains("/"+file, "/migrations/") ||
+		strings.HasSuffix(name, ".up.sql") || strings.HasSuffix(name, ".down.sql")):
+		return "migration"
+	case strings.HasSuffix(name, "_test.go"):
+		return "test"
+	case (module == "frontend" || strings.HasPrefix(file, "frontend/")) &&
+		(layer == "test" || strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") ||
+			strings.Contains("/"+file, "/tests/")):
+		return "frontend_test"
+	case layer == "test" ||
 		strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") ||
 		strings.Contains("/"+file, "/test/") || strings.Contains("/"+file, "/tests/"):
 		return "test"

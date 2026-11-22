@@ -12,7 +12,8 @@ func TestCheckpointClockContinuesFromSavedActiveTime(t *testing.T) {
 	ctx := context.Background()
 	store := traceStore{}
 	previousMillis := int64(3000)
-	clock := timedCheckpoints{AgentSessionStore: store, id: "parent", start: time.Now().Add(-2 * time.Second), previousMillis: &previousMillis}
+	changeIndex := 0
+	clock := timedCheckpoints{AgentSessionStore: store, id: "parent", start: time.Now().Add(-2 * time.Second), previousMillis: &previousMillis, changeIndex: &changeIndex}
 	for _, id := range []string{"parent", "child"} {
 		if err := clock.Save(ctx, planning.AgentSession{ID: id, Status: "PAUSED"}); err != nil {
 			t.Fatal(err)
@@ -26,6 +27,9 @@ func TestCheckpointClockContinuesFromSavedActiveTime(t *testing.T) {
 		t.Fatal("a child checkpoint recorded the parent clock")
 	}
 	view := viewSession(parent)
+	if view.ChangeIndex == nil || *view.ChangeIndex != changeIndex || store["child"].ChangeIndex != nil {
+		t.Fatalf("selected index was not preserved exclusively on the parent: %+v", view)
+	}
 	if view.ActiveMillis == nil || *view.ActiveMillis != *parent.ActiveMillis {
 		t.Fatal("paused view lost its checkpoint time")
 	}

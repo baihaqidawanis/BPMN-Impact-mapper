@@ -78,3 +78,68 @@ func TestCombinedScenarioFullProcessFitsScanTransport(t *testing.T) {
 		t.Fatal("transport modified original graphs")
 	}
 }
+
+func TestRoutingGuidanceFollowsParsedChanges(t *testing.T) {
+	base := filepath.Join("..", "..", "experiments", "simple-erp")
+	for _, tc := range []struct {
+		dir      string
+		element  string
+		expanded bool
+		facts    []string
+	}{
+		{"poc-patterns/skip", "CloseWithoutAdjustment", true, []string{"semua selisih nol", "ada baris dengan selisih nonnol", "NO_ADJUSTMENT"}},
+		{"poc-patterns/redo", "BackToReview", true, []string{"REVISION_REQUIRED", "Kirim respons setelah commit", "ID yang sama", "ReviewEntryJoin"}},
+		{"poc-patterns/switch", "SwitchToRejection", true, []string{"semua produk PR aktif", "ada produk PR yang nonaktif", "manual tetap memakai alasan reviewer"}},
+		{"poc-patterns/non-free-choice", "LoadLockedApprovalRoute", true, []string{"LockApprovalRoute", "Pada request approve maupun reject", "jalur tersimpan = STANDARD", "jalur tersimpan = ESCALATED", "sebelum mutasi"}},
+		{"current-staff-v2/add-task", "ReasonReview", false, nil},
+	} {
+		t.Run(tc.dir, func(t *testing.T) {
+			read := func(version string) *domain.Graph {
+				t.Helper()
+				data, err := os.ReadFile(filepath.Join(base, tc.dir, version+".bpmn"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				graph, err := bpmn.Parse(data, bpmn.Limits{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				return graph
+			}
+			pc := &domain.ProcessContext{Before: read("before"), After: read("after")}
+			report := domain.Report{Changes: diff.Compare(pc.Before, pc.After), ProcessContext: pc}
+			bundle := planning.BuildAgentBundle(report, planning.DefaultLimits())
+			for _, change := range bundle.Changes {
+				if change.ElementID != tc.element {
+					continue
+				}
+				bundle.Changes = []planning.ChangeInput{change}
+				for role, want := range map[planning.AgentRole]string{
+					planning.Analyst: routingAnalystInstruction, planning.Planner: routingPlannerInstruction,
+					planning.Reviewer: routingReviewerInstruction,
+				} {
+					got := expandedDecisionInstruction(planning.AgentTurn{Role: role, Bundle: bundle})
+					if tc.expanded && got != want || !tc.expanded && got != "" {
+						t.Fatalf("wrong guidance for %s: %q", role, got)
+					}
+				}
+				bundle.ProcessContext = &domain.ProcessContext{Before: compactProcessGraph(pc.Before), After: compactProcessGraph(pc.After)}
+				input, err := json.Marshal(planning.AgentTurn{Role: planning.Planner, Bundle: bundle})
+				if err != nil {
+					t.Fatal(err)
+				}
+				wire, err := sharedProcessInput(input, bundle.ProcessContext)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for _, fact := range tc.facts {
+					if !strings.Contains(string(wire), fact) {
+						t.Errorf("single-change review lost process requirement %q", fact)
+					}
+				}
+				return
+			}
+			t.Fatalf("expected change %s missing", tc.element)
+		})
+	}
+}

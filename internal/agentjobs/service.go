@@ -31,6 +31,7 @@ type Snapshot interface {
 
 type View struct {
 	ActiveMillis   *int64 `json:"active_ms,omitempty"`
+	ChangeIndex    *int   `json:"change_index,omitempty"`
 	runStarted     time.Time
 	SourceActivity []SourceActivity                `json:"source_activity,omitempty"`
 	Mode           string                          `json:"mode"`
@@ -126,6 +127,9 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 		if err != nil {
 			return View{}, err
 		}
+		if stored.ChangeIndex != nil && *stored.ChangeIndex != changeIndex {
+			return View{}, ErrBinding
+		}
 		// Rebuild older bundle shapes for resume. The engine still verifies
 		// the exact source, context and model binding before using a checkpoint.
 		if !sameChanges(stored.Bundle.Changes, bundle.Changes) {
@@ -181,6 +185,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 	}
 	v := View{SessionID: id, AnalysisID: report.AnalysisID, Status: "STARTING", Role: planning.Analyst, Provider: s.Model.Identity(), Message: "Preparing approved source and model metadata."}
 	v.Mode = mode
+	v.ChangeIndex = &changeIndex
 	v.ActiveMillis = previousMillis
 	v.runStarted = time.Now()
 	s.views[id] = v
@@ -216,7 +221,7 @@ func (s *Service) Start(ctx context.Context, report domain.Report, repo string, 
 }
 
 func (s *Service) execute(ctx context.Context, v View, repo string, bundle planning.EvidenceBundle) {
-	clock := timedCheckpoints{AgentSessionStore: s.Sessions, id: v.SessionID, start: v.runStarted, previousMillis: v.ActiveMillis}
+	clock := timedCheckpoints{AgentSessionStore: s.Sessions, id: v.SessionID, start: v.runStarted, previousMillis: v.ActiveMillis, changeIndex: v.ChangeIndex}
 	fail := func(status, message string) { v.Status = status; v.Message = message; s.put(v) }
 	source, err := s.Source(ctx, repo)
 	if err != nil {
@@ -249,6 +254,7 @@ func (s *Service) execute(ctx context.Context, v View, repo string, bundle plann
 	if session.ID != "" {
 		v = viewSession(session)
 		v.ActiveMillis = clock.elapsed()
+		v.ChangeIndex = clock.changeIndex
 	}
 	if runErr != nil {
 		if s.LogError != nil {
@@ -313,7 +319,7 @@ func (s *Service) put(v View) {
 
 func viewSession(session planning.AgentSession) View {
 	b := session.Bundle
-	return View{ActiveMillis: session.ActiveMillis, FocusedReview: session.FocusedReview, SourceActivity: sourceActivity(session.Observations), Message: session.ProgressMessage, Mode: sessionMode(session), FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
+	return View{ActiveMillis: session.ActiveMillis, ChangeIndex: session.ChangeIndex, FocusedReview: session.FocusedReview, SourceActivity: sourceActivity(session.Observations), Message: session.ProgressMessage, Mode: sessionMode(session), FullReview: session.FullReview, SessionID: session.ID, AnalysisID: b.AnalysisID, Status: session.Status, Role: session.Role, Turns: session.Turns, Tools: session.Tools, Revisions: session.Revisions, Provider: session.Identity, Context: &b, Decisions: session.Decisions, Events: session.Events, Issues: session.Feedback}
 }
 
 func sessionMode(session planning.AgentSession) string {
@@ -390,6 +396,14 @@ func (s *Service) Get(ctx context.Context, id string) (View, error) {
 		result.Message = "Server restarted. Re-enter the source path and resume this checkpoint."
 	}
 	if result.Status == "COMPLETE" || result.Status == "NEEDS_REVIEW" {
+		// Reopen the exact immutable export before applying current draft policy.
+		// A missing archive still goes through the normal draft validation path.
+		if id, e := session.ArchivedPlanID(); e == nil {
+			if saved, e := s.Plans.Get(ctx, id); e == nil {
+				result.Plan = &saved
+				return result, nil
+			}
+		}
 		plan, e := session.ChangePlan()
 		if e != nil && session.Status == "NEEDS_REVIEW" {
 			plan, e = session.PartialPlan()

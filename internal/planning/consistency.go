@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"sort"
 	"time"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
 var errConsistencyAttempts = errors.New("final consistency review attempts exhausted")
+
+const gatewayConsistencyInstruction = " For a changed gateway condition, compare the proposed valid and rejected paths across all supplied proposals for that operation. Trace the input sent by the caller, the backend predicate, and the resulting response and state. Flag disagreement between proposed edits or between an edit and its acceptance checks. When source is present, verify the actual owner of the operation. Cite the specific conflicting file, branch or check in the finding."
 
 func canPartitionReview(err error) bool {
 	return errors.Is(err, ErrAgentContextLimit) || errors.Is(err, ErrAgentOutputLimit) || errors.Is(err, errConsistencyAttempts)
@@ -115,11 +119,13 @@ func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string,
 		}
 		compact.Draft[i].DesignRationale = ""
 		compact.Draft[i].Steps = nil
-		compact.Draft[i].AcceptanceChecks = nil
+		if compact.Draft[i].ChangeType != domain.ModifyGatewayCondition {
+			compact.Draft[i].AcceptanceChecks = nil
+		}
 	}
 	compact.Bundle = consistencyBundle(s.Bundle, s.Draft, true)
 	compact.Decisions = nil
-	r, n, finalErr := e.reviewConsistencyPart(ctx, id+"-contracts", compact, "FINAL CONTRACT REVIEW: every file proposal is present with target behavior, summary, proposed edits and assumptions. Detailed steps and source evidence passed separate per-file review; those fields are deliberately omitted here. Check cross-file contracts and BPMN coverage. If a proposal makes a value required on every write but BPMN requires it at one transition, mark scope REVISE. Check that proposed tests exercise the entry point that implements the rule. Do not infer source facts. Return review only.")
+	r, n, finalErr := e.reviewConsistencyPart(ctx, id+"-contracts", compact, "FINAL CONTRACT REVIEW: every file proposal is present with target behavior, summary, proposed edits and assumptions. Detailed steps and source evidence were checked separately. Gateway condition acceptance checks are included to compare outcomes across files. Check cross-file contracts and BPMN coverage. If a proposal makes a value required on every write but BPMN requires it at one transition, mark scope REVISE. Check that proposed tests exercise the entry point that implements the rule. Do not infer source facts. Return review only.")
 	r.Findings = append(findings, r.Findings...)
 	if canPartitionReview(finalErr) {
 		r.Issues = []string{"File reviews finished, but the combined contract review could not be validated. Check consistency across files before applying the plan."}
@@ -129,6 +135,12 @@ func (e FullRepositoryEngine) reviewCombinedPlan(ctx context.Context, id string,
 }
 
 func (e FullRepositoryEngine) reviewConsistencyPart(ctx context.Context, childID string, s AgentSession, instruction string, related ...[]ProposalContract) (AgentReview, int, error) {
+	for _, change := range s.Bundle.Changes {
+		if change.ChangeType == domain.ModifyGatewayCondition {
+			instruction += gatewayConsistencyInstruction
+			break
+		}
+	}
 	parts := []any{"consistency-v4-target-partitions", instruction, s.Binding, s.Bundle.ContextID, s.Draft, s.Decisions}
 	var contracts []ProposalContract
 	if len(related) > 0 && len(related[0]) > 0 {

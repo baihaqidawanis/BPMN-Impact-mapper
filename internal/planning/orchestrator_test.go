@@ -3,11 +3,15 @@ package planning_test
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/bpmn"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/diff"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 )
@@ -233,6 +237,62 @@ func TestEvidenceBundleContextIDIsStableAndSensitive(t *testing.T) {
 	if len(first.ContextID) != 32 || first.ContextID != second.ContextID || first.ContextID == third.ContextID {
 		t.Fatalf("context IDs first=%q second=%q changed=%q", first.ContextID, second.ContextID, third.ContextID)
 	}
+}
+
+func TestSkipBundlePreservesAddedTaskContextAndGroupsNewBranches(t *testing.T) {
+	parse := func(name string) *domain.Graph {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "simple-erp", "poc-patterns", "skip", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		graph, err := bpmn.Parse(data, bpmn.Limits{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return graph
+	}
+	before, after := parse("before.bpmn"), parse("after.bpmn")
+	report := domain.Report{ProcessContext: &domain.ProcessContext{Before: before, After: after}, Changes: diff.Compare(before, after)}
+	tasks := map[string]bool{"CheckZeroDelta": false, "CloseWithoutAdjustment": false}
+	for i := range report.Changes {
+		change := &report.Changes[i]
+		if change.ChangeType == domain.ModifySequenceFlow && change.Context != nil && change.Context.Pattern == domain.PatternMoveTask {
+			t.Fatalf("new routing reported as a task move: %+v", change.NewElement)
+		}
+		if change.NewElement == nil {
+			continue
+		}
+		switch id := change.NewElement.ID; id {
+		case "CheckZeroDelta", "CloseWithoutAdjustment":
+			c := change.Context
+			if c == nil || c.Pattern != "" || c.ProcessName != "Submit stock adjustment - Staff" ||
+				len(c.Predecessors) != 1 || len(c.Successors) != 1 {
+				t.Fatalf("%s lost its process neighborhood: %+v", id, c)
+			}
+			tasks[id] = true
+		case "BypassApproval":
+			change.Impacts = []domain.Impact{{File: "decision.go", Evidence: []domain.Evidence{{Type: "SOURCE_TOOL", Location: "decision.go:1", Excerpt: "close adjustment"}}}}
+		}
+	}
+	if !tasks["CheckZeroDelta"] || !tasks["CloseWithoutAdjustment"] {
+		t.Fatal("missing added Skip activities")
+	}
+	previous := planning.BuildAgentBundle(report, planning.Limits{GroupGatewayChanges: true})
+	current := planning.BuildAgentBundle(report, planning.Limits{GroupGatewayChanges: true, GroupGatewayBranches: true})
+	if len(current.Changes) != len(previous.Changes)-3 {
+		t.Fatalf("expected to fold the two branches and their new incoming link: %d -> %d", len(previous.Changes), len(current.Changes))
+	}
+	for _, change := range current.Changes {
+		if change.ElementID == "ZeroDeltaDecision" {
+			if len(change.BranchChanges) != 2 || len(change.SupportingFlowIDs) != 3 ||
+				len(change.Candidates) != 1 || change.Candidates[0].File != "decision.go" {
+				t.Fatalf("gateway lost its branches or their evidence: %+v", change)
+			}
+			return
+		}
+	}
+	t.Fatal("missing Skip gateway")
 }
 
 func TestOrchestratorEnforcesIdentityAndRoleTimeout(t *testing.T) {

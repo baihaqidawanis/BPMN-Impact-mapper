@@ -70,11 +70,11 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 	}
 	protocol := FocusedProtocolVersion
 	if e.Light {
-		protocol = "focused-light-v1"
+		protocol = "focused-light-v2-source-roles"
 	}
 	budget := DefaultAgentBudget()
 	if e.UltraLight {
-		protocol = "focused-ultra-light-v5"
+		protocol = "focused-ultra-light-v7-schema-evidence"
 		budget.MaxTools = 4
 		budget.MaxDiscoveries = 2
 		budget.MaxRevisions = 0

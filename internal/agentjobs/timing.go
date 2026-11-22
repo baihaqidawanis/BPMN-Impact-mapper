@@ -12,6 +12,7 @@ type timedCheckpoints struct {
 	id             string
 	start          time.Time
 	previousMillis *int64
+	changeIndex    *int
 }
 
 func (c timedCheckpoints) elapsed() *int64 {
@@ -25,6 +26,7 @@ func (c timedCheckpoints) elapsed() *int64 {
 func (c timedCheckpoints) Save(ctx context.Context, session planning.AgentSession) error {
 	if session.ID == c.id {
 		session.ActiveMillis = c.elapsed()
+		session.ChangeIndex = c.changeIndex
 	}
 	return c.AgentSessionStore.Save(ctx, session)
 }

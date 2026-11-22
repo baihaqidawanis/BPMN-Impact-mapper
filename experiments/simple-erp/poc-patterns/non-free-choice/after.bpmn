@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_role_staff_l3_pr_submit" targetNamespace="https://simple-erp.local/bpm-haqi/role-staff-l3-pr-submit" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_staff_l3_pr_submit" name="Submit Purchase Request - Staff" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+Tidak ada pemeriksaan actor==creator untuk submit. Perspektif Staff; definisi operasi bersumber dari L3 P2P bersama.
+backend/internal/purchasing/adapter/postgres/store.go :: TransitionRequest</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_staff_l3_pr_submit">
+      <bpmn:lane id="Lane_role_staff_l3_pr_submit_0" name="Staff">
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_staff_l3_pr_submit_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_effect0</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_result_activity</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_staff_l3_pr_submit_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>LockApprovalRoute</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ReturnSubmitReceipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>LoadLockedApprovalRoute</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>LockedRouteDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>OpenStandardReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>OpenEscalatedReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>RejectUnknownRoute</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="AssignedReviewer" name="Reviewer">
+        <bpmn:flowNodeRef>RequestLockedReview</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_staff_l3_pr_submit_start" name="Kebutuhan aksi">
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_staff_l3_pr_submit_input" name="Kirim PR untuk review">
+      <bpmn:documentation>Request ini dijalankan oleh Staff; guard backend tetap berlaku.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_check" name="Lock PR; status DRAFT dan version cocok">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. Tidak ada pemeriksaan actor==creator untuk submit.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="role_staff_l3_pr_submit_valid" name="Syarat terpenuhi?" gatewayDirection="Diverging">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_3</bpmn:outgoing>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_effect0" name="Ubah PR menjadi SUBMITTED; naikkan versi">
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_4</bpmn:outgoing>
+      <bpmn:incoming>RouteLocked</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_staff_l3_pr_submit_effect1" name="Audit PUR-PR-002; commit">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="role_staff_l3_pr_submit_done" name="Respons dikirim">
+      <bpmn:incoming>role_staff_l3_pr_submit_result_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_0" sourceRef="role_staff_l3_pr_submit_start" targetRef="role_staff_l3_pr_submit_input" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_1" sourceRef="role_staff_l3_pr_submit_input" targetRef="role_staff_l3_pr_submit_check" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_2" sourceRef="role_staff_l3_pr_submit_check" targetRef="role_staff_l3_pr_submit_valid" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_3" sourceRef="role_staff_l3_pr_submit_valid" targetRef="LockApprovalRoute" name="Ya">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Ya</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_4" sourceRef="role_staff_l3_pr_submit_effect0" targetRef="role_staff_l3_pr_submit_effect1" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_5" sourceRef="role_staff_l3_pr_submit_effect1" targetRef="ReturnSubmitReceipt" />
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_Flow_6" sourceRef="role_staff_l3_pr_submit_valid" targetRef="role_staff_l3_pr_submit_result_activity" name="Tidak; Ditolak / gagal; tidak commit">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Tidak</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sendTask id="role_staff_l3_pr_submit_result_activity" name="Kirim respons hasil aksi (sukses atau gagal)">
+      <bpmn:documentation>Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>role_staff_l3_pr_submit_result_to_end</bpmn:outgoing>
+      <bpmn:incoming>OpenStandardReviewDone</bpmn:incoming>
+      <bpmn:incoming>OpenEscalatedReviewDone</bpmn:incoming>
+      <bpmn:incoming>RejectUnknownRouteDone</bpmn:incoming>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="role_staff_l3_pr_submit_result_to_end" sourceRef="role_staff_l3_pr_submit_result_activity" targetRef="role_staff_l3_pr_submit_done" />
+    <bpmn:serviceTask id="LockApprovalRoute" name="Tentukan dan simpan jalur approval PR">
+      <bpmn:documentation>Saat submit, total PR di bawah ambang konfigurasi mendapat STANDARD; total yang mencapai ambang mendapat ESCALATED. Simpan rute untuk ID PR yang sama bersama status SUBMITTED dalam satu transaksi. Perubahan ambang berikutnya hanya berlaku pada submit baru.</bpmn:documentation>
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_3</bpmn:incoming>
+      <bpmn:outgoing>RouteLocked</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sendTask id="ReturnSubmitReceipt" name="Kirim konfirmasi submit ke Staff">
+      <bpmn:incoming>role_staff_l3_pr_submit_Flow_5</bpmn:incoming>
+      <bpmn:outgoing>ContinueToReview</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:userTask id="RequestLockedReview" name="Kirim keputusan approve atau reject">
+      <bpmn:documentation>Ini request review PR yang sudah ada dan dapat datang setelah transaksi submit selesai.</bpmn:documentation>
+      <bpmn:incoming>ContinueToReview</bpmn:incoming>
+      <bpmn:outgoing>ReadLockedRoute</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="LoadLockedApprovalRoute" name="Baca rute yang tersimpan untuk PR ini">
+      <bpmn:documentation>Pada request approve maupun reject, baca rute PR yang sama sebelum mutasi. Perubahan ambang tidak mengubah rute PR yang sudah SUBMITTED. Pertahankan pemeriksaan status, versi, kewenangan, dan maker-checker.</bpmn:documentation>
+      <bpmn:incoming>ReadLockedRoute</bpmn:incoming>
+      <bpmn:outgoing>RouteLoaded</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="LockedRouteDecision" name="Rute review yang tersimpan?" gatewayDirection="Diverging">
+      <bpmn:incoming>RouteLoaded</bpmn:incoming>
+      <bpmn:outgoing>StoredStandard</bpmn:outgoing>
+      <bpmn:outgoing>StoredEscalated</bpmn:outgoing>
+      <bpmn:outgoing>MissingRoute</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="OpenStandardReview" name="Validasi Supervisor dan lanjutkan review">
+      <bpmn:documentation>STANDARD memberi hak review kepada Supervisor. Tolak role yang tidak cocok sebelum mutasi. Untuk role yang cocok, lanjutkan aksi approve atau reject yang sudah ada.</bpmn:documentation>
+      <bpmn:outgoing>OpenStandardReviewDone</bpmn:outgoing>
+      <bpmn:incoming>StoredStandard</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="OpenStandardReviewDone" sourceRef="OpenStandardReview" targetRef="role_staff_l3_pr_submit_result_activity" />
+    <bpmn:serviceTask id="OpenEscalatedReview" name="Validasi Super Admin dan lanjutkan review">
+      <bpmn:documentation>ESCALATED memberi hak review kepada Super Admin. Tolak role yang tidak cocok sebelum mutasi. Untuk role yang cocok, lanjutkan aksi approve atau reject yang sudah ada.</bpmn:documentation>
+      <bpmn:outgoing>OpenEscalatedReviewDone</bpmn:outgoing>
+      <bpmn:incoming>StoredEscalated</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="OpenEscalatedReviewDone" sourceRef="OpenEscalatedReview" targetRef="role_staff_l3_pr_submit_result_activity" />
+    <bpmn:serviceTask id="RejectUnknownRoute" name="Tolak review tanpa mutasi">
+      <bpmn:documentation>PR yang tidak punya rute valid gagal secara eksplisit tanpa mengubah status atau versi.</bpmn:documentation>
+      <bpmn:outgoing>RejectUnknownRouteDone</bpmn:outgoing>
+      <bpmn:incoming>MissingRoute</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="RejectUnknownRouteDone" sourceRef="RejectUnknownRoute" targetRef="role_staff_l3_pr_submit_result_activity" />
+    <bpmn:sequenceFlow id="RouteLocked" sourceRef="LockApprovalRoute" targetRef="role_staff_l3_pr_submit_effect0" />
+    <bpmn:sequenceFlow id="ContinueToReview" sourceRef="ReturnSubmitReceipt" targetRef="RequestLockedReview" name="Request review berikutnya" />
+    <bpmn:sequenceFlow id="ReadLockedRoute" sourceRef="RequestLockedReview" targetRef="LoadLockedApprovalRoute" />
+    <bpmn:sequenceFlow id="RouteLoaded" sourceRef="LoadLockedApprovalRoute" targetRef="LockedRouteDecision" />
+    <bpmn:sequenceFlow id="StoredStandard" sourceRef="LockedRouteDecision" targetRef="OpenStandardReview" name="jalur tersimpan = STANDARD">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">jalur tersimpan = STANDARD</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="StoredEscalated" sourceRef="LockedRouteDecision" targetRef="OpenEscalatedReview" name="jalur tersimpan = ESCALATED">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">jalur tersimpan = ESCALATED</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="MissingRoute" sourceRef="LockedRouteDecision" targetRef="RejectUnknownRoute" name="Rute kosong atau tidak valid">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">rute kosong atau di luar STANDARD dan ESCALATED</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_staff_l3_pr_submit">
+    <bpmn:participant id="Pool_role_staff_l3_pr_submit" name="Simple ERP" processRef="Process_role_staff_l3_pr_submit" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="StructuralDiagram">
+    <bpmndi:BPMNPlane id="StructuralPlane" bpmnElement="Collab_role_staff_l3_pr_submit">
+      <bpmndi:BPMNShape id="Pool_role_staff_l3_pr_submit_di" bpmnElement="Pool_role_staff_l3_pr_submit" isHorizontal="true">
+        <dc:Bounds x="20" y="40" width="3300" height="906" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_submit_0_di" bpmnElement="Lane_role_staff_l3_pr_submit_0" isHorizontal="true">
+        <dc:Bounds x="50" y="40" width="3270" height="155" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_staff_l3_pr_submit_1_di" bpmnElement="Lane_role_staff_l3_pr_submit_1" isHorizontal="true">
+        <dc:Bounds x="50" y="195" width="3270" height="492" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AssignedReviewer_di" bpmnElement="AssignedReviewer" isHorizontal="true">
+        <dc:Bounds x="50" y="687" width="3270" height="259" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_start_di" bpmnElement="role_staff_l3_pr_submit_start">
+        <dc:Bounds x="90" y="98.0" width="42.0" height="42.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="46.0" y="147.0" width="130" height="31" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_input_di" bpmnElement="role_staff_l3_pr_submit_input">
+        <dc:Bounds x="210" y="76.5" width="194" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_check_di" bpmnElement="role_staff_l3_pr_submit_check">
+        <dc:Bounds x="475" y="347.5" width="180" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_valid_di" bpmnElement="role_staff_l3_pr_submit_valid">
+        <dc:Bounds x="725" y="362.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="689" y="425" width="130" height="29" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_effect0_di" bpmnElement="role_staff_l3_pr_submit_effect0">
+        <dc:Bounds x="1105" y="347.5" width="186" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_effect1_di" bpmnElement="role_staff_l3_pr_submit_effect1">
+        <dc:Bounds x="1355" y="347.5" width="180" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_done_di" bpmnElement="role_staff_l3_pr_submit_done">
+        <dc:Bounds x="3200" y="369.0" width="42.0" height="42.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3156.0" y="418.0" width="130" height="31" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_staff_l3_pr_submit_result_activity_di" bpmnElement="role_staff_l3_pr_submit_result_activity">
+        <dc:Bounds x="2910" y="347.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LockApprovalRoute_di" bpmnElement="LockApprovalRoute">
+        <dc:Bounds x="855" y="347.5" width="188" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ReturnSubmitReceipt_di" bpmnElement="ReturnSubmitReceipt">
+        <dc:Bounds x="1605" y="347.5" width="190" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RequestLockedReview_di" bpmnElement="RequestLockedReview">
+        <dc:Bounds x="1860" y="772.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LoadLockedApprovalRoute_di" bpmnElement="LoadLockedApprovalRoute">
+        <dc:Bounds x="2125" y="347.5" width="190" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="LockedRouteDecision_di" bpmnElement="LockedRouteDecision">
+        <dc:Bounds x="2385" y="362.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2434" y="433" width="150" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="OpenStandardReview_di" bpmnElement="OpenStandardReview">
+        <dc:Bounds x="2590" y="347.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="OpenEscalatedReview_di" bpmnElement="OpenEscalatedReview">
+        <dc:Bounds x="2590" y="507.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RejectUnknownRoute_di" bpmnElement="RejectUnknownRoute">
+        <dc:Bounds x="2590" y="247.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_0_di" bpmnElement="role_staff_l3_pr_submit_Flow_0">
+        <di:waypoint x="132.0" y="119.0" />
+        <di:waypoint x="210" y="119.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_1_di" bpmnElement="role_staff_l3_pr_submit_Flow_1">
+        <di:waypoint x="404" y="119.0" />
+        <di:waypoint x="435" y="119" />
+        <di:waypoint x="435" y="390" />
+        <di:waypoint x="475" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_2_di" bpmnElement="role_staff_l3_pr_submit_Flow_2">
+        <di:waypoint x="655" y="390.0" />
+        <di:waypoint x="725" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_3_di" bpmnElement="role_staff_l3_pr_submit_Flow_3">
+        <di:waypoint x="780.0" y="390.0" />
+        <di:waypoint x="855" y="390.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="785" y="355" width="62" height="29" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_4_di" bpmnElement="role_staff_l3_pr_submit_Flow_4">
+        <di:waypoint x="1291" y="390.0" />
+        <di:waypoint x="1355" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_5_di" bpmnElement="role_staff_l3_pr_submit_Flow_5">
+        <di:waypoint x="1535" y="390.0" />
+        <di:waypoint x="1605" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_Flow_6_di" bpmnElement="role_staff_l3_pr_submit_Flow_6">
+        <di:waypoint x="752.5" y="362.5" />
+        <di:waypoint x="752.5" y="226" />
+        <di:waypoint x="3060" y="226" />
+        <di:waypoint x="3060.0" y="347.5" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="804" y="231" width="252" height="34" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_staff_l3_pr_submit_result_to_end_di" bpmnElement="role_staff_l3_pr_submit_result_to_end">
+        <di:waypoint x="3110" y="390.0" />
+        <di:waypoint x="3200" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="OpenStandardReviewDone_di" bpmnElement="OpenStandardReviewDone">
+        <di:waypoint x="2790" y="390.0" />
+        <di:waypoint x="2910" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="OpenEscalatedReviewDone_di" bpmnElement="OpenEscalatedReviewDone">
+        <di:waypoint x="2790" y="550.0" />
+        <di:waypoint x="3010" y="550" />
+        <di:waypoint x="3010.0" y="432.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="RejectUnknownRouteDone_di" bpmnElement="RejectUnknownRouteDone">
+        <di:waypoint x="2790" y="290.0" />
+        <di:waypoint x="2960" y="290" />
+        <di:waypoint x="2960.0" y="347.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="RouteLocked_di" bpmnElement="RouteLocked">
+        <di:waypoint x="1043" y="390.0" />
+        <di:waypoint x="1105" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ContinueToReview_di" bpmnElement="ContinueToReview">
+        <di:waypoint x="1795" y="390.0" />
+        <di:waypoint x="1826" y="390" />
+        <di:waypoint x="1826" y="815" />
+        <di:waypoint x="1860" y="815.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1624" y="625" width="180" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ReadLockedRoute_di" bpmnElement="ReadLockedRoute">
+        <di:waypoint x="2060" y="815.0" />
+        <di:waypoint x="2092" y="815" />
+        <di:waypoint x="2092" y="390" />
+        <di:waypoint x="2125" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="RouteLoaded_di" bpmnElement="RouteLoaded">
+        <di:waypoint x="2315" y="390.0" />
+        <di:waypoint x="2385" y="390.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="StoredStandard_di" bpmnElement="StoredStandard">
+        <di:waypoint x="2440.0" y="390.0" />
+        <di:waypoint x="2590" y="390.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2445" y="351" width="139" height="30" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="StoredEscalated_di" bpmnElement="StoredEscalated">
+        <di:waypoint x="2412.5" y="417.5" />
+        <di:waypoint x="2412.5" y="550" />
+        <di:waypoint x="2590" y="550.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2435" y="508" width="145" height="34" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MissingRoute_di" bpmnElement="MissingRoute">
+        <di:waypoint x="2412.5" y="362.5" />
+        <di:waypoint x="2412.5" y="290" />
+        <di:waypoint x="2590" y="290.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2428" y="248" width="145" height="34" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
