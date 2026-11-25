@@ -131,6 +131,97 @@ func TestWorkerSelectionBusyPersistenceAndNoReplay(t *testing.T) {
 	}
 }
 
+func TestReopensArchivedPlanAfterValidationPolicyChanges(t *testing.T) {
+	ctx := context.Background()
+	s := service(t, &model{})
+	report := fixtureReport()
+	report.Changes = report.Changes[:1]
+	report.Changes[0].Impacts[0].File = "backend/migrations/000001_stock.up.sql"
+	report.Changes[0].Impacts[0].RequiredAction = domain.ActionModify
+	bundle := planning.BuildEvidenceBundle(report, planning.DefaultLimits())
+	change := bundle.Changes[0]
+	candidate := change.Candidates[0]
+	proposal := planning.FilePlan{
+		ChangeType: change.ChangeType, ElementID: change.ElementID, File: candidate.File,
+		Symbol: candidate.Symbol, Module: candidate.Module, Layer: candidate.Layer,
+		Action: domain.ActionModify, Summary: "Extend allowed status values.",
+		Steps: []string{"Update the existing status constraint."}, EvidenceIDs: []string{candidate.Evidence[0].ID},
+	}
+	checkpoint := planning.AgentSession{
+		ID: "legacy-session", Version: "1", Status: "NEEDS_REVIEW", Bundle: bundle,
+		Draft: []planning.FilePlan{proposal},
+		Decisions: []planning.CandidateDecision{{
+			ChangeType: change.ChangeType, ElementID: change.ElementID, File: candidate.File, Symbol: candidate.Symbol,
+			Verdict: planning.VerdictRelevant, EvidenceIDs: proposal.EvidenceIDs,
+		}},
+	}
+	if _, err := checkpoint.ChangePlan(); !errors.Is(err, planning.ErrAgentPlanIncomplete) {
+		t.Fatalf("fresh validation accepted a legacy edit: %v", err)
+	}
+	if err := s.Sessions.Save(ctx, checkpoint); err != nil {
+		t.Fatal(err)
+	}
+	if view, err := s.Get(ctx, checkpoint.ID); err != nil || view.Plan != nil {
+		t.Fatalf("unarchived invalid proposal was exposed: %+v, %v", view.Plan, err)
+	}
+	archive := planning.ChangePlan{
+		Version: planning.BundleVersion, AnalysisID: bundle.AnalysisID, InputFingerprint: bundle.InputFingerprint,
+		ContextID: bundle.ContextID, Status: planning.StatusNeedsReview, Plans: checkpoint.Draft,
+		ReviewIssues: []string{},
+		ChangeCoverage: []planning.ChangeCoverage{{
+			ChangeType: change.ChangeType, ElementID: change.ElementID, ElementName: change.ElementName,
+			Status: "PLANNED", Relevant: 1, Plans: 1,
+		}},
+	}
+	var err error
+	archive.PlanID, err = planning.ComputePlanID(archive)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Plans.Save(ctx, archive); err != nil {
+		t.Fatal(err)
+	}
+	view, err := s.Get(ctx, checkpoint.ID)
+	if err != nil || view.Plan == nil || view.Plan.PlanID != archive.PlanID || view.Plan.Status != planning.StatusNeedsReview {
+		t.Fatalf("archive was not restored by its original ID: %+v, %v", view.Plan, err)
+	}
+}
+
+func TestReviewGroupsOnlyExplicitSupportingFlowsWithoutSourceLeads(t *testing.T) {
+	r := fixtureReport()
+	task := r.Changes[0]
+	for _, kind := range []domain.ChangeType{domain.AddTask, domain.ModifyGatewayCondition} {
+		task.ChangeType = kind
+		flow := domain.Change{ChangeType: domain.ModifySequenceFlow, PartOf: task.NewElement.ID, NewElement: &domain.Element{ID: "edge"}}
+		independent := flow
+		independent.NewElement = &domain.Element{ID: "coded-edge"}
+		independent.Impacts = task.Impacts
+		orphan := flow
+		orphan.PartOf = "unknown"
+		orphan.NewElement = &domain.Element{ID: "orphan"}
+		r.Changes = []domain.Change{flow, task, independent, orphan}
+		b := planning.BuildAgentBundle(r, planning.DefaultLimits())
+		raw := planning.BuildEvidenceBundle(r, planning.DefaultLimits())
+		if len(b.Changes) != 3 || len(b.Changes[0].SupportingFlowIDs) != 1 || b.Changes[0].SupportingFlowIDs[0] != "edge" ||
+			b.Changes[1].ElementID != "coded-edge" || b.Changes[2].ElementID != "orphan" ||
+			b.Changes[0].Candidates[0].Evidence[0].ID != raw.Changes[1].Candidates[0].Evidence[0].ID {
+			t.Fatalf("incorrect planning units for %s: %+v", kind, b.Changes)
+		}
+	}
+	// Exercise the web worker's normal all-changes entry point.
+	task.ChangeType = domain.AddTask
+	r.Changes = []domain.Change{r.Changes[0], task}
+	s := service(t, &model{})
+	v, err := s.Start(context.Background(), r, "repo", -1, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := finish(t, s, v.SessionID)
+	if done.Status != "COMPLETE" || done.Plan == nil || len(done.Plan.ChangeCoverage) != 1 || done.FocusedReview.BatchesTotal != 1 {
+		t.Fatalf("supporting flow received a separate session: %+v", done)
+	}
+}
+
 func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 	m := &model{}
 	m.fail.Store(true)
@@ -152,7 +243,8 @@ func TestWorkerConnectionFailureResumeAndShutdown(t *testing.T) {
 		t.Fatal(err)
 	}
 	done := finish(t, s, v.SessionID)
-	if done.Status != "COMPLETE" || done.Turns != 5 {
+	// Failed Analyst + successful Analyst/Planner + one combined Reviewer.
+	if done.Status != "COMPLETE" || done.Turns != 4 {
 		t.Fatal("resume lost charged turns")
 	}
 	base, cancel := context.WithCancel(context.Background())

@@ -3,6 +3,56 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(__dirname, "../../..");
+
+test("review sends the selected BPMN change and resumes with its saved scope", async ({ page, request }) => {
+  const response = await request.post("/backend/api/v1/analyses", { multipart: {
+    repo_path: path.join(root, "testdata/repository"),
+    method: "bm25",
+    old_bpmn: { name: "old.bpmn", mimeType: "text/xml", buffer: fs.readFileSync(path.join(root, "testdata/bpmn/old.bpmn")) },
+    new_bpmn: { name: "new.bpmn", mimeType: "text/xml", buffer: fs.readFileSync(path.join(root, "testdata/bpmn/new.bpmn")) },
+  } });
+  expect(response.ok()).toBe(true);
+  const report = await response.json();
+  expect(report.changes.length).toBeGreaterThan(1);
+  const index = 1;
+  const sessionID = "7".repeat(32);
+  const provider = { provider: "fixture", model: "qwen-fixture", prompt_version: "v1" };
+  const checkpoint = {
+    session_id: sessionID, analysis_id: report.analysis_id, mode: "ultra-light",
+    change_index: index, status: "PAUSED", role: "analyst", turns: 1, tools: 0, revisions: 0, provider,
+  };
+  await page.route("**/api/v1/capabilities/agents/check", route => route.fulfill({
+    json: { enabled: true, available: true, provider },
+  }));
+  const starts: { change_index: number; session_id?: string; mode: string }[] = [];
+  await page.route(`**/api/v1/analyses/${report.analysis_id}/agent-sessions`, route => {
+    starts.push(route.request().postDataJSON());
+    return route.fulfill({ json: checkpoint });
+  });
+  await page.route(`**/api/v1/agent-sessions/${sessionID}`, route => route.fulfill({ json: checkpoint }));
+
+  await page.goto(`/?analysis=${report.analysis_id}&view=analysis`);
+  await page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true }).click();
+  const panel = page.getByTestId("qwen-review");
+  await panel.getByLabel("Repository path for AI review").fill("C:\\fixture-repo");
+  await panel.getByLabel("BPMN changes to review").selectOption(String(index));
+  await panel.getByRole("radio", { name: /Ultra Light/ }).check();
+  await panel.getByRole("button", { name: "Run AI review", exact: true }).click();
+  await expect.poll(() => starts.length).toBe(1);
+  expect(starts[0]).toMatchObject({ change_index: index, mode: "ultra-light" });
+
+  await page.evaluate(id => localStorage.removeItem(`bpmn-agent-session:v2:${id}`), report.analysis_id);
+  await page.goto(`/?analysis=${report.analysis_id}&agentSession=${sessionID}`);
+  await expect(panel.getByRole("heading", { name: /paused/i })).toBeVisible();
+  if (await panel.getByRole("button", { name: "Change path" }).isVisible()) {
+    await panel.getByRole("button", { name: "Change path" }).click();
+  }
+  await panel.getByLabel("Repository path for AI review").fill("C:\\fixture-repo");
+  await panel.getByRole("button", { name: "Resume review" }).click();
+  await expect.poll(() => starts.length).toBe(2);
+  expect(starts[1]).toMatchObject({ change_index: index, mode: "ultra-light", session_id: sessionID });
+});
+
 test("Qwen review shows scoped progress, plan and restores without another model start", async ({ page, request }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   const saved = await request.post("/backend/api/v1/analyses", { multipart: {
@@ -27,11 +77,16 @@ test("Qwen review shows scoped progress, plan and restores without another model
   await page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true }).click();
   const panel = page.getByTestId("qwen-review");
   await expect(panel).toContainText("Connected");
+  await expect(panel.getByRole("radio", {name: /Light review/})).toBeChecked();
+  await panel.getByRole("radio", {name: /Full repository review/}).check();
+  if (await panel.getByRole("button", {name: "Change path"}).isVisible()) {
+    await panel.getByRole("button", {name: "Change path"}).click();
+  }
   await panel.getByLabel("Repository path for AI review").fill("C:\\fixture-repo");
   await panel.getByRole("button", { name: "Run AI review", exact: true }).click();
   const stages = panel.getByRole("list", { name: "AI agent progress" });
   await expect(stages.locator('[data-state="active"]')).toHaveCount(1);
-  await expect(panel).toContainText("NEEDS REVIEW", { timeout: 20_000 });
+  await expect(panel.getByRole("heading", { name: /needs review/i })).toBeVisible({ timeout: 20_000 });
   await expect(stages.locator('[data-state="active"]')).toHaveCount(0);
   await expect(stages.locator('[data-state="review"]')).toContainText("Needs review");
   await expect(panel.getByRole("list",{name:"AI agent progress"})).toBeVisible();
@@ -55,10 +110,21 @@ test("Qwen review shows scoped progress, plan and restores without another model
   await expect(panel).toContainText("Query: validate reason");
   await expect(panel).toContainText("Returned source: application/submit.go");
   await expect(panel).toContainText("Next source window starts at line 42.");
+  await panel.getByRole("radio", {name: /Focused review/}).check();
+  await expect(panel.getByRole("link", {name: "Download plan Markdown"})).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const files = panel.getByRole("region", { name: "Proposed file edits" });
+  await expect(files).toBeVisible();
+  const row = files.locator("summary").first();
+  await row.focus(); await row.press("Enter");
+  await expect(files.getByText("Submit accepts an invalid amount.")).toBeHidden();
+  await row.press("Enter");
+  await expect(files.getByText("Submit accepts an invalid amount.")).toBeVisible();
+  expect(await panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   expect(starts).toBe(1);
   await page.reload();
   await page.getByRole("group", { name: "Analysis workflow" }).getByRole("button", { name: "Planning", exact: true }).click();
-  await expect(panel).toContainText("NEEDS REVIEW"); expect(starts).toBe(1);
+  await expect(panel.getByRole("heading", { name: /needs review/i })).toBeVisible(); expect(starts).toBe(1);
   await stages.screenshot({ path: test.info().outputPath("agent-stages.png") });
 });
 
@@ -69,6 +135,6 @@ test("historical null plan arrays show an empty result without crashing",async({
  await page.route("**/api/v1/capabilities/agents/check",r=>r.fulfill({json:{enabled:true,available:false,message:"Offline fixture"}}));
  await page.route(`**/api/v1/agent-sessions/${id}`,r=>r.fulfill({json:{session_id:id,analysis_id:report.analysis_id,status:"NEEDS_REVIEW",role:"planner",turns:2,tools:0,revisions:0,plan:{plan_id:"8".repeat(32),status:"NEEDS_REVIEW",plans:null,review_issues:["No valid plan for the selected requirement."]}}}));
  await page.goto(`/?analysis=${report.analysis_id}`);await page.getByRole("group",{name:"Analysis workflow"}).getByRole("button",{name:"Planning",exact:true}).click();
- const panel=page.getByTestId("qwen-review");await expect(panel.getByRole("heading",{name:"No file recommendations were produced"})).toBeVisible();await expect(panel).toContainText("No valid plan for the selected requirement.");expect(errors).toEqual([]);
- await page.reload();await page.getByRole("group",{name:"Analysis workflow"}).getByRole("button",{name:"Planning",exact:true}).click();await expect(panel.getByRole("heading",{name:"No file recommendations were produced"})).toBeVisible();expect(errors).toEqual([]);
+ const panel=page.getByTestId("qwen-review");await expect(panel.getByRole("heading",{name:"No source edits were proposed"})).toBeVisible();await expect(panel).toContainText("No valid plan for the selected requirement.");expect(errors).toEqual([]);
+ await page.reload();await page.getByRole("group",{name:"Analysis workflow"}).getByRole("button",{name:"Planning",exact:true}).click();await expect(panel.getByRole("heading",{name:"No source edits were proposed"})).toBeVisible();expect(errors).toEqual([]);
 });

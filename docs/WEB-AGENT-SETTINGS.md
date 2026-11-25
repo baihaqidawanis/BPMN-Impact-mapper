@@ -2,7 +2,7 @@
 
 Planning / AI Agents now has a **Model settings** disclosure. Review scope (Focused or Full repository) is independent from generation settings.
 
-For each of Analyst, Planner and Reviewer, select an installed local Ollama alias, thinking on/off and generation profile (baseline/coding). Context and output token limits are shared. The model input offers installed generation aliases from metadata; embeddings and remote/cloud aliases are excluded. Manual aliases are still verified on Apply.
+For each of Analyst, Planner and Reviewer, select an installed local Ollama alias from the dropdown, thinking on/off and generation profile (baseline/coding). Context and output token limits are shared. Refresh model list after registering a GGUF in Ollama; embeddings and remote/cloud aliases are excluded. The current configured alias remains visible if the catalog is unavailable, but Apply still verifies metadata.
 
 Use **Apply settings** before starting a new review. Apply checks metadata only: no inference, download, source execution or repository change. Invalid settings or unavailable/unsupported models preserve the previous configuration. Output includes thinking tokens; more output or context is not a guarantee of quality or speed.
 
@@ -15,9 +15,11 @@ Use **Apply settings** before starting a new review. Apply checks metadata only:
 - The endpoint and credentials cannot be changed through the settings payload. Cloud aliases cannot be used to bypass the existing local-model validation.
 - Changing settings does not rerun deterministic mapping or alter ranking weights. Reuse an intact saved analysis and start a new AI session.
 
-## Suggested next comparison
+## Next local trial
 
-Keep the same source/BPMN/candidate analysis and models; set only **Reviewer thinking = Off**. Apply, then start a new Focused review. Compare time, source selection and plan quality with the old checkpoint. This is a controlled trial, not a validated faster or more accurate profile.
+Use the [current Focused review trial](FOCUSED-COMBINED-REVIEW.md): Qwen3.5 35B-A3B for all roles, Thinking Off, Coding, context 32768, output 6144. Qwen3.8 import was blocked by disk space and further installation is deferred per lab guidance. Keep the same source/BPMN/candidate analysis. Start a new session after a model or prompt change. Offline checks do not establish better model accuracy.
+
+Check model and Apply distinguish a missing Ollama alias, unsupported thinking, embedding-only models, remote aliases and changed model identity. Unknown transport failures do not automatically mean the VPN disconnected. Raw server responses and URLs are not shown.
 
 ## Implementation and verification
 

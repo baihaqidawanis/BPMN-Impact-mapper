@@ -27,13 +27,7 @@ func (h Handler) agentCapability(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	model, err := h.Agents.InspectModel(ctx)
-	message := "Local model metadata is available. No source or inference request was sent."
-	if err != nil {
-		message = "Model unavailable. Check VPN, SSH tunnel and installed model."
-	}
-	if errors.Is(err, agentjobs.ErrBusy) {
-		message = "A review is running. Model metadata remains pinned until it finishes."
-	}
+	message := agentjobs.ModelCheckMessage(err)
 	if model == nil {
 		writeJSON(w, 200, map[string]any{"enabled": false, "available": false, "message": "Model is not configured."})
 		return

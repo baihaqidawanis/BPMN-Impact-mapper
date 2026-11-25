@@ -29,7 +29,9 @@ def model_artifact_sha256(model, model_name):
         value = tensor.detach().cpu().contiguous()
         digest.update(str(value.dtype).encode("ascii"))
         digest.update(str(tuple(value.shape)).encode("ascii"))
-        digest.update(value.numpy().tobytes())
+        # Hash the same contiguous bytes without allocating another copy of the
+        # vocabulary embedding matrix (hundreds of MB on multilingual models).
+        digest.update(memoryview(value.numpy()).cast("B"))
     tokenizer = getattr(model[0], "tokenizer", None)
     if tokenizer is not None:
         digest.update(json.dumps(tokenizer.get_vocab(), sort_keys=True, separators=(",", ":")).encode("utf-8"))
@@ -55,19 +57,21 @@ def main():
         normalize_embeddings=True,
         show_progress_bar=False,
     )
-    json.dump(
-        {
-            "dimension": int(model.get_sentence_embedding_dimension()),
-            "runtime": {
-                "python_version": platform.python_version(),
-                "sentence_transformers_version": sentence_transformers.__version__,
-                "model_artifact_sha256": model_artifact_sha256(model, model_name),
-            },
-            "vectors": [[round(float(value), 8) for value in vector] for vector in vectors],
-        },
-        sys.stdout,
-        separators=(",", ":"),
-    )
+    metadata = {
+        "python_version": platform.python_version(),
+        "sentence_transformers_version": sentence_transformers.__version__,
+        "model_artifact_sha256": model_artifact_sha256(model, model_name),
+    }
+    # Stream rows to the Go decoder without retaining a Python float object
+    # for every coordinate in the repository.
+    sys.stdout.write('{"dimension":' + str(int(model.get_sentence_embedding_dimension())) + ',"runtime":')
+    json.dump(metadata, sys.stdout, separators=(",", ":"))
+    sys.stdout.write(',"vectors":[')
+    for index, vector in enumerate(vectors):
+        if index:
+            sys.stdout.write(",")
+        sys.stdout.write(json.dumps([round(float(v), 8) for v in vector], separators=(",", ":")))
+    sys.stdout.write("]}")
 
 
 if __name__ == "__main__":

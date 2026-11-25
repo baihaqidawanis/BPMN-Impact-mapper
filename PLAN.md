@@ -1,3 +1,7 @@
+# Status kerja aktif
+
+Baca [collab/STATUS.md](collab/STATUS.md) untuk checkpoint terbaru dan [alur Focused](docs/FOCUSED-COMBINED-REVIEW.md). Bagian di bawah memuat backlog/hasil historis; jangan menganggap semua TODO lama adalah prioritas sekarang.
+
 # BPMN Impact Mapper — Phase 1 Plan
 
 Status: **DONE — Phase 4.0 persisted analysis history verified**
@@ -1027,7 +1031,7 @@ reproducibility checks, not retrieval-accuracy claims.
 Authorization: user instruction on 2026-10-14 to implement the six remaining
 development steps before discussing evaluation metrics.
 
-- [DONE] Add root `BASELINE-METHODS.md` with the four method contracts,
+- [DONE] Add root `docs/METHODOLOGY.md` with the four method contracts,
   limitations, and primary literature; correct the stale Hybrid/Semantic note.
 - [DONE] Bind semantic reports and analysis identity to adapter SHA-256, Python
   version, sentence-transformers version, embedding dimension, and loaded model
@@ -2579,7 +2583,7 @@ identical JSON, expected primary anchor and evidence-bearing matches; unchanged
 control has zero edits/candidates. 10 logic tests and 12 browser tests pass
 (all diagrams, workspace auto-path/refresh, Qwen mocked checkpoint recovery).
 Architecture/parser/diff tests pass. No semantic/Qwen real-model accuracy claim.
-Read docs/PRE-QWEN-HANDOFF.md for the single current test entry point. Source
+Read docs/FOCUSED-COMBINED-REVIEW.md for the single current test entry point. Source
 review is provisional, not independent ground truth. ERP files not modified.
 The default tempfile scratch ACL failed under Windows sandbox; ordinary ignored
 outputs/pre-qwen-ready/rebuilt was used for the reproducibility check instead.

@@ -1,9 +1,13 @@
+export type ReviewMode = "focused" | "light" | "ultra-light" | "full";
+
 import type { ChangePlan, FullReviewProgress, PlanningContext, ProviderIdentity } from "./planning";
 
 export interface AgentCapability { enabled: boolean; available: boolean; provider?: ProviderIdentity; role_models?:Partial<Record<"analyst"|"planner"|"reviewer",ProviderIdentity>>; message: string }
 export interface AgentSession {
-  focused_review?: {outcome_counts_available?:boolean; batches_approved?:number; batches_needing_review?:number; batches_total:number; batches_reviewed:number; candidates_total:number; candidates_processed:number};
-  mode?: "focused" | "full"; full_review?: FullReviewProgress;
+  active_ms?: number;
+  change_index?: number;
+  focused_review?: {combined_review_only?:boolean; batches_prepared?:number; outcome_counts_available?:boolean; batches_approved?:number; batches_needing_review?:number; batches_total:number; batches_reviewed:number; candidates_total:number; candidates_processed:number};
+  mode?: ReviewMode; full_review?: FullReviewProgress;
   session_id: string; analysis_id: string; status: string; role: string;
   turns: number; tools: number; revisions: number; provider: ProviderIdentity;
   message?: string; plan?: ChangePlan; context?: PlanningContext;
@@ -20,7 +24,7 @@ async function responseJSON<T>(response: Response): Promise<T> {
 export async function checkAgent(): Promise<AgentCapability> {
   return responseJSON(await fetch("/backend/api/v1/capabilities/agents/check", { method: "POST" }));
 }
-export async function startAgent(analysisID: string, repositoryPath: string, changeIndex: number, sessionID?: string, mode: "focused" | "full" = "focused"): Promise<AgentSession> {
+export async function startAgent(analysisID: string, repositoryPath: string, changeIndex: number, sessionID?: string, mode: ReviewMode = "focused"): Promise<AgentSession> {
   return responseJSON(await fetch(`/backend/api/v1/analyses/${encodeURIComponent(analysisID)}/agent-sessions`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ repository_path: repositoryPath, change_index: changeIndex, session_id: sessionID, mode }),

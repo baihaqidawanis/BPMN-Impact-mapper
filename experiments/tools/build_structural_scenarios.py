@@ -34,13 +34,23 @@ def remove(process, id):
             if ref.tag==tag('flowNodeRef') and ref.text==id: lane.remove(ref)
 def refresh(process):
     nodes={n.get('id'):n for n in process if n.tag not in [tag('sequenceFlow'),tag('laneSet'),tag('documentation')]}
+    refs = {identifier: {'incoming': [], 'outgoing': []} for identifier in nodes}
     for value in nodes.values():
         for child in list(value):
             if child.tag in [tag('incoming'),tag('outgoing')]: value.remove(child)
     for edge in process.findall(tag('sequenceFlow')):
         for attr,kind in [('sourceRef','outgoing'),('targetRef','incoming')]:
             if edge.get(attr) not in nodes: raise ValueError('dangling flow '+edge.get('id'))
-            ET.SubElement(nodes[edge.get(attr)],tag(kind)).text=edge.get('id')
+            refs[edge.get(attr)][kind].append(edge.get('id'))
+    metadata = {tag(name) for name in ('documentation', 'extensionElements', 'auditing', 'monitoring', 'categoryValueRef')}
+    for identifier, element in nodes.items():
+        index = next((i for i, child in enumerate(element) if child.tag not in metadata), len(element))
+        for kind in ('incoming', 'outgoing'):
+            for flow_id in refs[identifier][kind]:
+                ref = ET.Element(tag(kind))
+                ref.text = flow_id
+                element.insert(index, ref)
+                index += 1
     return nodes
 def diagram(root):
     process=root.find(tag('process')); nodes=refresh(process)

@@ -10,7 +10,7 @@ test("library and history filters compose, reset, and recover after refresh fail
   await page.route("**/api/v1/bpmn-library",route=>route.fulfill({json:{entries}}));
   await page.route("**/api/v1/analyses",route=>route.fulfill(fail?{status:503,json:{}}:{json:{analyses:[
     {analysis_id:"a".repeat(32),repository:{name:"ERP",revision:"baseline-1"},method:"bm25",changes:1,candidates:5,unresolved:0,warnings:0},
-    {analysis_id:"b".repeat(32),repository:{name:"CRM",revision:"baseline-2"},method:"hybrid",changes:2,candidates:10,unresolved:1,warnings:0},
+    {analysis_id:"b".repeat(32),repository:{name:"CRM",revision:"baseline-2"},change_label:"Check customer status",method:"hybrid",changes:2,candidates:10,unresolved:1,warnings:0},
   ]}}));
   await page.goto("/?view=library");
   const library=page.getByRole("region",{name:"BPMN library"});
@@ -32,6 +32,8 @@ test("library and history filters compose, reset, and recover after refresh fail
   await history.getByLabel("Find reports").fill("baseline-2");
   await expect(history.locator("article")).toHaveCount(1);
   await expect(history.locator("article")).toContainText("CRM");
+  await history.getByLabel("Find reports").fill("customer status");
+  await expect(history.locator("article")).toHaveCount(1);
   await history.getByLabel("Find reports").fill("missing-report");
   await expect(history.getByText("No matching reports. Change the search or clear filters.")).toBeVisible();
   await history.getByRole("button",{name:"Clear filters",exact:true}).click();

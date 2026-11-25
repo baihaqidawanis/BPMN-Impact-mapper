@@ -11,6 +11,10 @@ import (
 )
 
 func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
+	return buildEvidenceBundle(report, limits, false)
+}
+
+func buildEvidenceBundle(report domain.Report, limits Limits, agent bool) EvidenceBundle {
 	defaults := DefaultLimits()
 	if limits.CandidatesPerChange <= 0 {
 		limits.CandidatesPerChange = defaults.CandidatesPerChange
@@ -94,11 +98,28 @@ func BuildEvidenceBundle(report domain.Report, limits Limits) EvidenceBundle {
 				File: impact.File, Symbol: impact.Symbol, Module: impact.Module, Layer: impact.Layer,
 				SuggestedAction: impact.RequiredAction, RetrievalScore: &score, Evidence: []EvidenceItem{},
 			}
-			evidence := append([]domain.Evidence(nil), impact.Evidence...)
-			if len(evidence) > limits.EvidencePerCandidate {
-				evidence = evidence[:limits.EvidencePerCandidate]
+			seenExcerpt := map[[2]string]bool{}
+			// A metadata-only candidate remains available as a search lead.
+			hasExcerpt := false
+			if agent {
+				for _, item := range impact.Evidence {
+					if item.Type != "PATH" && item.Type != "RRF_FUSION" && item.Excerpt != "" {
+						hasExcerpt = true
+						break
+					}
+				}
 			}
-			for evidenceIndex, item := range evidence {
+			for evidenceIndex, item := range impact.Evidence {
+				if len(candidate.Evidence) == limits.EvidencePerCandidate {
+					break
+				}
+				if agent {
+					key := [2]string{item.Location, item.Excerpt}
+					if seenExcerpt[key] || (hasExcerpt && (item.Type == "PATH" || item.Type == "RRF_FUSION" || item.Excerpt == "")) {
+						continue
+					}
+					seenExcerpt[key] = true
+				}
 				candidate.Evidence = append(candidate.Evidence, EvidenceItem{
 					ID:   fmt.Sprintf("CH%02d-C%02d-E%02d", changeIndex+1, candidateIndex+1, evidenceIndex+1),
 					Type: item.Type, Location: item.Location, Excerpt: boundedRunes(item.Excerpt, limits.ExcerptRunes),

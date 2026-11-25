@@ -282,7 +282,7 @@ The context records bounded predecessor/successor identities and sorted related 
 
 ## BM25
 
-Tokenization lowercases Unicode letters/digits and splits punctuation, snake/kebab separators, and camel-case boundaries. Domain stop words are not removed. BM25 uses `k1=1.2`, `b=0.75`, and:
+Tokenization lowercases Unicode letters and digits and splits punctuation, snake/kebab separators, and camel-case boundaries. The BM25 mapping query removes `dan`, `yang`, `and`, and `the`. It retains condition words such as `tidak` and `atau` and adds the aliases `alasan` → `reason` and `versi` → `version` alongside the original terms. The report records this profile in method metadata. BM25 uses `k1=1.2`, `b=0.75`, and:
 
 ```text
 IDF(q) = ln(1 + (N - df(q) + 0.5) / (df(q) + 0.5))
@@ -382,3 +382,64 @@ stored in canonical report metadata. Semantic participates in BPMN-Context-Aware
 Hybrid through RRF; it cannot promote deterministic actions. Cross-machine
 numerical reproducibility and retrieval accuracy remain evaluation work. See
 [SEMANTIC_RETRIEVAL.md](SEMANTIC_RETRIEVAL.md).
+
+## Frozen acceptance criteria for the thesis evaluation
+
+These are project targets agreed on 24 November 2026. Before the final run,
+freeze the test scenarios, independent ground truth, source revision, Top K,
+model configuration and scoring protocol. Treat scenarios used for tuning as
+development cases. Report per-scenario counts alongside macro-averages, with
+each scenario contributing equal weight.
+
+| Stage | Internal threshold |
+|---|---|
+| Hybrid retrieval | Macro Recall@10 ≥ 90%. Report Precision@10 and MAP using the same ranking cutoff across methods. |
+| Agent file selection | Macro precision ≥ 75% and macro recall ≥ 90%. For a scenario to pass its coverage check, it must find every file marked mandatory in its frozen reference. |
+| Change Plan Markdown | At least 80/100 per plan and no critical error. Report the average score and the number of plans that pass both criteria. |
+
+For file selection, deduplicate existing file paths within the same frozen
+scope. Precision is the number of correct edit proposals divided by all
+proposed existing-file edits. Recall is the same numerator divided by the
+number of expected existing files. Exclude `NO_ACTION` and `VERIFY` from
+the proposed edit list. Score newly required files in the plan rubric.
+On a positive reference with no predicted edits, record precision and recall
+as zero for the macro-average. Report no-change controls separately by whether
+they trigger a false edit. Keep the raw counts since small references produce
+large percentage steps.
+
+### Change Plan Markdown rubric
+
+Score each published plan against the frozen BPMN, requirement checklist and
+source snapshot. Award full points when the check is supported and complete,
+half points when the direction is correct but incomplete, and zero for
+missing, unsupported or contradictory content. Record the plan section and
+the requirement or source reference that justifies each score. Two reviewers
+score independently, then reconcile differences and record the final agreed
+score. The agent's own approval is recorded separately.
+
+| Check | What earns full points | Points |
+|---|---|---:|
+| Business predicate | Matches the BPMN guard and evaluates data at the correct level, such as individual lines. | 10 |
+| Branch outcomes | Names the correct result and side effects for each changed path. | 10 |
+| Enforcement | Preserves the required authorization, validation, persistence and transaction boundaries. | 10 |
+| Existing behavior | Keeps unaffected paths and explains which behavior still applies. | 10 |
+| Current behavior | Describes the code's actual behavior with verifiable source evidence. | 10 |
+| Implementation ownership | Identifies the actual code path and the function or component responsible for the change. | 10 |
+| Prerequisites | Accounts for schema, API or configuration dependencies when the requirement introduces them. | 5 |
+| Success checks | Defines runnable acceptance cases with concrete inputs and observable expected results. | 10 |
+| Failure and regression checks | Covers applicable invalid inputs, edge cases and existing behavior that must keep working. | 10 |
+| Implementation steps | Orders concrete edits and dependencies so a developer can implement the change. | 10 |
+| Internal consistency | Uses the same predicates, outcomes and assumptions across all sections. | 5 |
+
+A critical error makes the plan fail even when the numeric score is 80 or
+higher. Critical errors include reversing a required business outcome,
+allowing an unauthorized mutation, reporting success before a required write
+or commit, and omitting a prerequisite that prevents the specified result
+from being stored or reached. Contradictory instructions that allow any of
+those outcomes also count. Record the numeric score and the critical error
+separately.
+
+For example, the Skip reference expects all-zero lines to produce
+`NO_ADJUSTMENT` and any nonzero line to produce `SUBMITTED`. A plan that
+tells a developer to reject the nonzero branch fails the critical check,
+even if its file-selection metrics are perfect.

@@ -19,6 +19,7 @@ test("new analysis is saved and reopens after refresh without another analysis P
   await page.getByRole("group", { name: "Analysis mode" }).getByRole("button", { name: "Research", exact: true }).click();
   await page.getByLabel("Experimental method", { exact: true }).selectOption("bm25");
   await page.locator('input[name="repo_path"]').fill(path.join(root, "testdata/repository"));
+  await page.getByText("Repository name & revision", { exact: false }).click();
   await page.locator('input[name="repository_name"]').fill("Refresh integration fixture");
   await page.locator('input[name="old_bpmn"]').setInputFiles(path.join(root, "testdata/bpmn/old.bpmn"));
   await page.locator('input[name="new_bpmn"]').setInputFiles(path.join(root, "testdata/bpmn/new.bpmn"));
@@ -90,6 +91,7 @@ test("saved BPMN pair restores both canvases and complete process context", asyn
  expect(Object.keys(context.process_context.before.Elements).length).toBeGreaterThan(0);
  expect(Object.keys(context.process_context.after.Flows).length).toBeGreaterThan(0);
  await page.goto(`/?analysis=${report.analysis_id}`);
+ await page.getByRole("button", { name: "Edit analysis inputs", exact: true }).click();
  await expect(page.locator('label').filter({ has: page.locator('input[name="old_bpmn"]') }).getByText("baseline.bpmn", { exact: true })).toBeVisible();
  await page.getByRole("group",{name:"Analysis workflow"}).getByRole("button",{name:"Canvas",exact:true}).click();
  await expect.poll(()=>page.locator('.djs-container').count()).toBeGreaterThanOrEqual(2);

@@ -17,6 +17,7 @@ export interface PlanningCandidate {
 }
 
 export interface PlanningChange {
+  supporting_flow_ids?: string[];
   before?: { id: string; name?: string; type: string; actor?: string; state?: string; documentation?: string; default_flow?: string };
   after?: { id: string; name?: string; type: string; actor?: string; state?: string; documentation?: string; default_flow?: string };
   branch_changes?: { flow_id: string; old_condition?: string; new_condition?: string; old_label?: string; new_label?: string }[];

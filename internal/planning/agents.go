@@ -17,7 +17,9 @@ import (
 type AgentRole string
 
 const (
-	AgentProtocolVersion           = "agent-loop-v11"
+	// Allows local Thinking models to finish while keeping stuck calls cancellable.
+	AgentTurnTimeout               = 10 * time.Minute
+	AgentProtocolVersion           = "agent-loop-v12-evidence-scope"
 	Analyst              AgentRole = "analyst"
 	Planner              AgentRole = "planner"
 	Reviewer             AgentRole = "reviewer"
@@ -150,6 +152,10 @@ type AgentEvent struct {
 // A checkpoint is saved before every external turn. Failed turns consume budget
 // and can be retried, but an exhausted session cannot reset its own counters.
 type FocusedReviewProgress struct {
+	Light                  bool `json:"light,omitempty"`
+	UltraLight             bool `json:"ultra_light,omitempty"`
+	BatchesPrepared        int  `json:"batches_prepared,omitempty"`
+	CombinedReviewOnly     bool `json:"combined_review_only,omitempty"`
 	OutcomeCountsAvailable bool `json:"outcome_counts_available,omitempty"`
 	BatchesApproved        int  `json:"batches_approved,omitempty"`
 	BatchesNeedingReview   int  `json:"batches_needing_review,omitempty"`
@@ -160,36 +166,41 @@ type FocusedReviewProgress struct {
 }
 
 type AgentSession struct {
-	LastReview        *AgentReview           `json:"last_review,omitempty"`
-	FocusedReview     *FocusedReviewProgress `json:"focused_review,omitempty"`
-	ProgressMessage   string                 `json:"progress_message,omitempty"`
-	ActiveChildID     string                 `json:"active_child_id,omitempty"`
-	ConsistencyReview *AgentReview           `json:"consistency_review,omitempty"`
-	FullReview        *FullReviewProgress    `json:"full_review,omitempty"`
-	ReviewedChunk     *RepositoryChunk       `json:"reviewed_chunk,omitempty"`
-	Version           string                 `json:"version"`
-	ID                string                 `json:"id"`
-	Binding           string                 `json:"binding"`
-	Identity          ProviderIdentity       `json:"identity"`
-	Budget            AgentBudget            `json:"budget"`
-	Bundle            EvidenceBundle         `json:"bundle"`
-	Role              AgentRole              `json:"role"`
-	Status            string                 `json:"status"`
-	Turns             int                    `json:"turns"`
-	Tools             int                    `json:"tools"`
-	Revisions         int                    `json:"revisions"`
-	OutputRepairs     int                    `json:"output_repairs,omitempty"`
-	Decisions         []CandidateDecision    `json:"decisions"`
-	Draft             []FilePlan             `json:"draft"`
-	Feedback          []string               `json:"feedback"`
-	Observations      []ToolObservation      `json:"observations"`
-	Events            []AgentEvent           `json:"events"`
+	ActiveMillis           *int64                 `json:"active_ms,omitempty"`
+	ChangeIndex            *int                   `json:"change_index,omitempty"`
+	AwaitingCombinedReview bool                   `json:"awaiting_combined_review,omitempty"`
+	LastReview             *AgentReview           `json:"last_review,omitempty"`
+	FocusedReview          *FocusedReviewProgress `json:"focused_review,omitempty"`
+	ProgressMessage        string                 `json:"progress_message,omitempty"`
+	ActiveChildID          string                 `json:"active_child_id,omitempty"`
+	ConsistencyReview      *AgentReview           `json:"consistency_review,omitempty"`
+	FullReview             *FullReviewProgress    `json:"full_review,omitempty"`
+	ReviewedChunk          *RepositoryChunk       `json:"reviewed_chunk,omitempty"`
+	Version                string                 `json:"version"`
+	ID                     string                 `json:"id"`
+	Binding                string                 `json:"binding"`
+	Identity               ProviderIdentity       `json:"identity"`
+	Budget                 AgentBudget            `json:"budget"`
+	Bundle                 EvidenceBundle         `json:"bundle"`
+	Role                   AgentRole              `json:"role"`
+	Status                 string                 `json:"status"`
+	Turns                  int                    `json:"turns"`
+	Tools                  int                    `json:"tools"`
+	Revisions              int                    `json:"revisions"`
+	OutputRepairs          int                    `json:"output_repairs,omitempty"`
+	TestImpactRecheck      bool                   `json:"test_impact_recheck,omitempty"`
+	Decisions              []CandidateDecision    `json:"decisions"`
+	Draft                  []FilePlan             `json:"draft"`
+	Feedback               []string               `json:"feedback"`
+	Observations           []ToolObservation      `json:"observations"`
+	Events                 []AgentEvent           `json:"events"`
 }
 
 var ErrAgentSessionMissing = errors.New("agent session not found")
 
 var ErrAgentModelOutput = errors.New("agent model output invalid or incomplete")
 var ErrAgentContextLimit = errors.New("agent context limit exceeded")
+var ErrAgentOutputLimit = errors.New("output token limit reached before JSON completed")
 var ErrAgentPlanIncomplete = errors.New("agent plan requires proposed_changes and acceptance_checks for every file")
 
 type AgentSessionStore interface {
@@ -198,6 +209,11 @@ type AgentSessionStore interface {
 }
 
 type AgentEngine struct {
+	InspectWeak      bool
+	RelatedProposals []ProposalContract
+	DeferReview      bool
+	InitialFeedback  []string
+	InitialDraft     []FilePlan
 	InitialDecisions []CandidateDecision
 	Model            AgentModel
 	Tools            SourceTools
@@ -255,13 +271,17 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 		return AgentSession{}, errors.New("model and source snapshot identity required")
 	}
 	binding := agentDigest(struct {
-		Protocol string
-		Context  string
-		Model    ProviderIdentity
-		Tools    string
-		Budget   AgentBudget
-		Verified []CandidateDecision
-	}{AgentProtocolVersion, original.ContextID, identity, engine.Tools.Identity(), b, engine.InitialDecisions})
+		Protocol    string
+		Context     string
+		Model       ProviderIdentity
+		Tools       string
+		Budget      AgentBudget
+		Verified    []CandidateDecision
+		DeferReview bool
+		Feedback    []string
+		Draft       []FilePlan
+		Related     []ProposalContract
+	}{AgentProtocolVersion, original.ContextID, identity, engine.Tools.Identity(), b, engine.InitialDecisions, engine.DeferReview, engine.InitialFeedback, engine.InitialDraft, engine.RelatedProposals})
 	s, err := engine.Store.Load(ctx, id)
 	if errors.Is(err, ErrAgentSessionMissing) {
 		// Detach slices from the caller; discoveries must never mutate its report.
@@ -269,6 +289,7 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 		var bundle EvidenceBundle
 		_ = json.Unmarshal(data, &bundle)
 		s = AgentSession{Version: "1", ID: id, Binding: binding, Identity: identity, Budget: b, Bundle: bundle, Role: Analyst, Status: "RUNNING"}
+		s.Feedback = append([]string(nil), engine.InitialFeedback...)
 		if len(engine.InitialDecisions) > 0 {
 			count := 0
 			for _, change := range bundle.Changes {
@@ -289,6 +310,12 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 
 			s.Decisions = engine.InitialDecisions
 			s.Role = Planner
+			if len(engine.InitialDraft) > 0 {
+				if err := validatePlans(bundle, s.Decisions, "", engine.InitialDraft); err != nil {
+					return s, err
+				}
+				s.Draft = append([]FilePlan(nil), engine.InitialDraft...)
+			}
 		}
 	} else if err != nil {
 		return s, err
@@ -320,8 +347,15 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 			return s, err
 		}
 		// A provider must honor cancellation. One turn cannot run indefinitely.
-		turnCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+		turnCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 		turn := AgentTurn{Role: s.Role, Bundle: s.Bundle, Decisions: s.Decisions, Draft: s.Draft, Feedback: s.Feedback, Observations: s.Observations, RemainingTools: s.Budget.MaxTools - s.Tools, RemainingRevisions: s.Budget.MaxRevisions - s.Revisions}
+		if engine.InspectWeak && s.Role == Analyst {
+			// The host spends this batch's tool budget after the first verdicts.
+			turn.RemainingTools = 0
+		}
+		if s.Role == Planner {
+			turn.RelatedProposals = engine.RelatedProposals
+		}
 		data, _ := json.Marshal(turn)
 		var detached AgentTurn
 		_ = json.Unmarshal(data, &detached)
@@ -334,14 +368,14 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 			reply, callErr = engine.Model.Turn(turnCtx, detached)
 		}
 		cancel()
-		if !fileReview && errors.Is(callErr, ErrAgentContextLimit) && s.Role == Reviewer && len(s.Draft) > 0 {
+		if !fileReview && (errors.Is(callErr, ErrAgentContextLimit) || errors.Is(callErr, ErrAgentOutputLimit)) && s.Role == Reviewer && len(s.Draft) > 0 {
 			reply, callErr = engine.reviewOversizedBatch(ctx, &s)
 		}
-		if errors.Is(callErr, ErrAgentContextLimit) && s.Role == Planner {
+		if (errors.Is(callErr, ErrAgentContextLimit) || errors.Is(callErr, ErrAgentOutputLimit)) && s.Role == Planner {
 			reply, callErr = engine.planOversizedBatch(ctx, &s)
 		}
 		if callErr != nil {
-			if (errors.Is(callErr, ErrAgentModelOutput) || errors.Is(callErr, ErrAgentPlanIncomplete)) && s.OutputRepairs < 1 {
+			if !errors.Is(callErr, ErrAgentOutputLimit) && (errors.Is(callErr, ErrAgentModelOutput) || errors.Is(callErr, ErrAgentPlanIncomplete)) && s.OutputRepairs < 1 {
 				s.OutputRepairs++
 				s.Feedback = []string{modelOutputFeedback(s.Role, callErr)}
 				var saveErr error
@@ -371,12 +405,19 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 					s.Feedback = append(s.Feedback, "Turn budget exhausted after invalid model output; automatic resume cannot grant more turns. No approval was inferred.")
 				}
 			}
+			if errors.Is(callErr, ErrAgentOutputLimit) {
+				kind = "OUTPUT_LIMIT"
+				s.Feedback = append(s.Feedback, "Generation capacity exhausted; splitting may help multi-target requests. A single target may need Thinking Off or a larger output budget.")
+			}
 			checkpoint, stop := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 			var saveErr error
 			s, saveErr = engine.save(checkpoint, s, kind)
 			stop()
 			if saveErr != nil {
 				return s, saveErr
+			}
+			if kind == "OUTPUT_LIMIT" {
+				return s, ErrAgentOutputLimit
 			}
 			if kind == "MODEL_OUTPUT_INVALID" {
 				return s, ErrAgentModelOutput
@@ -499,14 +540,29 @@ func (engine AgentEngine) apply(ctx context.Context, s *AgentSession, r AgentRep
 				}
 			}
 			found := false
+			match := -1
 			for i, c := range change.Candidates {
-				if candidateKey(c.File, c.Symbol) == candidateKey(candidate.File, candidate.Symbol) || (c.File == candidate.File && (c.Symbol == "" || (q.Name == "read_source" || q.Name == "inspect_source"))) {
-					sourceRead := q.Name == "read_source" || q.Name == "inspect_source" || q.Name == "read_function"
-					change.Candidates[i].Evidence = MergeAgentEvidence(c.Evidence, candidate.Evidence, sourceRead)
-
-					found = true
+				// File windows must not become proof about the first function
+				// in a file. Keep the source tool's exact target identity.
+				if candidateKey(c.File, c.Symbol) == candidateKey(candidate.File, candidate.Symbol) {
+					match = i
 					break
 				}
+			}
+			// A named function is valid evidence for its whole file, but not
+			// the reverse. Prefer an exact function target whenever present.
+			if match < 0 && candidate.Symbol != "" {
+				for i, c := range change.Candidates {
+					if c.File == candidate.File && c.Symbol == "" {
+						match = i
+						break
+					}
+				}
+			}
+			if match >= 0 {
+				sourceRead := q.Name == "read_source" || q.Name == "inspect_source" || q.Name == "read_function"
+				change.Candidates[match].Evidence = MergeAgentEvidence(change.Candidates[match].Evidence, candidate.Evidence, sourceRead)
+				found = true
 			}
 			if found {
 				continue
@@ -548,9 +604,39 @@ func (engine AgentEngine) apply(ctx context.Context, s *AgentSession, r AgentRep
 		if count != len(r.Verification.Decisions) {
 			return errors.New("unknown change in decisions")
 		}
+		if engine.InspectWeak && s.Tools == 0 {
+			for _, request := range weakSourceRequests(s.Bundle, r.Verification.Decisions, s.Budget.MaxTools) {
+				if err := engine.apply(ctx, s, AgentReply{Tool: &request}, original); err != nil {
+					return err
+				}
+			}
+			if s.Tools > 0 {
+				s.Feedback = []string{"Reassess candidates together using the inspected source. When inspected source shows the live store/service/handler method for the affected entity and action (and it currently lacks the new BPMN branch or status), mark that owner RELEVANT — and mark any historical SQL migration defining its table/CHECK constraint RELEVANT as schema evidence. If find_callers shows a /domain/ method has only test callers or lacks the evaluated snapshot/item fields, mark it WEAK or REJECT rather than moving persistence logic there. Match argument positions to the declaration and trace the value from the caller or UI payload to the operation. An existing success test is affected if its input or outcome changes. Mark unrelated sibling modules REJECT and keep WEAK when source still does not establish a required edit."}
+				return nil
+			}
+		}
+		if engine.InspectWeak && s.TestImpactRecheck {
+			for _, prior := range s.Decisions {
+				if !lightTestRole(lightFileRole(prior.File, "", "")) || prior.Verdict != VerdictWeak {
+					for i, next := range r.Verification.Decisions {
+						if prior.ChangeType == next.ChangeType && prior.ElementID == next.ElementID && prior.File == next.File && prior.Symbol == next.Symbol {
+							r.Verification.Decisions[i] = prior
+							break
+						}
+					}
+				}
+			}
+		}
+		if engine.InspectWeak && !s.TestImpactRecheck && s.Turns+1 < s.Budget.MaxTurns && hasInspectedWeakTestWithRelated(r.Verification.Decisions, s.Observations, hasRelatedImplementationProposal(engine.RelatedProposals, s.Bundle.Changes)) {
+			s.TestImpactRecheck = true
+			s.Decisions = r.Verification.Decisions
+			s.Feedback = []string{"Check the inspected tests once more. Start with the inspected call and its enclosing test. Use the caller that exercises the same operation and entity as the changed BPMN. Another test in the same file may use the same action name on a different entity. Cite the actual input and expected outcome, then apply the proposed BPMN rule to it. A test needs an edit if its existing success path would now fail or its assertion must change, including calls made during setup. Keep WEAK when source does not establish the call and its consequence. Return decisions for all targets."}
+			return nil
+		}
 		s.Decisions = r.Verification.Decisions
 		s.Draft = nil
 		s.LastReview = nil
+		s.Feedback = nil
 		s.Role = Planner
 	case Planner:
 		if r.Plan == nil {
@@ -572,6 +658,11 @@ func (engine AgentEngine) apply(ctx context.Context, s *AgentSession, r AgentRep
 			return err
 		}
 		for _, p := range r.Plan.Plans {
+			if err := validateUncalledDomainMethodEdit(s.Observations, p); err != nil {
+				return err
+			}
+		}
+		for _, p := range r.Plan.Plans {
 			if p.Action == domain.ActionNoAction {
 				continue
 			}
@@ -579,12 +670,25 @@ func (engine AgentEngine) apply(ctx context.Context, s *AgentSession, r AgentRep
 				return ErrAgentPlanIncomplete
 			}
 		}
+		var deferredMigrationWarnings []string
+		if migErr := validateMigrationPrerequisitesWithRelated(s.Bundle, r.Plan.Plans, engine.RelatedProposals); migErr != nil {
+			if s.Turns+1 < s.Budget.MaxTurns {
+				return migErr
+			}
+			deferredMigrationWarnings = migrationPrerequisiteIssuesWithRelated(s.Bundle, r.Plan.Plans, engine.RelatedProposals)
+		}
 		s.Draft = r.Plan.Plans
 		s.LastReview = nil
 		s.Role = Reviewer
 		if len(s.Draft) == 0 {
 			s.Status = "NEEDS_REVIEW"
 			s.Feedback = append(s.Feedback, "No source-supported file proposal was produced; uncertain candidates remain unresolved.")
+		} else if engine.DeferReview {
+			s.Status = "NEEDS_REVIEW"
+			s.AwaitingCombinedReview = true
+			s.Feedback = deferredMigrationWarnings
+		} else if len(deferredMigrationWarnings) > 0 {
+			s.Feedback = append(s.Feedback, deferredMigrationWarnings...)
 		}
 	case Reviewer:
 		if r.Review == nil {
@@ -634,11 +738,24 @@ func agentRelativeFile(file string) bool {
 // ChangePlan exports the reviewed session through the existing canonical plan
 // renderer/store contract. A paused/running session cannot masquerade as final.
 func (s AgentSession) ChangePlan() (ChangePlan, error) {
+	return s.finalPlan(true)
+}
+
+// ArchivedPlanID identifies the immutable export created by an older
+// validator. The caller still has to load that exact plan from the store.
+func (s AgentSession) ArchivedPlanID() (string, error) {
+	plan, err := s.finalPlan(false)
+	return plan.PlanID, err
+}
+
+func (s AgentSession) finalPlan(validate bool) (ChangePlan, error) {
 	if s.Status != "COMPLETE" && s.Status != "NEEDS_REVIEW" {
 		return ChangePlan{}, errors.New("agent session is not final")
 	}
-	if err := validatePlans(s.Bundle, s.Decisions, "", s.Draft); err != nil {
-		return ChangePlan{}, err
+	if validate {
+		if err := validatePlans(s.Bundle, s.Decisions, "", s.Draft); err != nil {
+			return ChangePlan{}, err
+		}
 	}
 	p := ChangePlan{Version: BundleVersion, AnalysisID: s.Bundle.AnalysisID, InputFingerprint: s.Bundle.InputFingerprint, ContextID: s.Bundle.ContextID, Provider: s.Identity, Status: Status(s.Status), Plans: append([]FilePlan{}, s.Draft...), ReviewIssues: s.Feedback}
 	p.FullReview = s.FullReview

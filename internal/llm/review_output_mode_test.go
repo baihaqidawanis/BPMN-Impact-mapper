@@ -88,7 +88,7 @@ func TestImplementationReviewDraftKeepsEditsAndNoActionWithoutMutating(t *testin
 	turn.Draft = original
 	before, _ := json.Marshal(original)
 	projected := implementationReviewDraft(turn)
-	if projected[0].Summary != "" || projected[0].CurrentBehavior != "" || projected[0].TargetBehavior != original[0].TargetBehavior || projected[0].DesignRationale != "" || len(projected[0].ProposedChanges) != 1 || len(projected[0].Steps) != 1 || len(projected[0].AcceptanceChecks) != 1 || projected[1].CurrentBehavior == "" {
+	if projected[0].Summary != "" || projected[0].CurrentBehavior != original[0].CurrentBehavior || projected[0].TargetBehavior != original[0].TargetBehavior || projected[0].DesignRationale != "" || len(projected[0].ProposedChanges) != 1 || len(projected[0].Steps) != 1 || len(projected[0].AcceptanceChecks) != 1 || projected[1].CurrentBehavior == "" {
 		t.Fatal("lost concrete edits/checks or retained Planner assertions", projected)
 	}
 	if projected[2].TargetBehavior != original[2].TargetBehavior || projected[2].Summary != original[2].Summary {

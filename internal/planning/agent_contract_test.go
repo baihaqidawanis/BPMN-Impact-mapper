@@ -65,7 +65,7 @@ func TestAgentInspectionOnlyPlanGetsOneRepair(t *testing.T) {
 					t.Fatal(err, s.Status)
 				}
 				p, e := s.ChangePlan()
-				if e != nil || !strings.Contains(string(Markdown(p)), "### Acceptance checks") {
+				if e != nil || !strings.Contains(string(Markdown(p)), "**Acceptance checks**") {
 					t.Fatal("missing structured plan", e)
 				}
 			} else if !errors.Is(err, ErrAgentPlanIncomplete) || s.Status != "NEEDS_REVIEW" {

@@ -46,7 +46,7 @@ func TestPartialPlanIsUnapprovedAndPreservesUnresolvedTargets(t *testing.T) {
 	if err != nil || p.Status != StatusNeedsReview || len(p.Plans) != 1 || p.ChangeCoverage[0].Relevant != 2 || s.Status != "PAUSED" || len(s.Feedback) != 0 {
 		t.Fatal("preview hid coverage or changed checkpoint", p, err)
 	}
-	if !strings.Contains(string(Markdown(p)), "PARTIAL CHECKPOINT EXPORT") {
+	if !strings.Contains(string(Markdown(p)), "Partial export:") {
 		t.Fatal("missing partial warning")
 	}
 	s.Draft[0].EvidenceIDs = []string{"invented"}

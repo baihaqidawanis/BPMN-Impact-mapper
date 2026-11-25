@@ -211,7 +211,7 @@ func (e FullRepositoryEngine) Run(ctx context.Context, id string, original Evide
 			if err := e.Store.Save(ctx, receipt); err != nil {
 				return s, err
 			}
-			callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+			callCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 			reply, callErr := e.Model.Turn(callCtx, AgentTurn{Role: Analyst, Bundle: receipt.Bundle, RemainingTools: 0, RepositoryChunk: &c})
 			cancel()
 			s.Turns++

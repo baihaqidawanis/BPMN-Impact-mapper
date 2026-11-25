@@ -68,15 +68,15 @@ func TestReportStoreListDoesNotCountSupportingFlowsAsUnresolved(t *testing.T) {
 	value := domain.Report{
 		AnalysisID: "cccccccccccccccccccccccccccccccc", Method: domain.MethodHybrid,
 		Changes: []domain.Change{
-			{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "task"}, Impacts: []domain.Impact{{File: "request.go"}}},
-			{ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "flow"}, PartOf: "task"},
+			{ChangeType: domain.ModifySequenceFlow, NewElement: &domain.Element{ID: "flow", Name: "Supporting edge"}, PartOf: "task"},
+			{ChangeType: domain.AddTask, NewElement: &domain.Element{ID: "task", Name: "Review request"}, Impacts: []domain.Impact{{File: "request.go"}}},
 		},
 	}
 	if err := store.Save(context.Background(), value); err != nil {
 		t.Fatal(err)
 	}
 	listed, err := store.List(context.Background())
-	if err != nil || len(listed) != 1 || listed[0].Changes != 2 || listed[0].Candidates != 1 || listed[0].Unresolved != 0 {
+	if err != nil || len(listed) != 1 || listed[0].Changes != 2 || listed[0].Candidates != 1 || listed[0].Unresolved != 0 || listed[0].ChangeLabel != "Review request" {
 		t.Fatalf("listed=%#v err=%v", listed, err)
 	}
 }

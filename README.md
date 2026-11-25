@@ -24,7 +24,8 @@ Buka http://localhost:3000. Panduan yang dipakai sekarang:
 - [Alur Workspace: Mapping dan Planning](docs/WORKSPACE-UX-2026-11-02.md)
 - [Kesiapan sebelum model lab dan source connections](docs/PRE-LLM-READINESS.md)
 - [Eksperimen dan baseline historis](experiments/README.md)
-- [Arah TA](TA-DIRECTION-CONCLUSION.md) dan [metode](BASELINE-METHODS.md)
+- [Arah TA](TA-DIRECTION-CONCLUSION.md) dan [metode](docs/METHODOLOGY.md)
+- [Pegangan kerja TA](collab/TEAMWORK.md), [progres dan handoff](collab/PROGRESS.md), dan [alur review aktif](docs/FOCUSED-COMBINED-REVIEW.md)
 
 Panduan struktur: [architecture](docs/ARCHITECTURE.md). Tes diagnostik model memakai build tag `labdiagnostics` dan opt-in eksplisit; tes normal tidak menghubungi model lab.
 
@@ -333,26 +334,26 @@ BPMN change, including supporting sequence flows. These controls expose
 ranking and action-classification errors but are not independently reviewed
 Simple-ERP accuracy results.
 
-A separate [Staff source-review diagnostic](experiments/simple-erp/STAFF-SOURCE-REVIEW-DIAGNOSTIC-2026-10-28.md)
+A separate [Staff source-review diagnostic](experiments/history/simple-erp/notes/STAFF-SOURCE-REVIEW-DIAGNOSTIC-2026-10-28.md)
 compares the same four methods on one stock-rule change and one label-only
 control. Its source-inspected labels were frozen before this run's ranking,
 but come from a single assistant reviewer and are explicitly marked
 `single-source-review` in the benchmark exports. Treat its metrics as
 diagnostics, not independently adjudicated accuracy.
 
-The [gateway retrieval follow-up](experiments/simple-erp/GATEWAY-RETRIEVAL-FIX-2026-10-28.md)
+The [gateway retrieval follow-up](experiments/history/simple-erp/notes/GATEWAY-RETRIEVAL-FIX-2026-10-28.md)
 documents corrected branch queries, duplicate-flow grouping, and before/after
 diagnostics with unchanged reference labels.
 
-The [consolidated Staff benchmark](experiments/simple-erp/STAFF-CONSOLIDATED-2026-10-29.md)
+The [consolidated Staff benchmark](experiments/history/simple-erp/notes/STAFF-CONSOLIDATED-2026-10-29.md)
 combines five existing Staff cases and documents a separate positive-change
 summary alongside the canonical atomic-change metrics.
 
-The [file-level fusion follow-up](experiments/simple-erp/FILE-FUSION-2026-10-29.md)
+The [file-level fusion follow-up](experiments/history/simple-erp/notes/FILE-FUSION-2026-10-29.md)
 records the Hybrid ranking correction, unchanged references, before/after
 metrics and the fixed-denominator precision ceiling.
 
-The [positive-ranking and passage audit](experiments/simple-erp/ADJACENT-PASSAGES-2026-10-29.md)
+The [positive-ranking and passage audit](experiments/history/simple-erp/notes/ADJACENT-PASSAGES-2026-10-29.md)
 documents R-precision, positive-case MAP, the updated Research dashboard,
 and an unsuccessful passage experiment kept out of production.
 
@@ -432,7 +433,7 @@ and real-model evaluation remain pending.
 Detailed decisions are in [PLAN.md](PLAN.md), [architecture](docs/ARCHITECTURE.md), [methodology](docs/METHODOLOGY.md), [semantic retrieval research proposal](docs/SEMANTIC_RETRIEVAL.md), [security](docs/SECURITY.md), and [evaluation](docs/EVALUATION.md).
 
 The concise four-method research baseline and its primary literature are in
-[BASELINE-METHODS.md](BASELINE-METHODS.md).
+[methodology](docs/METHODOLOGY.md).
 
 ## Current limitations
 
@@ -462,6 +463,6 @@ collapses on desktop and opens/closes as a mobile menu. Direct input link:
 
 ### Next connected test
 
-Use [Pre-Qwen handoff](docs/PRE-QWEN-HANDOFF.md) and the active Staff v2 scenario
+Use [current Focused review guide](docs/FOCUSED-COMBINED-REVIEW.md) and the active Staff v2 scenario
 pack for the current ERP baseline. Historical experiment pairs/reports remain
 frozen. The handoff separates offline checks from actual lab-model validation.

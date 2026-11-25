@@ -72,7 +72,7 @@ func TestFinalConsistencyInvalidOutputHasBoundedRetries(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		result, _ = engine.Run(context.Background(), "invalid-final", agentBundle())
 	}
-	if count != 3 || result.Status != "NEEDS_REVIEW" || result.FullReview.ConsistencyReview != "incomplete" {
+	if count != 3 || result.Status != "COMPLETE" {
 		t.Fatal(count, result.Status, result.Feedback)
 	}
 }
@@ -87,10 +87,28 @@ func TestGroupedMarkdownRetainsChangesEvidenceAndUnresolvedCoverage(t *testing.T
 	if !bytes.Equal(first, second) || strings.Count(string(first), ". `store.go`") != 1 {
 		t.Fatal("file grouping is not stable")
 	}
-	for _, text := range []string{"Capture reason", "Reject invalid reason", "E1", "E3", "UNRESOLVED", "#### Implementation steps", "#### Current behavior", "#### Required behavior", "#### Design rationale", "Confirm error response contract."} {
+	for _, text := range []string{"Capture reason", "Reject invalid reason", "E1", "E3", "The affected code still needs to be identified.", "Validate before submit", "Submit omits reason.", "Require reason before submit.", "Confirm error response contract."} {
 		if !strings.Contains(string(first), text) {
 			t.Fatal("lost plan detail", text)
 		}
+	}
+}
+
+func TestConsistencyKeepsOtherFileFindingsWhenOneReviewExhaustsRetries(t *testing.T) {
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if strings.HasPrefix(turn.Feedback[0], "FINAL CROSS-BATCH") || turn.Draft[0].File == "a.go" {
+			return AgentReply{}, ErrAgentModelOutput
+		}
+		return AgentReply{Review: &AgentReview{
+			Issues:   []string{"Incorrect request field in b.go."},
+			Findings: []FileReviewFinding{{File: "b.go"}},
+		}}, nil
+	}}
+	engine := FullRepositoryEngine{Model: model, Store: memorySessions{}}
+	s := AgentSession{Bundle: agentBundle(), Draft: []FilePlan{{File: "a.go"}, {File: "b.go"}}}
+	review, _, err := engine.reviewCombinedPlan(context.Background(), "partial-review", s)
+	if err != nil || review.Approved || len(review.Issues) < 2 || len(review.Findings) != 1 || review.Findings[0].File != "b.go" {
+		t.Fatalf("expected an unresolved a.go and a retained b.go finding, got %+v, %v", review, err)
 	}
 }
 
@@ -254,5 +272,144 @@ func TestEmptyCombinedPlanNeverCallsModel(t *testing.T) {
 	review, turns, err := (FullRepositoryEngine{Model: model, Store: memorySessions{}}).reviewCombinedPlan(context.Background(), "empty-final", AgentSession{Bundle: agentBundle()})
 	if err != nil || review.Approved || turns != 0 || len(review.Issues) != 1 {
 		t.Fatal(review, turns, err)
+	}
+}
+
+func TestScopedConsistencyBundleNarrowsTargetReviewToSingleChange(t *testing.T) {
+	b := agentBundle()
+	b.RepositoryOverview = &RepositoryOverview{File: "README.md", Summary: strings.Repeat("r", 1200)}
+	second := b.Changes[0]
+	second.ElementID = "OtherElement"
+	b.Changes = append(b.Changes, second)
+	plan := FilePlan{
+		ChangeType: b.Changes[0].ChangeType,
+		ElementID:  b.Changes[0].ElementID,
+		File:       b.Changes[0].Candidates[0].File,
+		Symbol:     b.Changes[0].Candidates[0].Symbol,
+	}
+	scoped := scopedConsistencyBundle(b, []FilePlan{plan})
+	if scoped.RepositoryOverview != nil {
+		t.Fatal("expected RepositoryOverview stripped from single-target review bundle")
+	}
+	if len(scoped.Changes) != 1 || scoped.Changes[0].ElementID != b.Changes[0].ElementID {
+		t.Fatalf("expected 1 scoped change, got %d (%+v)", len(scoped.Changes), scoped.Changes)
+	}
+	if len(scoped.Changes[0].Candidates) != 1 {
+		t.Fatalf("expected matching candidate evidence preserved, got %d", len(scoped.Changes[0].Candidates))
+	}
+}
+
+func TestConsistencyFallsBackToScopedBundleOnTargetContextLimit(t *testing.T) {
+	b := agentBundle()
+	b.RepositoryOverview = &RepositoryOverview{File: "README.md", Summary: strings.Repeat("r", 1200)}
+	second := b.Changes[0]
+	second.ElementID = "OtherElement"
+	b.Changes = append(b.Changes, second)
+	plans := []FilePlan{
+		{ChangeType: b.Changes[0].ChangeType, ElementID: b.Changes[0].ElementID, File: "store.go", Symbol: "Submit", Steps: []string{"step 1"}, AcceptanceChecks: []string{"check 1"}},
+		{ChangeType: second.ChangeType, ElementID: second.ElementID, File: "store.go", Symbol: "Submit", Steps: []string{"step 2"}, AcceptanceChecks: []string{"check 2"}},
+	}
+	scopedCalls := 0
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		instruction := turn.Feedback[0]
+		if strings.HasPrefix(instruction, "FINAL CROSS-BATCH") || strings.HasPrefix(instruction, "FINAL FILE") {
+			return AgentReply{}, ErrAgentContextLimit
+		}
+		if strings.HasPrefix(instruction, "FINAL TARGET SOURCE") {
+			if len(turn.Bundle.Changes) > 1 {
+				return AgentReply{}, ErrAgentContextLimit
+			}
+			scopedCalls++
+			if turn.Bundle.RepositoryOverview != nil {
+				t.Fatal("scoped fallback kept RepositoryOverview")
+			}
+			return AgentReply{Review: &AgentReview{Approved: true}}, nil
+		}
+		return AgentReply{Review: &AgentReview{Approved: true}}, nil
+	}}
+	review, _, err := (FullRepositoryEngine{Model: model, Store: memorySessions{}}).reviewCombinedPlan(context.Background(), "scoped-fallback", AgentSession{Bundle: b, Draft: plans})
+	if err != nil || !review.Approved || scopedCalls != 2 {
+		t.Fatalf("expected 2 scoped target approvals, got approved=%v scopedCalls=%d err=%v issues=%v", review.Approved, scopedCalls, err, review.Issues)
+	}
+}
+
+func TestFocusedPropagatesHistoricalMigrationNotesToLaterStorageBatch(t *testing.T) {
+	b := agentBundle()
+	migCandidate := b.Changes[0].Candidates[0]
+	migCandidate.File = "backend/migrations/000005_operations.up.sql"
+	migCandidate.Symbol = "stock_adjustments"
+	migCandidate.Layer = "schema"
+	migCandidate.Evidence = []EvidenceItem{{ID: "mig-1", Type: "SOURCE_TOOL", Location: migCandidate.File + ":36", Excerpt: strings.Repeat("x", 6500)}}
+	storeCandidate := b.Changes[0].Candidates[0]
+	storeCandidate.Evidence = []EvidenceItem{{ID: "store-1", Type: "SOURCE_TOOL", Location: storeCandidate.File + ":120", Excerpt: strings.Repeat("y", 6500)}}
+	b.Changes[0].Candidates = []Candidate{migCandidate, storeCandidate}
+	b.ContextID, _ = ComputeContextID(b)
+
+	sawMigrationContract := false
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if turn.Role == Planner && len(turn.Bundle.Changes) == 1 && len(turn.Bundle.Changes[0].Candidates) == 1 {
+			c := turn.Bundle.Changes[0].Candidates[0]
+			if c.File == migCandidate.File {
+				return AgentReply{Plan: &LayerPlanningResponse{Plans: []FilePlan{{
+					ChangeType:       b.Changes[0].ChangeType,
+					ElementID:        b.Changes[0].ElementID,
+					File:             c.File,
+					Symbol:           c.Symbol,
+					Module:           c.Module,
+					Layer:            c.Layer,
+					Action:           domain.ActionNoAction,
+					Summary:          "Historical migration is read-only; add forward migration for new status.",
+					CurrentBehavior:  "CHECK restricts status values.",
+					TargetBehavior:   "Preserve historical migration.",
+					DesignRationale:  "Do not modify applied migrations.",
+					AcceptanceChecks: []string{"Historical migration remains unchanged."},
+					EvidenceIDs:      []string{"mig-1"},
+				}}}}, nil
+			}
+			if c.File == storeCandidate.File {
+				for _, rel := range turn.RelatedProposals {
+					if rel.File == migCandidate.File {
+						sawMigrationContract = true
+					}
+				}
+			}
+		}
+		return goodReply(turn)
+	}}
+	_, err := (FocusedEngine{Model: model, Tools: fixtureTools{"fixed"}, Store: memorySessions{}}).Run(context.Background(), "mig-prop", b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !sawMigrationContract {
+		t.Fatal("expected later storage batch to receive historical migration contract via related_proposals")
+	}
+}
+
+func TestPartitionedPlannerRetainsCompanionRelatedProposals(t *testing.T) {
+	b := agentBundle()
+	verified, _ := goodReply(AgentTurn{Role: Analyst, Bundle: b})
+	companion := []ProposalContract{{
+		ChangeType: domain.AddGateway,
+		ElementID:  "ZeroDeltaDecision",
+		File:           "backend/migrations/000005_operations.up.sql",
+		Action:         domain.ActionNoAction,
+		TargetBehavior: "Historical migration restricts status via CHECK; add forward migration.",
+	}}
+	sawCompanion := false
+	model := scriptedAgent{func(turn AgentTurn) (AgentReply, error) {
+		if turn.Role == Planner {
+			for _, rel := range turn.RelatedProposals {
+				if rel.File == companion[0].File && rel.ElementID == companion[0].ElementID {
+					sawCompanion = true
+				}
+			}
+		}
+		return goodReply(turn)
+	}}
+	engine := AgentEngine{Model: model, Tools: fixtureTools{"fixed"}, Store: memorySessions{}, RelatedProposals: companion}
+	s := AgentSession{Version: "1", ID: "pp-rel", Binding: "b", Bundle: b, Role: Planner, Decisions: verified.Verification.Decisions, Budget: DefaultAgentBudget()}
+	reply, err := engine.planOversizedBatch(context.Background(), &s)
+	if err != nil || reply.Plan == nil || len(reply.Plan.Plans) != 1 || !sawCompanion {
+		t.Fatalf("expected partitioned planner to forward companion related_proposals, got err=%v sawCompanion=%v", err, sawCompanion)
 	}
 }

@@ -1,0 +1,327 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_role_supervisor_l3_pr_review" targetNamespace="https://simple-erp.local/bpm-haqi/role-supervisor-l3-pr-review" exporter="Simple ERP source-backed documentation" exporterVersion="1">
+  <bpmn:process id="Process_role_supervisor_l3_pr_review" name="Review Purchase Request - Supervisor" isExecutable="false">
+    <bpmn:documentation>Level 3; generator source snapshot; descriptive as-is working tree, not deployed-runtime proof.
+Bypass self-review Super Admin memeriksa role aktif di database; guard status/versi tetap berlaku. Perspektif Supervisor; definisi operasi bersumber dari L3 P2P bersama.
+backend/internal/purchasing/adapter/postgres/store.go :: TransitionRequest</bpmn:documentation>
+    <bpmn:laneSet id="Lanes_role_supervisor_l3_pr_review">
+      <bpmn:lane id="Lane_role_supervisor_l3_pr_review_0" name="Supervisor">
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_input</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_role_supervisor_l3_pr_review_1" name="Sistem Simple ERP">
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_check</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_positive</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_negative</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_effect1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_result_activity</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>role_supervisor_l3_pr_review_done</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>CheckProductsAtApproval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ApprovalProductDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>PrepareInactiveReason</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>RejectionPathJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>KeepManualRejectionReason</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>DecisionAuditJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ReviewOutcomeJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>SwitchValidationFailure</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="role_supervisor_l3_pr_review_start" name="Kebutuhan aksi">
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_0</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="role_supervisor_l3_pr_review_input" name="Pilih approve/reject; UI kirim alasan demo saat reject">
+      <bpmn:documentation>Request ini dijalankan oleh Supervisor; guard backend tetap berlaku. Panel PR tidak menyediakan input alasan reject; API tetap menerima reason.</bpmn:documentation>
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_0</bpmn:incoming>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="role_supervisor_l3_pr_review_check" name="Lock PR; SUBMITTED; versi cocok; Supervisor bukan creator; Super Admin boleh self-review">
+      <bpmn:documentation>Setelah kontrol akses HTTP; lihat l3-kontrol-request. Bypass self-review Super Admin memeriksa role aktif di database; guard status/versi tetap berlaku.</bpmn:documentation>
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_1</bpmn:incoming>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="role_supervisor_l3_pr_review_valid" name="Hasil review PR?" gatewayDirection="Diverging">
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_2</bpmn:incoming>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_4</bpmn:outgoing>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_5</bpmn:outgoing>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="role_supervisor_l3_pr_review_positive" name="Set PR APPROVED">
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_7</bpmn:outgoing>
+      <bpmn:incoming>ContinueApproval</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_supervisor_l3_pr_review_negative" name="Set PR REJECTED dan alasan">
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_8</bpmn:outgoing>
+      <bpmn:incoming>ApplyRejectionOutcome</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="role_supervisor_l3_pr_review_effect1" name="Simpan reviewer; audit PUR-PR-003; commit">
+      <bpmn:outgoing>role_supervisor_l3_pr_review_Flow_3</bpmn:outgoing>
+      <bpmn:incoming>DecisionReadyForAudit</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="role_supervisor_l3_pr_review_done" name="Respons dikirim">
+      <bpmn:incoming>role_supervisor_l3_pr_review_result_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_0" sourceRef="role_supervisor_l3_pr_review_start" targetRef="role_supervisor_l3_pr_review_input" />
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_1" sourceRef="role_supervisor_l3_pr_review_input" targetRef="role_supervisor_l3_pr_review_check" />
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_2" sourceRef="role_supervisor_l3_pr_review_check" targetRef="role_supervisor_l3_pr_review_valid" />
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_3" sourceRef="role_supervisor_l3_pr_review_effect1" targetRef="ReviewOutcomeJoin" name="Aksi selesai; hasil diterima" />
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_4" sourceRef="role_supervisor_l3_pr_review_valid" targetRef="SwitchValidationFailure" name="Tidak; Ditolak / gagal; tidak commit">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Tidak</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_5" sourceRef="role_supervisor_l3_pr_review_valid" targetRef="CheckProductsAtApproval" name="Approve">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Approve</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_6" sourceRef="role_supervisor_l3_pr_review_valid" targetRef="KeepManualRejectionReason" name="Reject">
+      <bpmn:conditionExpression language="text/plain" xsi:type="bpmn:tFormalExpression">Reject</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_7" sourceRef="role_supervisor_l3_pr_review_positive" targetRef="DecisionAuditJoin" />
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_Flow_8" sourceRef="role_supervisor_l3_pr_review_negative" targetRef="DecisionAuditJoin" />
+    <bpmn:sendTask id="role_supervisor_l3_pr_review_result_activity" name="Kirim respons hasil aksi (sukses atau gagal)">
+      <bpmn:documentation>Explicit presentation of existing response handling. Preserve success/error status and payload; no extra commit or state change.</bpmn:documentation>
+      <bpmn:outgoing>role_supervisor_l3_pr_review_result_to_end</bpmn:outgoing>
+      <bpmn:incoming>ReturnReviewOutcome</bpmn:incoming>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="role_supervisor_l3_pr_review_result_to_end" sourceRef="role_supervisor_l3_pr_review_result_activity" targetRef="role_supervisor_l3_pr_review_done" />
+    <bpmn:serviceTask id="CheckProductsAtApproval" name="Periksa produk di semua baris PR">
+      <bpmn:documentation>Pada aksi approve yang lolos status, versi, hak akses, dan maker-checker, baca status terkini tiap produk. Lakukan pemeriksaan dalam transaksi review sebelum mengubah PR. Jika pembacaan gagal, tolak request tanpa commit.</bpmn:documentation>
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_5</bpmn:incoming>
+      <bpmn:outgoing>ProductsChecked</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="ApprovalProductDecision" name="Ada produk nonaktif?" gatewayDirection="Diverging">
+      <bpmn:incoming>ProductsChecked</bpmn:incoming>
+      <bpmn:outgoing>ContinueApproval</bpmn:outgoing>
+      <bpmn:outgoing>SwitchToRejection</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="PrepareInactiveReason" name="Siapkan alasan penolakan otomatis">
+      <bpmn:documentation>Satu produk nonaktif cukup untuk menolak PR. Simpan hasil REJECTED dan alasan otomatis pada jalur penolakan yang ada. Audit harus mencerminkan hasil penolakan, meski aksi awal approve. Reject manual tetap memakai alasan reviewer.</bpmn:documentation>
+      <bpmn:incoming>SwitchToRejection</bpmn:incoming>
+      <bpmn:outgoing>ApplyExistingRejection</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="ProductsChecked" sourceRef="CheckProductsAtApproval" targetRef="ApprovalProductDecision" />
+    <bpmn:sequenceFlow id="ContinueApproval" sourceRef="ApprovalProductDecision" targetRef="role_supervisor_l3_pr_review_positive" name="semua produk PR aktif">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">semua produk PR aktif</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SwitchToRejection" sourceRef="ApprovalProductDecision" targetRef="PrepareInactiveReason" name="ada produk PR yang nonaktif">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">ada produk PR yang nonaktif</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="RejectionPathJoin" name="Gabung jalur penolakan" gatewayDirection="Converging">
+      <bpmn:incoming>ApplyExistingRejection</bpmn:incoming>
+      <bpmn:incoming>ManualRejectionReady</bpmn:incoming>
+      <bpmn:outgoing>ApplyRejectionOutcome</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="KeepManualRejectionReason" name="Gunakan alasan penolakan reviewer">
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_6</bpmn:incoming>
+      <bpmn:outgoing>ManualRejectionReady</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="ApplyExistingRejection" sourceRef="PrepareInactiveReason" targetRef="RejectionPathJoin" />
+    <bpmn:sequenceFlow id="ManualRejectionReady" sourceRef="KeepManualRejectionReason" targetRef="RejectionPathJoin" />
+    <bpmn:sequenceFlow id="ApplyRejectionOutcome" sourceRef="RejectionPathJoin" targetRef="role_supervisor_l3_pr_review_negative" />
+    <bpmn:exclusiveGateway id="DecisionAuditJoin" name="Gabung hasil keputusan" gatewayDirection="Converging">
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_7</bpmn:incoming>
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_8</bpmn:incoming>
+      <bpmn:outgoing>DecisionReadyForAudit</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="DecisionReadyForAudit" sourceRef="DecisionAuditJoin" targetRef="role_supervisor_l3_pr_review_effect1" />
+    <bpmn:exclusiveGateway id="ReviewOutcomeJoin" name="Gabung hasil review" gatewayDirection="Converging">
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_3</bpmn:incoming>
+      <bpmn:incoming>ReviewValidationFailureReady</bpmn:incoming>
+      <bpmn:outgoing>ReturnReviewOutcome</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="SwitchValidationFailure" name="Siapkan respons gagal validasi review">
+      <bpmn:incoming>role_supervisor_l3_pr_review_Flow_4</bpmn:incoming>
+      <bpmn:outgoing>ReviewValidationFailureReady</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="ReviewValidationFailureReady" sourceRef="SwitchValidationFailure" targetRef="ReviewOutcomeJoin" />
+    <bpmn:sequenceFlow id="ReturnReviewOutcome" sourceRef="ReviewOutcomeJoin" targetRef="role_supervisor_l3_pr_review_result_activity" />
+  </bpmn:process>
+  <bpmn:collaboration id="Collab_role_supervisor_l3_pr_review">
+    <bpmn:participant id="Pool_role_supervisor_l3_pr_review" name="Simple ERP" processRef="Process_role_supervisor_l3_pr_review" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="StructuralDiagram">
+    <bpmndi:BPMNPlane id="StructuralPlane" bpmnElement="Collab_role_supervisor_l3_pr_review">
+      <bpmndi:BPMNShape id="Pool_role_supervisor_l3_pr_review_di" bpmnElement="Pool_role_supervisor_l3_pr_review" isHorizontal="true">
+        <dc:Bounds x="20" y="40" width="3020" height="631" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_supervisor_l3_pr_review_0_di" bpmnElement="Lane_role_supervisor_l3_pr_review_0" isHorizontal="true">
+        <dc:Bounds x="50" y="40" width="2990" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_role_supervisor_l3_pr_review_1_di" bpmnElement="Lane_role_supervisor_l3_pr_review_1" isHorizontal="true">
+        <dc:Bounds x="50" y="200" width="2990" height="471" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_start_di" bpmnElement="role_supervisor_l3_pr_review_start">
+        <dc:Bounds x="90" y="99.0" width="42.0" height="42.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="46.0" y="148.0" width="130" height="31" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_input_di" bpmnElement="role_supervisor_l3_pr_review_input">
+        <dc:Bounds x="220" y="77.5" width="226" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_check_di" bpmnElement="role_supervisor_l3_pr_review_check">
+        <dc:Bounds x="515" y="317.5" width="224" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_valid_di" bpmnElement="role_supervisor_l3_pr_review_valid">
+        <dc:Bounds x="815" y="332.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="860" y="407" width="130" height="29" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_positive_di" bpmnElement="role_supervisor_l3_pr_review_positive">
+        <dc:Bounds x="1445" y="317.5" width="180" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_negative_di" bpmnElement="role_supervisor_l3_pr_review_negative">
+        <dc:Bounds x="1785" y="467.5" width="180" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_effect1_di" bpmnElement="role_supervisor_l3_pr_review_effect1">
+        <dc:Bounds x="2155" y="317.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_done_di" bpmnElement="role_supervisor_l3_pr_review_done">
+        <dc:Bounds x="2920" y="339.0" width="42.0" height="42.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2876.0" y="388.0" width="130" height="31" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="role_supervisor_l3_pr_review_result_activity_di" bpmnElement="role_supervisor_l3_pr_review_result_activity">
+        <dc:Bounds x="2625" y="317.5" width="200" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="CheckProductsAtApproval_di" bpmnElement="CheckProductsAtApproval">
+        <dc:Bounds x="955" y="317.5" width="191" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ApprovalProductDecision_di" bpmnElement="ApprovalProductDecision">
+        <dc:Bounds x="1215" y="332.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1260" y="409" width="155" height="29" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="PrepareInactiveReason_di" bpmnElement="PrepareInactiveReason">
+        <dc:Bounds x="1435" y="467.5" width="185" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RejectionPathJoin_di" bpmnElement="RejectionPathJoin">
+        <dc:Bounds x="1680" y="482.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1628" y="548" width="73" height="33" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="KeepManualRejectionReason_di" bpmnElement="KeepManualRejectionReason">
+        <dc:Bounds x="1390" y="568.5" width="180" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DecisionAuditJoin_di" bpmnElement="DecisionAuditJoin">
+        <dc:Bounds x="2040" y="332.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1980" y="402" width="79" height="36" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ReviewOutcomeJoin_di" bpmnElement="ReviewOutcomeJoin">
+        <dc:Bounds x="2490" y="332.5" width="55.0" height="55.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2452.5" y="394.5" width="130" height="31" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SwitchValidationFailure_di" bpmnElement="SwitchValidationFailure">
+        <dc:Bounds x="1480" y="211.5" width="225" height="85.0" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_0_di" bpmnElement="role_supervisor_l3_pr_review_Flow_0">
+        <di:waypoint x="132.0" y="120.0" />
+        <di:waypoint x="220" y="120.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_1_di" bpmnElement="role_supervisor_l3_pr_review_Flow_1">
+        <di:waypoint x="446" y="120.0" />
+        <di:waypoint x="480" y="120" />
+        <di:waypoint x="480" y="360" />
+        <di:waypoint x="515" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_2_di" bpmnElement="role_supervisor_l3_pr_review_Flow_2">
+        <di:waypoint x="739" y="360.0" />
+        <di:waypoint x="815" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_3_di" bpmnElement="role_supervisor_l3_pr_review_Flow_3">
+        <di:waypoint x="2355" y="360.0" />
+        <di:waypoint x="2490" y="360.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2360" y="315" width="122" height="37" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_4_di" bpmnElement="role_supervisor_l3_pr_review_Flow_4">
+        <di:waypoint x="842.5" y="332.5" />
+        <di:waypoint x="842.5" y="254" />
+        <di:waypoint x="1480" y="254.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="884" y="215" width="235" height="32" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_5_di" bpmnElement="role_supervisor_l3_pr_review_Flow_5">
+        <di:waypoint x="870.0" y="360.0" />
+        <di:waypoint x="955" y="360.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="874" y="327" width="78" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_6_di" bpmnElement="role_supervisor_l3_pr_review_Flow_6">
+        <di:waypoint x="842.5" y="387.5" />
+        <di:waypoint x="842.5" y="611" />
+        <di:waypoint x="1390" y="611.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1030" y="620" width="130" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_7_di" bpmnElement="role_supervisor_l3_pr_review_Flow_7">
+        <di:waypoint x="1625" y="360.0" />
+        <di:waypoint x="2040" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_Flow_8_di" bpmnElement="role_supervisor_l3_pr_review_Flow_8">
+        <di:waypoint x="1965" y="510.0" />
+        <di:waypoint x="2067.5" y="510" />
+        <di:waypoint x="2067.5" y="387.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="role_supervisor_l3_pr_review_result_to_end_di" bpmnElement="role_supervisor_l3_pr_review_result_to_end">
+        <di:waypoint x="2825" y="360.0" />
+        <di:waypoint x="2920" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ProductsChecked_di" bpmnElement="ProductsChecked">
+        <di:waypoint x="1146" y="360.0" />
+        <di:waypoint x="1215" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ContinueApproval_di" bpmnElement="ContinueApproval">
+        <di:waypoint x="1270.0" y="360.0" />
+        <di:waypoint x="1445" y="360.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1275" y="319" width="160" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SwitchToRejection_di" bpmnElement="SwitchToRejection">
+        <di:waypoint x="1242.5" y="387.5" />
+        <di:waypoint x="1242.5" y="510" />
+        <di:waypoint x="1435" y="510.0" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1276" y="467" width="147" height="37" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ApplyExistingRejection_di" bpmnElement="ApplyExistingRejection">
+        <di:waypoint x="1620" y="510.0" />
+        <di:waypoint x="1680" y="510.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ManualRejectionReady_di" bpmnElement="ManualRejectionReady">
+        <di:waypoint x="1570" y="611.0" />
+        <di:waypoint x="1707.5" y="611" />
+        <di:waypoint x="1707.5" y="537.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ApplyRejectionOutcome_di" bpmnElement="ApplyRejectionOutcome">
+        <di:waypoint x="1735.0" y="510.0" />
+        <di:waypoint x="1785" y="510.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DecisionReadyForAudit_di" bpmnElement="DecisionReadyForAudit">
+        <di:waypoint x="2095.0" y="360.0" />
+        <di:waypoint x="2155" y="360.0" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ReviewValidationFailureReady_di" bpmnElement="ReviewValidationFailureReady">
+        <di:waypoint x="1705" y="254.0" />
+        <di:waypoint x="2517.5" y="254" />
+        <di:waypoint x="2517.5" y="332.5" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="ReturnReviewOutcome_di" bpmnElement="ReturnReviewOutcome">
+        <di:waypoint x="2545.0" y="360.0" />
+        <di:waypoint x="2625" y="360.0" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

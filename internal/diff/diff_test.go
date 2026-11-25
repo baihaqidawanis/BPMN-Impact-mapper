@@ -75,6 +75,59 @@ func TestModifiedGatewayConditionIncludesChangedBranchContext(t *testing.T) {
 	t.Fatal("MODIFY_GATEWAY_CONDITION not detected")
 }
 
+func TestGatewayRoutesRetainConditionAndDefaultDestinationInBothDirections(t *testing.T) {
+	read := func(name string) *domain.Graph {
+		t.Helper()
+		path := filepath.Join("..", "..", "experiments", "simple-erp", "poc-patterns", "skip", name+".bpmn")
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		g, err := bpmn.Parse(data, bpmn.Limits{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return g
+	}
+	before, after := read("before"), read("after")
+	for _, removed := range []bool{false, true} {
+		old, next := before, after
+		if removed {
+			old, next = after, before
+		}
+		found := false
+		for _, change := range diff.Compare(old, next) {
+			element := change.NewElement
+			if removed {
+				element = change.OldElement
+			}
+			if element == nil || element.ID != "ZeroDeltaDecision" {
+				continue
+			}
+			found = true
+			if change.Context == nil || change.Context.ProcessName == "" || len(change.Context.BranchChanges) != 2 {
+				t.Fatalf("incomplete gateway context: %+v", change.Context)
+			}
+			for _, route := range change.Context.BranchChanges {
+				condition, target := route.NewCondition, route.NewTarget
+				if removed {
+					condition, target = route.OldCondition, route.OldTarget
+				}
+				source := after.Flows[route.FlowID]
+				if source == nil || target != source.TargetRef || condition != source.Condition {
+					t.Fatalf("route does not match graph: %+v", route)
+				}
+				if (condition == "") != (route.FlowID == element.DefaultFlow) {
+					t.Fatalf("lost fallback route: %+v", route)
+				}
+			}
+		}
+		if !found {
+			t.Fatalf("missing gateway, removed=%v", removed)
+		}
+	}
+}
+
 func TestCompareDetectsRequiredTaxonomy(t *testing.T) {
 	oldGraph := parseFixture(t, "old.bpmn")
 	newGraph := parseFixture(t, "new.bpmn")
@@ -87,6 +140,15 @@ func TestCompareDetectsRequiredTaxonomy(t *testing.T) {
 		if !found[required] {
 			t.Errorf("missing %s in %#v", required, found)
 		}
+	}
+}
+
+func TestActivityTypeChangeWithStableID(t *testing.T) {
+	before := graphWithElements(&domain.Element{ID: "Submit", Name: "Submit", Type: "userTask"})
+	after := graphWithElements(&domain.Element{ID: "Submit", Name: "Submit", Type: "serviceTask"})
+	got := diff.Compare(before, after)
+	if len(got) != 1 || got[0].ChangeType != domain.ModifyTaskType || got[0].OldElement.Type != "userTask" || got[0].NewElement.Type != "serviceTask" {
+		t.Fatalf("lost activity transition: %+v", got)
 	}
 }
 

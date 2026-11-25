@@ -67,13 +67,16 @@ func TestOfflinePlanExportKeepsTechnicalContentFromCanonicalJSON(t *testing.T) {
 	if !bytes.Equal(md, Markdown(p)) || !bytes.Equal(md, Markdown(restored)) {
 		t.Fatal("export changed across JSON roundtrip or repeated render")
 	}
-	for _, section := range []string{"Unapproved draft", "Review issues", "Current behavior", "Required behavior", "Design rationale", "Assumptions and open decisions", "Implementation steps", "Proposed changes", "Acceptance checks"} {
+	for _, section := range []string{"This draft is awaiting review", "Open review items", "Today:", "Required:", "Confirm:", "Proposed implementation", "Acceptance checks"} {
 		if !strings.Contains(string(md), section) {
 			t.Fatalf("missing section %q", section)
 		}
 	}
 	f := restored.Plans[0]
-	for _, text := range []string{f.File, f.Summary, f.CurrentBehavior, f.TargetBehavior, f.DesignRationale, f.Assumptions[0], f.Steps[0], f.ProposedChanges[0], f.AcceptanceChecks[0], f.EvidenceIDs[0], restored.ReviewIssues[0]} {
+	if f.DesignRationale != p.Plans[0].DesignRationale || f.Steps[0] != p.Plans[0].Steps[0] {
+		t.Fatal("JSON lost implementation details")
+	}
+	for _, text := range []string{f.File, f.Summary, f.CurrentBehavior, f.TargetBehavior, f.Assumptions[0], f.ProposedChanges[0], f.AcceptanceChecks[0], f.EvidenceIDs[0], restored.ReviewIssues[0]} {
 		if !strings.Contains(string(md), text) {
 			t.Fatalf("canonical content omitted: %q", text)
 		}

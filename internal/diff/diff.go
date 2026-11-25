@@ -143,7 +143,16 @@ func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.C
 		switch change.ChangeType {
 		case domain.AddTask:
 			if change.NewElement != nil && isTask(change.NewElement.Type) {
-				change.Context = insertionContext(oldGraph, newGraph, change.NewElement.ID)
+				id := change.NewElement.ID
+				change.Context = insertionContext(oldGraph, newGraph, id)
+				if change.Context == nil {
+					predecessors, _ := neighbors(newGraph, id, true)
+					successors, _ := neighbors(newGraph, id, false)
+					change.Context = &domain.ChangeContext{
+						ProcessName:  newGraph.ProcessNames[change.NewElement.ProcessID],
+						Predecessors: predecessors, Successors: successors,
+					}
+				}
 			}
 		case domain.RemoveTask:
 			if change.OldElement != nil && isTask(change.OldElement.Type) {
@@ -162,7 +171,9 @@ func annotateChangeContexts(oldGraph, newGraph *domain.Graph, changes []domain.C
 				change.Context = modifiedGatewayBranchContext(oldGraph, newGraph, change.NewElement.ID)
 			}
 		case domain.ModifySequenceFlow:
-			change.Context = movedFlowContext(change, moved)
+			if change.Context = gatewayRerouteContext(oldGraph, newGraph, *change); change.Context == nil {
+				change.Context = movedFlowContext(change, moved)
+			}
 		}
 	}
 }
@@ -181,9 +192,26 @@ func movedTaskContexts(oldGraph, newGraph *domain.Graph) map[string]*domain.Chan
 		if contextIDs(oldPredecessors) == contextIDs(newPredecessors) && contextIDs(oldSuccessors) == contextIDs(newSuccessors) {
 			continue
 		}
+		// Connecting a new node or removing a neighbor changes the edges
+		// of existing tasks without establishing that those tasks moved.
+		if containsNewNeighbor(newGraph, oldPredecessors, oldSuccessors) ||
+			containsNewNeighbor(oldGraph, newPredecessors, newSuccessors) {
+			continue
+		}
 		result[id] = &domain.ChangeContext{Pattern: domain.PatternMoveTask, Predecessors: newPredecessors, Successors: newSuccessors, RelatedFlowIDs: sortedUnique(append(append(append(oldIncoming, oldOutgoing...), newIncoming...), newOutgoing...))}
 	}
 	return result
+}
+
+func containsNewNeighbor(other *domain.Graph, groups ...[]domain.ElementContext) bool {
+	for _, group := range groups {
+		for _, neighbor := range group {
+			if other.Elements[neighbor.ID] == nil {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func movedFlowContext(change *domain.Change, moved map[string]*domain.ChangeContext) *domain.ChangeContext {
@@ -264,9 +292,32 @@ func gatewayBranchContext(graph *domain.Graph, id string) *domain.ChangeContext 
 	}
 	return &domain.ChangeContext{
 		Pattern: domain.PatternAddGatewayBranch, Predecessors: predecessors, Successors: successors,
+		ProcessName:    graph.ProcessNames[graph.Elements[id].ProcessID],
+		BranchChanges:  gatewayRoutes(graph, outgoingFlows, false),
 		BranchTerms:    branchTerms(graph, outgoingFlows),
 		RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...)),
 	}
+}
+
+// Preserve which guard reaches which destination. An unordered bag of terms
+// cannot distinguish a bypass from the normal continuation.
+func gatewayRoutes(graph *domain.Graph, flowIDs []string, removed bool) []domain.BranchChange {
+	if len(flowIDs) < 2 {
+		return nil
+	}
+	var routes []domain.BranchChange
+	for _, id := range flowIDs {
+		if flow := graph.Flows[id]; flow != nil {
+			route := domain.BranchChange{FlowID: id}
+			if removed {
+				route.OldLabel, route.OldCondition, route.OldTarget = flow.Name, flow.Condition, flow.TargetRef
+			} else {
+				route.NewLabel, route.NewCondition, route.NewTarget = flow.Name, flow.Condition, flow.TargetRef
+			}
+			routes = append(routes, route)
+		}
+	}
+	return routes
 }
 
 func modifiedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *domain.ChangeContext {
@@ -284,24 +335,12 @@ func modifiedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *
 		if newFlow != nil && newFlow.SourceRef != id {
 			newFlow = nil
 		}
-		if oldFlow != nil && newFlow != nil && branchCondition(oldFlow) == branchCondition(newFlow) {
+		if oldFlow != nil && newFlow != nil && oldFlow.TargetRef == newFlow.TargetRef && branchCondition(oldFlow) == branchCondition(newFlow) {
 			continue
 		}
 		changedFlows = append(changedFlows, flowID)
-		transition := domain.BranchChange{FlowID: flowID}
-		if oldFlow != nil {
-			transition.OldCondition = oldFlow.Condition
-			transition.OldLabel = oldFlow.Name
-			transition.OldTarget = oldFlow.TargetRef
-		}
-		if newFlow != nil {
-			transition.NewCondition = newFlow.Condition
-			transition.NewLabel = newFlow.Name
-			transition.NewTarget = newFlow.TargetRef
-		}
-		transitions = append(transitions, transition)
-		// Labels often explain expressions in business language. Keep both
-		// for retrieval; only branchCondition decides semantic equivalence.
+		transitions = append(transitions, branchTransition(flowID, oldFlow, newFlow))
+		// Keep labels and expressions together as retrieval terms.
 		for _, flow := range []*domain.Flow{oldFlow, newFlow} {
 			if flow != nil {
 				terms = append(terms, flow.Name, flow.Condition)
@@ -332,7 +371,11 @@ func removedGatewayBranchContext(oldGraph, newGraph *domain.Graph, id string) *d
 	if !preservedNeighbor {
 		return nil
 	}
-	return &domain.ChangeContext{Pattern: domain.PatternRemoveGatewayBranch, Predecessors: predecessors, Successors: successors, BranchTerms: branchTerms(oldGraph, outgoingFlows), RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...))}
+	return &domain.ChangeContext{
+		Pattern: domain.PatternRemoveGatewayBranch, ProcessName: oldGraph.ProcessNames[oldGraph.Elements[id].ProcessID],
+		Predecessors: predecessors, Successors: successors, BranchTerms: branchTerms(oldGraph, outgoingFlows),
+		BranchChanges: gatewayRoutes(oldGraph, outgoingFlows, true), RelatedFlowIDs: sortedUnique(append(incomingFlows, outgoingFlows...)),
+	}
 }
 
 func sameScope(elements ...*domain.Element) bool {
@@ -476,6 +519,9 @@ func compareElement(oldGraph, newGraph *domain.Graph, oldElement, newElement *do
 	var changes []domain.Change
 	base := func(kind domain.ChangeType, reason string) domain.Change {
 		return domain.Change{ChangeType: kind, OldElement: clone(oldElement), NewElement: clone(newElement), Impacts: []domain.Impact{}, UnresolvedImpact: []string{}, Reason: reason}
+	}
+	if oldElement.Type != newElement.Type && isTask(oldElement.Type) && isTask(newElement.Type) {
+		changes = append(changes, base(domain.ModifyTaskType, fmt.Sprintf("activity type changed from %s to %s", oldElement.Type, newElement.Type)))
 	}
 	if oldElement.Name != newElement.Name {
 		kind := domain.ModifyTaskLabel

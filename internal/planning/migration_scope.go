@@ -1,0 +1,473 @@
+package planning
+
+import (
+	"fmt"
+	"path"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
+)
+
+var numberedSQLMigration = regexp.MustCompile(`^[0-9]+[^/]*\.(up|down)\.sql$`)
+var numberedMigrationPrefix = regexp.MustCompile(`(?i)\b([0-9]{3,6})_[a-z0-9_]+\.(?:up|down)\.sql\b`)
+var migrationStemPattern = regexp.MustCompile(`^[0-9]+_([a-z0-9_]+)\.(?:up|down)\.sql$`)
+var sqlTableHeader = regexp.MustCompile(`(?i)\b(?:CREATE|ALTER)\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*)`)
+var sqlCheckInConstraint = regexp.MustCompile(`(?i)\bCHECK\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s+IN\s*\(([^)]+)\)\s*\)`)
+var sqlNonZeroCheck = regexp.MustCompile(`(?i)\bCHECK\s*\(\s*[a-zA-Z_][a-zA-Z0-9_]*\s*(?:<>|!=)\s*0\s*\)`)
+var sqlQuotedUpperToken = regexp.MustCompile(`'([A-Z][A-Z0-9_]{2,})'`)
+var upperEnumToken = regexp.MustCompile(`\b([A-Z][A-Z0-9_]{2,})\b`)
+var forwardMigrationMention = regexp.MustCompile(`(?i)\b(?:forward\s+migration|new\s+(?:\w+\s+){0,2}migration|(?:add|create|write|apply|introduce)\s+(?:a\s+|an\s+|the\s+)?(?:new\s+|forward\s+|database\s+|sql\s+|schema\s+)?migration|migration\s+to\s+(?:allow|add|include|update|expand|alter)|alter\s+table)\b`)
+
+var genericMigrationStems = map[string]bool{
+	"init": true, "initial": true, "schema": true, "core": true, "base": true,
+	"main": true, "operations": true, "common": true, "shared": true, "app": true,
+}
+
+// IsHistoricalMigration identifies an existing numbered migration in the inspected snapshot.
+func IsHistoricalMigration(file string) bool {
+	file = strings.ToLower(strings.ReplaceAll(file, "\\", "/"))
+	return strings.Contains("/"+file, "/migrations/") && numberedSQLMigration.MatchString(path.Base(file))
+}
+
+// A numbered migration in the analyzed snapshot may already be applied.
+// Describe new DDL in the storage plan while preserving migration history.
+func validateMigrationEdit(p FilePlan) error {
+	if (p.Action != domain.ActionModify && p.Action != domain.ActionRemove) || !IsHistoricalMigration(p.File) {
+		return nil
+	}
+	return fmt.Errorf("%w: existing migration %q is schema evidence; do not edit or remove it. Use NO_CHANGE for this target and describe a new forward migration in the affected storage proposal if the source constraint requires one", ErrAgentPlanIncomplete, p.File)
+}
+
+type sqlCheckConstraint struct {
+	File    string
+	Table   string
+	Column  string
+	Allowed map[string]bool
+}
+
+func evidenceLineKey(file, location string) string {
+	rest := strings.TrimPrefix(location, file+":")
+	if idx := strings.IndexByte(rest, ':'); idx >= 0 {
+		rest = rest[:idx]
+	}
+	if _, err := strconv.Atoi(rest); err == nil {
+		return file + "|" + rest
+	}
+	return ""
+}
+
+func extractSQLCheckConstraints(bundle EvidenceBundle) []sqlCheckConstraint {
+	seen := map[string]bool{}
+	lineTable := map[string]string{}
+	for _, change := range bundle.Changes {
+		for _, candidate := range change.Candidates {
+			lowerFile := strings.ToLower(candidate.File)
+			if !strings.HasSuffix(lowerFile, ".sql") || strings.HasSuffix(lowerFile, ".down.sql") {
+				continue
+			}
+			for _, ev := range candidate.Evidence {
+				if key := evidenceLineKey(candidate.File, ev.Location); key != "" {
+					if m := sqlTableHeader.FindStringSubmatch(ev.Excerpt); len(m) == 2 {
+						lineTable[key] = strings.ToLower(m[1])
+					}
+				}
+			}
+		}
+	}
+	var out []sqlCheckConstraint
+	for _, change := range bundle.Changes {
+		for _, candidate := range change.Candidates {
+			lowerFile := strings.ToLower(candidate.File)
+			if !strings.HasSuffix(lowerFile, ".sql") || strings.HasSuffix(lowerFile, ".down.sql") {
+				continue
+			}
+			for _, ev := range candidate.Evidence {
+				tableHeaders := sqlTableHeader.FindAllStringSubmatchIndex(ev.Excerpt, -1)
+				for _, idx := range sqlCheckInConstraint.FindAllStringSubmatchIndex(ev.Excerpt, -1) {
+					col := strings.ToLower(ev.Excerpt[idx[2]:idx[3]])
+					vals := sqlQuotedUpperToken.FindAllStringSubmatch(ev.Excerpt[idx[4]:idx[5]], -1)
+					if len(vals) < 2 {
+						continue
+					}
+					table := ""
+					for _, th := range tableHeaders {
+						if th[0] <= idx[0] {
+							table = strings.ToLower(ev.Excerpt[th[2]:th[3]])
+						}
+					}
+					if table == "" {
+						if key := evidenceLineKey(candidate.File, ev.Location); key != "" {
+							table = lineTable[key]
+						}
+					}
+					allowed := map[string]bool{}
+					keys := make([]string, 0, len(vals))
+					for _, v := range vals {
+						allowed[v[1]] = true
+						keys = append(keys, v[1])
+					}
+					sort.Strings(keys)
+					sig := candidate.File + "|" + table + "|" + col + "|" + strings.Join(keys, ",")
+					if seen[sig] {
+						continue
+					}
+					seen[sig] = true
+					out = append(out, sqlCheckConstraint{File: candidate.File, Table: table, Column: col, Allowed: allowed})
+				}
+			}
+		}
+	}
+	return out
+}
+
+func introducedProcessUpperTokens(pc *domain.ProcessContext) map[string]bool {
+	out := map[string]bool{}
+	if pc == nil || pc.After == nil {
+		return out
+	}
+	collect := func(g *domain.Graph) map[string]bool {
+		tokens := map[string]bool{}
+		if g == nil {
+			return tokens
+		}
+		scan := func(s string) {
+			for _, m := range upperEnumToken.FindAllStringSubmatch(s, -1) {
+				if !nonStatusUpperTokens[m[1]] {
+					tokens[m[1]] = true
+				}
+			}
+		}
+		for _, el := range g.Elements {
+			if el != nil {
+				scan(el.Name)
+				scan(el.Documentation)
+			}
+		}
+		for _, f := range g.Flows {
+			if f != nil {
+				scan(f.Name)
+				scan(f.Condition)
+			}
+		}
+		return tokens
+	}
+	afterTokens := collect(pc.After)
+	beforeTokens := collect(pc.Before)
+	for tok := range afterTokens {
+		if pc.Before == nil || !beforeTokens[tok] {
+			out[tok] = true
+		}
+	}
+	return out
+}
+
+// migrationPrerequisiteIssues verifies that when inspected SQL evidence contains
+// a CHECK(col IN (...)) constraint and a non-test implementation proposal writes
+// a newly introduced BPMN value excluded by that CHECK, at least one executable
+// proposal specifies a forward migration or constraint update.
+func migrationPrerequisiteIssues(bundle EvidenceBundle, plans []FilePlan) []string {
+	return migrationPrerequisiteIssuesWithRelated(bundle, plans, nil)
+}
+
+func migrationPrerequisiteIssuesWithRelated(bundle EvidenceBundle, plans []FilePlan, related []ProposalContract) []string {
+	constraints := extractSQLCheckConstraints(bundle)
+	introduced := introducedProcessUpperTokens(bundle.ProcessContext)
+	maxMigNum, maxMigWidth, existingMigFiles := maxExistingMigrationNumber(bundle, related)
+	nonZeroTables, lineTables := extractLedgerAndLineTables(bundle)
+	var issues []string
+	reported := map[string]bool{}
+	for _, p := range plans {
+		if (p.Action != domain.ActionModify && p.Action != domain.ActionAdd) || p.Layer == "test" || p.Layer == "documentation" {
+			continue
+		}
+		if maxMigNum > 0 {
+			for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+				for _, step := range group {
+					if !forwardMigrationMention.MatchString(step) {
+						continue
+					}
+					for _, m := range numberedMigrationPrefix.FindAllStringSubmatch(step, -1) {
+						if existingMigFiles[strings.ToLower(m[0])] {
+							continue
+						}
+						if n, err := strconv.Atoi(m[1]); err == nil && n <= maxMigNum {
+							key := fmt.Sprintf("mignum|%s|%d", p.File, n)
+							if !reported[key] {
+								reported[key] = true
+								issues = append(issues, fmt.Sprintf("Schema prerequisite invalid: %s proposes migration number %0*d which collides with existing migrations (highest observed: %0*d); use the next unused migration number (%0*d_...) instead.", p.File, maxMigWidth, n, maxMigWidth, maxMigNum, maxMigWidth, maxMigNum+1))
+							}
+						}
+					}
+				}
+			}
+		}
+		if len(nonZeroTables) > 0 && len(lineTables) > 0 && hasEveryZeroDifference(bundle.ProcessContext, ChangeInput{}) {
+			lowerFile := strings.ToLower(strings.ReplaceAll(p.File, "\\", "/"))
+			submod := ""
+			if sm := internalSubmodulePath.FindStringSubmatch(lowerFile); len(sm) == 2 {
+				submod = sm[1]
+			}
+			prefixes := collectProcessWordPrefixes(bundle.ProcessContext)
+			matchingLine := ""
+			for _, lt := range lineTables {
+				if submod == "" || identifierMatchesScope(lt, submod, prefixes) {
+					matchingLine = lt
+					break
+				}
+			}
+			if matchingLine != "" {
+				for _, ledger := range nonZeroTables {
+					queryLedger := regexp.MustCompile(`(?i)\b(?:query|select|read|fetch|retrieve|load|inspect|join|from)\b[^.;\n]{0,50}\b` + regexp.QuoteMeta(ledger) + `\b`)
+					for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+						for _, step := range group {
+							if !negationCue.MatchString(step) && queryLedger.MatchString(step) {
+								key := "ledger|" + p.File + "|" + ledger
+								if !reported[key] {
+									reported[key] = true
+									issues = append(issues, fmt.Sprintf("Schema source invalid: %s queries non-zero-only ledger table %q (CHECK <> 0) to evaluate per-line zero deltas before posting; query each line's quantities from %q instead.", p.File, ledger, matchingLine))
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	if len(constraints) == 0 || len(introduced) == 0 {
+		sort.Strings(issues)
+		return issues
+	}
+	for _, c := range constraints {
+		for _, p := range plans {
+			if !constraintAppliesToPlan(bundle.ProcessContext, c, p) {
+				continue
+			}
+			for tok := range introduced {
+				if c.Allowed[tok] || !writesEnumValue(p, c.Column, tok) {
+					continue
+				}
+				if mutatesHistoricalMigrationInPlan(p, c.File) {
+					key := "mut|" + c.File + "|" + c.Column + "|" + tok + "|" + p.File
+					if !reported[key] {
+						reported[key] = true
+						issues = append(issues, fmt.Sprintf("Schema prerequisite invalid: %s proposes editing historical migration %s directly; keep %s unchanged and add a step in %s creating a new forward migration (ALTER TABLE %s ... CHECK (%s IN (...))) to allow %q.", p.File, c.File, c.File, p.File, fallbackTable(c.Table), c.Column, tok))
+					}
+					continue
+				}
+				if hasForwardMigrationFor(plans, c, tok) {
+					if c.Table != "" && !forwardMigrationNamesTable(plans, c, tok) {
+						key := "tbl|" + c.File + "|" + c.Table + "|" + tok + "|" + p.File
+						if !reported[key] {
+							reported[key] = true
+							issues = append(issues, fmt.Sprintf("Schema prerequisite invalid: forward migration in %s must target the exact SQL table %q (column %s) from %s to allow %q; do not abbreviate or guess the table name.", p.File, c.Table, c.Column, c.File, tok))
+						}
+					}
+					continue
+				}
+				key := c.File + "|" + c.Column + "|" + tok + "|" + p.File
+				if reported[key] {
+					continue
+				}
+				reported[key] = true
+				tableHint := ""
+				if c.Table != "" {
+					tableHint = fmt.Sprintf(" on table %q", c.Table)
+				}
+				issues = append(issues, fmt.Sprintf("Schema prerequisite missing: %s restricts %s%s via CHECK(...) without %q, yet %s proposes using %q without specifying a new forward migration to update the constraint; keep %s as NO_CHANGE and add a step in %s creating a new forward migration updating the %s CHECK constraint%s to allow %q (do not edit %s).", c.File, c.Column, tableHint, tok, p.File, tok, c.File, p.File, c.Column, tableHint, tok, c.File))
+			}
+		}
+	}
+	sort.Strings(issues)
+	return issues
+}
+
+func fallbackTable(table string) string {
+	if table != "" {
+		return table
+	}
+	return "<table>"
+}
+
+func maxExistingMigrationNumber(bundle EvidenceBundle, related []ProposalContract) (int, int, map[string]bool) {
+	maxNum, width := 0, 6
+	existing := map[string]bool{}
+	check := func(file string) {
+		base := strings.ToLower(path.Base(strings.ReplaceAll(file, "\\", "/")))
+		if m := numberedMigrationPrefix.FindStringSubmatch(base); len(m) == 2 {
+			existing[base] = true
+			if n, err := strconv.Atoi(m[1]); err == nil && n > maxNum {
+				maxNum = n
+				width = len(m[1])
+			}
+		}
+	}
+	for _, change := range bundle.Changes {
+		for _, c := range change.Candidates {
+			check(c.File)
+		}
+	}
+	for _, r := range related {
+		check(r.File)
+	}
+	return maxNum, width, existing
+}
+
+func extractLedgerAndLineTables(bundle EvidenceBundle) (nonZeroTables []string, lineTables []string) {
+	seenNZ, seenLine := map[string]bool{}, map[string]bool{}
+	for _, change := range bundle.Changes {
+		for _, c := range change.Candidates {
+			lf := strings.ToLower(c.File)
+			if !strings.HasSuffix(lf, ".sql") || strings.HasSuffix(lf, ".down.sql") {
+				continue
+			}
+			for _, ev := range c.Evidence {
+				for _, m := range sqlTableHeader.FindAllStringSubmatch(ev.Excerpt, -1) {
+					tbl := strings.ToLower(m[1])
+					if strings.HasSuffix(tbl, "_lines") && !seenLine[tbl] {
+						seenLine[tbl] = true
+						lineTables = append(lineTables, tbl)
+					}
+				}
+				if sqlNonZeroCheck.MatchString(ev.Excerpt) {
+					tableHeaders := sqlTableHeader.FindAllStringSubmatch(ev.Excerpt, -1)
+					for _, m := range tableHeaders {
+						tbl := strings.ToLower(m[1])
+						if !seenNZ[tbl] {
+							seenNZ[tbl] = true
+							nonZeroTables = append(nonZeroTables, tbl)
+						}
+					}
+					if len(tableHeaders) == 0 && strings.Contains(strings.ToLower(ev.Excerpt), "movement_type") && !seenNZ["stock_movements"] {
+						seenNZ["stock_movements"] = true
+						nonZeroTables = append(nonZeroTables, "stock_movements")
+					}
+				}
+			}
+		}
+	}
+	sort.Strings(nonZeroTables)
+	sort.Strings(lineTables)
+	return nonZeroTables, lineTables
+}
+
+func forwardMigrationNamesTable(plans []FilePlan, constraint sqlCheckConstraint, value string) bool {
+	tbl := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(constraint.Table) + `\b`)
+	column := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(constraint.Column) + `\b`)
+	token := regexp.MustCompile(`\b` + regexp.QuoteMeta(value) + `\b`)
+	for _, p := range plans {
+		if (p.Action != domain.ActionModify && p.Action != domain.ActionAdd) || p.Layer == "test" || p.Layer == "documentation" {
+			continue
+		}
+		for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+			for _, step := range group {
+				if !mutatesHistoricalMigrationProse(step, constraint.File) && forwardMigrationMention.MatchString(step) && column.MatchString(step) && token.MatchString(step) && tbl.MatchString(step) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func constraintAppliesToPlan(pc *domain.ProcessContext, c sqlCheckConstraint, p FilePlan) bool {
+	lowerFile := strings.ToLower(strings.ReplaceAll(p.File, "\\", "/"))
+	if (p.Action != domain.ActionModify && p.Action != domain.ActionAdd) || p.Layer == "test" || p.Layer == "documentation" || p.Layer == "domain" || p.Layer == "frontend" || strings.HasSuffix(lowerFile, ".sql") || strings.Contains("/"+lowerFile, "/domain/") {
+		return false
+	}
+	submod := ""
+	if m := internalSubmodulePath.FindStringSubmatch(lowerFile); len(m) == 2 {
+		submod = m[1]
+	}
+	if submod == "" {
+		return true
+	}
+	prefixes := collectProcessWordPrefixes(pc)
+	if c.Table != "" {
+		return identifierMatchesScope(c.Table, submod, prefixes)
+	}
+	if m := migrationStemPattern.FindStringSubmatch(strings.ToLower(path.Base(c.File))); len(m) == 2 && !genericMigrationStems[m[1]] {
+		return identifierMatchesScope(m[1], submod, prefixes)
+	}
+	return true
+}
+
+func identifierMatchesScope(ident, submod string, prefixes map[string]bool) bool {
+	for _, part := range strings.Split(strings.ToLower(ident), "_") {
+		if len(part) < 4 {
+			continue
+		}
+		if strings.Contains(submod, part[:4]) || (len(submod) >= 4 && strings.Contains(part, submod[:4])) || matchesProcessPrefix(part, prefixes) {
+			return true
+		}
+	}
+	return false
+}
+
+func mutatesHistoricalMigrationInPlan(p FilePlan, histFile string) bool {
+	for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+		for _, step := range group {
+			if mutatesHistoricalMigrationProse(step, histFile) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func mutatesHistoricalMigrationProse(step, histFile string) bool {
+	base := path.Base(histFile)
+	re := regexp.MustCompile(`(?i)\b(?:update|modify|edit|change|alter|rewrite|append\s+to)\s+[` + "`" + `'"]?(?:` + regexp.QuoteMeta(histFile) + `|` + regexp.QuoteMeta(base) + `)\b`)
+	return re.MatchString(step)
+}
+
+// SQL excerpts can show several unrelated enums in one migration. Require
+// the proposal to assign the new value to the actual constrained column.
+func writesEnumValue(p FilePlan, column, value string) bool {
+	assignment := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(column) + `\s*(?:=|to|as)\s*[^\w\s]?` + regexp.QuoteMeta(value) + `\b`)
+	if assignment.MatchString(p.TargetBehavior) {
+		return true
+	}
+	for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+		for _, step := range group {
+			if !forwardMigrationMention.MatchString(step) && assignment.MatchString(step) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasForwardMigrationFor(plans []FilePlan, constraint sqlCheckConstraint, value string) bool {
+	column := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(constraint.Column) + `\b`)
+	token := regexp.MustCompile(`\b` + regexp.QuoteMeta(value) + `\b`)
+	for _, p := range plans {
+		if (p.Action != domain.ActionModify && p.Action != domain.ActionAdd) || p.Layer == "test" || p.Layer == "documentation" {
+			continue
+		}
+		newSQL := p.Action == domain.ActionAdd && strings.HasSuffix(strings.ToLower(p.File), ".up.sql") && !strings.EqualFold(p.File, constraint.File)
+		for _, group := range [][]string{p.ProposedChanges, p.Steps} {
+			for _, step := range group {
+				if !mutatesHistoricalMigrationProse(step, constraint.File) &&
+					(newSQL || forwardMigrationMention.MatchString(step)) && column.MatchString(step) && token.MatchString(step) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func validateMigrationPrerequisites(bundle EvidenceBundle, plans []FilePlan) error {
+	return validateMigrationPrerequisitesWithRelated(bundle, plans, nil)
+}
+
+func validateMigrationPrerequisitesWithRelated(bundle EvidenceBundle, plans []FilePlan, related []ProposalContract) error {
+	issues := migrationPrerequisiteIssuesWithRelated(bundle, plans, related)
+	if len(issues) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: %s", ErrAgentPlanIncomplete, issues[0])
+}

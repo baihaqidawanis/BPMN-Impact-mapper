@@ -1,6 +1,8 @@
 # Peta dokumentasi
 
-Mulai dari [README utama](../README.md) untuk menjalankan web.
+Mulai dari [README utama](../README.md) untuk menjalankan web. Untuk melanjutkan pengembangan lintas GPT/Claude, baca [pegangan bersama](../collab/CLAUDE-GPT.md) dan [status terbaru](../collab/STATUS.md).
+
+Panduan agent aktif: [Focused combined review](FOCUSED-COMBINED-REVIEW.md). Catatan bertanggal lainnya menjelaskan versi historis, bukan konfigurasi model yang harus dipakai sekarang.
 
 | Keperluan | Dokumen |
 |---|---|
@@ -28,6 +30,6 @@ Dokumen lama tidak otomatis menjelaskan perilaku aplikasi versi sekarang.
 - [Role convention recheck](ROLE-BPMN-AUDIT-2026-11-02.md): strict gateway edge findings.
 - [Prepared gateway cleanup](ROLE-BPMN-GATEWAY-CLEANUP-2026-11-02.md): user-approved canonical update and post-apply verification.
 - [Sidebar, Overview and result UX](WORKSPACE-REDESIGN-2026-11-02.md).
-- [Handoff sebelum Qwen](PRE-QWEN-HANDOFF.md): satu jalur percobaan dan paket aktif terbaru.
+- [Handoff GPT/Claude](../collab/CLAUDE-GPT.md): konteks TA, kedua repo, commands dan protokol update.
 
 - [Audit paket agent tanpa VPN](OFFLINE-AGENT-PAYLOAD-AUDIT-2026-11-09.md): pemeriksaan 21 variasi transport dan batas klaim pengujiannya.

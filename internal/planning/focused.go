@@ -7,14 +7,16 @@ import (
 	"fmt"
 )
 
-const FocusedProtocolVersion = "focused-batches-v7-outcome-counts"
+const FocusedProtocolVersion = "focused-batches-v12-output-capacity"
 
 // FocusedEngine reviews every change with bounded seed input per model session,
 // then assembles one evidence-bound plan. It never scans the full source corpus.
 type FocusedEngine struct {
-	Model AgentModel
-	Tools SourceTools
-	Store AgentSessionStore
+	Model      AgentModel
+	Tools      SourceTools
+	Store      AgentSessionStore
+	Light      bool
+	UltraLight bool
 }
 
 // Group by payload size as well as count; never discard a seed. The model's
@@ -44,7 +46,7 @@ func focusedChildID(id string, change int, seeds []Candidate) string {
 }
 
 func capacityLimitedChild(child AgentSession, err error) bool {
-	if errors.Is(err, ErrAgentContextLimit) || errors.Is(err, errBatchReviewBudget) {
+	if errors.Is(err, ErrAgentContextLimit) || errors.Is(err, ErrAgentOutputLimit) || errors.Is(err, errBatchReviewBudget) {
 		return true
 	}
 	if len(child.Events) == 0 {
@@ -66,7 +68,18 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 	if err := validateBundle(original); err != nil {
 		return s, err
 	}
-	binding := agentDigest([]any{FocusedProtocolVersion, original.ContextID, e.Tools.Identity(), e.Model.Identity()})
+	protocol := FocusedProtocolVersion
+	if e.Light {
+		protocol = "focused-light-v2-source-roles"
+	}
+	budget := DefaultAgentBudget()
+	if e.UltraLight {
+		protocol = "focused-ultra-light-v7-schema-evidence"
+		budget.MaxTools = 4
+		budget.MaxDiscoveries = 2
+		budget.MaxRevisions = 0
+	}
+	binding := agentDigest([]any{protocol, original.ContextID, e.Tools.Identity(), e.Model.Identity()})
 	saved, err := e.Store.Load(ctx, id)
 	if err == nil {
 		if saved.Binding != binding {
@@ -92,14 +105,19 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 		return s, cause
 	}
 	var issues []string
-	s.FocusedReview = &FocusedReviewProgress{OutcomeCountsAvailable: true}
+	overlappingFiles := make(map[string]bool)
+	s.FocusedReview = &FocusedReviewProgress{Light: e.Light, UltraLight: e.UltraLight, OutcomeCountsAvailable: true, CombinedReviewOnly: true}
 	for _, c := range original.Changes {
 		s.FocusedReview.CandidatesTotal += len(c.Candidates)
-		s.FocusedReview.BatchesTotal += len(focusedSeedBatches(c.Candidates))
+		seeds, _ := e.seedCandidates(c.Candidates)
+		s.FocusedReview.BatchesTotal += len(focusedSeedBatches(seeds))
 	}
 	batchIndex := 0
 	for i, change := range original.Changes {
-		batches := focusedSeedBatches(change.Candidates)
+		initial, reserve := e.seedCandidates(change.Candidates)
+		batches := focusedSeedBatches(initial)
+		draftStart := len(s.Draft)
+		ultraSupplement := false
 		for position := 0; position < len(batches); position++ {
 			seeds := batches[position]
 			if err := ctx.Err(); err != nil {
@@ -115,7 +133,35 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 			input.Changes = []ChangeInput{change}
 			input.Changes[0].Candidates = append([]Candidate(nil), seeds...)
 			input.ContextID, _ = ComputeContextID(input)
-			child, err := (AgentEngine{Model: e.Model, Tools: e.Tools, Store: e.Store}).Run(ctx, s.ActiveChildID, input)
+			// Earlier proposals for these files are coordination context only.
+			// Reconstructing them from completed children keeps resume stable.
+			// Also carry forward historical-migration constraint notes so storage
+			// batches know about blocking schema constraints discovered earlier.
+			var companion []FilePlan
+			hasImplSeed := false
+			for _, seed := range seeds {
+				if !IsHistoricalMigration(seed.File) && seed.Layer != "documentation" {
+					hasImplSeed = true
+					break
+				}
+			}
+			for draftIndex, p := range s.Draft {
+				if (ultraSupplement || len(batches) > 1) && draftIndex >= draftStart {
+					companion = append(companion, p)
+					continue
+				}
+				if hasImplSeed && IsHistoricalMigration(p.File) {
+					companion = append(companion, p)
+					continue
+				}
+				for _, seed := range seeds {
+					if p.File == seed.File {
+						companion = append(companion, p)
+						break
+					}
+				}
+			}
+			child, err := (AgentEngine{Model: e.Model, Tools: e.Tools, Store: e.Store, Budget: budget, DeferReview: true, InspectWeak: e.UltraLight && len(seeds) > 0, RelatedProposals: BuildProposalContracts(companion, nil)}).Run(ctx, s.ActiveChildID, input)
 			s.Turns += child.Turns
 			s.Tools += child.Tools
 			s.Revisions += child.Revisions
@@ -149,20 +195,26 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 						s.Decisions = append(s.Decisions, d)
 					}
 				}
-				if child.Status != "COMPLETE" && len(child.Draft) > 0 {
+				if !child.AwaitingCombinedReview && child.Status != "COMPLETE" && len(child.Draft) > 0 {
 					issues = append(issues, fmt.Sprintf("Focused batch %d draft withheld because reviewer approval is incomplete; inspect its checkpoint.", batchIndex+1))
 				}
+				allowed := allowedPlanningTargets(s.Bundle, s.Decisions)
 				for _, p := range child.Draft {
-					if child.Status != "COMPLETE" {
+					if !child.AwaitingCombinedReview && child.Status != "COMPLETE" {
+						continue
+					}
+					if _, ok := allowed[planKey(p.ChangeType, p.ElementID, p.File, p.Symbol)]; !ok {
+						issues = append(issues, fmt.Sprintf("Withheld proposal for %s/%s: %s (%s) conflicts with the stored target decision.", p.ChangeType, p.ElementID, p.File, p.Symbol))
 						continue
 					}
 					if !hasFocusedPlan(s.Draft, p) {
 						s.Draft = append(s.Draft, p)
-					} else {
-						issues = append(issues, "A file was proposed in overlapping focused batches; inspect the merged plan for duplicated or conflicting recommendations.")
+					} else if !overlappingFiles[p.File] {
+						overlappingFiles[p.File] = true
+						issues = append(issues, fmt.Sprintf("Overlapping focused batches proposed changes to %s. Check for conflicting recommendations.", p.File))
 					}
 				}
-				if child.Status != "COMPLETE" {
+				if !child.AwaitingCombinedReview && child.Status != "COMPLETE" {
 					issues = append(issues, child.Feedback...)
 					if len(child.Feedback) == 0 {
 						issues = append(issues, "A focused candidate batch still needs review.")
@@ -171,12 +223,28 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 			}
 			batchIndex++
 			s.FocusedReview.BatchesReviewed = batchIndex
-			if child.Status == "COMPLETE" {
-				s.FocusedReview.BatchesApproved++
+			if child.AwaitingCombinedReview {
+				s.FocusedReview.BatchesPrepared++
 			} else {
 				s.FocusedReview.BatchesNeedingReview++
 			}
 			s.FocusedReview.CandidatesProcessed += len(seeds)
+			if position == len(batches)-1 && len(reserve) > 0 && lightNeedsMoreSource(change.Candidates, s.Draft[draftStart:]) {
+				if e.UltraLight {
+					reserve = ultraLightReserve(initial, reserve, s.Draft[draftStart:])
+				}
+				if len(reserve) == 0 {
+					continue
+				}
+				extra := focusedSeedBatches(reserve)
+				if e.UltraLight {
+					extra = extra[:1]
+					ultraSupplement = true
+				}
+				batches = append(batches, extra...)
+				s.FocusedReview.BatchesTotal += len(extra)
+				reserve = nil
+			}
 		}
 	}
 
@@ -187,8 +255,36 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 	if err := e.Store.Save(ctx, s); err != nil {
 		return s, err
 	}
-	review, turns, err := (FullRepositoryEngine{Model: e.Model, Store: e.Store}).reviewCombinedPlan(ctx, id, s)
+	auditor := FullRepositoryEngine{Model: combinedFirstModel{e.Model}, Store: e.Store}
+	review, turns, err := auditor.reviewCombinedPlan(ctx, id, s)
 	s.Turns += turns
+	if err == nil && !review.Approved {
+		revised, revisionErr := e.reviseFocusedPlan(ctx, id, &s, review)
+		if revisionErr != nil {
+			return pause("Focused plan correction interrupted; prepared drafts are preserved.", revisionErr)
+		}
+		if revised {
+			review, turns, err = auditor.reviewCombinedPlan(ctx, id+"-revised", s)
+			s.Turns += turns
+		}
+	}
+	if e.UltraLight {
+		for _, change := range original.Changes {
+			_, reserve := e.seedCandidates(change.Candidates)
+			if len(reserve) == 0 {
+				continue
+			}
+			var plans []FilePlan
+			for _, plan := range s.Draft {
+				if plan.ChangeType == change.ChangeType && plan.ElementID == change.ElementID {
+					plans = append(plans, plan)
+				}
+			}
+			if lightNeedsMoreSource(change.Candidates, plans) {
+				issues = append(issues, fmt.Sprintf("Ultra Light left source coverage unresolved for %s/%s. Consider reviewing the remaining mapped candidates.", change.ChangeType, change.ElementID))
+			}
+		}
+	}
 	if err != nil {
 		if errors.Is(err, ErrAgentContextLimit) || errors.Is(err, errConsistencyAttempts) {
 			issues = append(issues, "Combined focused-plan review exceeded its context or retry budget; inspect all file recommendations.")
@@ -210,6 +306,7 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 		}
 	}
 	issues = append(issues, implementationCoverageIssues(s.Bundle, s.Draft)...)
+	issues = append(issues, combinedPlanConflictIssues(s.Bundle, s.Draft)...)
 	s.Status = "COMPLETE"
 	s.ProgressMessage = "Focused review finished."
 	s.Feedback = cleanStrings(issues)

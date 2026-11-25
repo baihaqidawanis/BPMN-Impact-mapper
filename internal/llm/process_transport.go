@@ -5,9 +5,101 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/planning"
 )
+
+// Append a redundant index only when it fits alongside all primary evidence.
+// The input is a compact JSON object produced by the host.
+func withLocalRoutes(input []byte, turn planning.AgentTurn, byteBudget int) []byte {
+	pc := turn.Bundle.ProcessContext
+	if pc == nil || pc.After == nil || (turn.Role != planning.Analyst && turn.Role != planning.Planner && turn.Role != planning.Reviewer) {
+		return input
+	}
+	elementID := ""
+	switch {
+	case len(turn.Bundle.Changes) == 1:
+		elementID = turn.Bundle.Changes[0].ElementID
+	case turn.Role == planning.Reviewer && len(turn.Draft) == 1:
+		elementID = turn.Draft[0].ElementID
+	default:
+		return input
+	}
+	if elementID == "" {
+		return input
+	}
+	routes := localGatewayRoutes(pc.After, elementID)
+	if len(routes) == 0 {
+		return input
+	}
+	data, _ := json.Marshal(routes)
+	const field = `,"local_after_routes":`
+	if len(input)+len(field)+len(data) > byteBudget {
+		return input
+	}
+	out := make([]byte, 0, len(input)+len(field)+len(data))
+	out = append(out, input[:len(input)-1]...)
+	out = append(out, field...)
+	out = append(out, data...)
+	return append(out, '}')
+}
+
+type gatewayRoute struct {
+	From      string `json:"from"`
+	FromName  string `json:"from_name,omitempty"`
+	Condition string `json:"condition,omitempty"`
+	Label     string `json:"label,omitempty"`
+	Default   bool   `json:"default,omitempty"`
+	To        string `json:"to"`
+	ToName    string `json:"to_name,omitempty"`
+}
+
+// A compact reading aid for the full after graph. Keep each gateway's
+// alternatives together, including the distinct inputs of a join.
+func localGatewayRoutes(g *domain.Graph, elementID string) []gatewayRoute {
+	nodes := map[string]bool{elementID: true}
+	if flow := g.Flows[elementID]; flow != nil {
+		nodes = map[string]bool{flow.SourceRef: true, flow.TargetRef: true}
+	}
+	gateways := map[string]bool{}
+	for _, flow := range g.Flows {
+		if flow == nil || (!nodes[flow.SourceRef] && !nodes[flow.TargetRef]) {
+			continue
+		}
+		for _, id := range []string{flow.SourceRef, flow.TargetRef} {
+			if node := g.Elements[id]; node != nil && strings.HasSuffix(node.Type, "Gateway") {
+				gateways[id] = true
+			}
+		}
+	}
+	var ids []string
+	for id, flow := range g.Flows {
+		if flow != nil && (gateways[flow.SourceRef] || gateways[flow.TargetRef]) {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	var routes []gatewayRoute
+	for _, id := range ids {
+		f := g.Flows[id]
+		source := g.Elements[f.SourceRef]
+		target := g.Elements[f.TargetRef]
+		r := gatewayRoute{From: f.SourceRef, Condition: f.Condition, Default: source != nil && source.DefaultFlow == id, To: f.TargetRef}
+		if source != nil && strings.TrimSpace(source.Name) != "" && source.Name != f.SourceRef {
+			r.FromName = strings.TrimSpace(source.Name)
+		}
+		if target != nil && strings.TrimSpace(target.Name) != "" && target.Name != f.TargetRef {
+			r.ToName = strings.TrimSpace(target.Name)
+		}
+		if f.Name != f.Condition {
+			r.Label = f.Name
+		}
+		routes = append(routes, r)
+	}
+	return routes
+}
 
 const sharedProcessInstructions = " Reconstruct each process graph: merge shared_elements/shared_flows into before/after Elements/Flows. Resolve @ keys/values using id_aliases; emit ORIGINAL BPMN IDs. All nodes/edges remain available. Evidence locations starting ':' use candidate.file as prefix."
 

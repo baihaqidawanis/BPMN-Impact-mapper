@@ -164,7 +164,7 @@ func (analyzer Analyzer) Analyze(ctx context.Context, request Request) (domain.R
 	if methodMetadata == nil {
 		methodMetadata = make(map[string]string)
 	}
-	methodMetadata["change_policy"] = "gateway-condition-flow-grouping-v4-branch-transitions"
+	methodMetadata["change_policy"] = "gateway-condition-flow-grouping-v6-reroute-context"
 	if analyzer.IncludeSourceCallers {
 		methodMetadata["source_caller_policy"] = "top5-unique-name2-reverse3-cap128-related3-v1"
 	}
@@ -268,7 +268,7 @@ func inputFingerprint(name, revision string, oldData, newData []byte, inventory 
 func analysisID(fingerprint string, request Request, methodConfig []byte, indexIdentity string) string {
 	hash := sha256.New()
 	writeHash(hash, []byte(indexIdentity))
-	writeHash(hash, []byte("engine-3.5j-conservative-symbol-scope"))
+	writeHash(hash, []byte("engine-3.5k-activity-type-diff"))
 	writeHash(hash, []byte(fingerprint))
 	writeHash(hash, []byte(request.Method))
 	writeHash(hash, methodConfig)

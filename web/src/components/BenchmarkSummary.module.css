@@ -1,27 +1,243 @@
-.panel { margin-bottom: 24px; padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
-.panel header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 18px; }
-.label { color: var(--muted); font-size: 12px; }
-.experiments { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
-.experiments code { overflow-wrap: anywhere; white-space: normal; }
-.variant { display: block; margin-top: 5px; color: var(--muted); font-weight: 400; }
-.panel h3 { margin: 7px 0; font-size: 20px; letter-spacing: -.025em; }
-.panel p { color: var(--muted); font-size: 13px; line-height: 1.65; }
-.panel header p { margin: 0; }
-.panel a { padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-control); color: var(--ink); font-size: 12px; text-decoration: none; }
-.panel a:hover { border-color: var(--blue); color: var(--blue); }
-.tableWrap { max-width: 100%; overflow: auto; margin: 20px 0; }
-.panel table { width: 100%; min-width: 730px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-.panel th, .panel td { padding: 13px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-.panel th:first-child { text-align: left; }
-.panel thead th { color: var(--muted); font-size: 12px; font-weight: 500; }
-.hybrid { background: var(--blue-soft); }
-.hybrid th { color: var(--blue); }
-.panel .note { font-size: 12px; }
-.panel details { padding-top: 15px; border-top: 1px solid var(--line); }
-.panel summary { cursor: pointer; font-size: 13px; font-weight: 600; }
-.panel dl { display: grid; gap: 14px; margin: 18px 0; }
-.panel dt { font-size: 13px; font-weight: 600; }
-.panel dd { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-.panel td.studyCell { min-width: 160px; max-width: 360px; white-space: normal; text-align: left; line-height: 1.6; }
-.panel li { margin: 8px 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
-@media (max-width: 600px) { .panel { padding: 18px; } }
+.panel {
+  margin-bottom: 20px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.panel header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px 20px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 540;
+}
+
+.experiments {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.experiments code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+  font-size: 12px;
+  color: var(--charcoal);
+}
+
+.variant {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.panel h3 {
+  margin: 4px 0 6px;
+  font-size: 17px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.panel p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.panel header p {
+  margin: 0;
+  max-width: 66ch;
+}
+
+.panel a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--control-bg);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 520;
+  text-decoration: none;
+  box-shadow: var(--shadow-control);
+  white-space: nowrap;
+}
+
+.panel a:hover {
+  border-color: var(--control-hover);
+  background: var(--surface-hover);
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.highlights > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--sidebar-bg);
+}
+
+.highlights span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.highlights b {
+  font-size: 19px;
+  font-weight: 630;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.panel table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel th,
+.panel td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.panel tbody tr:last-child th,
+.panel tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.panel th:first-child {
+  text-align: left;
+  font-weight: 560;
+  color: var(--ink);
+}
+
+.panel thead th {
+  background: var(--sidebar-bg);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 560;
+}
+
+.panel tbody tr:hover {
+  background: var(--surface-subtle);
+}
+
+.hybrid {
+  background: var(--blue-soft);
+}
+
+.hybrid:hover {
+  background: var(--blue-soft) !important;
+}
+
+.hybrid th {
+  color: var(--blue);
+  font-weight: 620;
+}
+
+.panel .note {
+  margin: 8px 0 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.panel details {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.panel summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 580;
+  color: var(--ink);
+}
+
+.panel summary:hover {
+  color: var(--blue);
+}
+
+.panel dl {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.panel dt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.panel dd {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.panel td.studyCell {
+  min-width: 160px;
+  max-width: 360px;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.55;
+}
+
+.panel ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.panel li {
+  margin: 6px 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+  .panel {
+    padding: 16px;
+  }
+}

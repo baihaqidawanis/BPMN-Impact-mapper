@@ -5,7 +5,28 @@ import (
 	"sort"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/textutil"
 )
+
+const bm25QueryProfile = "id-en-stopwords-glossary-v1"
+
+// mappingBM25Query filters function words in the BPMN query and retains the
+// original business terms alongside their aliases for mixed-language source.
+func mappingBM25Query(tokens []string) []string {
+	query := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		switch token {
+		case "dan", "yang", "and", "the":
+			continue
+		case "alasan":
+			query = append(query, "reason")
+		case "versi":
+			query = append(query, "version")
+		}
+		query = append(query, token)
+	}
+	return textutil.UniqueSorted(query)
+}
 
 type BM25 struct {
 	documents []domain.Artifact

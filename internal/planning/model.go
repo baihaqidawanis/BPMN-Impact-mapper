@@ -31,6 +31,8 @@ type Limits struct {
 	RelatedPerChange     int
 	EvidencePerCandidate int
 	ExcerptRunes         int
+	GroupGatewayChanges  bool
+	GroupGatewayBranches bool
 }
 
 func DefaultLimits() Limits {
@@ -56,6 +58,7 @@ type Candidate struct {
 }
 
 type ChangeInput struct {
+	SupportingFlowIDs []string              `json:"supporting_flow_ids,omitempty"`
 	Before            *ElementInput         `json:"before,omitempty"`
 	After             *ElementInput         `json:"after,omitempty"`
 	BranchChanges     []domain.BranchChange `json:"branch_changes,omitempty"`
@@ -182,13 +185,14 @@ type ReviewResponse struct {
 }
 
 type ChangeCoverage struct {
-	ChangeType domain.ChangeType `json:"change_type"`
-	ElementID  string            `json:"element_id"`
-	Relevant   int               `json:"relevant"`
-	Weak       int               `json:"weak"`
-	Rejected   int               `json:"rejected"`
-	Plans      int               `json:"plans"`
-	Status     string            `json:"status"`
+	ElementName string            `json:"element_name,omitempty"`
+	ChangeType  domain.ChangeType `json:"change_type"`
+	ElementID   string            `json:"element_id"`
+	Relevant    int               `json:"relevant"`
+	Weak        int               `json:"weak"`
+	Rejected    int               `json:"rejected"`
+	Plans       int               `json:"plans"`
+	Status      string            `json:"status"`
 }
 type ChangePlan struct {
 	ReviewFindings   []FileReviewFinding `json:"review_findings,omitempty"`

@@ -34,8 +34,11 @@ export function BpmnLibraryDetail({initialID,entries,onClose,onBaseline}:{initia
   const child=entries.find(e=>e.id===link?.target_id);
   const choices=entries.filter(e=>entry && e.repository===entry.repository && e.level>entry.level);
   return <section className={styles.detail} aria-label="Process detail browser">
-    <div className={styles.heading}><button type="button" onClick={onClose}>Back to library</button><span>Read-only process navigation</span></div>
-    <nav aria-label="Process breadcrumb" className={styles.actions}>{trail.map((item,index)=><button type="button" key={item} disabled={busy||index===trail.length-1} onClick={()=>setTrail(trail.slice(0,index+1))}>{entries.find(e=>e.id===item)?.process||"Diagram"}</button>)}</nav>
+    <div className={styles.detailNav}>
+      <button type="button" onClick={onClose}>Back to library</button>
+      <nav aria-label="Process breadcrumb" className={styles.actions}>{trail.map((item,index)=><button type="button" key={item} disabled={busy||index===trail.length-1} onClick={()=>setTrail(trail.slice(0,index+1))}>{entries.find(e=>e.id===item)?.process||"Diagram"}</button>)}</nav>
+      <span>Read-only process navigation</span>
+    </div>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {!entry && !error && <p role="status">Opening process...</p>}

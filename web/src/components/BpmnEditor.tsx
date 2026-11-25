@@ -22,7 +22,7 @@ interface Props {
   onDirty: (value: boolean) => void;
 }
 
-export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirty }: Props) {
+export function BpmnEditor({ baseline, initial, onApply, active, onDirty }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const beforeContainer = useRef<HTMLDivElement>(null);
   const modeler = useRef<Modeler | null>(null);
@@ -72,13 +72,16 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
     }
     async function refresh() {
       const current = ++version;
-      const { xml } = await instance?.saveXML({ format: false }) ?? {};
+      const { xml } = (await instance?.saveXML({ format: false })) ?? {};
       if (xml && current === version && !disposed) mark(xml);
     }
     refreshPreview.current = refresh;
     async function load() {
       try {
-        const [{ default: BpmnModeler }, { default: BpmnNavigatedViewer }] = await Promise.all([import("bpmn-js/lib/Modeler"), import("bpmn-js/lib/NavigatedViewer")]);
+        const [{ default: BpmnModeler }, { default: BpmnNavigatedViewer }] = await Promise.all([
+          import("bpmn-js/lib/Modeler"),
+          import("bpmn-js/lib/NavigatedViewer"),
+        ]);
         if (disposed || !container.current || !beforeContainer.current) return;
         baselineXml = await baseline.text();
         before = new BpmnNavigatedViewer({ container: beforeContainer.current });
@@ -91,15 +94,32 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
         await refresh();
         before.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 });
         instance.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 });
-        setNotice(warnings.length ? `${warnings.length} import warnings. Check missing shapes or connections before applying.` : "Double-click to rename. Use the wrench to choose User Task or Service Task.");
-        instance.on("commandStack.changed", () => { if (!disposed) { setDirty(true); onDirty(true); void refresh().catch(() => setError("Change preview could not be refreshed.")); } });
+        setNotice(
+          warnings.length
+            ? `${warnings.length} import warnings. Check missing shapes or connections before applying.`
+            : "Double-click labels to rename · use the wrench to switch task types."
+        );
+        instance.on("commandStack.changed", () => {
+          if (!disposed) {
+            setDirty(true);
+            onDirty(true);
+            void refresh().catch(() => setError("Change preview could not be refreshed."));
+          }
+        });
         setReady(true);
       } catch (cause) {
         if (!disposed) setError(cause instanceof Error ? cause.message : "Diagram could not be opened. Check XML and BPMN diagram coordinates.");
       }
     }
     void load();
-    return () => { disposed = true; refreshPreview.current = null; instance?.destroy(); before?.destroy(); modeler.current = null; viewer.current = null; };
+    return () => {
+      disposed = true;
+      refreshPreview.current = null;
+      instance?.destroy();
+      before?.destroy();
+      modeler.current = null;
+      viewer.current = null;
+    };
   }, [baseline, initial, onDirty]);
 
   async function exportFile() {
@@ -110,16 +130,27 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
   }
 
   async function apply() {
-    try { onApply(await exportFile()); setDirty(false); onDirty(false); } catch (cause) { setError(String(cause)); }
+    try {
+      onApply(await exportFile());
+      setDirty(false);
+      onDirty(false);
+    } catch (cause) {
+      setError(String(cause));
+    }
   }
 
   async function download() {
     try {
       const file = await exportFile();
       const url = URL.createObjectURL(file);
-      const link = document.createElement("a"); link.href = url; link.download = file.name; link.click();
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file.name;
+      link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (cause) { setError(String(cause)); }
+    } catch (cause) {
+      setError(String(cause));
+    }
   }
 
   async function reset() {
@@ -129,12 +160,13 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
       await modeler.current?.importXML(await baseline.text());
       modeler.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 });
       await refreshPreview.current?.();
-      setDirty(true); onDirty(true); setError(""); setReady(true);
-    } catch (cause) { setError(String(cause)); }
-  }
-
-  function close() {
-    onClose();
+      setDirty(true);
+      onDirty(true);
+      setError("");
+      setReady(true);
+    } catch (cause) {
+      setError(String(cause));
+    }
   }
 
   function zoom(factor: number) {
@@ -147,30 +179,100 @@ export function BpmnEditor({ baseline, initial, onApply, onClose, active, onDirt
     if (canvas) canvas.zoom(Math.max(0.1, Math.min(4, canvas.zoom() * factor)));
   }
 
-  return <div role="region" aria-label="Edit new BPMN">
-    <section className={styles.editor}>
-      <header><div><h2>Compare BPMN versions</h2><p>Original preserved · edit only the new version</p></div><button type="button" onClick={close}>Back to mapping</button></header>
-      <nav aria-label="Diagram tools">
-        <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ undo: () => void }>("commandStack").undo()}>Undo</button>
-        <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ redo: () => void }>("commandStack").redo()}>Redo</button>
-        <button type="button" disabled={!ready} onClick={() => zoom(1.25)}>Zoom in</button>
-        <button type="button" disabled={!ready} onClick={() => zoom(0.8)}>Zoom out</button>
-        <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 })}>Fit diagram</button>
-        <button type="button" disabled={!ready} onClick={() => zoomBefore(1.25)}>Before +</button>
-        <button type="button" disabled={!ready} onClick={() => zoomBefore(0.8)}>Before −</button>
-        <button type="button" disabled={!ready} onClick={() => viewer.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 })}>Fit before</button>
-        <button type="button" disabled={!ready} onClick={() => void reset()}>Reset to baseline</button>
-        <button type="button" disabled={!ready} onClick={() => void download()}>Download BPMN</button>
-        <button className={styles.primary} type="button" disabled={!ready} onClick={() => void apply()}>Use edited BPMN</button>
-      </nav>
-      {error && <p role="alert" className={styles.error}>{error}</p>}
-      <p role="status">{dirty ? "Unapplied changes. " : ""}{notice || "Opening diagrams…"}</p>
-      <div className={styles.legend} aria-label="Visual change preview"><span><i className={styles.added} />Added {diff.added.length}</span><span><i className={styles.removed} />Removed {diff.removed.length}</span><span><i className={styles.modified} />Changed {diff.modified.length}</span><small>Quick visual preview by ID, label, lane and flow. The backend report is the authoritative semantic diff.</small><button type="button" aria-pressed={showMarkers} onClick={() => setShowMarkers(value => !value)}>{showMarkers ? "Hide markers" : "Show markers"}</button></div>
-      <div className={`${styles.panels} ${focusAfter ? styles.focusAfter : ""} ${showMarkers ? styles.showMarkers : ""}`}>
-        <div className={styles.pane}><div className={styles.paneTitle}><b>Before</b><span>{baseline.name} · view only</span></div><div ref={beforeContainer} className={styles.canvas} data-testid="bpmn-baseline-canvas" /></div>
-        <div className={styles.pane}><div className={styles.paneTitle}><b>After</b><span>{initial.name} · editable</span><button type="button" onClick={() => setFocusAfter(value => !value)}>{focusAfter ? "Show before" : "Expand editor"}</button></div><div ref={container} className={styles.canvas} data-testid="bpmn-editor-canvas" /></div>
-      </div>
-      <footer>Edits and undo history stay here when switching tabs. Use edited BPMN to send this version to Mapping. Download before refreshing.</footer>
-    </section>
-  </div>;
+  return (
+    <div role="region" aria-label="Edit new BPMN">
+      <section className={styles.editor}>
+        <nav className={styles.toolbar} aria-label="Diagram tools">
+          <div className={styles.toolGroup}>
+            <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ undo: () => void }>("commandStack").undo()}>
+              Undo
+            </button>
+            <button type="button" disabled={!ready} onClick={() => modeler.current?.get<{ redo: () => void }>("commandStack").redo()}>
+              Redo
+            </button>
+            <button type="button" disabled={!ready} onClick={() => void reset()}>
+              Reset to baseline
+            </button>
+          </div>
+
+          <div className={styles.legend} aria-label="Visual change preview">
+            <span><i className={styles.added} />Added {diff.added.length}</span>
+            <span><i className={styles.removed} />Removed {diff.removed.length}</span>
+            <span><i className={styles.modified} />Changed {diff.modified.length}</span>
+            <button type="button" className={styles.ghostBtn} aria-pressed={showMarkers} onClick={() => setShowMarkers(value => !value)}>
+              {showMarkers ? "Hide markers" : "Show markers"}
+            </button>
+          </div>
+
+          <div className={styles.toolGroup}>
+            <button type="button" disabled={!ready} onClick={() => void download()}>
+              Download BPMN
+            </button>
+            <button className={styles.primary} type="button" disabled={!ready} onClick={() => void apply()}>
+              Use edited BPMN
+            </button>
+          </div>
+        </nav>
+
+        {error && <p role="alert" className={styles.error}>{error}</p>}
+
+        <div className={`${styles.panels} ${focusAfter ? styles.focusAfter : ""} ${showMarkers ? styles.showMarkers : ""}`}>
+          <div className={styles.pane}>
+            <div className={styles.paneTitle}>
+              <div className={styles.paneMeta}>
+                <b>Before</b>
+                <span>{baseline.name} · view only</span>
+              </div>
+              <div className={styles.paneTools}>
+                <button type="button" disabled={!ready} onClick={() => zoomBefore(1.25)} aria-label="Before +" title="Zoom in baseline">+</button>
+                <button type="button" disabled={!ready} onClick={() => zoomBefore(0.8)} aria-label="Before −" title="Zoom out baseline">−</button>
+                <button
+                  type="button"
+                  disabled={!ready}
+                  aria-label="Fit before"
+                  title="Fit baseline diagram"
+                  onClick={() => viewer.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 })}
+                >
+                  Fit
+                </button>
+              </div>
+            </div>
+            <div ref={beforeContainer} className={styles.canvas} data-testid="bpmn-baseline-canvas" />
+          </div>
+
+          <div className={styles.pane}>
+            <div className={styles.paneTitle}>
+              <div className={styles.paneMeta}>
+                <b>After</b>
+                <span>{initial.name} · editable{dirty ? " · unsaved" : ""}</span>
+              </div>
+              <div className={styles.paneTools}>
+                <button type="button" disabled={!ready} onClick={() => zoom(1.25)} aria-label="Zoom in" title="Zoom in">+</button>
+                <button type="button" disabled={!ready} onClick={() => zoom(0.8)} aria-label="Zoom out" title="Zoom out">−</button>
+                <button
+                  type="button"
+                  disabled={!ready}
+                  aria-label="Fit diagram"
+                  title="Fit diagram"
+                  onClick={() => modeler.current?.get<{ zoom: (value: string, center?: { x: number; y: number }) => void }>("canvas").zoom("fit-viewport", { x: 0, y: 0 })}
+                >
+                  Fit
+                </button>
+                <button type="button" className={styles.expandBtn} onClick={() => setFocusAfter(value => !value)}>
+                  {focusAfter ? "Show before" : "Expand editor"}
+                </button>
+              </div>
+            </div>
+            <div ref={container} className={styles.canvas} data-testid="bpmn-editor-canvas" />
+          </div>
+        </div>
+
+        {(dirty || notice) && (
+          <footer className={styles.footBar}>
+            <span role="status">{dirty ? "Unsaved draft · " : ""}{notice}</span>
+          </footer>
+        )}
+      </section>
+    </div>
+  );
 }

@@ -1,5 +1,7 @@
 # TA Direction Conclusion
 
+Ringkasan arah penelitian dari 17 November 2026. Agentic planning sudah diimplementasikan. Kualitas dan durasi masih dalam pengujian. Baca [pegangan TA](collab/TEAMWORK.md), [progres aktif](collab/PROGRESS.md), dan [kebijakan Focused](docs/FOCUSED-COMBINED-REVIEW.md). Judul di bawah adalah usulan penelitian yang menunggu konfirmasi dosen.
+
 ## Proposed title
 
 **Evidence-Constrained Agentic Change Planning from BPMN Changes Using Deterministic Impact Mapping**
@@ -86,7 +88,7 @@ Metode otomatis yang menggabungkan ranked list BM25 dan Semantic menggunakan Rec
 
 ### 4. BPMN-Context-Aware Hybrid Retrieval
 
-Metode utama yang menambahkan exact trace ID, symbol/path similarity, structured evidence, BPMN context, dan static source relations pada hasil retrieval. Implementasi Hybrid sekarang menggabungkan ranking deterministic tersebut dengan Semantic menggunakan RRF. Kandidat yang hanya berasal dari Semantic tetap `VERIFY`; action kuat hanya dipertahankan bila didukung sisi deterministic evidence. Implementasi ini masih harus diuji dengan hidden ground truth sebelum diklaim lebih akurat.
+Metode utama memperkaya query BM25 dengan konteks BPMN lalu menggabungkan posisi ranking BM25 dan Semantic menggunakan RRF (`k=60`). Task ID, nama function, path dan pola source ditampilkan sebagai evidence tambahan, bukan bobot ranking terpisah. Semua kandidat retrieval tetap `VERIFY`. Static source relations tersedia sebagai bukti/eksperimen terpisah, bukan knowledge graph atau bobot ketiga tersembunyi. Klaim peningkatan perlu evaluasi dengan acuan dan scope yang tetap.
 
 `BPMN context` berarti informasi lokal dari node yang berubah: predecessor/successor, actor/lane, gateway, serta incoming/outgoing flow. Ini bukan Neo4j, bukan graph database, bukan unified BPMN-source knowledge graph, dan bukan traversal graph untuk mencari source code. Kata `context-aware` dipilih agar tidak tertukar dengan pendekatan graph database.
 
@@ -97,9 +99,9 @@ Walaupun fusion dan Hybrid sudah diimplementasikan, Semantic Retrieval tetap har
 - BM25-only: implemented dan dapat dipilih melalui CLI/API/web;
 - Semantic-only: implemented secara offline dengan local embedding model;
 - BM25 + Semantic Fusion: implemented dengan deterministic RRF;
-- BPMN-Context-Aware Hybrid Retrieval: implemented sebagai fusion antara ranking deterministic evidence dan Semantic;
+- BPMN-Context-Aware Hybrid Retrieval: implemented sebagai RRF antara context-aware BM25 dan Semantic;
 - Configuration-Driven: hanya compatibility adapter internal, bukan metode utama TA;
-- LLM/agentic planning: belum diimplementasikan dan tetap berada setelah evaluasi retrieval.
+- LLM/agentic planning: Analyst/Planner/Reviewer sudah diimplementasikan dengan source tools read-only, checkpoints dan export plan. Focused terbaru menunda semantic review sampai proposal gabungan tersedia, lalu mengizinkan maksimal satu koreksi terarah. Hasil model masih perlu diuji; keberhasilan tes offline bukan bukti akurasi.
 
 Synthetic smoke test, unit test, dan browser E2E membuktikan pipeline dapat berjalan. Hasil tersebut belum membuktikan akurasi atau generalisasi.
 
@@ -109,7 +111,7 @@ Synthetic smoke test, unit test, dan browser E2E membuktikan pipeline dapat berj
 2. Buat hidden ground truth file/symbol terdampak melalui dua reviewer setelah inference, kemudian lakukan adjudication.
 3. Jalankan empat metode pada input identik dan ukur Recall@k, Precision@k, MRR/MAP, false discovery proportion, unresolved rate, latency, dan reproducibility.
 4. Analisis error per jenis perubahan BPMN: label, penambahan/penghapusan task, gateway branch, sequence flow, actor, state, dan data requirement.
-5. Setelah metode retrieval terpilih berdasarkan evidence eksperimen, implementasikan evidence-constrained planning agent untuk menghasilkan `change-plan.json` dan `change-plan.md` tanpa mengubah source code.
+5. Evaluasi agent yang sudah diimplementasikan pada input tetap: kualitas pemilihan file, isi rencana, keberhasilan sesi, jumlah revisi dan latency. Hasil tetap `change-plan.json` dan `change-plan.md` tanpa mengubah source code.
 
 ## Agent responsibilities
 

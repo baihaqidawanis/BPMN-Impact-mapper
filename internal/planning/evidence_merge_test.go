@@ -44,6 +44,15 @@ func TestDiscoveredDeclarationSurvivesLaterActionWindow(t *testing.T) {
 	}
 }
 
+func TestInspectedCallEvidencePrecedesLexicalHits(t *testing.T) {
+	existing := []EvidenceItem{{ID: "sales-hit", Type: "BM25", Excerpt: "unrelated sales test"}}
+	incoming := []EvidenceItem{{ID: "inventory-call", Type: "AST_CALL_LITERALS"}, {ID: "inventory-source", Type: "SOURCE_TOOL"}}
+	merged := MergeAgentEvidence(existing, incoming, true)
+	if len(merged) != 3 || merged[0].ID != "inventory-call" || merged[1].ID != "inventory-source" {
+		t.Fatal("retrieval hit was prioritized over inspected call", merged)
+	}
+}
+
 func (evidenceWindowTools) Identity() string { return "window-fixture" }
 func (f evidenceWindowTools) Execute(context.Context, ToolRequest) (ToolResult, error) {
 	return ToolResult{Candidates: []Candidate{{File: "store.go", Symbol: "Submit", Origin: "agent-source-tool", SuggestedAction: "VERIFY", Evidence: f.items}}}, nil

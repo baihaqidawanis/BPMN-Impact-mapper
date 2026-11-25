@@ -353,12 +353,26 @@ func elementID(change domain.Change) string {
 	return ""
 }
 
+func normalizePath(file string) string {
+	file = strings.TrimSpace(strings.ReplaceAll(file, "\\", "/"))
+	if file == "" {
+		return ""
+	}
+	clean := path.Clean(file)
+	if clean == "." {
+		return ""
+	}
+	return clean
+}
+
 func deduplicate(impacts []domain.Impact) []domain.Impact {
 	seen := map[string]bool{}
 	result := make([]domain.Impact, 0, len(impacts))
 	for _, impact := range impacts {
-		if impact.File != "" && !seen[impact.File] {
-			seen[impact.File] = true
+		clean := normalizePath(impact.File)
+		if clean != "" && !seen[clean] {
+			seen[clean] = true
+			impact.File = clean
 			result = append(result, impact)
 		}
 	}

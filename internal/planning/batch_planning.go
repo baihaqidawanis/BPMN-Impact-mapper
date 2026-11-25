@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
@@ -45,7 +44,7 @@ func (e AgentEngine) planOversizedBatch(ctx context.Context, s *AgentSession) (A
 				}
 			}
 			id := fmt.Sprintf("%s-pp-%d-%d", base, ci, pi)
-			related := BuildProposalContracts(append(append([]FilePlan{}, s.Draft...), plans...), draft)
+			related := mergeProposalContracts(e.RelatedProposals, BuildProposalContracts(append(append([]FilePlan{}, s.Draft...), plans...), draft))
 			binding := agentDigest([]any{"planning-part-v2-related", base, part.ContextID, selected, draft, related})
 			receipt, err := e.Store.Load(ctx, id)
 			if errors.Is(err, ErrAgentSessionMissing) {
@@ -73,7 +72,7 @@ func (e AgentEngine) planOversizedBatch(ctx context.Context, s *AgentSession) (A
 			if err := e.Store.Save(ctx, receipt); err != nil {
 				return AgentReply{}, err
 			}
-			callCtx, cancel := context.WithTimeout(ctx, 90*time.Second)
+			callCtx, cancel := context.WithTimeout(ctx, AgentTurnTimeout)
 			reply, err := (batchReviewModel{e, s}).Turn(callCtx, AgentTurn{Role: Planner, Bundle: part, Decisions: selected, Draft: draft, RelatedProposals: related, Feedback: s.Feedback})
 			cancel()
 			if err != nil {
@@ -84,6 +83,16 @@ func (e AgentEngine) planOversizedBatch(ctx context.Context, s *AgentSession) (A
 			}
 			if err := validatePlans(part, selected, "", reply.Plan.Plans); err != nil {
 				return AgentReply{}, fmt.Errorf("%w: %v", ErrAgentModelOutput, err)
+			}
+			for _, p := range reply.Plan.Plans {
+				if err := validateUncalledDomainMethodEdit(s.Observations, p); err != nil {
+					return AgentReply{}, fmt.Errorf("%w: %v", ErrAgentModelOutput, err)
+				}
+			}
+			if s.Turns+1 < s.Budget.MaxTurns {
+				if err := validateMigrationPrerequisitesWithRelated(s.Bundle, reply.Plan.Plans, related); err != nil {
+					return AgentReply{}, fmt.Errorf("%w: %v", ErrAgentModelOutput, err)
+				}
 			}
 			for _, p := range reply.Plan.Plans {
 				if p.Action == domain.ActionNoAction {
@@ -104,4 +113,20 @@ func (e AgentEngine) planOversizedBatch(ctx context.Context, s *AgentSession) (A
 		return AgentReply{}, ErrAgentContextLimit
 	}
 	return AgentReply{Plan: &LayerPlanningResponse{Plans: plans}}, nil
+}
+
+func mergeProposalContracts(groups ...[]ProposalContract) []ProposalContract {
+	seen := map[string]bool{}
+	var out []ProposalContract
+	for _, group := range groups {
+		for _, c := range group {
+			key := planKey(c.ChangeType, c.ElementID, c.File, c.Symbol)
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			out = append(out, c)
+		}
+	}
+	return out
 }

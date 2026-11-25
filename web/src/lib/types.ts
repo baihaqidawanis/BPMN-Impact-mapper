@@ -84,6 +84,7 @@ export interface Report {
 }
 
 export interface ReportSummary {
+  change_label?: string;
   analysis_id: string;
   input_fingerprint: string;
   method: AnalysisMethod;

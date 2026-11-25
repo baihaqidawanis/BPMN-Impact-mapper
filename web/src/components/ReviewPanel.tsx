@@ -71,9 +71,9 @@ export function ReviewPanel({ report }: { report: Report }) {
 
   return (
     <details className={styles.panel} data-testid="review-panel">
-      <summary><span><b>Reviewer annotation</b><small>Export ground-truth input locally; nothing is sent to inference.</small></span><span>Open</span></summary>
+      <summary><span><b>Step 1 · Reviewer annotation</b><small>Label expected files locally and export reviewer JSON.</small></span><span>Open</span></summary>
       <div className={styles.body}>
-        <div className={styles.notice}><b>Independent judgment required.</b> Rankings are prompts for review, not automatic truth. Add missing files manually and leave a case empty only when no software impact is expected.</div>
+        <div className={styles.notice}><b>Independent judgment required.</b> Add missing files manually; leave empty only if no code change is expected.</div>
         <label className={styles.reviewer}><span>Reviewer ID</span><input value={reviewerID} onChange={(event) => setReviewerID(event.target.value)} placeholder="reviewer-a" /></label>
         {report.changes.map((change, changeIndex) => <section className={styles.case} key={`${change.change_type}-${changeIndex}`}>
           <header><span>{String(changeIndex + 1).padStart(2, "0")}</span><div><b>{change.change_type.replaceAll("_", " ")}</b><small>{change.new_element?.id ?? change.old_element?.id}</small></div></header>

@@ -1,0 +1,38 @@
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+}
+.trigger:hover { color: var(--blue); }
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  color: var(--blue);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.action svg { width: 13px; height: 13px; flex-shrink: 0; }
+.open, .trigger[data-state="open"] .closed { display: none; }
+.trigger[data-state="open"] .open { display: inline; }
+.trigger[data-state="open"] svg { transform: rotate(180deg); }
+.content { padding: 8px 0 4px; }
+@media (prefers-reduced-motion: no-preference) {
+  .trigger, .action svg { transition: color 180ms var(--ease), transform 180ms var(--ease); }
+}

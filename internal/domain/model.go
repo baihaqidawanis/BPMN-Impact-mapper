@@ -6,6 +6,7 @@ const (
 	AddTask                ChangeType = "ADD_TASK"
 	RemoveTask             ChangeType = "REMOVE_TASK"
 	ModifyTaskLabel        ChangeType = "MODIFY_TASK_LABEL"
+	ModifyTaskType         ChangeType = "MODIFY_TASK_TYPE"
 	ModifyActorRole        ChangeType = "MODIFY_ACTOR_ROLE"
 	AddGateway             ChangeType = "ADD_GATEWAY"
 	RemoveGateway          ChangeType = "REMOVE_GATEWAY"
@@ -239,6 +240,7 @@ type Report struct {
 }
 
 type ReportSummary struct {
+	ChangeLabel      string         `json:"change_label,omitempty"`
 	AnalysisID       string         `json:"analysis_id"`
 	InputFingerprint string         `json:"input_fingerprint"`
 	Method           AnalysisMethod `json:"method"`

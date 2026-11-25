@@ -1,0 +1,59 @@
+.action.primary,
+.action.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  box-sizing: border-box;
+  padding: 5px 12px;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 520;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.action svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.action.primary,
+.action.primary span {
+  color: #ffffff;
+}
+
+.action.primary {
+  border: 1px solid transparent;
+  background: var(--blue);
+  box-shadow: 0 1px 2px rgba(0, 113, 227, 0.2);
+}
+
+.action.primary:hover,
+.action.primary:hover span {
+  background: var(--blue-hover);
+  color: #ffffff;
+}
+
+.action.secondary,
+.action.secondary span {
+  color: var(--ink);
+}
+
+.action.secondary {
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  box-shadow: var(--shadow-control);
+}
+
+.action.secondary:hover,
+.action.secondary:hover span {
+  background: var(--surface-hover);
+  border-color: var(--control-hover);
+  color: var(--ink);
+}

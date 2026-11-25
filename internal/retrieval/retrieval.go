@@ -44,7 +44,7 @@ type BM25Only struct{ DiversifyFiles bool }
 func (BM25Only) Method() domain.AnalysisMethod { return domain.MethodBM25 }
 
 func (BM25Only) MethodMetadata() map[string]string {
-	return map[string]string{"query_version": "element-and-direct-branch-conditions-v2"}
+	return map[string]string{"query_version": "element-and-direct-branch-conditions-v2", "query_profile": bm25QueryProfile}
 }
 
 func (strategy BM25Only) Attach(_ context.Context, changes []domain.Change, artifacts []domain.Artifact, config Config) ([]domain.Change, []domain.Warning, error) {
@@ -70,6 +70,7 @@ func (strategy BM25Only) Attach(_ context.Context, changes []domain.Change, arti
 			withoutContext.Context = &domain.ChangeContext{BranchTerms: change.Context.BranchTerms}
 		}
 		query, _ := queryFor(withoutContext)
+		query = mappingBM25Query(query)
 		ranked := removeShadowedPackageDocuments(model.Search(query))
 		if len(ranked) == 0 {
 			change.UnresolvedImpact = append(change.UnresolvedImpact, "BM25 found no lexical candidate")
@@ -363,6 +364,9 @@ func queryFor(change domain.Change) ([]string, []string) {
 		// artifacts look relevant (for example every task mentioning "flow").
 		// Direct IDs are matched independently as exact trace evidence.
 		raw = append(raw, element.Name, element.State)
+		if change.ChangeType == domain.ModifyTaskType {
+			raw = append(raw, element.Type)
+		}
 		if (change.ChangeType == domain.AddTask || change.ChangeType == domain.RemoveTask) && strings.TrimSpace(element.Name) != "" {
 			raw = append(raw, textutil.ContextAnchor(element.Documentation, retrievalNeighborNames(change.Context)))
 		} else {

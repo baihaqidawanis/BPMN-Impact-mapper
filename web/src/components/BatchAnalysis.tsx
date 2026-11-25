@@ -77,7 +77,7 @@ export function BatchAnalysis({ busy, onBusy, onOpen }: { busy: boolean; onBusy:
   }
 
   return <section className={styles.root} aria-label="Batch analysis">
-    <header><h3>Run multiple scenario experiments</h3><p>Each BPMN pair and selected method produces a separate saved report. A shared baseline with several changed files tests alternative scenarios; it does not merge them into one process. Accuracy is measured separately in Evaluation using expected files. This batch does not run AI review.</p></header>
+    <header><h3>Run experiments</h3><p>Each BPMN pair and method saves a separate mapping report.</p></header>
     <fieldset disabled={running || busy || loading}>
       <div className={styles.fields}>
         <label>Repository path<input value={repo} onChange={e=>setRepo(e.target.value)} placeholder="Server-local repository path" /></label>

@@ -58,9 +58,9 @@ export function EvaluationDashboard({ reports }: { reports: Report[] }) {
 
   const ready = reconciliation && reconciliation.disagreements.every((_, i) => Boolean(decisions[i]));
   return <details className={styles.panel} data-testid="evaluation-dashboard">
-    <summary>Evaluation dashboard <span>Compare mapping results with the expected files</span></summary>
+    <summary>Step 3 · Evaluation dashboard <span>Reconcile two reviewer files and score {reports.length} report(s)</span></summary>
     <div className={styles.body}>
-      <p>Check the {reports.length} selected report(s) against reference lists of expected files. This workflow currently needs two separately prepared reviewer JSON files for the same repository and BPMN case. Compare their answers, resolve any differences, then calculate the metrics. These files stay out of mapping and are not saved on the server.</p>
+      <p>Upload Reviewer A &amp; B JSON files for the same BPMN case, resolve disagreements, and compute metrics locally.</p>
       <div className={styles.uploads}>
         <label>Reviewer A JSON<input type="file" accept=".json,application/json" disabled={busy} onChange={e => void load(e.target.files?.[0], "a")} /><small>{a?.reviewer_id}</small></label>
         <label>Reviewer B JSON<input type="file" accept=".json,application/json" disabled={busy} onChange={e => void load(e.target.files?.[0], "b")} /><small>{b?.reviewer_id}</small></label>
@@ -112,7 +112,7 @@ function EvaluationTable({ bundle }: { bundle: EvaluationBundle }) {
   return <section data-testid="evaluation-results">
     <h3>Evaluation results</h3>
     <p>All {bundle.ground_truth.cases.length} changes evaluated at file level against the supplied reference. The reference may be provisional.</p>
-    <p>Positive-change MAP measures where all reference files appear. R-precision checks the top R candidates, where R is the number of reference files. Fixed-k precision divides by k. Empty-reference cases are scored separately as abstentions. Older reports show n/a for unavailable metrics. Unqualified ranking rows below retain the legacy aggregate over all labeled changes.</p>
+    <details className={styles.confusion}><summary>Metric definitions</summary><p>Positive-change MAP measures where all reference files appear. R-precision checks the top R candidates, where R is the number of reference files. Fixed-k precision divides by k. Empty-reference cases are scored separately as abstentions. Older reports show n/a for unavailable metrics. Unqualified ranking rows below retain the legacy aggregate over all labeled changes.</p></details>
     <div className={styles.tableWrap}><table><thead><tr><th>Metric</th>{bundle.results.map(r => <th key={r.analysis_id}>{r.method}</th>)}</tr></thead>
       <tbody>{rows.map(([name, value]) => <tr key={name}><th>{name}</th>{bundle.results.map(r => <td key={r.analysis_id}>{value(r.metrics)?.toFixed(4) ?? "n/a"}</td>)}</tr>)}
         <tr><th>Correct negative controls</th>{bundle.results.map(r => <td key={r.analysis_id}>{r.metrics.negative_controls ? `${r.metrics.correct_abstentions}/${r.metrics.negative_controls} (${r.metrics.negative_control_accuracy.toFixed(4)})` : "n/a"}</td>)}</tr>

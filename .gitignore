@@ -10,15 +10,24 @@
 /web/coverage/
 /web/test-results/
 /web/playwright-report/
+/test-results/
 *.tsbuildinfo
 /impact-report.json
 /impact-report.md
 /impact-report-*.md
 /impact-report-*.json
 /tmp/
+/OpenVPN.log
 /agent-context-*.json
 /change-plan-*.md
 /change-plan-*.json
+/Planinng - Answer/**/agent-context-*.json
+/Planinng - Answer/**/change-plan-*.json
+/Planinng - Answer/**/change-plan-*.md
+/2026-11-21-ZAP-Report-.html
+/image.png
+/image copy.png
+/image copy 2.png
 *.exe
 *.test
 *.out

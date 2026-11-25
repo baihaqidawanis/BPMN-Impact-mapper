@@ -6,6 +6,8 @@ Focused review includes every displayed candidate on every BPMN change. Top 10 o
 
 ## Execution
 
+Current Focused policy: [one combined audit](FOCUSED-COMBINED-REVIEW.md). Prepared Analyst/Planner child drafts are collected without per-batch semantic review. Reviewer audits the combined proposal, with at most one targeted Planner correction. The historical execution notes below describe the earlier pipeline and are retained for interpreting old sessions.
+
 Focused seeds are split into two-candidate child sessions per change, retaining complete before/after semantic graph context. Each child runs Analyst, Planner and Reviewer and has its own bounded tool/turn/revision budget. Completed child checkpoints are reused on resume. The parent merges evidence, preserves diagnostics, and exports one plan. Only COMPLETE child drafts are promoted into that combined plan. Rejected or interrupted drafts remain in child checkpoints and produce explicit withheld-batch issues. Overlapping file proposals are flagged; conflicting proposals are not silently resolved by dropping evidence.
 
 No default whole-job ten-minute cutoff is applied to focused sessions; individual model turns remain bounded and Stop/cancel is available. Increasing coverage can significantly increase latency. Progress reports initial candidates processed and completed candidate batches; these counters do not prove correctness or complete-file comprehension. Source access logs distinguish search hits from returned read excerpts.

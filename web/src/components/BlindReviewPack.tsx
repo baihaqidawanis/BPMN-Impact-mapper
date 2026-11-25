@@ -43,9 +43,9 @@ export function BlindReviewPack({ reports }: { reports: Report[] }) {
   }
 
   return <details className={styles.panel} data-testid="blind-review-pack">
-    <summary>Blind reviewer pack <span>Prepare independent review without showing mapper candidates</span></summary>
+    <summary>Step 2 · Blind reviewer pack <span>Generate blind templates without showing mapper candidates</span></summary>
     <div className={styles.body}>
-      <p>This post-inference tool uses the {reports.length} immutable report(s) in the current comparison. Reviewers receive BPMN changes only. Keep the coordinator manifest separate.</p>
+      <p>Builds blind templates from {reports.length} immutable report(s). Keep the coordinator manifest separate.</p>
       <div className={styles.reviewers}>
         <label>Reviewer A ID<input value={reviewerA} disabled={busy} onChange={event => { setReviewerA(event.target.value); setPack(null); }} /></label>
         <label>Reviewer B ID<input value={reviewerB} disabled={busy} onChange={event => { setReviewerB(event.target.value); setPack(null); }} /></label>

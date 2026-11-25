@@ -52,9 +52,9 @@ test("report filters and file view work without rerunning analysis", async ({ pa
   await page.route(`**/backend/api/v1/analyses/${report.analysis_id}`, route => route.fulfill({ json: report }));
   await page.goto("/?view=analysis");
   await page.getByRole("navigation", {name:"Workspace navigation"}).getByRole("button", { name: "History", exact: true }).click();
-  await page.getByTestId("analysis-history").locator("summary").click();
-  await page.getByRole("button", { name: "Open report", exact: true }).click();
+  await page.getByTestId("analysis-history").getByRole("button", { name: "Open report", exact: true }).click();
   const results = page.getByTestId("report-view");
+  await results.getByRole("button", { name: "Show all changes", exact: true }).click();
   await expect(results.getByTestId("impact-details")).toHaveCount(4);
   await results.getByRole("button", { name: "Code", exact: true }).click();
   await expect(results.getByTestId("impact-details")).toHaveCount(2);
@@ -69,10 +69,14 @@ test("report filters and file view work without rerunning analysis", async ({ pa
   await first.getByText("Show technical evidence", {exact: true}).click();
   await expect(first.getByText("func CheckRequest() {}", {exact:true})).toBeVisible();
   expect(await first.getByText("Show technical evidence", {exact:true}).evaluate(el => getComputedStyle(el).display)).not.toBe("grid");
-  await page.screenshot({ path: "test-results/report-results-desktop.png", fullPage: true });
+  const summary = results.getByRole("region", { name: "Report summary" });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await expect(summary).toBeInViewport();
+  await page.screenshot({ path: "test-results/report-results-desktop.png", animations: "disabled" });
   await page.setViewportSize({width:390, height:844});
   await expect.poll(() => results.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
-  await page.screenshot({ path: "test-results/report-results-mobile.png", fullPage: true });
+  await expect(summary).toBeInViewport();
+  await page.screenshot({ path: "test-results/report-results-mobile.png", animations: "disabled" });
   await results.getByRole("button", { name: "Docs", exact: true }).click();
   await expect(results.getByRole("heading", {name:"docs/rules.md", exact:true})).toBeVisible();
   await results.getByRole("button", { name: "Tests", exact: true }).click();
