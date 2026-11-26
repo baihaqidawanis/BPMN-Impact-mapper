@@ -5,9 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
 const FocusedProtocolVersion = "focused-batches-v12-output-capacity"
+
+// MigrationHeadCatalog is optionally implemented by SourceTools to expose the
+// highest-numbered existing migration per directory in the approved snapshot.
+type MigrationHeadCatalog interface {
+	MigrationHeads() []string
+}
 
 // FocusedEngine reviews every change with bounded seed input per model session,
 // then assembles one evidence-bound plan. It never scans the full source corpus.
@@ -161,7 +170,52 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 					}
 				}
 			}
-			child, err := (AgentEngine{Model: e.Model, Tools: e.Tools, Store: e.Store, Budget: budget, DeferReview: true, InspectWeak: e.UltraLight && len(seeds) > 0, RelatedProposals: BuildProposalContracts(companion, nil)}).Run(ctx, s.ActiveChildID, input)
+			if hasImplSeed {
+				if catalog, ok := e.Tools.(MigrationHeadCatalog); ok {
+					for _, headFile := range catalog.MigrationHeads() {
+						already := false
+						for _, p := range companion {
+							if p.File == headFile {
+								already = true
+								break
+							}
+						}
+						if !already {
+							companion = append(companion, FilePlan{
+								File:           headFile,
+								Action:         domain.ActionNoAction,
+								TargetBehavior: "Highest existing numbered migration in this directory; any new forward migration must use a higher number.",
+							})
+						}
+					}
+				}
+			}
+			var child AgentSession
+			var err error
+			prevLastFeedback := ""
+			sameFeedbackStreak := 0
+			for autoResume := 0; ; autoResume++ {
+				child, err = (AgentEngine{Model: e.Model, Tools: e.Tools, Store: e.Store, Budget: budget, DeferReview: true, InspectWeak: e.UltraLight && len(seeds) > 0, RelatedProposals: BuildProposalContracts(companion, nil)}).Run(ctx, s.ActiveChildID, input)
+				if !errors.Is(err, ErrAgentModelOutput) || child.Status != "PAUSED" || len(child.Feedback) == 0 {
+					break
+				}
+				lastFB := child.Feedback[len(child.Feedback)-1]
+				if !strings.Contains(lastFB, ErrAgentPlanIncomplete.Error()) {
+					break
+				}
+				if lastFB == prevLastFeedback || (len(child.Feedback) >= 2 && lastFB == child.Feedback[len(child.Feedback)-2]) {
+					sameFeedbackStreak++
+				} else {
+					sameFeedbackStreak = 0
+				}
+				prevLastFeedback = lastFB
+				if autoResume >= 5 || child.Turns >= budget.MaxTurns || sameFeedbackStreak >= 2 {
+					// Never stall an end-user run on a semantic validator mismatch;
+					// mark this batch for review and continue remaining batches.
+					child.Status = "NEEDS_REVIEW"
+					break
+				}
+			}
 			s.Turns += child.Turns
 			s.Tools += child.Tools
 			s.Revisions += child.Revisions

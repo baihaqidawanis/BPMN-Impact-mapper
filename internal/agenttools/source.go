@@ -64,6 +64,36 @@ func New(ctx context.Context, repo string, options ingest.Options) (*Snapshot, e
 
 func (s *Snapshot) Identity() string { return s.identity }
 
+// MigrationHeads returns the highest-numbered historical .up.sql file per
+// directory across the approved read-only source snapshot.
+func (s *Snapshot) MigrationHeads() []string {
+	type head struct {
+		num  int
+		file string
+	}
+	byDir := map[string]head{}
+	for file := range s.files {
+		if !planning.IsHistoricalMigration(file) || !strings.HasSuffix(strings.ToLower(file), ".up.sql") {
+			continue
+		}
+		base := path.Base(file)
+		var num int
+		if _, err := fmt.Sscanf(base, "%d", &num); err != nil || num <= 0 {
+			continue
+		}
+		dir := path.Dir(file)
+		if cur, ok := byDir[dir]; !ok || num > cur.num || (num == cur.num && file > cur.file) {
+			byDir[dir] = head{num: num, file: file}
+		}
+	}
+	out := make([]string, 0, len(byDir))
+	for _, h := range byDir {
+		out = append(out, h.file)
+	}
+	sort.Strings(out)
+	return out
+}
+
 // CheckBundle prevents old/invented seed files or named functions from entering
 // a live session. It does not prove an older report's every excerpt is current;
 // callers must use an analysis produced against this source revision.

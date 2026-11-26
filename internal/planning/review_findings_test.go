@@ -72,6 +72,8 @@ func TestMarkdownRetainsAllFailingReviewChecksAndInlineFileConflicts(t *testing.
 			"Plan 0: requirement: Missing per-line loop.; contracts: CHECK constraint blocks new status.; failure_tests: Missing opposite nonzero test.",
 			"Cross-proposal conflict on backend/store.go: different BPMN change proposals assign conflicting zero-difference outcomes: NO_ADJUSTMENT (CheckZeroDelta) vs SUBMITTED (SkipOutcomeJoin).",
 			"Schema prerequisite missing: backend/migrations/000005_operations.up.sql restricts status via CHECK(...) without \"NO_ADJUSTMENT\", yet backend/store.go proposes using \"NO_ADJUSTMENT\" without specifying a new forward migration to update the constraint.",
+			"Model response rejected for planner: internal retry noise that should not clutter developer Markdown.",
+			"Ultra Light left source coverage unresolved for Add gateway (ZeroDeltaDecision). Consider reviewing the remaining mapped candidates.",
 		},
 	}
 	md := string(Markdown(plan))
@@ -84,6 +86,11 @@ func TestMarkdownRetainsAllFailingReviewChecksAndInlineFileConflicts(t *testing.
 	} {
 		if !strings.Contains(md, want) {
 			t.Fatalf("expected %q in rendered Markdown:\n%s", want, md)
+		}
+	}
+	for _, noise := range []string{"Model response rejected for planner", "Ultra Light left source coverage unresolved"} {
+		if strings.Contains(md, noise) {
+			t.Fatalf("internal retry noise %q leaked into developer Markdown:\n%s", noise, md)
 		}
 	}
 }

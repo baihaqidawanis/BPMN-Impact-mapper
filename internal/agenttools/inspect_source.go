@@ -57,6 +57,35 @@ func (s *Snapshot) inspectSource(ctx context.Context, q planning.ToolRequest) (p
 			ownerScores[n] = max(ownerScores[n], score)
 		}
 	}
+	if strings.HasSuffix(strings.ToLower(q.File), ".sql") {
+		currentScore := 0
+		for i, line := range lines {
+			trimmed := strings.ToLower(strings.TrimSpace(line))
+			for _, kw := range []string{"create table ", "alter table "} {
+				if idx := strings.Index(trimmed, kw); idx >= 0 {
+					rest := strings.TrimSpace(trimmed[idx+len(kw):])
+					rest = strings.TrimPrefix(rest, "if not exists ")
+					fields := strings.FieldsFunc(rest, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' })
+					currentScore = 0
+					if len(fields) > 0 {
+						tbl := fields[0]
+						for _, term := range tokens {
+							if len(term) >= 4 && (strings.Contains(tbl, term) || strings.Contains(tbl, term[:4])) {
+								currentScore += 4
+							}
+						}
+					}
+					break
+				}
+			}
+			if currentScore > 0 {
+				ownerScores[i] = max(ownerScores[i], currentScore)
+			}
+			if strings.Contains(trimmed, ");") {
+				currentScore = 0
+			}
+		}
+	}
 	bestLine, bestScore := 0, -1
 	for i, line := range lines {
 		if err := ctx.Err(); err != nil {

@@ -202,6 +202,8 @@
 .canvas {
   flex: 1;
   min-height: 240px;
+  background: #ffffff;
+  color: #111113;
 }
 
 .showMarkers .canvas :global(.visual-added .djs-visual > *) {

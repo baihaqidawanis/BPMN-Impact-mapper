@@ -29,7 +29,7 @@ var rejectNonZeroDirect = regexp.MustCompile(`(?i)\breject(?:s|ed|ing)?\b([^.;\n
 var zeroDeltaClauseCue = regexp.MustCompile(`(?i)\b(?:all\s+(?:lines?|rows?|items?)\s+(?:have\s+)?(?:a\s+)?zero\s+(?:deltas?|differences?)|all\s+(?:line\s+)?(?:deltas?|differences?)\s+(?:are\s+|equal\s+)?(?:zero|0)|(?:zero[- ]delta|0[- ]delta)(?:\s+(?:per\s+line|submission|submissions|case|path|adjustment|lines?))?|every\s+(?:line|row|item)\s+has\s+zero\s+(?:delta|difference)|semua\s+selisih(?:\s+stok)?\s+nol)\b`)
 var statusAssignmentCue = regexp.MustCompile(`(?i)\b(?:set(?:ting|s)?\s+(?:the\s+)?(?:adjustment\s+|record\s+)?status\s+(?:to|=)|status\s+(?:becomes|is\s+set\s+to|changes\s+to|remains|stays)|transition(?:s|ed|ing)?\s+(?:the\s+)?(?:adjustment\s+|record\s+)?(?:status\s+)?to|close(?:s|d|ing)?\s+(?:the\s+)?(?:adjustment\s+)?(?:as|with\s+status)|return(?:s|ing)?\s+(?:the\s+)?(?:status\s+)?|mark(?:s|ed|ing)?\s+(?:as|status))\s*['"` + "`" + `"]?([A-Za-z][A-Za-z0-9_]{2,})['"` + "`" + `"]?\b`)
 var zeroDeltaRejectCue = regexp.MustCompile(`(?i)\b(?:is\s+rejected|reject(?:s|ed|ing)?|return(?:s|ing)?\s+(?:a\s+|an\s+|the\s+)?(?:non-?nil\s+|specific\s+)?(?:validation\s+)?error|route(?:s|d|ing)?\b[^.;\n]{0,40}\b(?:invalid|reject|error))\b`)
-var clauseBranchSplit = regexp.MustCompile(`(?i)(?:[.;\n]+|\b(?:otherwise|whereas)\b)`)
+var clauseBranchSplit = regexp.MustCompile(`(?i)(?:[.\n]+|\b(?:otherwise|whereas)\b)`)
 
 var nonStatusUpperTokens = map[string]bool{
 	"HTTP": true, "JSON": true, "SQL": true, "API": true, "BPMN": true,
@@ -38,10 +38,13 @@ var nonStatusUpperTokens = map[string]bool{
 	"ERR": true, "EOF": true, "NIL": true, "OK": true,
 }
 
-var prematureSubmitStockMutation = regexp.MustCompile(`(?i)\b(?:(?:execute|perform|trigger|run)\s+(?:the\s+)?stock\s+(?:posting|update(?:\s+query)?|mutation)|audit(?:s|\s+records?)?\s+['"` + "`" + `"]?APPROVED['"` + "`" + `"]?)\b`)
-var repurposedApprovalTest = regexp.MustCompile(`(?i)\b(?:update|modify|change)\s+(?:the\s+)?(?:existing\s+)?(?:test\s+)?` + "`" + `?Test\w*Approval\w*` + "`" + `?[^.;\n]{0,180}\b(?:zero[- ]delta|bypass|rather\s+than\s+['"` + "`" + `"]?SUBMITTED)\b`)
-var preservedApprovalTestCue = regexp.MustCompile(`(?i)\b(?:preserv(?:e|es|ing)\s+(?:its\s+|the\s+)?original|keep(?:s|ing)?\s+(?:its\s+|the\s+)?original|separate\s+test|non-?zero\s+(?:delta|difference))\b`)
+var prematureSubmitStockMutation = regexp.MustCompile(`(?i)\b(?:(?:execute|perform|trigger|run)\s+(?:the\s+)?(?:\w+\s+){0,4}(?:stock|inventory|ledger|balance)\s+(?:posting|update(?:\s+query)?|mutation)|(?:with|including|plus|and)\s+(?:standard\s+|normal\s+|existing\s+)?(?:stock|inventory|ledger|balance)\s+(?:posting|mutation|movements?)|(?:stock|inventory|ledger|balance)\s+(?:posting|mutation)\s+(?:is\s+)?(?:queued|scheduled|triggered|initiated)|(?:queue|schedule|initiate)s?\s+(?:the\s+)?(?:stock|inventory|ledger|balance)\s+(?:posting|mutation)|posts?\s+(?:stock|ledger|balance)\b|insert(?:s|ing)?\s+into\s+` + "`" + `?[\w]*(?:balance|movement|ledger)[\w]*` + "`" + `?` + `|[\w]*(?:balance|movement|ledger)[\w]*\s+rows?\s+(?:are\s+)?created|audit(?:s|\s+records?)?\s+['"` + "`" + `"]?(?:APPROVED|POSTED)['"` + "`" + `"]?)\b`)
+var postDeferralCue = regexp.MustCompile(`(?i)\b(?:(?:is\s+|are\s+|remains?\s+)?deferred|remains?\s+(?:a\s+)?separate|does\s+not\s+(?:happen|occur|run|execute)|is\s+(?:skipped|omitted|not\s+(?:executed|performed|triggered))|only\s+(?:after|on)\s+approval|until\s+(?:after\s+)?approval|pending\s+approval|separate\s+post-?approval|without\s+(?:posting|mutating))\b`)
+var repurposedApprovalTest = regexp.MustCompile(`(?i)\b(?:update|modify|change)\s+(?:the\s+)?(?:\w+\s+){0,3}` + "`" + `?Test\w*Approval\w*` + "`" + `?[^.;\n]{0,200}\b(?:zero[- ]delta|bypass|rather\s+than\s+['"` + "`" + `"]?[A-Z][A-Z0-9_]{2,})\b`)
+var preservedApprovalTestCue = regexp.MustCompile(`(?i)\b(?:preserv(?:e|es|ing)\s+(?:its\s+|the\s+)?(?:original|existing)|keep(?:s|ing)?\s+(?:its\s+|the\s+)?(?:original|existing)|retain(?:s|ing)?\s+(?:its\s+|the\s+)?(?:original\s+|existing\s+)?(?:assertion|check|behavior|coverage)|unchanged|separate\s+(?:test|subtest|function)|add\s+(?:a\s+|new\s+)?(?:separate\s+)?test|does\s+not\s+(?:conflict|break|regress|interfere)|without\s+(?:conflicting|breaking|interfering|altering))\b`)
 var opposingNonZeroTestCue = regexp.MustCompile(`(?i)\b(?:oppos(?:ing|ite)|cancel(?:l?ing)?\s+(?:out|sum|deltas?)|\+\s*\d+[^.\n]{0,30}-\s*\d+|\+delta[^.\n]{0,20}-delta|sum(?:s|ming)?\s+to\s+(?:zero|0))\b`)
+var opposingNonZeroSetupCue = regexp.MustCompile(`(?i)\b(?:\+\s*\d+[^.\n]{0,30}-\s*\d+|\+delta[^.\n]{0,20}-delta|individual\s+lines?\s+(?:differ|are\s+non-?zero)|oppos(?:ing|ite)\s+(?:non-?zero|deltas?|differences?))\b`)
+var allZeroLabelCue = regexp.MustCompile(`(?i)\b(?:all[- ]zero|every\s+line[^.;\n]{0,30}(?:zero|0|equals?\s+the\s+snapshot))\b`)
 
 // This checks explicit contradictions. Prose alone cannot prove a transaction
 // is correct, so the reviewer still traces the write and the effects.
@@ -59,20 +62,31 @@ func validateRoutingPlanWithContext(pc *domain.ProcessContext, change ChangeInpu
 	}
 	nonZeroContinues := perItem && hasNonZeroContinuation(pc)
 	deferredApproval := perItem && hasDeferredApprovalWithoutStockMutation(pc)
-	zeroBypassOK, expectedStatuses := zeroBypassTargetContract(pc)
-	for _, edits := range [][]string{plan.ProposedChanges, plan.Steps, plan.AcceptanceChecks} {
+	zeroBypassOK, expectedStatuses, _, normalStatuses := zeroBypassTargetContract(pc)
+	bypassLabel := joinTokensOr(expectedStatuses, "the bypass status")
+	normalLabel := joinTokensOr(normalStatuses, "the normal approval status")
+	for _, edits := range [][]string{{plan.Summary, plan.TargetBehavior}, plan.ProposedChanges, plan.Steps, plan.AcceptanceChecks} {
 		for _, edit := range edits {
-			if perItem && (matchUnnegated(signedSumEdit, edit) || matchUnnegated(zeroSumBranch, edit) || matchUnnegated(deltasSumToZero, edit) || matchUnnegated(explicitAggregateBranch, edit)) {
+			if strings.TrimSpace(edit) == "" {
+				continue
+			}
+			mentionsBypass := mentionsAnyToken(edit, expectedStatuses)
+			mentionsNormal := mentionsAnyToken(edit, normalStatuses)
+			isOpposingTestSetup := opposingNonZeroSetupCue.MatchString(edit) && !mentionsBypass
+			if perItem && (matchUnnegated(signedSumEdit, edit) || matchUnnegated(zeroSumBranch, edit) || (!isOpposingTestSetup && matchUnnegated(deltasSumToZero, edit)) || matchUnnegated(explicitAggregateBranch, edit)) {
 				return fmt.Errorf("%w: %q substitutes an aggregate for an all-items-zero branch (offending text: %q); rewrite this item to compare each line individually and preserve the normal path for opposite nonzero differences", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160))
 			}
 			if nonZeroContinues && (matchUnnegatedBridge(nonZeroRejectionClause, edit) || matchUnnegatedBridge(rejectNonZeroDirect, edit)) {
 				return fmt.Errorf("%w: %q rejects the valid non-zero difference branch (offending text: %q); in the after process, non-zero differences must continue along the normal path while precondition failures remain on their own gateway", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160))
 			}
-			if deferredApproval && nonZeroBranchCue.MatchString(edit) && matchUnnegated(prematureSubmitStockMutation, edit) {
-				return fmt.Errorf("%w: %q triggers approval or stock mutation inside the non-zero submit branch (offending text: %q); keep status as SUBMITTED for approval and preserve stock mutation in its separate post-approval operation", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160))
+			if deferredApproval && (nonZeroBranchCue.MatchString(edit) || mentionsNormal) && matchUnnegatedActive(prematureSubmitStockMutation, edit) {
+				return fmt.Errorf("%w: %q attributes downstream posting or approval mutation to the non-zero %s submit branch (offending text: %q); during submit, non-zero differences only transition to %s for approval while posting remains a separate post-approval operation", ErrAgentPlanIncomplete, plan.File, normalLabel, compactSnippet(edit, 160), normalLabel)
+			}
+			if zeroBypassOK && opposingNonZeroSetupCue.MatchString(edit) && (mentionsBypass || allZeroLabelCue.MatchString(edit)) && !mentionsNormal {
+				return fmt.Errorf("%w: %q routes opposing non-zero lines (+2 and -2) to the all-zero bypass outcome (offending text: %q); use truly equal lines (e.g., counted 5 vs snapshot 5 on every line) for the all-zero %s case, and keep opposing non-zero lines (+2 and -2) on the normal %s path", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160), bypassLabel, normalLabel)
 			}
 			if zeroBypassOK && (plan.Layer == "test" || strings.HasSuffix(strings.ToLower(plan.File), "_test.go")) && repurposedApprovalTest.MatchString(edit) && !preservedApprovalTestCue.MatchString(edit) {
-				return fmt.Errorf("%w: %q repurposes an existing Approval test into a zero-difference bypass test (offending text: %q); preserve existing approval tests reaching SUBMITTED and add a separate test function for zero-difference bypass and opposite-nonzero (+delta/-delta) cases", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160))
+				return fmt.Errorf("%w: %q repurposes an existing Approval test into a zero-difference bypass test (offending text: %q); preserve existing approval tests reaching %s and add a separate test function for zero-difference bypass and opposite-nonzero (+delta/-delta) cases", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160), normalLabel)
 			}
 			if plan.Layer != "test" && (skippedStatusWrite.MatchString(edit) || (perItem && returnAfterStateAssignment.MatchString(edit))) {
 				return fmt.Errorf("%w: %q explicitly bypasses the changed status write (offending text: %q); trace it through persistence, audit where applicable, and commit before returning success", ErrAgentPlanIncomplete, plan.File, compactSnippet(edit, 160))
@@ -97,7 +111,7 @@ func validateRoutingPlanWithContext(pc *domain.ProcessContext, change ChangeInpu
 			if nonZeroContinues && plan.Action == domain.ActionModify && (plan.Layer == "test" || strings.HasSuffix(strings.ToLower(plan.File), "_test.go")) {
 				joined := strings.Join(append(append([]string{}, plan.ProposedChanges...), append(plan.Steps, plan.AcceptanceChecks...)...), "\n")
 				if !opposingNonZeroTestCue.MatchString(joined) {
-					return fmt.Errorf("%w: %q test plan for an all-items-zero branch must include an explicit opposing non-zero case (e.g., +2 and -2 summing to 0) verifying it still follows the normal non-zero path, alongside all-zero bypass and stale-version/status conflict checks", ErrAgentPlanIncomplete, plan.File)
+					return fmt.Errorf("%w: %q test plan for an all-items-zero branch must keep existing approval test assertions intact and add separate test cases for: (1) all lines truly equal (counted == snapshot, 0 delta) -> %s, (2) opposing non-zero lines (+2 on one line and -2 on another) -> %s (normal approval path, not %s), and (3) stale version / invalid precondition state -> 409 Conflict", ErrAgentPlanIncomplete, plan.File, bypassLabel, normalLabel, bypassLabel)
 				}
 			}
 		}
@@ -259,14 +273,18 @@ func compactSnippet(text string, maxRunes int) string {
 
 // zeroBypassTargetContract inspects the BPMN after graph to determine whether
 // an all-items-zero gateway branch leads to a valid (non-failure) bypass task,
-// and extracts any newly introduced uppercase status tokens on that target.
-func zeroBypassTargetContract(pc *domain.ProcessContext) (bool, map[string]bool) {
+// and dynamically extracts status tokens and element IDs for both the bypass
+// and normal continuation targets.
+func zeroBypassTargetContract(pc *domain.ProcessContext) (bool, map[string]bool, []string, map[string]bool) {
 	if pc == nil || pc.After == nil {
-		return false, nil
+		return false, nil, nil, nil
 	}
 	introduced := introducedProcessUpperTokens(pc)
 	validBypass := false
 	expected := map[string]bool{}
+	normal := map[string]bool{}
+	seenTarget := map[string]bool{}
+	var bypassTargets []string
 	for _, f := range pc.After.Flows {
 		if f == nil {
 			continue
@@ -275,21 +293,65 @@ func zeroBypassTargetContract(pc *domain.ProcessContext) (bool, map[string]bool)
 		if src == nil || !strings.HasSuffix(src.Type, "Gateway") {
 			continue
 		}
-		if !everyZeroDifference.MatchString(f.Condition + " " + f.Name) {
-			continue
-		}
+		flowText := f.Condition + " " + f.Name
 		target := pc.After.Elements[f.TargetRef]
 		if target == nil || failureTargetCue.MatchString(target.Name) || failureTargetCue.MatchString(target.ID) || strings.Contains(strings.ToLower(target.Type), "error") {
 			continue
 		}
-		validBypass = true
-		for _, m := range upperEnumToken.FindAllStringSubmatch(target.Name+" "+target.Documentation, -1) {
-			if introduced[m[1]] {
-				expected[m[1]] = true
+		if everyZeroDifference.MatchString(flowText) {
+			validBypass = true
+			if id := strings.ToLower(strings.TrimSpace(target.ID)); id != "" && !seenTarget[id] {
+				seenTarget[id] = true
+				bypassTargets = append(bypassTargets, id)
+			}
+			for _, m := range upperEnumToken.FindAllStringSubmatch(target.Name+" "+target.Documentation, -1) {
+				if introduced[m[1]] {
+					expected[m[1]] = true
+				}
+			}
+		} else if nonZeroBranchCue.MatchString(flowText) {
+			for _, m := range upperEnumToken.FindAllStringSubmatch(target.Name+" "+target.Documentation, -1) {
+				if !nonStatusUpperTokens[m[1]] {
+					normal[m[1]] = true
+				}
 			}
 		}
 	}
-	return validBypass, expected
+	sort.Strings(bypassTargets)
+	return validBypass, expected, bypassTargets, normal
+}
+
+func joinTokensOr(values map[string]bool, fallback string) string {
+	if len(values) == 0 {
+		return fallback
+	}
+	return strings.Join(sortedMapKeys(values), "/")
+}
+
+func mentionsAnyToken(text string, tokens map[string]bool) bool {
+	if len(tokens) == 0 {
+		return false
+	}
+	upper := strings.ToUpper(text)
+	for tok := range tokens {
+		if strings.Contains(upper, tok) {
+			return true
+		}
+	}
+	return false
+}
+
+func mentionsAnyTarget(text string, targets []string) bool {
+	if len(targets) == 0 {
+		return false
+	}
+	lower := strings.ToLower(text)
+	for _, id := range targets {
+		if strings.Contains(lower, id) {
+			return true
+		}
+	}
+	return false
 }
 
 func sortedMapKeys(values map[string]bool) []string {
@@ -301,25 +363,55 @@ func sortedMapKeys(values map[string]bool) []string {
 	return out
 }
 
-var deferredQueueCue = regexp.MustCompile(`(?i)\b(?:antre(?:an)?\s+approval|approval\s+queue)\b`)
-var separateStockCue = regexp.MustCompile(`(?i)\b(?:tanpa\s+(?:posting|mutasi)\s+stok|posting\s+stok\s+tetap\s+aksi\s+terpisah|without\s+(?:posting|mutating)\s+stock)\b`)
+var deferredQueueCue = regexp.MustCompile(`(?i)\b(?:antre(?:an)?\s+approval|approval\s+queue|pending\s+approval)\b`)
+var separateStockCue = regexp.MustCompile(`(?i)\b(?:tanpa\s+(?:posting|mutasi)\s+\w+|(?:posting|mutasi)\s+\w+\s+tetap\s+aksi\s+terpisah|without\s+(?:posting|mutating)\s+\w+|posting\s+(?:is\s+)?deferred\s+until\s+(?:after\s+)?approval)\b`)
+
+func matchUnnegatedActive(re *regexp.Regexp, text string) bool {
+	for _, loc := range re.FindAllStringIndex(text, -1) {
+		start, end := loc[0], loc[1]
+		prefixStart := start - 36
+		if prefixStart < 0 {
+			prefixStart = 0
+		}
+		prefix := text[prefixStart:start]
+		if idx := strings.LastIndexAny(prefix, ",.;:\n"); idx >= 0 {
+			prefix = prefix[idx+1:]
+		}
+		if negationCue.MatchString(prefix) {
+			continue
+		}
+		suffixEnd := end + 52
+		if suffixEnd > len(text) {
+			suffixEnd = len(text)
+		}
+		suffix := text[end:suffixEnd]
+		if idx := strings.IndexAny(suffix, ".;\n"); idx >= 0 {
+			suffix = suffix[:idx]
+		}
+		if postDeferralCue.MatchString(suffix) {
+			continue
+		}
+		return true
+	}
+	return false
+}
 
 func hasDeferredApprovalWithoutStockMutation(pc *domain.ProcessContext) bool {
 	if pc == nil || pc.After == nil {
 		return false
 	}
-	hasQueue, hasSeparateStock := false, false
+	hasQueue, hasSeparateEffect := false, false
 	for _, el := range pc.After.Elements {
 		if el == nil {
 			continue
 		}
 		text := el.Name + " " + el.Documentation
-		if deferredQueueCue.MatchString(text) && strings.Contains(text, "SUBMITTED") {
+		if deferredQueueCue.MatchString(text) {
 			hasQueue = true
 		}
 		if separateStockCue.MatchString(text) {
-			hasSeparateStock = true
+			hasSeparateEffect = true
 		}
 	}
-	return hasQueue && hasSeparateStock
+	return hasQueue && hasSeparateEffect
 }

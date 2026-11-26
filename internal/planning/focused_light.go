@@ -97,7 +97,7 @@ func weakSourceRequests(bundle EvidenceBundle, decisions []CandidateDecision, li
 			file := c.File
 			parts := []string{c.Symbol, behavior, processName}
 			if role == "migration" {
-				parts = []string{processName, behavior, "create table alter constraint check status lines snapshot quantity"}
+				parts = []string{processName, behavior, "create table alter constraint check status snapshot counted"}
 				// Paired rollback filenames are leads to the forward
 				// definition. The source tool still verifies the file.
 				if strings.HasSuffix(strings.ToLower(file), ".down.sql") {

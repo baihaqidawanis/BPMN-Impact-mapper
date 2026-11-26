@@ -99,6 +99,13 @@ func Markdown(plan ChangePlan) []byte {
 		groups[item.File] = append(groups[item.File], item)
 	}
 	if len(groups) > 0 {
+		if prereqs := collectMarkdownPrerequisites(plan); len(prereqs) > 0 {
+			out.WriteString("## Prerequisites\n\n")
+			for _, p := range prereqs {
+				fmt.Fprintf(&out, "- %s\n", singleLine(p))
+			}
+			out.WriteByte('\n')
+		}
 		out.WriteString("## Proposed implementation\n\n")
 	} else if len(held) > 0 {
 		out.WriteString("All proposed edits still have open questions about scope.\n\n")
@@ -111,7 +118,12 @@ func Markdown(plan ChangePlan) []byte {
 	}
 	sort.Strings(files)
 	for i, file := range files {
-		fmt.Fprintf(&out, "### %d. `%s`\n\n", i+1, singleLine(file))
+		actionTag := string(groups[file][0].Action)
+		if actionTag != "" {
+			fmt.Fprintf(&out, "### %d. `%s` (%s)\n\n", i+1, singleLine(file), actionTag)
+		} else {
+			fmt.Fprintf(&out, "### %d. `%s`\n\n", i+1, singleLine(file))
+		}
 		for _, warning := range fileConflictWarnings(plan.ReviewIssues, file) {
 			fmt.Fprintf(&out, "> **Review warning:** %s\n\n", singleLine(warning))
 		}
@@ -188,6 +200,9 @@ func Markdown(plan ChangePlan) []byte {
 			}
 		}
 		for _, issue := range plan.ReviewIssues {
+			if isInternalRetryNoise(issue) {
+				continue
+			}
 			prefix, body, ok := strings.Cut(issue, ": ")
 			if ok && strings.HasPrefix(prefix, "Plan ") {
 				if _, err := strconv.Atoi(strings.TrimPrefix(prefix, "Plan ")); err == nil && summaries[singleLine(body)] {
@@ -195,13 +210,14 @@ func Markdown(plan ChangePlan) []byte {
 				}
 			}
 			issue = strings.Replace(issue, "PARTIAL CHECKPOINT EXPORT:", "Partial export:", 1)
+			issue = strings.ReplaceAll(issue, "\x00", " / ")
 			for _, c := range plan.ChangeCoverage {
 				issue = strings.ReplaceAll(issue, string(c.ChangeType)+"/"+c.ElementID, changeTitles[changeKey{string(c.ChangeType), c.ElementID}])
 			}
 			writeIssue(strings.ReplaceAll(issue, " ()", ""))
 		}
 		if len(seen) == 0 {
-			out.WriteString("The model reviewer reported no open findings.\n")
+			out.WriteString("No developer-blocking open issues remain.\n")
 		}
 		out.WriteByte('\n')
 	}
@@ -216,6 +232,50 @@ func Markdown(plan ChangePlan) []byte {
 	return out.Bytes()
 }
 
+func collectMarkdownPrerequisites(plan ChangePlan) []string {
+	var out []string
+	seen := map[string]bool{}
+	for _, p := range plan.Plans {
+		if p.Action == "NO_ACTION" {
+			continue
+		}
+		for _, step := range append(append([]string{}, p.ProposedChanges...), p.Steps...) {
+			low := strings.ToLower(step)
+			if strings.Contains(low, "forward migration") || strings.Contains(low, "new migration") || strings.Contains(low, "alter table") {
+				clean := singleLine(step)
+				if !seen[clean] {
+					seen[clean] = true
+					out = append(out, clean)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// isInternalRetryNoise hides internal model-retry and batch-diagnostic traces
+// from the developer/coding-agent Markdown handoff. Full traces remain in JSON.
+func isInternalRetryNoise(issue string) bool {
+	clean := strings.TrimSpace(issue)
+	if clean == "" {
+		return true
+	}
+	for _, prefix := range []string{
+		"Model response rejected for ",
+		"Agent action rejected:",
+		"agent plan requires proposed_changes and acceptance_checks",
+		"Focused batch ",
+		"Turn budget exhausted after invalid model output",
+		"Ultra Light left source coverage unresolved for ",
+		"No source-supported file proposal was produced;",
+	} {
+		if strings.HasPrefix(clean, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 func singleLine(value string) string {
 	return strings.Join(strings.Fields(value), " ")
 }
@@ -227,12 +287,15 @@ func fileConflictWarnings(issues []string, file string) []string {
 	var out []string
 	seen := map[string]bool{}
 	for _, issue := range issues {
+		if isInternalRetryNoise(issue) {
+			continue
+		}
 		clean := singleLine(issue)
 		if !strings.Contains(clean, file) {
 			continue
 		}
 		lower := strings.ToLower(clean)
-		if strings.Contains(lower, "conflict") || strings.Contains(lower, "schema prerequisite missing") || strings.Contains(lower, "overlapping focused batches") {
+		if strings.Contains(lower, "conflict") || strings.Contains(lower, "schema prerequisite") || strings.Contains(lower, "overlapping focused batches") {
 			if !seen[clean] {
 				seen[clean] = true
 				out = append(out, clean)

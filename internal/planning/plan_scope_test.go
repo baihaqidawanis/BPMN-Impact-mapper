@@ -118,6 +118,7 @@ func TestRoutingGuardCatchesMidSentenceAggregatesRouteInversionAndSelfContradict
 	for _, badCheck := range []string{
 		"Submit with zero delta: Status becomes SUBMITTED, version increments, audit records NO_ADJUSTMENT.",
 		"Submit with all line deltas zero: Status remains DRAFT, no SUBMITTED transition, success response returned.",
+		"Submit a DRAFT adjustment where all line deltas are zero; the system returns success, status remains SUBMITTED, version increments, and no stock_movements rows are created.",
 	} {
 		wrongZeroStatus := FilePlan{File: "backend/store.go", AcceptanceChecks: []string{badCheck}}
 		if err := validateRoutingPlanWithContext(pc, adjacent, wrongZeroStatus); !errors.Is(err, ErrAgentPlanIncomplete) {
@@ -223,12 +224,17 @@ func TestMigrationPrerequisiteFlagsMissingForwardMigrationForNewStatus(t *testin
 		t.Fatalf("movement evidence alone cannot establish a status constraint, got %v", issues)
 	}
 	storageWithMigration := storageWithoutMigration
-	storageWithMigration.Steps = append(storageWithMigration.Steps, "Add a new forward migration to update the status CHECK constraint to allow NO_ADJUSTMENT.")
+	storageWithMigration.Steps = append(storageWithMigration.Steps, "Add a new forward migration to update the status CHECK constraint to allow NO_ADJUSTMENT, with a matching .down.sql rollback strategy handling existing NO_ADJUSTMENT rows.")
 	if err := validateMigrationPrerequisites(bundle, []FilePlan{historicalNoAction, storageWithMigration}); err != nil {
 		t.Fatalf("rejected storage proposal with explicit forward migration: %v", err)
 	}
+	missingRollback := storageWithoutMigration
+	missingRollback.Steps = append(missingRollback.Steps, "Add a new forward migration to update the status CHECK constraint to allow NO_ADJUSTMENT.")
+	if issues := migrationPrerequisiteIssues(bundle, []FilePlan{historicalNoAction, missingRollback}); len(issues) == 0 || !strings.Contains(strings.Join(issues, "\n"), "rollback (.down.sql) strategy") {
+		t.Fatalf("expected missing rollback strategy warning, got: %v", issues)
+	}
 	dbMigrationPhrasing := storageWithoutMigration
-	dbMigrationPhrasing.Steps = append(dbMigrationPhrasing.Steps, "Apply database migration updating the status CHECK constraint defined in backend/migrations/000005_operations.up.sql to allow 'NO_ADJUSTMENT'.")
+	dbMigrationPhrasing.Steps = append(dbMigrationPhrasing.Steps, "Apply database migration updating the status CHECK constraint defined in backend/migrations/000005_operations.up.sql to allow 'NO_ADJUSTMENT', and document the rollback strategy for existing rows.")
 	if err := validateMigrationPrerequisites(bundle, []FilePlan{historicalNoAction, dbMigrationPhrasing}); err != nil {
 		t.Fatalf("rejected valid database migration phrasing referencing baseline file: %v", err)
 	}
@@ -294,6 +300,7 @@ func TestMigrationPrerequisiteFlagsMissingForwardMigrationForNewStatus(t *testin
 				{ID: "s1", Type: "SOURCE_TOOL", Location: "backend/migrations/000005_operations.up.sql:36:1", Excerpt: "CREATE TABLE inventory_adjustments (id uuid PRIMARY KEY, document_no text"},
 				{ID: "s2", Type: "SOURCE_TOOL", Location: "backend/migrations/000005_operations.up.sql:36:201", Excerpt: "status text NOT NULL CHECK(status IN('DRAFT','SUBMITTED','APPROVED','REJECTED'))"},
 				{ID: "s3", Type: "SOURCE_TOOL", Location: "backend/migrations/000005_operations.up.sql:37:1", Excerpt: "CREATE TABLE inventory_adjustment_lines (id uuid PRIMARY KEY, snapshot_quantity numeric, counted_quantity numeric)"},
+				{ID: "s3b", Type: "SOURCE_TOOL", Location: "backend/migrations/000005_operations.up.sql:39:1", Excerpt: "CREATE TABLE stock_movements (id uuid PRIMARY KEY"},
 				{ID: "s4", Type: "SOURCE_TOOL", Location: "backend/migrations/000005_operations.up.sql:41:1", Excerpt: "quantity numeric(19,4) NOT NULL CHECK(quantity<>0), movement_type text NOT NULL CHECK(movement_type IN('STOCK_ADJUSTMENT','SALES_DELIVERY'))"},
 			},
 		}},
@@ -320,10 +327,21 @@ func TestMigrationPrerequisiteFlagsMissingForwardMigrationForNewStatus(t *testin
 		Action:          domain.ActionModify,
 		TargetBehavior:  "Set status to NO_ADJUSTMENT when all lines have zero delta.",
 		ProposedChanges: []string{"Query inventory_adjustment_lines to compare counted_quantity and snapshot_quantity per line, then set status to NO_ADJUSTMENT when all deltas are zero."},
-		Steps:           []string{"Add a new forward migration 000007_add_no_adjustment_status.up.sql altering inventory_adjustments status CHECK constraint to allow NO_ADJUSTMENT."},
+		Steps:           []string{"Add a new forward migration 000007_add_no_adjustment_status.up.sql altering inventory_adjustments status CHECK constraint to allow NO_ADJUSTMENT, plus a matching .down.sql rollback plan for existing NO_ADJUSTMENT rows."},
 	}
 	if issues := migrationPrerequisiteIssuesWithRelated(splitSQLBundle, []FilePlan{cleanStore}, relatedFinance); len(issues) != 0 {
 		t.Fatalf("rejected clean storage proposal: %v", issues)
+	}
+	spacedLedger := cleanStore
+	spacedLedger.CurrentBehavior = "TransitionAdjustment validates DRAFT status and version, then queries stock movements."
+	spacedLedger.ProposedChanges = []string{"Modify TransitionAdjustment to query stock movements for the adjustment ID and set status to NO_ADJUSTMENT."}
+	if issues := migrationPrerequisiteIssuesWithRelated(splitSQLBundle, []FilePlan{spacedLedger}, relatedFinance); len(issues) == 0 || !strings.Contains(strings.Join(issues, "\n"), "inventory_adjustment_lines") || !strings.Contains(strings.Join(issues, "\n"), "snapshot_quantity vs counted_quantity") {
+		t.Fatalf("expected spaced 'stock movements' query to be caught with line columns, got: %v", issues)
+	}
+	payloadGuessStore := cleanStore
+	payloadGuessStore.ProposedChanges = []string{"Calculate the delta for each line item in the request payload and set status to NO_ADJUSTMENT."}
+	if issues := migrationPrerequisiteIssuesWithRelated(splitSQLBundle, []FilePlan{payloadGuessStore}, relatedFinance); len(issues) == 0 || !strings.Contains(strings.Join(issues, "\n"), "snapshot_quantity vs counted_quantity") {
+		t.Fatalf("expected request-payload delta hallucination to be caught with line quantity columns, got: %v", issues)
 	}
 
 	// Uncalled /domain/ method proved empty by find_callers must not be modified.
@@ -335,6 +353,128 @@ func TestMigrationPrerequisiteFlagsMissingForwardMigrationForNewStatus(t *testin
 		File: "backend/internal/inventory/domain/adjustment.go", Symbol: "Adjustment.Complete", Layer: "domain", Action: domain.ActionModify,
 	}); !errors.Is(err, ErrAgentPlanIncomplete) {
 		t.Fatalf("expected uncalled domain method edit to be rejected, got %v", err)
+	}
+
+	// Deferred stock posting is valid (0 false positive); active stock_balances insert or +2/-2 -> NO_ADJUSTMENT is rejected.
+	skipPC := &domain.ProcessContext{
+		After: &domain.Graph{
+			Elements: map[string]*domain.Element{
+				"Zero":  {ID: "Zero", Type: "exclusiveGateway", Name: "Semua selisih nol?"},
+				"Close": {ID: "Close", Type: "serviceTask", Name: "Tutup NO_ADJUSTMENT", Documentation: "Lewati antrean approval; posting stok tetap aksi terpisah."},
+				"Sub":   {ID: "Sub", Type: "serviceTask", Name: "Ubah adjustment SUBMITTED"},
+			},
+			Flows: map[string]*domain.Flow{
+				"f1": {SourceRef: "Zero", TargetRef: "Close", Condition: "semua selisih nol"},
+				"f2": {SourceRef: "Zero", TargetRef: "Sub", Condition: "ada baris dengan selisih nonnol"},
+			},
+		},
+	}
+	deferredOK := FilePlan{
+		File:             "backend/internal/inventory/adapter/postgres/store.go",
+		Layer:            "adapter",
+		Action:           domain.ActionModify,
+		ProposedChanges:  []string{"Compare counted_quantity vs snapshot_quantity per line."},
+		AcceptanceChecks: []string{"Submit a DRAFT adjustment with at least one non-zero delta: status becomes SUBMITTED, and stock posting is deferred until after approval.", "Submit a DRAFT adjustment with non-zero deltas; expect standard approval flow (status SUBMITTED) and stock posting deferred."},
+	}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, deferredOK); err != nil {
+		t.Fatalf("false positive on deferred stock posting: %v", err)
+	}
+	prematureInsert := deferredOK
+	prematureInsert.AcceptanceChecks = []string{"Verify non-zero deltas follow SUBMITTED status and inserts into stock_balances."}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, prematureInsert); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected premature stock_balances insert on submit to fail, got %v", err)
+	}
+	prematureQueued := deferredOK
+	prematureQueued.AcceptanceChecks = []string{"Submit adjustment with any line delta non-zero: status becomes SUBMITTED, version increments, stock posting queued, audit record created."}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, prematureQueued); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected premature 'stock posting queued' on submit to fail, got %v", err)
+	}
+	prematureMovements := deferredOK
+	prematureMovements.ProposedChanges = []string{"If any delta is non-zero, proceed with the existing logic of inserting into `stock_movements`."}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, prematureMovements); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected premature inserting into stock_movements on submit to fail, got %v", err)
+	}
+	repurposedSummary := FilePlan{
+		File:    "backend/test/integration/operations_test.go",
+		Layer:   "test",
+		Action:  domain.ActionModify,
+		Summary: "Update the integration test TestInventoryApprovalRejectsChangedSnapshot in backend/test/integration/operations_test.go to cover the new zero-delta branch (NO_ADJUSTMENT), the opposing delta branch (SUBMITTED), and the stale version rejection (409 Conflict).",
+	}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, repurposedSummary); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected summary repurposing TestInventoryApprovalRejectsChangedSnapshot without preservation cue to fail, got %v", err)
+	}
+	preservedSummary := FilePlan{
+		File:             "backend/test/integration/operations_test.go",
+		Layer:            "test",
+		Action:           domain.ActionModify,
+		Summary:          "Keep TestInventoryApprovalRejectsChangedSnapshot unchanged (preserving its original changed-snapshot assertion) and add separate test cases for zero-delta (NO_ADJUSTMENT), opposing non-zero (+2/-2 -> SUBMITTED), and stale version (409 Conflict).",
+		Steps:            []string{"Update the existing `TestInventoryApprovalRejectsChangedSnapshot` to retain its assertion on version mismatch returning 409 Conflict, ensuring it does not conflict with the new zero-delta bypass."},
+		AcceptanceChecks: []string{"All zero lines -> NO_ADJUSTMENT; opposing +2/-2 lines -> SUBMITTED; stale version -> 409."},
+	}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, preservedSummary); err != nil {
+		t.Fatalf("rejected test plan that preserves existing approval test: %v", err)
+	}
+	invertedOpposing := deferredOK
+	invertedOpposing.AcceptanceChecks = []string{"Verify opposing deltas (+2 and -2) trigger NO_ADJUSTMENT status."}
+	if err := validateRoutingPlanWithContext(skipPC, ChangeInput{}, invertedOpposing); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected +2/-2 -> NO_ADJUSTMENT inversion to fail, got %v", err)
+	}
+	// Verify dynamic BPMN token extraction works identically on a completely different domain/status set.
+	otherDomainPC := &domain.ProcessContext{
+		Before: &domain.Graph{Elements: map[string]*domain.Element{"sub": {Name: "Submit to PENDING_REVIEW"}}},
+		After: &domain.Graph{
+			Elements: map[string]*domain.Element{
+				"Zero":  {ID: "Zero", Type: "exclusiveGateway", Name: "All line differences are zero?"},
+				"Close": {ID: "AutoSettle", Type: "serviceTask", Name: "Close as AUTO_SETTLED", Documentation: "Skip approval queue; ledger posting is deferred until after approval."},
+				"Sub":   {ID: "Sub", Type: "serviceTask", Name: "Route to PENDING_REVIEW"},
+			},
+			Flows: map[string]*domain.Flow{
+				"f1": {SourceRef: "Zero", TargetRef: "Close", Condition: "all line deltas are zero"},
+				"f2": {SourceRef: "Zero", TargetRef: "Sub", Condition: "any non-zero delta"},
+			},
+		},
+	}
+	otherBad := FilePlan{
+		File:             "backend/internal/billing/store.go",
+		Layer:            "adapter",
+		Action:           domain.ActionModify,
+		AcceptanceChecks: []string{"Verify opposing deltas (+2 and -2) trigger AUTO_SETTLED status."},
+	}
+	if err := validateRoutingPlanWithContext(otherDomainPC, ChangeInput{}, otherBad); !errors.Is(err, ErrAgentPlanIncomplete) || !strings.Contains(err.Error(), "AUTO_SETTLED") || !strings.Contains(err.Error(), "PENDING_REVIEW") {
+		t.Fatalf("expected dynamic cross-domain status names in validation error, got: %v", err)
+	}
+	otherPremature := FilePlan{
+		File:             "backend/internal/billing/store.go",
+		Layer:            "adapter",
+		Action:           domain.ActionModify,
+		AcceptanceChecks: []string{"Non-zero delta transitions to PENDING_REVIEW and inserts into ledger_balances."},
+	}
+	if err := validateRoutingPlanWithContext(otherDomainPC, ChangeInput{}, otherPremature); !errors.Is(err, ErrAgentPlanIncomplete) {
+		t.Fatalf("expected premature ledger_balances insert on PENDING_REVIEW submit to fail, got: %v", err)
+	}
+	// Non-zero-delta Skip scenario (e.g., invoice amount < 1000 skips manager approval) must trigger zero false positives.
+	amountSkipPC := &domain.ProcessContext{
+		After: &domain.Graph{
+			Elements: map[string]*domain.Element{
+				"Gate": {ID: "Gate", Type: "exclusiveGateway", Name: "Amount below threshold?"},
+				"Skip": {ID: "AutoApprove", Type: "serviceTask", Name: "Auto-approve invoice as AUTO_APPROVED"},
+				"Mgr":  {ID: "MgrReview", Type: "userTask", Name: "Manager approval"},
+			},
+			Flows: map[string]*domain.Flow{
+				"f1": {SourceRef: "Gate", TargetRef: "Skip", Condition: "amount < 1000"},
+				"f2": {SourceRef: "Gate", TargetRef: "Mgr", Condition: "amount >= 1000"},
+			},
+		},
+	}
+	amountSkipPlan := FilePlan{
+		File:             "backend/internal/billing/store.go",
+		Layer:            "adapter",
+		Action:           domain.ActionModify,
+		ProposedChanges:  []string{"Calculate the sum of invoice line totals; if amount < 1000 set status to AUTO_APPROVED."},
+		AcceptanceChecks: []string{"Invoice below 1000 becomes AUTO_APPROVED; invoice >= 1000 routes to manager approval."},
+	}
+	if err := validateRoutingPlanWithContext(amountSkipPC, ChangeInput{}, amountSkipPlan); err != nil {
+		t.Fatalf("unexpected false positive on non-zero-delta amount Skip scenario: %v", err)
 	}
 }
 

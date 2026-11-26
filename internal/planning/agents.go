@@ -428,9 +428,11 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 			return s, fmt.Errorf("agent model interrupted; session may be resumed: %w", callErr)
 		}
 		if err := engine.apply(ctx, &s, reply, original); err != nil {
-			if errors.Is(err, ErrAgentPlanIncomplete) && s.OutputRepairs < 1 {
+			errMsg := err.Error()
+			repeatedSameErr := len(s.Feedback) > 0 && strings.HasPrefix(s.Feedback[len(s.Feedback)-1], errMsg)
+			if errors.Is(err, ErrAgentPlanIncomplete) && s.OutputRepairs < 3 && !repeatedSameErr {
 				s.OutputRepairs++
-				s.Feedback = []string{err.Error() + ". CHANGE requires intended behavior changes and observable pass/fail checks. NO_ACTION requires source-backed current/target behavior, rationale and existing-contract checks, with empty steps/proposed_changes; never invent an edit to fill a quota. Keep exact target identities and evidence."}
+				s.Feedback = []string{errMsg + ". CHANGE requires intended behavior changes and observable pass/fail checks. NO_ACTION requires source-backed current/target behavior, rationale and existing-contract checks, with empty steps/proposed_changes; never invent an edit to fill a quota. Keep exact target identities and evidence."}
 				var saveErr error
 				s, saveErr = engine.save(ctx, s, "OUTPUT_REPAIR_REQUESTED")
 				if saveErr != nil {

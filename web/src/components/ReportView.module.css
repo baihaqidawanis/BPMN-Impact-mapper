@@ -40,7 +40,7 @@
 }
 
 .metaSep {
-  color: rgba(0, 0, 0, 0.2);
+  color: var(--line-strong);
 }
 
 .reportHeader h2 {

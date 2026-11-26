@@ -45,8 +45,28 @@ export function WorkspaceShell({
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const toggle = useRef<HTMLButtonElement>(null);
   const navigation = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+    setTheme(current);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    const root = document.documentElement;
+    root.setAttribute("data-theme-transition", "");
+    root.dataset.theme = next;
+    setTheme(next);
+    try {
+      localStorage.setItem("bpmn-impact-theme", next);
+    } catch {
+      // Ignore storage restrictions.
+    }
+    window.setTimeout(() => root.removeAttribute("data-theme-transition"), 280);
+  }
 
   useEffect(() => {
     const media = window.matchMedia("(max-width:760px)");
@@ -164,7 +184,8 @@ export function WorkspaceShell({
               onClick={() => (mobile ? setOpen(!open) : setCollapsed(!collapsed))}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 6h16M4 12h16M4 18h16" />
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M9 4v16" />
               </svg>
             </button>
             <div className={styles.breadcrumb}>
@@ -180,6 +201,24 @@ export function WorkspaceShell({
           {headerCenter && <div className={styles.topbarCenter}>{headerCenter}</div>}
           <div className={styles.topbarRight}>
             {headerActions}
+            <button
+              type="button"
+              className={styles.themeToggle}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              onClick={toggleTheme}
+            >
+              {theme === "dark" ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
             {busy && <span className={styles.busyTag}>Analyzing…</span>}
           </div>
         </header>
