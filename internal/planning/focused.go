@@ -18,6 +18,18 @@ type MigrationHeadCatalog interface {
 	MigrationHeads() []string
 }
 
+// SchemaFact describes one DDL statement from an approved .up.sql migration.
+type SchemaFact struct {
+	File    string
+	Excerpt string
+}
+
+// SchemaFactCatalog is optionally implemented by SourceTools to expose table
+// and CHECK constraint facts for host-side post-batch polish checks.
+type SchemaFactCatalog interface {
+	SchemaFacts() []SchemaFact
+}
+
 // FocusedEngine reviews every change with bounded seed input per model session,
 // then assembles one evidence-bound plan. It never scans the full source corpus.
 type FocusedEngine struct {
@@ -303,8 +315,14 @@ func (e FocusedEngine) Run(ctx context.Context, id string, original EvidenceBund
 	}
 
 	s.Bundle.ContextID, _ = ComputeContextID(s.Bundle)
-	s.Role = Reviewer
+	s.Role = Planner
 	s.ActiveChildID = ""
+	s.ProgressMessage = "Polishing schema and table references on assembled draft."
+	if err := e.Store.Save(ctx, s); err != nil {
+		return s, err
+	}
+	e.polishDeterministicPlanIssues(ctx, id, &s)
+	s.Role = Reviewer
 	s.ProgressMessage = "Checking the combined focused plan."
 	if err := e.Store.Save(ctx, s); err != nil {
 		return s, err

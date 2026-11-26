@@ -94,6 +94,46 @@ func (s *Snapshot) MigrationHeads() []string {
 	return out
 }
 
+// SchemaFacts extracts compact CREATE/ALTER TABLE DDL statements containing
+// CHECK constraints or *_lines definitions from approved .up.sql migrations
+// for host-side post-batch validation (never injected into batch prompts).
+func (s *Snapshot) SchemaFacts() []planning.SchemaFact {
+	files := make([]string, 0, len(s.files))
+	for file := range s.files {
+		if strings.HasSuffix(strings.ToLower(file), ".up.sql") {
+			files = append(files, file)
+		}
+	}
+	sort.Strings(files)
+	var out []planning.SchemaFact
+	for _, file := range files {
+		for _, rawStmt := range strings.Split(s.files[file], ";") {
+			stmt := strings.Join(strings.Fields(rawStmt), " ")
+			if stmt == "" {
+				continue
+			}
+			upper := strings.ToUpper(stmt)
+			idx := strings.Index(upper, "CREATE TABLE ")
+			if idx < 0 {
+				idx = strings.Index(upper, "ALTER TABLE ")
+			}
+			if idx < 0 {
+				continue
+			}
+			stmt = stmt[idx:]
+			upper = upper[idx:]
+			if !strings.Contains(upper, "CHECK") && !strings.Contains(upper, "_LINES") {
+				continue
+			}
+			if len(stmt) > 420 {
+				stmt = stmt[:420]
+			}
+			out = append(out, planning.SchemaFact{File: file, Excerpt: stmt})
+		}
+	}
+	return out
+}
+
 // CheckBundle prevents old/invented seed files or named functions from entering
 // a live session. It does not prove an older report's every excerpt is current;
 // callers must use an analysis produced against this source revision.

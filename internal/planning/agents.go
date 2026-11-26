@@ -325,7 +325,7 @@ func (engine AgentEngine) Run(ctx context.Context, id string, original EvidenceB
 	if err := validateBundle(s.Bundle); err != nil {
 		return s, err
 	}
-	if s.Version != "1" || (s.Role != Analyst && s.Role != Planner && s.Role != Reviewer) || s.Turns < 0 || s.Turns > b.MaxTurns || s.Tools < 0 || s.Tools > b.MaxTools || s.Revisions < 0 || s.Revisions > b.MaxRevisions || s.OutputRepairs < 0 || s.OutputRepairs > 1 || len(s.Events) > 128 {
+	if s.Version != "1" || (s.Role != Analyst && s.Role != Planner && s.Role != Reviewer) || s.Turns < 0 || s.Turns > b.MaxTurns || s.Tools < 0 || s.Tools > b.MaxTools || s.Revisions < 0 || s.Revisions > b.MaxRevisions || s.OutputRepairs < 0 || s.OutputRepairs > 3 || len(s.Events) > 128 {
 		return s, errors.New("invalid agent checkpoint state")
 	}
 	if s.Status == "COMPLETE" || s.Status == "NEEDS_REVIEW" {

@@ -16,9 +16,12 @@ export function BpmnReadOnly({xml,onSelect}:{xml:string;onSelect:(id:string)=>vo
     setReady(false);setError("");
     async function open(){
       try {
-        const {default:Viewer}=await import("bpmn-js/lib/NavigatedViewer");
+        const [{default:Viewer},{default:TokenSimulationViewerModule}]=await Promise.all([
+          import("bpmn-js/lib/NavigatedViewer"),
+          import("bpmn-js-token-simulation/lib/viewer"),
+        ]);
         if(disposed || !container.current)return;
-        instance=new Viewer({container:container.current});viewer.current=instance;
+        instance=new Viewer({container:container.current,additionalModules:[TokenSimulationViewerModule]});viewer.current=instance;
         await instance.importXML(xml);if(disposed)return;
         instance.get<{zoom:(value:string)=>void}>("canvas").zoom("fit-viewport");
         instance.on("element.click",(event:{element:{id:string}})=>select.current(event.element.id));

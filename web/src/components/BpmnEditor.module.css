@@ -24,7 +24,8 @@
   gap: 6px;
 }
 
-.editor button {
+.toolbar button,
+.paneTools button {
   min-height: 30px;
   padding: 4px 11px;
   border: 1px solid var(--control-border);
@@ -37,12 +38,14 @@
   box-shadow: var(--shadow-control);
 }
 
-.editor button:hover:not(:disabled) {
+.toolbar button:hover:not(:disabled),
+.paneTools button:hover:not(:disabled) {
   background: var(--surface-hover);
   border-color: var(--control-hover);
 }
 
-.editor button:disabled {
+.toolbar button:disabled,
+.paneTools button:disabled {
   opacity: 0.42;
   cursor: not-allowed;
 }

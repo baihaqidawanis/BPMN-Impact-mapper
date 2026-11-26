@@ -3,6 +3,8 @@ package planning
 import (
 	"context"
 	"fmt"
+
+	"github.com/baihaqidawan/bpmn-impact-mapper/internal/domain"
 )
 
 // Prefer one combined audit; partition only when the real context guard fails.
@@ -109,4 +111,114 @@ func (e FocusedEngine) reviseFocusedPlan(ctx context.Context, id string, s *Agen
 		return false, err
 	}
 	return true, nil
+}
+
+// polishDeterministicPlanIssues runs at most one lightweight single-proposal
+// Planner pass per draft item that still has deterministic schema/table/routing
+// issues after all batches complete. Any error, invalid output, action flip, or
+// non-decreasing issue count safely falls back to the existing draft item.
+func (e FocusedEngine) polishDeterministicPlanIssues(ctx context.Context, id string, s *AgentSession) {
+	if len(s.Draft) == 0 {
+		return
+	}
+	var headContracts []ProposalContract
+	if catalog, ok := e.Tools.(MigrationHeadCatalog); ok {
+		for _, headFile := range catalog.MigrationHeads() {
+			headContracts = append(headContracts, ProposalContract{
+				File:           headFile,
+				Action:         domain.ActionNoAction,
+				TargetBehavior: "Highest existing numbered migration in this directory; any new forward migration must use a higher number.",
+			})
+		}
+	}
+	var schemaFacts []SchemaFact
+	if sc, ok := e.Tools.(SchemaFactCatalog); ok {
+		schemaFacts = sc.SchemaFacts()
+	}
+	changeMap := make(map[string]ChangeInput, len(s.Bundle.Changes))
+	for _, ch := range s.Bundle.Changes {
+		changeMap[planKey(ch.ChangeType, ch.ElementID, "", "")] = ch
+	}
+	evalIssues := func(p FilePlan) []string {
+		rel := append([]ProposalContract(nil), headContracts...)
+		rel = append(rel, schemaFactContractsForPlan(s.Bundle.ProcessContext, p, schemaFacts)...)
+		var out []string
+		out = append(out, migrationPrerequisiteIssuesWithRelated(s.Bundle, []FilePlan{p}, rel)...)
+		out = append(out, rollbackRowStrategyIssuesWithRelated(s.Bundle, []FilePlan{p}, rel)...)
+		if err := validateRoutingPlanWithContext(s.Bundle.ProcessContext, changeMap[planKey(p.ChangeType, p.ElementID, "", "")], p); err != nil {
+			out = append(out, err.Error())
+		}
+		return cleanStrings(out)
+	}
+	for idx, p := range s.Draft {
+		if ctx.Err() != nil {
+			return
+		}
+		if (p.Action != domain.ActionModify && p.Action != domain.ActionAdd) || p.Layer == "documentation" {
+			continue
+		}
+		oldIssues := evalIssues(p)
+		if len(oldIssues) == 0 {
+			continue
+		}
+		ch, ok := changeMap[planKey(p.ChangeType, p.ElementID, "", "")]
+		if !ok {
+			continue
+		}
+		var matchedCand *Candidate
+		for ci := range ch.Candidates {
+			if ch.Candidates[ci].File == p.File && ch.Candidates[ci].Symbol == p.Symbol {
+				c := ch.Candidates[ci]
+				matchedCand = &c
+				break
+			}
+		}
+		var matchedDec *CandidateDecision
+		for di := range s.Decisions {
+			d := s.Decisions[di]
+			if d.ChangeType == p.ChangeType && d.ElementID == p.ElementID && d.File == p.File && d.Symbol == p.Symbol && d.Verdict == VerdictRelevant {
+				matchedDec = &d
+				break
+			}
+		}
+		if matchedCand == nil || matchedDec == nil {
+			continue
+		}
+		singleChange := ch
+		singleChange.Candidates = []Candidate{*matchedCand}
+		input := s.Bundle
+		input.Changes = []ChangeInput{singleChange}
+		input.ContextID, _ = ComputeContextID(input)
+		feedback := make([]string, 0, len(oldIssues)+1)
+		feedback = append(feedback, fmt.Sprintf("POST-BATCH DETERMINISTIC POLISH: keep action=%s on %s and preserve all valid branches, forward migration numbers, and acceptance checks from your draft while fixing ONLY the specific schema/source issues below (also remove any inaccurate claim in current_behavior or design_rationale that pre-change code already queries a non-zero-only ledger table):", p.Action, p.File))
+		feedback = append(feedback, oldIssues...)
+		childID := "polish-" + agentDigest([]any{id, idx, input.ContextID, oldIssues})[:44]
+		child, err := (AgentEngine{
+			Model:            e.Model,
+			Tools:            e.Tools,
+			Store:            e.Store,
+			InitialDecisions: []CandidateDecision{*matchedDec},
+			InitialFeedback:  feedback,
+			InitialDraft:     []FilePlan{p},
+			RelatedProposals: headContracts,
+			DeferReview:      true,
+			Budget:           AgentBudget{MaxTurns: 3, MaxTools: 0, MaxRevisions: 0, MaxDiscoveries: 0},
+		}).Run(ctx, childID, input)
+		s.Turns += child.Turns
+		if err != nil || !child.AwaitingCombinedReview || len(child.Draft) != 1 {
+			continue
+		}
+		if _, err := child.ChangePlan(); err != nil {
+			continue
+		}
+		polished := child.Draft[0]
+		if polished.File != p.File || polished.Symbol != p.Symbol || polished.Action != p.Action {
+			continue
+		}
+		newIssues := evalIssues(polished)
+		if len(newIssues) < len(oldIssues) {
+			s.Draft[idx] = polished
+			s.Revisions++
+		}
+	}
 }

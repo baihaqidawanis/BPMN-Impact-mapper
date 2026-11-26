@@ -22,7 +22,8 @@ var requestPayloadDeltaCue = regexp.MustCompile(`(?i)\b(?:line(?:\s+items?)?|del
 var sqlQuotedUpperToken = regexp.MustCompile(`'([A-Z][A-Z0-9_]{2,})'`)
 var upperEnumToken = regexp.MustCompile(`\b([A-Z][A-Z0-9_]{2,})\b`)
 var forwardMigrationMention = regexp.MustCompile(`(?i)\b(?:forward\s+migration|new\s+(?:\w+\s+){0,2}migration|(?:add|create|write|apply|introduce)\s+(?:a\s+|an\s+|the\s+)?(?:new\s+|forward\s+|database\s+|sql\s+|schema\s+)?migration|migration\s+to\s+(?:allow|add|include|update|expand|alter)|alter\s+table)\b`)
-var migrationRollbackCue = regexp.MustCompile(`(?i)\b(?:rollback|\.down\.sql|down\s+migration|revert(?:ing)?\s+(?:the\s+)?(?:migration|constraint)|downgrade)\b`)
+var migrationRollbackCue = regexp.MustCompile(`(?i)(?:\.down\.sql\b|\b(?:rollback|down\s+migration|revert(?:ing)?\s+(?:the\s+)?(?:migration|constraint)|downgrade)\b)`)
+var rollbackRowStrategyCue = regexp.MustCompile(`(?i)\b(?:existing\s+(?:[A-Z0-9_]+\s+)?(?:rows?|records?|data)|rows?\s+(?:with|using|having|in)\s+['"` + "`" + `"]?[A-Z0-9_]+|remap(?:ping|ped)?|migrat(?:e|ing)\s+back|backfill|update\s+existing|delete\s+existing|clean\s*up|block(?:ing|ed)?\s+rollback|prevent\s+rollback|abort(?:ing)?\s+rollback|abort\s+if|fail\s+if|raise\s+exception|before\s+restor(?:ing|e)|prior\s+to\s+restor(?:ing|e))\b`)
 
 var genericMigrationStems = map[string]bool{
 	"init": true, "initial": true, "schema": true, "core": true, "base": true,
@@ -193,7 +194,7 @@ func migrationPrerequisiteIssuesWithRelated(bundle EvidenceBundle, plans []FileP
 	constraints := extractSQLCheckConstraintsWithRelated(bundle, related)
 	introduced := introducedProcessUpperTokens(bundle.ProcessContext)
 	maxMigNum, maxMigWidth, existingMigFiles := maxExistingMigrationNumber(bundle, related)
-	nonZeroTables, lineTables, lineCols := extractLedgerAndLineTables(bundle)
+	nonZeroTables, lineTables, lineCols := extractLedgerAndLineTablesWithRelated(bundle, related)
 	var issues []string
 	reported := map[string]bool{}
 	for _, p := range plans {
@@ -364,11 +365,33 @@ func evidenceLineNumber(file, location string) (int, bool) {
 }
 
 func extractLedgerAndLineTables(bundle EvidenceBundle) (nonZeroTables []string, lineTables []string, lineCols map[string][]string) {
+	return extractLedgerAndLineTablesWithRelated(bundle, nil)
+}
+
+func extractLedgerAndLineTablesWithRelated(bundle EvidenceBundle, related []ProposalContract) (nonZeroTables []string, lineTables []string, lineCols map[string][]string) {
 	seenNZ, seenLine := map[string]bool{}, map[string]bool{}
 	lineCols = map[string][]string{}
 	type headerAtLine struct {
 		line  int
 		table string
+	}
+	addQtyCols := func(ownerTbl, excerpt string) {
+		if !strings.HasSuffix(ownerTbl, "_lines") {
+			return
+		}
+		for _, qm := range sqlQuantityColumn.FindAllStringSubmatch(excerpt, -1) {
+			col := strings.ToLower(qm[1])
+			dup := false
+			for _, old := range lineCols[ownerTbl] {
+				if old == col {
+					dup = true
+					break
+				}
+			}
+			if !dup {
+				lineCols[ownerTbl] = append(lineCols[ownerTbl], col)
+			}
+		}
 	}
 	for _, change := range bundle.Changes {
 		for _, c := range change.Candidates {
@@ -407,21 +430,7 @@ func extractLedgerAndLineTables(bundle EvidenceBundle) (nonZeroTables []string, 
 				} else if hasLn {
 					ownerTbl = nearestTable(ln)
 				}
-				if strings.HasSuffix(ownerTbl, "_lines") {
-					for _, qm := range sqlQuantityColumn.FindAllStringSubmatch(ev.Excerpt, -1) {
-						col := strings.ToLower(qm[1])
-						dup := false
-						for _, old := range lineCols[ownerTbl] {
-							if old == col {
-								dup = true
-								break
-							}
-						}
-						if !dup {
-							lineCols[ownerTbl] = append(lineCols[ownerTbl], col)
-						}
-					}
-				}
+				addQtyCols(ownerTbl, ev.Excerpt)
 				if sqlNonZeroCheck.MatchString(ev.Excerpt) && ownerTbl != "" && !seenNZ[ownerTbl] {
 					seenNZ[ownerTbl] = true
 					nonZeroTables = append(nonZeroTables, ownerTbl)
@@ -429,9 +438,112 @@ func extractLedgerAndLineTables(bundle EvidenceBundle) (nonZeroTables []string, 
 			}
 		}
 	}
+	for _, r := range related {
+		lf := strings.ToLower(r.File)
+		if !strings.HasSuffix(lf, ".sql") || strings.HasSuffix(lf, ".down.sql") {
+			continue
+		}
+		for _, text := range append([]string{r.TargetBehavior}, r.Assumptions...) {
+			ownerTbl := ""
+			if m := sqlTableHeader.FindStringSubmatch(text); len(m) == 2 {
+				ownerTbl = strings.ToLower(m[1])
+				if strings.HasSuffix(ownerTbl, "_lines") && !seenLine[ownerTbl] {
+					seenLine[ownerTbl] = true
+					lineTables = append(lineTables, ownerTbl)
+				}
+			}
+			addQtyCols(ownerTbl, text)
+			if sqlNonZeroCheck.MatchString(text) && ownerTbl != "" && !seenNZ[ownerTbl] {
+				seenNZ[ownerTbl] = true
+				nonZeroTables = append(nonZeroTables, ownerTbl)
+			}
+		}
+	}
 	sort.Strings(nonZeroTables)
 	sort.Strings(lineTables)
 	return nonZeroTables, lineTables, lineCols
+}
+
+func schemaFactContractsForPlan(pc *domain.ProcessContext, p FilePlan, facts []SchemaFact) []ProposalContract {
+	if len(facts) == 0 {
+		return nil
+	}
+	submod := ""
+	lf := strings.ToLower(strings.ReplaceAll(p.File, "\\", "/"))
+	if m := internalSubmodulePath.FindStringSubmatch(lf); len(m) == 2 {
+		submod = m[1]
+	}
+	prefixes := collectProcessWordPrefixes(pc)
+	byFile := map[string][]string{}
+	var order []string
+	for _, f := range facts {
+		m := sqlTableHeader.FindStringSubmatch(f.Excerpt)
+		if len(m) != 2 {
+			continue
+		}
+		tbl := strings.ToLower(m[1])
+		keep := sqlNonZeroCheck.MatchString(f.Excerpt) || submod == "" || identifierMatchesScope(tbl, submod, prefixes)
+		if !keep {
+			continue
+		}
+		if _, ok := byFile[f.File]; !ok {
+			order = append(order, f.File)
+		}
+		byFile[f.File] = append(byFile[f.File], f.Excerpt)
+	}
+	var out []ProposalContract
+	for _, file := range order {
+		out = append(out, ProposalContract{
+			File:           file,
+			Action:         domain.ActionNoAction,
+			TargetBehavior: "Read-only historical schema facts.",
+			Assumptions:    byFile[file],
+		})
+	}
+	return out
+}
+
+func rollbackRowStrategyIssuesWithRelated(bundle EvidenceBundle, plans []FilePlan, related []ProposalContract) []string {
+	constraints := extractSQLCheckConstraintsWithRelated(bundle, related)
+	introduced := introducedProcessUpperTokens(bundle.ProcessContext)
+	if len(constraints) == 0 || len(introduced) == 0 {
+		return nil
+	}
+	hasRowStrategy := false
+	for _, p := range plans {
+		for _, group := range [][]string{p.ProposedChanges, p.Steps, p.Assumptions} {
+			for _, item := range group {
+				if rollbackRowStrategyCue.MatchString(item) {
+					hasRowStrategy = true
+				}
+			}
+		}
+	}
+	if hasRowStrategy {
+		return nil
+	}
+	var issues []string
+	seen := map[string]bool{}
+	for _, c := range constraints {
+		for _, p := range plans {
+			if !constraintAppliesToPlan(bundle.ProcessContext, c, p) {
+				continue
+			}
+			for tok := range introduced {
+				if c.Allowed[tok] || !writesEnumValue(p, c.Column, tok) || !hasForwardMigrationFor(plans, c, tok) {
+					continue
+				}
+				key := c.Table + "|" + c.Column + "|" + tok + "|" + p.File
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				issues = append(issues, fmt.Sprintf("Rollback strategy incomplete: forward migration in %s adds %q to %s.%s without explaining how existing %q rows are handled on rollback; update the rollback (.down.sql) step to specify how existing %q rows are handled (e.g., remapped, deleted, or blocking rollback if any exist) before restoring the prior CHECK constraint.", p.File, tok, fallbackTable(c.Table), c.Column, tok, tok))
+			}
+		}
+	}
+	sort.Strings(issues)
+	return issues
 }
 
 func hasForwardMigrationRollback(plans []FilePlan) bool {

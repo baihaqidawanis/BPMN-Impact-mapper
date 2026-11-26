@@ -78,16 +78,29 @@ export function BpmnEditor({ baseline, initial, onApply, active, onDirty }: Prop
     refreshPreview.current = refresh;
     async function load() {
       try {
-        const [{ default: BpmnModeler }, { default: BpmnNavigatedViewer }] = await Promise.all([
+        const [
+          { default: BpmnModeler },
+          { default: BpmnNavigatedViewer },
+          { default: TokenSimulationModelerModule },
+          { default: TokenSimulationViewerModule },
+        ] = await Promise.all([
           import("bpmn-js/lib/Modeler"),
           import("bpmn-js/lib/NavigatedViewer"),
+          import("bpmn-js-token-simulation/lib/modeler"),
+          import("bpmn-js-token-simulation/lib/viewer"),
         ]);
         if (disposed || !container.current || !beforeContainer.current) return;
         baselineXml = await baseline.text();
-        before = new BpmnNavigatedViewer({ container: beforeContainer.current });
+        before = new BpmnNavigatedViewer({
+          container: beforeContainer.current,
+          additionalModules: [TokenSimulationViewerModule],
+        });
         viewer.current = before;
         await before.importXML(baselineXml);
-        instance = new BpmnModeler({ container: container.current });
+        instance = new BpmnModeler({
+          container: container.current,
+          additionalModules: [TokenSimulationModelerModule],
+        });
         modeler.current = instance;
         const { warnings } = await instance.importXML(await initial.text());
         if (disposed) return;
